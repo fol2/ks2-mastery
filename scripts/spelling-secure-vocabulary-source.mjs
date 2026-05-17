@@ -282,6 +282,18 @@ function auditedWordFromSourceRecord(record, approval, sourceJsonlSha256, index)
       advisories: Array.isArray(record.advisories) ? record.advisories : [],
       securePromotionAllowed: decision === DECISION_SECURE_EXTENSION_IMPORT,
     },
+    releaseReadiness: {
+      acceptedSpellings: Array.isArray(record.acceptedSpellings) ? record.acceptedSpellings : [],
+      rejectedVariants: Array.isArray(record.rejectedVariants) ? record.rejectedVariants : [],
+      explanation: normaliseString(record.explanation),
+      exampleSentences: Array.isArray(record.exampleSentences) ? record.exampleSentences : [],
+      ukSpellingDecision: normaliseString(record.ukSpellingDecision),
+      familyRoot: normaliseString(record.familyRoot),
+      morphologyTags: Array.isArray(record.morphologyTags) ? record.morphologyTags : [],
+      safetyNotes: normaliseString(record.safetyNotes),
+      audioStatus: normaliseString(record.audioStatus),
+      ttsStatus: normaliseString(record.ttsStatus),
+    },
   };
 }
 
@@ -336,6 +348,7 @@ export function buildSecureVocabularyArtifacts({ sourceJsonlPath, approvalPath, 
     reviewedAt: word.review.reviewedAt,
     provenanceSource: word.provenance.source,
     safetyStatus: word.safety.status,
+    releaseReadiness: word.releaseReadiness,
   }));
 
   const reviewPack = {

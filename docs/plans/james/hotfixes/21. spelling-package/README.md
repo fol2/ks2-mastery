@@ -14,5 +14,6 @@ It contains:
 - `validation/secure-vocabulary-approved-source/` - approved-source audit, check-mode import plan, reviewer pack, audited source, and B3w verification evidence.
 - `validation/task-b-local-patch-equivalence-2026-05-17.md` - local Node 22 evidence that the cache-key and admin signal patch-equivalent fixes are implemented and verified in the worktree.
 - `validation/taxonomy-backbone-local-verification-2026-05-17.md` - local verification for the statutory-core / secure-extension / enrichment-extra taxonomy backbone.
+- `validation/secure-vocabulary-release-readiness-gate-2026-05-17.md` - explicit evidence that the current approved source passes B3w metadata reconciliation but is blocked from live secure-extension promotion.
 
-The patch and taxonomy backbone are not the full thousands-word expansion. They are safe preparatory work for large spelling content releases.
+The patch, taxonomy backbone, and release-readiness gate are not the full thousands-word expansion. They are safe preparatory work for large spelling content releases.

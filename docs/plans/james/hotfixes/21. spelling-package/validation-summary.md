@@ -60,7 +60,8 @@ Generated local evidence under `validation/secure-vocabulary-approved-source/`:
 - `review-pack.md`: human-readable reviewer summary and advisory-word list.
 - `verification-report.json`: B3w verification `ok: true`, `issueCount: 0`, `checkedReviewPackWords: 1463`, `checkedAuditedSourceWords: 1463`.
 - `release-gate-report.json`: direct CLI verification with the same `ok: true` and zero issues.
-- `targeted-tests.log`: `node --test tests/spelling-secure-vocabulary-source.test.js tests/secure-vocabulary-release-gates.test.js`, 5 tests passed.
+- `release-readiness-report.json`: explicit live-promotion gate with `ok: false`, `issueCount: 18256`, `metadataIssueCount: 0`, and `checkedSecureExtensionWords: 1217`.
+- `targeted-tests.log`: original B3w run passed 5 tests. The release-readiness addendum reran `node --test tests/spelling-secure-vocabulary-source.test.js tests/secure-vocabulary-release-gates.test.js` after adding release-readiness coverage, and 10 tests passed.
 - `content-validate.log`: `npm run content:validate`, `ok: true`, 246 runtime words, 2213 runtime sentences, 0 errors, 6 existing pattern warnings.
 - `npm-run-check.log`: `npm run check`, exit `0`; Wrangler dry-run build and client bundle audit passed.
 
@@ -70,6 +71,7 @@ Commands recorded:
 - `node scripts/import-spelling-secure-vocabulary.mjs --check --source-jsonl D:\tmp\ks2-spelling-b3w-source-artifact-approved-check\source\secure-vocabulary-source-v1.jsonl --approval D:\tmp\ks2-spelling-b3w-source-artifact-approved-check\approval\owner-approval-record.json --out validation/secure-vocabulary-approved-source/import-plan.json`
 - `node scripts/build-spelling-secure-vocabulary-review-pack.mjs --source-jsonl D:\tmp\ks2-spelling-b3w-source-artifact-approved-check\source\secure-vocabulary-source-v1.jsonl --approval D:\tmp\ks2-spelling-b3w-source-artifact-approved-check\approval\owner-approval-record.json --out-dir validation/secure-vocabulary-approved-source --json`
 - `node scripts/verify-spelling-secure-vocabulary-release.mjs --source validation/secure-vocabulary-approved-source/audited-source.json --review-pack validation/secure-vocabulary-approved-source/review-pack.json --json --out validation/secure-vocabulary-approved-source/release-gate-report.json`
+- `node scripts/verify-spelling-secure-vocabulary-release.mjs --release-ready --audited-source validation/secure-vocabulary-approved-source/audited-source.json --review-pack validation/secure-vocabulary-approved-source/review-pack.json --json --out validation/secure-vocabulary-approved-source/release-readiness-report.json`
 - `node --test tests/spelling-secure-vocabulary-source.test.js tests/secure-vocabulary-release-gates.test.js`
 - `npm run content:validate`
 - `npm run check`
@@ -183,7 +185,7 @@ Local Codex Node 22 update:
 
 3. **Existing pattern warnings remain.** Several registered spelling patterns have below-threshold core coverage. Expansion must improve pattern coverage or explicitly keep those patterns non-launchable.
 
-4. **Full content import and release remain required.** The source list is now pinned, approved for import/reviewer-pack generation, mapped into a check-mode import plan, B3w-verified as a reviewer pack, and backed by a local taxonomy seam. The full secure-extension content import, generated sentences/audio, release manifest, CI, deployment, and production verification are still not complete.
+4. **Full content import and release remain required.** The source list is now pinned, approved for import/reviewer-pack generation, mapped into a check-mode import plan, B3w-verified as a reviewer pack, backed by a local taxonomy seam, and blocked by an explicit release-readiness gate. The full secure-extension content import, generated sentences/audio, release manifest, CI, deployment, and production verification are still not complete.
 
 5. **Production is not proven.** No live hard-refresh spelling journey, deployed commit/release id, content-quality endpoint evidence, or logs/screenshots were captured.
 

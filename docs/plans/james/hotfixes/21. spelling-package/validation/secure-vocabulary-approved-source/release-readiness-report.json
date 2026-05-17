@@ -1,0 +1,1212 @@
+{
+  "ok": false,
+  "issueCount": 18256,
+  "issues": [
+    {
+      "code": "secure_vocabulary_release_promotion_not_approved",
+      "path": "source.approvalDecision",
+      "message": "Secure-extension promotion requires APPROVED_FOR_SECURE_EXTENSION_IMPORT on both audited source and review pack.",
+      "auditedSourceDecision": "APPROVED_FOR_IMPORT_REVIEWER_PACK_ONLY",
+      "reviewPackDecision": "APPROVED_FOR_IMPORT_REVIEWER_PACK_ONLY"
+    },
+    {
+      "code": "secure_vocabulary_release_word_not_adult_approved",
+      "path": "auditedSource.words[246].sourceReviewStatus",
+      "wordIdentity": "ability",
+      "actual": "candidate_source_supplied_not_adult_approved"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[246]",
+      "wordIdentity": "ability",
+      "field": "acceptedSpellings"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[246]",
+      "wordIdentity": "ability",
+      "field": "explanation"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[246]",
+      "wordIdentity": "ability",
+      "field": "exampleSentences"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[246]",
+      "wordIdentity": "ability",
+      "field": "ukSpellingDecision"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[246]",
+      "wordIdentity": "ability",
+      "field": "patternOrMorphologyTags"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[246]",
+      "wordIdentity": "ability",
+      "field": "familyRoot"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[246]",
+      "wordIdentity": "ability",
+      "field": "audioOrTtsStatus"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[246]",
+      "wordIdentity": "ability",
+      "field": "acceptedSpellings"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[246]",
+      "wordIdentity": "ability",
+      "field": "explanation"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[246]",
+      "wordIdentity": "ability",
+      "field": "exampleSentences"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[246]",
+      "wordIdentity": "ability",
+      "field": "ukSpellingDecision"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[246]",
+      "wordIdentity": "ability",
+      "field": "patternOrMorphologyTags"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[246]",
+      "wordIdentity": "ability",
+      "field": "familyRoot"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[246]",
+      "wordIdentity": "ability",
+      "field": "audioOrTtsStatus"
+    },
+    {
+      "code": "secure_vocabulary_release_word_not_adult_approved",
+      "path": "auditedSource.words[247].sourceReviewStatus",
+      "wordIdentity": "able",
+      "actual": "candidate_source_supplied_not_adult_approved"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[247]",
+      "wordIdentity": "able",
+      "field": "acceptedSpellings"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[247]",
+      "wordIdentity": "able",
+      "field": "explanation"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[247]",
+      "wordIdentity": "able",
+      "field": "exampleSentences"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[247]",
+      "wordIdentity": "able",
+      "field": "ukSpellingDecision"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[247]",
+      "wordIdentity": "able",
+      "field": "patternOrMorphologyTags"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[247]",
+      "wordIdentity": "able",
+      "field": "familyRoot"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[247]",
+      "wordIdentity": "able",
+      "field": "audioOrTtsStatus"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[247]",
+      "wordIdentity": "able",
+      "field": "acceptedSpellings"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[247]",
+      "wordIdentity": "able",
+      "field": "explanation"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[247]",
+      "wordIdentity": "able",
+      "field": "exampleSentences"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[247]",
+      "wordIdentity": "able",
+      "field": "ukSpellingDecision"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[247]",
+      "wordIdentity": "able",
+      "field": "patternOrMorphologyTags"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[247]",
+      "wordIdentity": "able",
+      "field": "familyRoot"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[247]",
+      "wordIdentity": "able",
+      "field": "audioOrTtsStatus"
+    },
+    {
+      "code": "secure_vocabulary_release_word_not_adult_approved",
+      "path": "auditedSource.words[248].sourceReviewStatus",
+      "wordIdentity": "absence",
+      "actual": "candidate_source_supplied_not_adult_approved"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[248]",
+      "wordIdentity": "absence",
+      "field": "acceptedSpellings"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[248]",
+      "wordIdentity": "absence",
+      "field": "explanation"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[248]",
+      "wordIdentity": "absence",
+      "field": "exampleSentences"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[248]",
+      "wordIdentity": "absence",
+      "field": "ukSpellingDecision"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[248]",
+      "wordIdentity": "absence",
+      "field": "patternOrMorphologyTags"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[248]",
+      "wordIdentity": "absence",
+      "field": "familyRoot"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[248]",
+      "wordIdentity": "absence",
+      "field": "audioOrTtsStatus"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[248]",
+      "wordIdentity": "absence",
+      "field": "acceptedSpellings"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[248]",
+      "wordIdentity": "absence",
+      "field": "explanation"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[248]",
+      "wordIdentity": "absence",
+      "field": "exampleSentences"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[248]",
+      "wordIdentity": "absence",
+      "field": "ukSpellingDecision"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[248]",
+      "wordIdentity": "absence",
+      "field": "patternOrMorphologyTags"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[248]",
+      "wordIdentity": "absence",
+      "field": "familyRoot"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[248]",
+      "wordIdentity": "absence",
+      "field": "audioOrTtsStatus"
+    },
+    {
+      "code": "secure_vocabulary_release_word_not_adult_approved",
+      "path": "auditedSource.words[249].sourceReviewStatus",
+      "wordIdentity": "absent",
+      "actual": "candidate_source_supplied_not_adult_approved"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[249]",
+      "wordIdentity": "absent",
+      "field": "acceptedSpellings"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[249]",
+      "wordIdentity": "absent",
+      "field": "explanation"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[249]",
+      "wordIdentity": "absent",
+      "field": "exampleSentences"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[249]",
+      "wordIdentity": "absent",
+      "field": "ukSpellingDecision"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[249]",
+      "wordIdentity": "absent",
+      "field": "patternOrMorphologyTags"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[249]",
+      "wordIdentity": "absent",
+      "field": "familyRoot"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[249]",
+      "wordIdentity": "absent",
+      "field": "audioOrTtsStatus"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[249]",
+      "wordIdentity": "absent",
+      "field": "acceptedSpellings"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[249]",
+      "wordIdentity": "absent",
+      "field": "explanation"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[249]",
+      "wordIdentity": "absent",
+      "field": "exampleSentences"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[249]",
+      "wordIdentity": "absent",
+      "field": "ukSpellingDecision"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[249]",
+      "wordIdentity": "absent",
+      "field": "patternOrMorphologyTags"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[249]",
+      "wordIdentity": "absent",
+      "field": "familyRoot"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[249]",
+      "wordIdentity": "absent",
+      "field": "audioOrTtsStatus"
+    },
+    {
+      "code": "secure_vocabulary_release_word_not_adult_approved",
+      "path": "auditedSource.words[250].sourceReviewStatus",
+      "wordIdentity": "absolutely",
+      "actual": "candidate_source_supplied_not_adult_approved"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[250]",
+      "wordIdentity": "absolutely",
+      "field": "acceptedSpellings"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[250]",
+      "wordIdentity": "absolutely",
+      "field": "explanation"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[250]",
+      "wordIdentity": "absolutely",
+      "field": "exampleSentences"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[250]",
+      "wordIdentity": "absolutely",
+      "field": "ukSpellingDecision"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[250]",
+      "wordIdentity": "absolutely",
+      "field": "patternOrMorphologyTags"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[250]",
+      "wordIdentity": "absolutely",
+      "field": "familyRoot"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[250]",
+      "wordIdentity": "absolutely",
+      "field": "audioOrTtsStatus"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[250]",
+      "wordIdentity": "absolutely",
+      "field": "acceptedSpellings"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[250]",
+      "wordIdentity": "absolutely",
+      "field": "explanation"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[250]",
+      "wordIdentity": "absolutely",
+      "field": "exampleSentences"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[250]",
+      "wordIdentity": "absolutely",
+      "field": "ukSpellingDecision"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[250]",
+      "wordIdentity": "absolutely",
+      "field": "patternOrMorphologyTags"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[250]",
+      "wordIdentity": "absolutely",
+      "field": "familyRoot"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[250]",
+      "wordIdentity": "absolutely",
+      "field": "audioOrTtsStatus"
+    },
+    {
+      "code": "secure_vocabulary_release_word_not_adult_approved",
+      "path": "auditedSource.words[251].sourceReviewStatus",
+      "wordIdentity": "absorb",
+      "actual": "candidate_source_supplied_not_adult_approved"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[251]",
+      "wordIdentity": "absorb",
+      "field": "acceptedSpellings"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[251]",
+      "wordIdentity": "absorb",
+      "field": "explanation"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[251]",
+      "wordIdentity": "absorb",
+      "field": "exampleSentences"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[251]",
+      "wordIdentity": "absorb",
+      "field": "ukSpellingDecision"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[251]",
+      "wordIdentity": "absorb",
+      "field": "patternOrMorphologyTags"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[251]",
+      "wordIdentity": "absorb",
+      "field": "familyRoot"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[251]",
+      "wordIdentity": "absorb",
+      "field": "audioOrTtsStatus"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[251]",
+      "wordIdentity": "absorb",
+      "field": "acceptedSpellings"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[251]",
+      "wordIdentity": "absorb",
+      "field": "explanation"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[251]",
+      "wordIdentity": "absorb",
+      "field": "exampleSentences"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[251]",
+      "wordIdentity": "absorb",
+      "field": "ukSpellingDecision"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[251]",
+      "wordIdentity": "absorb",
+      "field": "patternOrMorphologyTags"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[251]",
+      "wordIdentity": "absorb",
+      "field": "familyRoot"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[251]",
+      "wordIdentity": "absorb",
+      "field": "audioOrTtsStatus"
+    },
+    {
+      "code": "secure_vocabulary_release_word_not_adult_approved",
+      "path": "auditedSource.words[252].sourceReviewStatus",
+      "wordIdentity": "absorbed",
+      "actual": "candidate_source_supplied_not_adult_approved"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[252]",
+      "wordIdentity": "absorbed",
+      "field": "acceptedSpellings"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[252]",
+      "wordIdentity": "absorbed",
+      "field": "explanation"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[252]",
+      "wordIdentity": "absorbed",
+      "field": "exampleSentences"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[252]",
+      "wordIdentity": "absorbed",
+      "field": "ukSpellingDecision"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[252]",
+      "wordIdentity": "absorbed",
+      "field": "patternOrMorphologyTags"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[252]",
+      "wordIdentity": "absorbed",
+      "field": "familyRoot"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[252]",
+      "wordIdentity": "absorbed",
+      "field": "audioOrTtsStatus"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[252]",
+      "wordIdentity": "absorbed",
+      "field": "acceptedSpellings"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[252]",
+      "wordIdentity": "absorbed",
+      "field": "explanation"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[252]",
+      "wordIdentity": "absorbed",
+      "field": "exampleSentences"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[252]",
+      "wordIdentity": "absorbed",
+      "field": "ukSpellingDecision"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[252]",
+      "wordIdentity": "absorbed",
+      "field": "patternOrMorphologyTags"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[252]",
+      "wordIdentity": "absorbed",
+      "field": "familyRoot"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[252]",
+      "wordIdentity": "absorbed",
+      "field": "audioOrTtsStatus"
+    },
+    {
+      "code": "secure_vocabulary_release_word_not_adult_approved",
+      "path": "auditedSource.words[253].sourceReviewStatus",
+      "wordIdentity": "absorbing",
+      "actual": "candidate_source_supplied_not_adult_approved"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[253]",
+      "wordIdentity": "absorbing",
+      "field": "acceptedSpellings"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[253]",
+      "wordIdentity": "absorbing",
+      "field": "explanation"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[253]",
+      "wordIdentity": "absorbing",
+      "field": "exampleSentences"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[253]",
+      "wordIdentity": "absorbing",
+      "field": "ukSpellingDecision"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[253]",
+      "wordIdentity": "absorbing",
+      "field": "patternOrMorphologyTags"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[253]",
+      "wordIdentity": "absorbing",
+      "field": "familyRoot"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[253]",
+      "wordIdentity": "absorbing",
+      "field": "audioOrTtsStatus"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[253]",
+      "wordIdentity": "absorbing",
+      "field": "acceptedSpellings"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[253]",
+      "wordIdentity": "absorbing",
+      "field": "explanation"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[253]",
+      "wordIdentity": "absorbing",
+      "field": "exampleSentences"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[253]",
+      "wordIdentity": "absorbing",
+      "field": "ukSpellingDecision"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[253]",
+      "wordIdentity": "absorbing",
+      "field": "patternOrMorphologyTags"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[253]",
+      "wordIdentity": "absorbing",
+      "field": "familyRoot"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[253]",
+      "wordIdentity": "absorbing",
+      "field": "audioOrTtsStatus"
+    },
+    {
+      "code": "secure_vocabulary_release_word_not_adult_approved",
+      "path": "auditedSource.words[254].sourceReviewStatus",
+      "wordIdentity": "absorption",
+      "actual": "candidate_source_supplied_not_adult_approved"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[254]",
+      "wordIdentity": "absorption",
+      "field": "acceptedSpellings"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[254]",
+      "wordIdentity": "absorption",
+      "field": "explanation"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[254]",
+      "wordIdentity": "absorption",
+      "field": "exampleSentences"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[254]",
+      "wordIdentity": "absorption",
+      "field": "ukSpellingDecision"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[254]",
+      "wordIdentity": "absorption",
+      "field": "patternOrMorphologyTags"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[254]",
+      "wordIdentity": "absorption",
+      "field": "familyRoot"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[254]",
+      "wordIdentity": "absorption",
+      "field": "audioOrTtsStatus"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[254]",
+      "wordIdentity": "absorption",
+      "field": "acceptedSpellings"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[254]",
+      "wordIdentity": "absorption",
+      "field": "explanation"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[254]",
+      "wordIdentity": "absorption",
+      "field": "exampleSentences"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[254]",
+      "wordIdentity": "absorption",
+      "field": "ukSpellingDecision"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[254]",
+      "wordIdentity": "absorption",
+      "field": "patternOrMorphologyTags"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[254]",
+      "wordIdentity": "absorption",
+      "field": "familyRoot"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[254]",
+      "wordIdentity": "absorption",
+      "field": "audioOrTtsStatus"
+    },
+    {
+      "code": "secure_vocabulary_release_word_not_adult_approved",
+      "path": "auditedSource.words[255].sourceReviewStatus",
+      "wordIdentity": "abstract",
+      "actual": "candidate_source_supplied_not_adult_approved"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[255]",
+      "wordIdentity": "abstract",
+      "field": "acceptedSpellings"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[255]",
+      "wordIdentity": "abstract",
+      "field": "explanation"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[255]",
+      "wordIdentity": "abstract",
+      "field": "exampleSentences"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[255]",
+      "wordIdentity": "abstract",
+      "field": "ukSpellingDecision"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[255]",
+      "wordIdentity": "abstract",
+      "field": "patternOrMorphologyTags"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[255]",
+      "wordIdentity": "abstract",
+      "field": "familyRoot"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[255]",
+      "wordIdentity": "abstract",
+      "field": "audioOrTtsStatus"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[255]",
+      "wordIdentity": "abstract",
+      "field": "acceptedSpellings"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[255]",
+      "wordIdentity": "abstract",
+      "field": "explanation"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[255]",
+      "wordIdentity": "abstract",
+      "field": "exampleSentences"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[255]",
+      "wordIdentity": "abstract",
+      "field": "ukSpellingDecision"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[255]",
+      "wordIdentity": "abstract",
+      "field": "patternOrMorphologyTags"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[255]",
+      "wordIdentity": "abstract",
+      "field": "familyRoot"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[255]",
+      "wordIdentity": "abstract",
+      "field": "audioOrTtsStatus"
+    },
+    {
+      "code": "secure_vocabulary_release_word_not_adult_approved",
+      "path": "auditedSource.words[256].sourceReviewStatus",
+      "wordIdentity": "acceptable",
+      "actual": "candidate_source_supplied_not_adult_approved"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[256]",
+      "wordIdentity": "acceptable",
+      "field": "acceptedSpellings"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[256]",
+      "wordIdentity": "acceptable",
+      "field": "explanation"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[256]",
+      "wordIdentity": "acceptable",
+      "field": "exampleSentences"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[256]",
+      "wordIdentity": "acceptable",
+      "field": "ukSpellingDecision"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[256]",
+      "wordIdentity": "acceptable",
+      "field": "patternOrMorphologyTags"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[256]",
+      "wordIdentity": "acceptable",
+      "field": "familyRoot"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[256]",
+      "wordIdentity": "acceptable",
+      "field": "audioOrTtsStatus"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[256]",
+      "wordIdentity": "acceptable",
+      "field": "acceptedSpellings"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[256]",
+      "wordIdentity": "acceptable",
+      "field": "explanation"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[256]",
+      "wordIdentity": "acceptable",
+      "field": "exampleSentences"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[256]",
+      "wordIdentity": "acceptable",
+      "field": "ukSpellingDecision"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[256]",
+      "wordIdentity": "acceptable",
+      "field": "patternOrMorphologyTags"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[256]",
+      "wordIdentity": "acceptable",
+      "field": "familyRoot"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[256]",
+      "wordIdentity": "acceptable",
+      "field": "audioOrTtsStatus"
+    },
+    {
+      "code": "secure_vocabulary_release_word_not_adult_approved",
+      "path": "auditedSource.words[257].sourceReviewStatus",
+      "wordIdentity": "acceptance",
+      "actual": "candidate_source_supplied_not_adult_approved"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[257]",
+      "wordIdentity": "acceptance",
+      "field": "acceptedSpellings"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[257]",
+      "wordIdentity": "acceptance",
+      "field": "explanation"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[257]",
+      "wordIdentity": "acceptance",
+      "field": "exampleSentences"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[257]",
+      "wordIdentity": "acceptance",
+      "field": "ukSpellingDecision"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[257]",
+      "wordIdentity": "acceptance",
+      "field": "patternOrMorphologyTags"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[257]",
+      "wordIdentity": "acceptance",
+      "field": "familyRoot"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[257]",
+      "wordIdentity": "acceptance",
+      "field": "audioOrTtsStatus"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[257]",
+      "wordIdentity": "acceptance",
+      "field": "acceptedSpellings"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[257]",
+      "wordIdentity": "acceptance",
+      "field": "explanation"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[257]",
+      "wordIdentity": "acceptance",
+      "field": "exampleSentences"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[257]",
+      "wordIdentity": "acceptance",
+      "field": "ukSpellingDecision"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[257]",
+      "wordIdentity": "acceptance",
+      "field": "patternOrMorphologyTags"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[257]",
+      "wordIdentity": "acceptance",
+      "field": "familyRoot"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[257]",
+      "wordIdentity": "acceptance",
+      "field": "audioOrTtsStatus"
+    },
+    {
+      "code": "secure_vocabulary_release_word_not_adult_approved",
+      "path": "auditedSource.words[258].sourceReviewStatus",
+      "wordIdentity": "access",
+      "actual": "candidate_source_supplied_not_adult_approved"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[258]",
+      "wordIdentity": "access",
+      "field": "acceptedSpellings"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[258]",
+      "wordIdentity": "access",
+      "field": "explanation"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[258]",
+      "wordIdentity": "access",
+      "field": "exampleSentences"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[258]",
+      "wordIdentity": "access",
+      "field": "ukSpellingDecision"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[258]",
+      "wordIdentity": "access",
+      "field": "patternOrMorphologyTags"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[258]",
+      "wordIdentity": "access",
+      "field": "familyRoot"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[258]",
+      "wordIdentity": "access",
+      "field": "audioOrTtsStatus"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[258]",
+      "wordIdentity": "access",
+      "field": "acceptedSpellings"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[258]",
+      "wordIdentity": "access",
+      "field": "explanation"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[258]",
+      "wordIdentity": "access",
+      "field": "exampleSentences"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[258]",
+      "wordIdentity": "access",
+      "field": "ukSpellingDecision"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[258]",
+      "wordIdentity": "access",
+      "field": "patternOrMorphologyTags"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[258]",
+      "wordIdentity": "access",
+      "field": "familyRoot"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "reviewPack.words[258]",
+      "wordIdentity": "access",
+      "field": "audioOrTtsStatus"
+    },
+    {
+      "code": "secure_vocabulary_release_word_not_adult_approved",
+      "path": "auditedSource.words[259].sourceReviewStatus",
+      "wordIdentity": "accessible",
+      "actual": "candidate_source_supplied_not_adult_approved"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[259]",
+      "wordIdentity": "accessible",
+      "field": "acceptedSpellings"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[259]",
+      "wordIdentity": "accessible",
+      "field": "explanation"
+    },
+    {
+      "code": "secure_vocabulary_release_word_missing_field",
+      "path": "auditedSource.words[259]",
+      "wordIdentity": "accessible",
+      "field": "exampleSentences"
+    }
+  ],
+  "issuesTruncated": true,
+  "checkedReviewPackWords": 1463,
+  "checkedAuditedSourceWords": 1463,
+  "checkedSecureExtensionWords": 1217,
+  "metadataIssueCount": 0
+}

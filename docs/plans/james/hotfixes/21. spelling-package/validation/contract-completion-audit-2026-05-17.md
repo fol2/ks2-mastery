@@ -49,6 +49,25 @@ Execute `docs/plans/james/hotfixes/21. spelling-package/contract/spelling-secure
 | Acceptance 13: Code Reviewer and Contract Auditor exact PASS lines | Two reviewer agents were attempted for the B3w taxonomy diff but timed out and were shut down. No exact PASS line exists for full contract. | Not met |
 | Acceptance 14: live production verified | No deployment or hard-refresh production proof for this branch/commit. | Not met |
 
+## Release-Readiness Gate Addendum
+
+After this audit, an explicit release-readiness gate was added to prevent B3w source/reviewer-pack approval from being mistaken for live secure-extension import approval.
+
+Evidence:
+
+- `scripts/verify-spelling-secure-vocabulary-release.mjs --release-ready`
+- `validation/secure-vocabulary-approved-source/release-readiness-report.json`
+- `validation/secure-vocabulary-release-readiness-gate-2026-05-17.md`
+
+Current approved-source result:
+
+- `ok`: `false`
+- `issueCount`: `18256`
+- `metadataIssueCount`: `0`
+- `checkedSecureExtensionWords`: `1217`
+
+This confirms that B3w metadata reconciliation is clean while live secure-extension promotion remains blocked by missing `APPROVED_FOR_SECURE_EXTENSION_IMPORT`, missing adult-approved per-word status, and missing release-quality word fields on the audited source and review pack.
+
 ## Commands And Evidence Inspected
 
 - `node --version`: `v22.15.1`
