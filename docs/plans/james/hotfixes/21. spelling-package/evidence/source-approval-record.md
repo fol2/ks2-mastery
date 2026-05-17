@@ -13,3 +13,16 @@ James approved the exact secure-vocabulary source input for import/reviewer-pack
 - Scope: import and reviewer-pack generation only.
 
 This approval is not production proof and does not authorise live secure-extension promotion. Live promotion still requires an explicit `APPROVED_FOR_SECURE_EXTENSION_IMPORT` decision, generated import/reviewer-pack proof, release validation, CI, deployment, and production hard-refresh evidence.
+
+## Subsequent Secure-Extension Import Approval
+
+James subsequently approved secure-extension import for all pinned candidate rows in Codex chat on 2026-05-17:
+
+`adult secure-import approval 同 release-quality fields <-- I approval all`
+
+That approval is recorded separately in:
+
+- `evidence/secure-extension-import-approval-record-2026-05-17.md`
+- `evidence/secure-extension-import-approval-record-2026-05-17.json`
+
+This later approval closes the adult secure-import approval evidence gap. It does not fill the row-specific release-quality field values that are still absent from the current audited source and review pack.

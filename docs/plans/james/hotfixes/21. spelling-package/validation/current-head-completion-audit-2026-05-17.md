@@ -27,9 +27,9 @@ git rev-parse HEAD origin/codex/spelling-package-b3w-completion origin/main
 | Use an isolated worktree because other agents are working | Worktree path is under `.worktrees/spelling-package-b3w-completion`; `contract_goal.md` and `docs/contract_goal.md` both include the worktree instruction. | Met |
 | Source boundary must identify ZIP, branch/ref, commit, and authority | `contract-current-state-audit-2026-05-17.md`, `evidence/source-ledger.md`, and current git refs above record ZIP/source boundary and implementation branch. | Met for current slice |
 | B3w source-list search must not loop | `secure-vocabulary-source-v1-input-artifact.zip` is present; source JSONL SHA-256 is pinned as `ae39bfc5091525d602f158c18d254b57c498683f9ae81da4d2733f225862a42c`; review-pack reconciliation reports no source-list mismatch. | Met |
-| Approval decision must be honoured | Source and review pack decision are both `APPROVED_FOR_IMPORT_REVIEWER_PACK_ONLY`; import plan is check-mode only with no live writes. | Met, but blocks live secure-extension import |
+| Approval decision must be honoured | Source and review pack decision are both `APPROVED_FOR_IMPORT_REVIEWER_PACK_ONLY`; import plan is check-mode only with no live writes. James's later secure-extension import approval is recorded in `evidence/secure-extension-import-approval-record-2026-05-17.md`, but is not yet ingested into the audited source/review pack. | Met for historical source decision and later owner evidence; generated artefacts still block live import |
 | Taxonomy must distinguish statutory-core, secure-extension, and enrichment-extra | Existing taxonomy backbone keeps statutory/current extra/secure-extension candidates separate; current runtime remains `213` statutory-core, `0` secure-extension, `33` enrichment-extra. | Partially met; no live secure-extension runtime yet |
-| Import and review provenance for every new secure-extension word | `release-gap-summary.md` shows all `1217` secure-extension candidates lack live secure-import adult approval and release-quality fields. | Not met |
+| Import and review provenance for every new secure-extension word | `release-gap-summary.md` shows the current generated artefacts still lack live secure-import approval and release-quality fields. The later owner approval record closes the approval evidence gap, but not the missing field values or source/review-pack ingestion. | Not met |
 | Validators and audits must fail on release-blocking issues | `verify-spelling-secure-vocabulary-release.mjs --release-ready` exits `1` with `ok=false`, `issueCount=18256`; `summarise-spelling-secure-vocabulary-release-gaps.mjs` exits `1` with `status=RELEASE BLOCKED`. | Met as a blocking gate |
 | Preserve mode semantics for SATs/Test, Smart Review, Trouble Drill, Word Bank, Mega/post-Mega, Guardian/Boss | A reviewer-found Word Bank Guardian chip leak for non-statutory secure-extension rows was fixed locally by applying Guardian eligibility to `renewedRecently` and `neverRenewed`; `tests\spelling-view-model.test.js` now covers the regression. No live secure-extension import or production proof exists. | Partially met for the B3w slice; not met for full expansion |
 | Scale and performance proof for expanded word count | Current checks cover the existing runtime and the non-importing release gate/template. No 1217-word secure-extension runtime, bundle, Worker cold-start, D1, audio, or production performance proof exists. | Not met |
@@ -46,7 +46,7 @@ git rev-parse HEAD origin/codex/spelling-package-b3w-completion origin/main
 - `node --version`: `v22.15.1`.
 - `node scripts/verify-spelling-secure-vocabulary-release.mjs --audited-source docs\plans\james\hotfixes\21. spelling-package\validation\secure-vocabulary-approved-source\audited-source.json --review-pack docs\plans\james\hotfixes\21. spelling-package\validation\secure-vocabulary-approved-source\review-pack.json --release-ready --json --out docs\plans\james\hotfixes\21. spelling-package\validation\secure-vocabulary-approved-source\release-readiness-report.json`
   - Result: exit `1`, `ok=false`, `issueCount=18256`, `checkedSecureExtensionWords=1217`.
-  - First blocker: `secure_vocabulary_release_promotion_not_approved`.
+  - First blocker: `secure_vocabulary_release_promotion_not_approved` in the current generated source/review-pack artefacts. This predates the later owner approval record and remains true until those artefacts are regenerated with the new decision.
 - `node scripts/summarise-spelling-secure-vocabulary-release-gaps.mjs --audited-source docs\plans\james\hotfixes\21. spelling-package\validation\secure-vocabulary-approved-source\audited-source.json --review-pack docs\plans\james\hotfixes\21. spelling-package\validation\secure-vocabulary-approved-source\review-pack.json --json --out docs\plans\james\hotfixes\21. spelling-package\validation\secure-vocabulary-approved-source\release-gap-summary.json --md-out docs\plans\james\hotfixes\21. spelling-package\validation\secure-vocabulary-approved-source\release-gap-summary.md`
   - Result: exit `1`, `status=RELEASE BLOCKED`.
   - Counts: `1217` secure-extension words, `0` adult-approved for secure import, `1217` not adult-approved for secure import, `12` advisory words.
@@ -61,14 +61,27 @@ git rev-parse HEAD origin/codex/spelling-package-b3w-completion origin/main
   - Latest independent Code Reviewer and Contract Auditor rerun for head `9cc389568c2fc10b9d1d52d12d247bca1e4a7580`.
   - Result: both returned `NOT PASS`.
   - Closed: stale-evidence blocker and reviewer-found Word Bank Guardian-chip blocker.
-  - Still blocking: secure-extension promotion approval, Task D release-quality fields, live secure-extension runtime/release, production hard-refresh proof, and exact reviewer PASS lines.
+  - Still blocking at that review point: secure-extension promotion approval, Task D release-quality fields, live secure-extension runtime/release, production hard-refresh proof, and exact reviewer PASS lines. James's later approval record closes the owner approval evidence gap but not the generated-artefact, field-value, runtime, production, or reviewer PASS blockers.
+
+## Post-Review Owner Approval Addendum
+
+James subsequently approved secure-extension import for all pinned secure-extension candidate rows in Codex chat on 2026-05-17:
+
+`adult secure-import approval 同 release-quality fields <-- I approval all`
+
+This is now recorded as owner/adult-reviewer evidence in:
+
+- `evidence/secure-extension-import-approval-record-2026-05-17.md`
+- `evidence/secure-extension-import-approval-record-2026-05-17.json`
+
+This changes the approval blocker from "missing owner approval" to "approval not yet ingested into the audited source and review pack". It also does not supply row-specific content values for the release-quality fields.
 
 ## Missing Inputs
 
 The current source artefact is not enough to finish the full live secure-vocabulary expansion. To proceed, the project needs a revised source artefact or filled release input using `validation/secure-vocabulary-approved-source/release-input-template/` with:
 
-- approval decision `APPROVED_FOR_SECURE_EXTENSION_IMPORT`;
-- adult-approved secure-import status per word;
+- the new approval decision `APPROVED_FOR_SECURE_EXTENSION_IMPORT` ingested into the audited source and review pack;
+- adult-approved secure-import status per word ingested into the audited source and review pack;
 - accepted spellings and rejected variants where applicable;
 - UK spelling decision;
 - KS2-safe explanation and example sentence coverage;
@@ -79,6 +92,6 @@ The current source artefact is not enough to finish the full live secure-vocabul
 
 ## Completion Decision
 
-The active goal is not achieved in the current worktree state. The B3w source-list loop is closed, the branch has a finite, test-backed release gate plus a 1217-row release input template, and the reviewer-found Word Bank Guardian chip leak for non-statutory secure-extension rows has a local regression test and fix. The full contract remains blocked because live secure-extension import, release-quality fields, reviewer PASS lines, deployment, and production hard-refresh evidence are all absent.
+The active goal is not achieved in the current worktree state. The B3w source-list loop is closed, the branch has a finite, test-backed release gate plus a 1217-row release input template, the reviewer-found Word Bank Guardian chip leak for non-statutory secure-extension rows has a local regression test and fix, and James's later owner approval closes the adult secure-import approval evidence gap. The full contract remains blocked because the approval is not yet ingested into the generated source/review-pack artefacts, row-specific release-quality field values are still absent, and live secure-extension import, reviewer PASS lines, deployment, and production hard-refresh evidence are all absent.
 
 Do not mark the thread goal complete from this state.
