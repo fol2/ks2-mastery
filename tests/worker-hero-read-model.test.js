@@ -8,6 +8,12 @@ import { createWorkerRepositoryServer } from './helpers/worker-server.js';
 
 const HERO_URL = 'https://repo.test/api/hero/read-model';
 
+const NOW = Date.UTC(2026, 0, 1);
+
+function runSql(server, sql, params = []) {
+  server.DB.db.prepare(sql).run(...params);
+}
+
 function createServerWithHeroFlag(enabled = true) {
   return createWorkerRepositoryServer({
     env: { HERO_MODE_SHADOW_ENABLED: enabled ? 'true' : 'false' },
@@ -40,6 +46,42 @@ async function seedLearner(server, accountId, learnerId) {
   return repos;
 }
 
+function insertSpellingSubjectState(server, accountId, learnerId) {
+  runSql(server, `
+    INSERT INTO child_subject_state (learner_id, subject_id, ui_json, data_json, updated_at, updated_by_account_id)
+    VALUES (?, 'spelling', ?, ?, ?, ?)
+  `, [
+    learnerId,
+    JSON.stringify({ phase: 'idle' }),
+    JSON.stringify({ prefs: { mode: 'smart' } }),
+    NOW,
+    accountId,
+  ]);
+}
+
+function insertLargeSpellingContentRow(server, accountId) {
+  runSql(server, `
+    INSERT INTO account_subject_content (account_id, subject_id, content_json, updated_at, updated_by_account_id)
+    VALUES (?, 'spelling', ?, ?, ?)
+  `, [
+    accountId,
+    JSON.stringify({ huge: 'x'.repeat(1_100_000) }),
+    NOW,
+    accountId,
+  ]);
+}
+
+function guardAgainstUnboundedSpellingContentRead(server) {
+  const originalPrepare = server.env.DB.prepare.bind(server.env.DB);
+  server.env.DB.prepare = (sql) => {
+    const normalised = String(sql || '').replace(/\s+/g, ' ').trim();
+    if (/SELECT account_id, subject_id, content_json, updated_at FROM account_subject_content\b/.test(normalised)) {
+      throw new Error('Unbounded spelling content_json read should not run on Hero read-model paths.');
+    }
+    return originalPrepare(sql);
+  };
+}
+
 // ── Tests ──────────────────────────────────────────────────────────────
 
 test('hero read-model: flag on + authenticated returns shadow read model', async () => {
@@ -61,6 +103,25 @@ test('hero read-model: flag on + authenticated returns shadow read model', async
   assert.equal(payload.hero.schedulerVersion, 'hero-p2-child-ui-v1');
 
   server.close();
+});
+
+test('hero read-model avoids unbounded spelling content_json reads', async () => {
+  const server = createServerWithHeroFlag(true);
+  try {
+    await seedLearner(server, 'adult-a', 'learner-a');
+    insertSpellingSubjectState(server, 'adult-a', 'learner-a');
+    insertLargeSpellingContentRow(server, 'adult-a');
+    guardAgainstUnboundedSpellingContentRead(server);
+
+    const response = await server.fetch(`${HERO_URL}?learnerId=learner-a`);
+    const payload = await response.json();
+
+    assert.equal(response.status, 200);
+    assert.equal(payload.ok, true);
+    assert.equal(payload.hero.mode, 'shadow');
+  } finally {
+    server.close();
+  }
 });
 
 test('hero read-model: flag on returns eligibleSubjects and lockedSubjects arrays', async () => {

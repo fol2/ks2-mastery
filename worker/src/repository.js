@@ -230,6 +230,10 @@ const CAPACITY_READ_MODEL_TABLES = Object.freeze([
 ]);
 const COMMAND_PROJECTION_READ_MODEL_VERSION = 1;
 const SPELLING_RUNTIME_CONTENT_CACHE_LIMIT = 8;
+// Runtime read paths must not pull a multi-megabyte account content row into
+// every bootstrap/Hero request. Large published bundles use the checked-in
+// snapshot; admin/export paths still read the full editable content row.
+const SPELLING_RUNTIME_D1_CONTENT_INLINE_LIMIT = 1_000_000;
 const spellingRuntimeContentCache = new Map();
 const MONSTER_VISUAL_CONFIG_ID = 'global';
 const MONSTER_VISUAL_SCOPE_TYPE = 'platform';
@@ -508,10 +512,18 @@ async function readSubjectContentBundle(db, accountId, subjectId = 'spelling') {
 
 async function readSpellingRuntimeContentBundle(db, accountId, subjectId = 'spelling') {
   const row = await first(db, `
-    SELECT account_id, subject_id, content_json, updated_at
+    SELECT
+      account_id,
+      subject_id,
+      updated_at,
+      length(content_json) AS content_length,
+      CASE
+        WHEN length(content_json) <= ? THEN content_json
+        ELSE NULL
+      END AS content_json
     FROM account_subject_content
     WHERE account_id = ? AND subject_id = ?
-  `, [accountId, subjectId]);
+  `, [SPELLING_RUNTIME_D1_CONTENT_INLINE_LIMIT, accountId, subjectId]);
   const key = spellingRuntimeContentRowKey(row, subjectId);
   return readCachedSpellingRuntimeContent(key)
     || rememberSpellingRuntimeContent(key, buildSpellingRuntimeContent(row, subjectId));
@@ -607,11 +619,12 @@ function spellingRuntimeContentSeedKey(subjectId) {
 function spellingRuntimeContentRowKey(row, subjectId) {
   if (!row) return spellingRuntimeContentSeedKey(subjectId);
   const contentJson = typeof row.content_json === 'string' ? row.content_json : '';
+  const contentLength = Number(row.content_length);
   return [
     'row',
     subjectId,
     row.updated_at || 0,
-    contentJson.length,
+    Number.isFinite(contentLength) ? contentLength : contentJson.length,
     stableHash(contentJson),
   ].join(':');
 }

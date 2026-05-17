@@ -133,6 +133,29 @@ async function readJsonBody(response) {
   try { return JSON.parse(text); } catch { return null; }
 }
 
+function insertLargeSpellingContentRow(server, accountId) {
+  runSql(server, `
+    INSERT INTO account_subject_content (account_id, subject_id, content_json, updated_at, updated_by_account_id)
+    VALUES (?, 'spelling', ?, ?, ?)
+  `, [
+    accountId,
+    JSON.stringify({ huge: 'x'.repeat(1_100_000) }),
+    NOW,
+    accountId,
+  ]);
+}
+
+function guardAgainstUnboundedSpellingContentRead(server) {
+  const originalPrepare = server.env.DB.prepare.bind(server.env.DB);
+  server.env.DB.prepare = (sql) => {
+    const normalised = String(sql || '').replace(/\s+/g, ' ').trim();
+    if (/SELECT account_id, subject_id, content_json, updated_at FROM account_subject_content\b/.test(normalised)) {
+      throw new Error('Unbounded spelling content_json read should not run on bootstrap read-model paths.');
+    }
+    return originalPrepare(sql);
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Scenario 15: envelope shape snapshot per BOOTSTRAP_CAPACITY_VERSION.
 // This is the release-rule test. If a required field is added to the bundle
@@ -1037,6 +1060,25 @@ test('U1 hotfix: GET /api/bootstrap also ships child_subject_state for all writa
 
     assert.equal(payload.meta?.capacity?.bootstrapMode, 'selected-learner-bounded');
     assert.equal(payload.bootstrapCapacity?.subjectStatesBounded, false);
+  } finally {
+    server.close();
+  }
+});
+
+test('public bootstrap does not pull oversized spelling content_json from D1', async () => {
+  const server = createServer();
+  try {
+    insertLearner(server, 'adult-u7', { id: 'learner-a', name: 'Alpha', sortIndex: 0, selected: true });
+    insertSubjectStateFor(server, 'adult-u7', 'learner-a', 'spelling');
+    insertLargeSpellingContentRow(server, 'adult-u7');
+    guardAgainstUnboundedSpellingContentRead(server);
+
+    const response = await getBootstrap(server);
+    assert.equal(response.status, 200);
+    const payload = await readJsonBody(response);
+    assert.equal(payload.ok, true);
+    assert.equal(payload.subjectStates?.['learner-a::spelling']?.ui?.subjectId, 'spelling');
+    assert.deepEqual(payload.subjectStates?.['learner-a::spelling']?.data, {});
   } finally {
     server.close();
   }
