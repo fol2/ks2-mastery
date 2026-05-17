@@ -1,0 +1,80 @@
+repo=ks2-mastery
+profile=review
+profile_description=code review bundle: source, scripts, tests, fixtures, and repo config
+mode=omit
+include_globs=.gitattributes,.gitignore,.npmrc,.nvmrc,AGENTS.md,README.md,_headers,favicon.ico,index.html,llms.txt,manifest.webmanifest,migration-plan.md,package-lock.json,package.json,playwright.config.mjs,robots.txt,sitemap.xml,skills-lock.json,wrangler.jsonc,.github/**,.githooks/**,content/**,legacy/**,scripts/**,shared/**,skills/**,src/**,styles/**,tests/**,worker/**
+exclude_globs=assets/**,worktrees/**,.worktrees/**,reports/**,output/**
+tracked_total=5138
+selected_by_profile=1544
+copied=1544
+omitted=3594
+outside_profile=3594
+excluded=0
+placeholders=0
+symlinks=0
+missing=0
+
+omitted_paths:
+- .agents/skills/claude-design/README.md [outside-profile]
+- .agents/skills/claude-design/SKILL.md [outside-profile]
+- .claude/launch.json [outside-profile]
+- .claude/scheduled_tasks.lock [outside-profile]
+- .claude/settings.local.json [outside-profile]
+- .claude/skills/claude-design/README.md [outside-profile]
+- .claude/skills/claude-design/SKILL.md [outside-profile]
+- .codex/environments/environment.toml [outside-profile]
+- .shard-analysis/analyse.mjs [outside-profile]
+- .shard-analysis/check-membership.mjs [outside-profile]
+- .shard-analysis/predict.mjs [outside-profile]
+- .shard-analysis/shard-1-timings.json [outside-profile]
+- .shard-analysis/shard-2-timings.json [outside-profile]
+- .shard-analysis/shard-3-timings.json [outside-profile]
+- .shard-analysis/shard-4-timings.json [outside-profile]
+- .shard-analysis/shard-5-timings.json [outside-profile]
+- .shard-analysis/shard-6-timings.json [outside-profile]
+- .shard-analysis/single-file-impact.mjs [outside-profile]
+- .shard-analysis/validate.mjs [outside-profile]
+- .shard-analysis/wall-model.mjs [outside-profile]
+- LEAN_ZIP_MANIFEST.txt [outside-profile]
+- assets/app-icons/app-icon-192.png [outside-profile]
+- assets/app-icons/app-icon-512.png [outside-profile]
+- assets/app-icons/app-icon-maskable-512.png [outside-profile]
+- assets/app-icons/app-icon-source.png [outside-profile]
+- assets/app-icons/apple-touch-icon.png [outside-profile]
+- assets/app-icons/favicon-16.png [outside-profile]
+- assets/app-icons/favicon-32.png [outside-profile]
+- assets/app-icons/favicon-48.png [outside-profile]
+- assets/icons/spelling-modes/sats-test.webp [outside-profile]
+- assets/icons/spelling-modes/smart-review.webp [outside-profile]
+- assets/icons/spelling-modes/trouble-drill.webp [outside-profile]
+- assets/monsters/arithon/b1/arithon-b1-0.1280.webp [outside-profile]
+- assets/monsters/arithon/b1/arithon-b1-0.320.webp [outside-profile]
+- assets/monsters/arithon/b1/arithon-b1-0.640.webp [outside-profile]
+- assets/monsters/arithon/b1/arithon-b1-1.1280.webp [outside-profile]
+- assets/monsters/arithon/b1/arithon-b1-1.320.webp [outside-profile]
+- assets/monsters/arithon/b1/arithon-b1-1.640.webp [outside-profile]
+- assets/monsters/arithon/b1/arithon-b1-2.1280.webp [outside-profile]
+- assets/monsters/arithon/b1/arithon-b1-2.320.webp [outside-profile]
+- assets/monsters/arithon/b1/arithon-b1-2.640.webp [outside-profile]
+- assets/monsters/arithon/b1/arithon-b1-3.1280.webp [outside-profile]
+- assets/monsters/arithon/b1/arithon-b1-3.320.webp [outside-profile]
+- assets/monsters/arithon/b1/arithon-b1-3.640.webp [outside-profile]
+- assets/monsters/arithon/b1/arithon-b1-4.1280.webp [outside-profile]
+- assets/monsters/arithon/b1/arithon-b1-4.320.webp [outside-profile]
+- assets/monsters/arithon/b1/arithon-b1-4.640.webp [outside-profile]
+- assets/monsters/arithon/b2/arithon-b2-0.1280.webp [outside-profile]
+- assets/monsters/arithon/b2/arithon-b2-0.320.webp [outside-profile]
+- assets/monsters/arithon/b2/arithon-b2-0.640.webp [outside-profile]
+- assets/monsters/arithon/b2/arithon-b2-1.1280.webp [outside-profile]
+- assets/monsters/arithon/b2/arithon-b2-1.320.webp [outside-profile]
+- assets/monsters/arithon/b2/arithon-b2-1.640.webp [outside-profile]
+- assets/monsters/arithon/b2/arithon-b2-2.1280.webp [outside-profile]
+- assets/monsters/arithon/b2/arithon-b2-2.320.webp [outside-profile]
+- assets/monsters/arithon/b2/arithon-b2-2.640.webp [outside-profile]
+- assets/monsters/arithon/b2/arithon-b2-3.1280.webp [outside-profile]
+- assets/monsters/arithon/b2/arithon-b2-3.320.webp [outside-profile]
+- assets/monsters/arithon/b2/arithon-b2-3.640.webp [outside-profile]
+- assets/monsters/arithon/b2/arithon-b2-4.1280.webp [outside-profile]
+- assets/monsters/arithon/b2/arithon-b2-4.320.webp [outside-profile]
+- assets/monsters/arithon/b2/arithon-b2-4.640.webp [outside-profile]
+- assets/monsters/bracehart/b1/bracehart-b1-0.1280.webp [outside-profile]

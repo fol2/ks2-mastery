@@ -1,0 +1,19 @@
+{
+  "words": [
+    {
+      "slug": "accommodate",
+      "word": "accommodate",
+      "review": {
+        "status": "approved",
+        "reviewer": "Adult Reviewer",
+        "reviewedAt": "2026-05-17T10:00:00.000Z"
+      },
+      "provenance": {
+        "source": "audited-ks2-secure-vocabulary"
+      },
+      "safety": {
+        "status": "approved"
+      }
+    }
+  ]
+}

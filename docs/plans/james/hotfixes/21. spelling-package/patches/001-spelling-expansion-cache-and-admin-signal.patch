@@ -1,0 +1,109 @@
+diff --git a/worker/src/repository.js b/worker/src/repository.js
+index a20215b..4ac9cd6 100644
+--- a/worker/src/repository.js
++++ b/worker/src/repository.js
+@@ -603,9 +603,27 @@ function spellingRuntimeContentSeedKey(subjectId) {
+   ].join(':');
+ }
+
++function hashSpellingContentCacheKey(contentJson) {
++  const text = typeof contentJson === 'string' ? contentJson : '';
++  let hash = 2166136261;
++  for (let index = 0; index < text.length; index += 1) {
++    hash ^= text.charCodeAt(index);
++    hash = Math.imul(hash, 16777619);
++  }
++  return (hash >>> 0).toString(36);
++}
++
+ function spellingRuntimeContentRowKey(row, subjectId) {
+   if (!row) return spellingRuntimeContentSeedKey(subjectId);
+-  return row.content_json || `row:${subjectId}:${row.updated_at || 0}:empty`;
++  const contentJson = typeof row.content_json === 'string' ? row.content_json : '';
++  if (!contentJson) return `row:${subjectId}:${row.updated_at || 0}:empty`;
++  return [
++    'row',
++    subjectId,
++    row.updated_at || 0,
++    contentJson.length,
++    hashSpellingContentCacheKey(contentJson),
++  ].join(':');
+ }
+
+ function rememberSpellingRuntimeContent(key, value) {
+@@ -2211,7 +2229,7 @@ async function readContentQualitySignalsData(db, { actorAccountId, actor = null
+   // Spelling signals: word-bank coverage from account_subject_content.
+   const spellingSignals = await safeSignalSection('spelling', async () => {
+     let wordCount = 0;
+-    let secureCoreCount = 0;
++    let coveredWordCount = 0;
+     try {
+       const contentRow = await first(db,
+         `SELECT content_json FROM account_subject_content WHERE subject_id = 'spelling' LIMIT 1`,
+@@ -2220,8 +2238,10 @@ async function readContentQualitySignalsData(db, { actorAccountId, actor = null
+       if (contentRow?.content_json) {
+         const bundle = JSON.parse(contentRow.content_json);
+         if (bundle && typeof bundle === 'object') {
+-          wordCount = Number(bundle?.publication?.runtimeWordCount) || 0;
+-          secureCoreCount = Number(bundle?.secureCoreCount) || 0;
++          const snapshot = runtimeSnapshotForBundle(bundle);
++          const summary = runtimeContentSummary(bundle, snapshot);
++          wordCount = Number(summary.runtimeWordCount) || 0;
++          coveredWordCount = wordCount;
+         }
+       }
+     } catch {
+@@ -2236,7 +2256,7 @@ async function readContentQualitySignalsData(db, { actorAccountId, actor = null
+         templateCoverage: { status: 'not_available', value: 0, total: 0 },
+         itemCoverage: {
+           status: wordCount > 0 ? 'available' : 'not_available',
+-          value: secureCoreCount,
++          value: coveredWordCount,
+           total: wordCount,
+         },
+         commonMisconceptions: { status: 'not_available', items: [] },
+diff --git a/tests/spelling-content-api.test.js b/tests/spelling-content-api.test.js
+index 1a6bad5..3cc07db 100644
+--- a/tests/spelling-content-api.test.js
++++ b/tests/spelling-content-api.test.js
+@@ -202,6 +202,40 @@ test('worker spelling content route is limited to operator roles', async () => {
+   }
+ });
+
++test('worker admin content-quality signals report spelling runtime word coverage from persisted content', async () => {
++  const server = createWorkerRepositoryServer();
++  try {
++    const initialResponse = await fetchAdmin(server, 'https://repo.test/api/content/spelling');
++    const initial = await initialResponse.json();
++
++    const writeResponse = await fetchAdmin(server, 'https://repo.test/api/content/spelling', {
++      method: 'PUT',
++      headers: { 'content-type': 'application/json' },
++      body: JSON.stringify({
++        content: SEEDED_SPELLING_CONTENT_BUNDLE,
++        mutation: {
++          requestId: 'content-quality-spelling-coverage-1',
++          correlationId: 'content-quality-spelling-coverage-1',
++          expectedAccountRevision: initial.mutation.accountRevision,
++        },
++      }),
++    });
++    assert.equal(writeResponse.status, 200);
++
++    const response = await fetchAdmin(server, 'https://repo.test/api/admin/ops/content-quality-signals');
++    const payload = await response.json();
++    const spelling = payload.subjects.find((subject) => subject.subjectKey === 'spelling');
++    const expectedRuntimeWords = SEEDED_SPELLING_CONTENT_BUNDLE.releases.at(-1).snapshot.words.length;
++
++    assert.equal(response.status, 200);
++    assert.equal(spelling.signals.itemCoverage.status, 'available');
++    assert.equal(spelling.signals.itemCoverage.value, expectedRuntimeWords);
++    assert.equal(spelling.signals.itemCoverage.total, expectedRuntimeWords);
++  } finally {
++    server.close();
++  }
++});
++
+ test('worker spelling content route accepts valid Extra pool content without statutory year groups', async () => {
+   const server = createWorkerRepositoryServer();
+   try {

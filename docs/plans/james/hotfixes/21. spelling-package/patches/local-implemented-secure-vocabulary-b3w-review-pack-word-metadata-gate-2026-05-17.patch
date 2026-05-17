@@ -1,0 +1,545 @@
+diff --git a/docs/plans/james/hotfixes/21. spelling-package/evidence/local-b3w-secure-vocabulary-release-gate.md b/docs/plans/james/hotfixes/21. spelling-package/evidence/local-b3w-secure-vocabulary-release-gate.md
+new file mode 100644
+index 00000000..9c4ae7d1
+--- /dev/null
++++ b/docs/plans/james/hotfixes/21. spelling-package/evidence/local-b3w-secure-vocabulary-release-gate.md
+@@ -0,0 +1,25 @@
++# B3w Secure Vocabulary Release Gate Evidence
++
++Date: 2026-05-17
++
++Scope:
++- Added a local secure vocabulary release verifier for review-pack word metadata.
++- Added a regression test for metadata mismatch blocking.
++- Kept the change limited to the verifier, its targeted tests, and local B3w evidence.
++
++Validation:
++- `node --test tests/secure-vocabulary-release-gates.test.js`
++  - Log: `validation/local-b3w-targeted-test.log`
++  - Exit: `validation/local-b3w-targeted-test.exit`
++  - Result: pass, 2/2 tests
++- `node scripts/verify-spelling-secure-vocabulary-release.mjs --audited-source docs/plans/james/hotfixes/21. spelling-package/validation/local-b3w-cli-source.json --review-pack docs/plans/james/hotfixes/21. spelling-package/validation/local-b3w-cli-review-pack-mismatch.json --json`
++  - Log: `validation/local-b3w-cli-mismatch.log`
++  - Exit: `validation/local-b3w-cli-mismatch.exit`
++  - Result: expected failure, one `secure_vocabulary_review_pack_word_metadata_mismatch` issue at `reviewPack.words[0]`
++- `git diff --check -- <B3w files and named patch artefact>`
++  - Log: `validation/local-b3w-diff-check.log`
++  - Exit: `validation/local-b3w-diff-check.exit`
++  - Result: pass
++
++Limitations:
++- This is a local B3w gate implementation only. No commit, push, deploy, D1, R2, or production smoke was performed.
+diff --git a/docs/plans/james/hotfixes/21. spelling-package/validation/local-b3w-cli-mismatch.exit b/docs/plans/james/hotfixes/21. spelling-package/validation/local-b3w-cli-mismatch.exit
+new file mode 100644
+index 00000000..d00491fd
+--- /dev/null
++++ b/docs/plans/james/hotfixes/21. spelling-package/validation/local-b3w-cli-mismatch.exit
+@@ -0,0 +1 @@
++1
+diff --git a/docs/plans/james/hotfixes/21. spelling-package/validation/local-b3w-cli-mismatch.log b/docs/plans/james/hotfixes/21. spelling-package/validation/local-b3w-cli-mismatch.log
+new file mode 100644
+index 00000000..5b905378
+--- /dev/null
++++ b/docs/plans/james/hotfixes/21. spelling-package/validation/local-b3w-cli-mismatch.log
+@@ -0,0 +1,47 @@
++{
++  "ok": false,
++  "issueCount": 1,
++  "checkedReviewPackWords": 1,
++  "checkedAuditedSourceWords": 1,
++  "issues": [
++    {
++      "code": "secure_vocabulary_review_pack_word_metadata_mismatch",
++      "path": "reviewPack.words[0]",
++      "wordIdentity": "accommodate",
++      "fields": [
++        "reviewStatus",
++        "reviewer",
++        "reviewedAt",
++        "provenanceSource",
++        "safetyStatus"
++      ],
++      "mismatches": [
++        {
++          "field": "reviewStatus",
++          "actual": "pending",
++          "expected": "approved"
++        },
++        {
++          "field": "reviewer",
++          "actual": "Different Reviewer",
++          "expected": "Adult Reviewer"
++        },
++        {
++          "field": "reviewedAt",
++          "actual": "2026-05-17T11:00:00.000Z",
++          "expected": "2026-05-17T10:00:00.000Z"
++        },
++        {
++          "field": "provenanceSource",
++          "actual": "unverified-import",
++          "expected": "audited-ks2-secure-vocabulary"
++        },
++        {
++          "field": "safetyStatus",
++          "actual": "needs_review",
++          "expected": "approved"
++        }
++      ]
++    }
++  ]
++}
+diff --git a/docs/plans/james/hotfixes/21. spelling-package/validation/local-b3w-cli-review-pack-mismatch.json b/docs/plans/james/hotfixes/21. spelling-package/validation/local-b3w-cli-review-pack-mismatch.json
+new file mode 100644
+index 00000000..0560e55a
+--- /dev/null
++++ b/docs/plans/james/hotfixes/21. spelling-package/validation/local-b3w-cli-review-pack-mismatch.json
+@@ -0,0 +1,13 @@
++{
++  "words": [
++    {
++      "slug": "accommodate",
++      "word": "accommodate",
++      "reviewStatus": "pending",
++      "reviewer": "Different Reviewer",
++      "reviewedAt": "2026-05-17T11:00:00.000Z",
++      "provenanceSource": "unverified-import",
++      "safetyStatus": "needs_review"
++    }
++  ]
++}
+diff --git a/docs/plans/james/hotfixes/21. spelling-package/validation/local-b3w-cli-source.json b/docs/plans/james/hotfixes/21. spelling-package/validation/local-b3w-cli-source.json
+new file mode 100644
+index 00000000..89d528e2
+--- /dev/null
++++ b/docs/plans/james/hotfixes/21. spelling-package/validation/local-b3w-cli-source.json
+@@ -0,0 +1,19 @@
++{
++  "words": [
++    {
++      "slug": "accommodate",
++      "word": "accommodate",
++      "review": {
++        "status": "approved",
++        "reviewer": "Adult Reviewer",
++        "reviewedAt": "2026-05-17T10:00:00.000Z"
++      },
++      "provenance": {
++        "source": "audited-ks2-secure-vocabulary"
++      },
++      "safety": {
++        "status": "approved"
++      }
++    }
++  ]
++}
+diff --git a/docs/plans/james/hotfixes/21. spelling-package/validation/local-b3w-diff-check.exit b/docs/plans/james/hotfixes/21. spelling-package/validation/local-b3w-diff-check.exit
+new file mode 100644
+index 00000000..573541ac
+--- /dev/null
++++ b/docs/plans/james/hotfixes/21. spelling-package/validation/local-b3w-diff-check.exit
+@@ -0,0 +1 @@
++0
+diff --git a/docs/plans/james/hotfixes/21. spelling-package/validation/local-b3w-diff-check.log b/docs/plans/james/hotfixes/21. spelling-package/validation/local-b3w-diff-check.log
+new file mode 100644
+index 00000000..a7ec2b34
+--- /dev/null
++++ b/docs/plans/james/hotfixes/21. spelling-package/validation/local-b3w-diff-check.log
+@@ -0,0 +1,17 @@
++Command: git diff --check -- <B3w files and named patch artefact>
++Exit: 0
++Output:
++warning: in the working copy of 'docs/plans/james/hotfixes/21. spelling-package/evidence/local-b3w-secure-vocabulary-release-gate.md', LF will be replaced by CRLF the next time Git touches it
++warning: in the working copy of 'docs/plans/james/hotfixes/21. spelling-package/patches/local-implemented-secure-vocabulary-b3w-review-pack-word-metadata-gate-2026-05-17.patch', LF will be replaced by CRLF the next time Git touches it
++warning: in the working copy of 'docs/plans/james/hotfixes/21. spelling-package/validation/local-b3w-cli-mismatch.exit', LF will be replaced by CRLF the next time Git touches it
++warning: in the working copy of 'docs/plans/james/hotfixes/21. spelling-package/validation/local-b3w-cli-mismatch.log', LF will be replaced by CRLF the next time Git touches it
++warning: in the working copy of 'docs/plans/james/hotfixes/21. spelling-package/validation/local-b3w-cli-review-pack-mismatch.json', LF will be replaced by CRLF the next time Git touches it
++warning: in the working copy of 'docs/plans/james/hotfixes/21. spelling-package/validation/local-b3w-cli-source.json', LF will be replaced by CRLF the next time Git touches it
++warning: in the working copy of 'docs/plans/james/hotfixes/21. spelling-package/validation/local-b3w-diff-check.exit', LF will be replaced by CRLF the next time Git touches it
++warning: in the working copy of 'docs/plans/james/hotfixes/21. spelling-package/validation/local-b3w-diff-check.log', LF will be replaced by CRLF the next time Git touches it
++warning: in the working copy of 'docs/plans/james/hotfixes/21. spelling-package/validation/local-b3w-red-test.exit', LF will be replaced by CRLF the next time Git touches it
++warning: in the working copy of 'docs/plans/james/hotfixes/21. spelling-package/validation/local-b3w-red-test.log', LF will be replaced by CRLF the next time Git touches it
++warning: in the working copy of 'docs/plans/james/hotfixes/21. spelling-package/validation/local-b3w-targeted-test.exit', LF will be replaced by CRLF the next time Git touches it
++warning: in the working copy of 'docs/plans/james/hotfixes/21. spelling-package/validation/local-b3w-targeted-test.log', LF will be replaced by CRLF the next time Git touches it
++warning: in the working copy of 'scripts/verify-spelling-secure-vocabulary-release.mjs', LF will be replaced by CRLF the next time Git touches it
++warning: in the working copy of 'tests/secure-vocabulary-release-gates.test.js', LF will be replaced by CRLF the next time Git touches it
+diff --git a/docs/plans/james/hotfixes/21. spelling-package/validation/local-b3w-red-test.exit b/docs/plans/james/hotfixes/21. spelling-package/validation/local-b3w-red-test.exit
+new file mode 100644
+index 00000000..d00491fd
+--- /dev/null
++++ b/docs/plans/james/hotfixes/21. spelling-package/validation/local-b3w-red-test.exit
+@@ -0,0 +1 @@
++1
+diff --git a/docs/plans/james/hotfixes/21. spelling-package/validation/local-b3w-red-test.log b/docs/plans/james/hotfixes/21. spelling-package/validation/local-b3w-red-test.log
+new file mode 100644
+index 00000000..08842c12
+--- /dev/null
++++ b/docs/plans/james/hotfixes/21. spelling-package/validation/local-b3w-red-test.log
+@@ -0,0 +1,38 @@
++TAP version 13
++# node:internal/modules/esm/resolve:275
++#     throw new ERR_MODULE_NOT_FOUND(
++#           ^
++# Error [ERR_MODULE_NOT_FOUND]: Cannot find module 'D:\\Coding\\ks2-mastery\\.worktrees\\spelling-package-b3w-completion\\scripts\\verify-spelling-secure-vocabulary-release.mjs' imported from D:\\Coding\\ks2-mastery\\.worktrees\\spelling-package-b3w-completion\\tests\\secure-vocabulary-release-gates.test.js
++#     at finalizeResolution (node:internal/modules/esm/resolve:275:11)
++#     at moduleResolve (node:internal/modules/esm/resolve:860:10)
++#     at defaultResolve (node:internal/modules/esm/resolve:984:11)
++#     at ModuleLoader.defaultResolve (node:internal/modules/esm/loader:780:12)
++#     at \#cachedDefaultResolve (node:internal/modules/esm/loader:704:25)
++#     at ModuleLoader.resolve (node:internal/modules/esm/loader:687:38)
++#     at ModuleLoader.getModuleJobForImport (node:internal/modules/esm/loader:305:38)
++#     at ModuleJob._link (node:internal/modules/esm/module_job:137:49) {
++#   code: 'ERR_MODULE_NOT_FOUND',
++#   url: 'file:///D:/Coding/ks2-mastery/.worktrees/spelling-package-b3w-completion/scripts/verify-spelling-secure-vocabulary-release.mjs'
++# }
++# Node.js v22.15.1
++# Subtest: tests\\secure-vocabulary-release-gates.test.js
++not ok 1 - tests\\secure-vocabulary-release-gates.test.js
++  ---
++  duration_ms: 38.8803
++  type: 'test'
++  location: 'D:\\Coding\\ks2-mastery\\.worktrees\\spelling-package-b3w-completion\\tests\\secure-vocabulary-release-gates.test.js:1:1'
++  failureType: 'testCodeFailure'
++  exitCode: 1
++  signal: ~
++  error: 'test failed'
++  code: 'ERR_TEST_FAILURE'
++  ...
++1..1
++# tests 1
++# suites 0
++# pass 0
++# fail 1
++# cancelled 0
++# skipped 0
++# todo 0
++# duration_ms 43.8546
+diff --git a/docs/plans/james/hotfixes/21. spelling-package/validation/local-b3w-targeted-test.exit b/docs/plans/james/hotfixes/21. spelling-package/validation/local-b3w-targeted-test.exit
+new file mode 100644
+index 00000000..573541ac
+--- /dev/null
++++ b/docs/plans/james/hotfixes/21. spelling-package/validation/local-b3w-targeted-test.exit
+@@ -0,0 +1 @@
++0
+diff --git a/docs/plans/james/hotfixes/21. spelling-package/validation/local-b3w-targeted-test.log b/docs/plans/james/hotfixes/21. spelling-package/validation/local-b3w-targeted-test.log
+new file mode 100644
+index 00000000..b4bfabd9
+--- /dev/null
++++ b/docs/plans/james/hotfixes/21. spelling-package/validation/local-b3w-targeted-test.log
+@@ -0,0 +1,22 @@
++TAP version 13
++# Subtest: secure vocabulary release gate passes when review-pack word metadata matches the audited source
++ok 1 - secure vocabulary release gate passes when review-pack word metadata matches the audited source
++  ---
++  duration_ms: 0.9497
++  type: 'test'
++  ...
++# Subtest: secure vocabulary release gate blocks review-pack word metadata mismatches
++ok 2 - secure vocabulary release gate blocks review-pack word metadata mismatches
++  ---
++  duration_ms: 0.7218
++  type: 'test'
++  ...
++1..2
++# tests 2
++# suites 0
++# pass 2
++# fail 0
++# cancelled 0
++# skipped 0
++# todo 0
++# duration_ms 51.6596
+diff --git a/scripts/verify-spelling-secure-vocabulary-release.mjs b/scripts/verify-spelling-secure-vocabulary-release.mjs
+new file mode 100644
+index 00000000..3c279f84
+--- /dev/null
++++ b/scripts/verify-spelling-secure-vocabulary-release.mjs
+@@ -0,0 +1,203 @@
++#!/usr/bin/env node
++
++import { existsSync, readFileSync, writeFileSync } from 'node:fs';
++import { resolve } from 'node:path';
++import { fileURLToPath } from 'node:url';
++
++export const SECURE_VOCABULARY_REVIEW_PACK_WORD_METADATA_MISMATCH =
++  'secure_vocabulary_review_pack_word_metadata_mismatch';
++
++function normaliseIdentity(value) {
++  return String(value ?? '').trim().toLowerCase();
++}
++
++function wordIdentity(word) {
++  if (!word || typeof word !== 'object') return '';
++  return normaliseIdentity(word.slug || word.id || word.word);
++}
++
++function wordsFromPayload(payload, label) {
++  if (Array.isArray(payload)) return payload;
++  if (Array.isArray(payload?.words)) return payload.words;
++  if (Array.isArray(payload?.[label]?.words)) return payload[label].words;
++  return [];
++}
++
++function valueAt(word, path) {
++  let current = word;
++  for (const part of path.split('.')) {
++    current = current?.[part];
++  }
++  return current;
++}
++
++function metadataField(name, reviewPackPath, sourcePath) {
++  return { name, reviewPackPath, sourcePath };
++}
++
++const REVIEW_PACK_WORD_METADATA_FIELDS = Object.freeze([
++  metadataField('reviewer', 'reviewer', 'review.reviewer'),
++  metadataField('reviewedAt', 'reviewedAt', 'review.reviewedAt'),
++  metadataField('provenanceSource', 'provenanceSource', 'provenance.source'),
++  metadataField('safetyStatus', 'safetyStatus', 'safety.status'),
++]);
++
++function buildAuditedSourceIndex(auditedSourceWords) {
++  const index = new Map();
++  for (const sourceWord of auditedSourceWords) {
++    const identity = wordIdentity(sourceWord);
++    if (identity && !index.has(identity)) {
++      index.set(identity, sourceWord);
++    }
++  }
++  return index;
++}
++
++function mismatchDetail(field, actual, expected) {
++  return { field, actual: actual ?? null, expected: expected ?? null };
++}
++
++function reviewStatusMismatches(reviewPackWord, sourceWord) {
++  const actual = reviewPackWord?.reviewStatus;
++  const expected = sourceWord?.review?.status;
++  if (actual === 'approved' && actual === expected) return [];
++
++  return [mismatchDetail('reviewStatus', actual, expected)];
++}
++
++function wordMetadataMismatches(reviewPackWord, sourceWord) {
++  if (!sourceWord) {
++    return [mismatchDetail('sourceWord', null, 'audited source word')];
++  }
++
++  const mismatches = reviewStatusMismatches(reviewPackWord, sourceWord);
++  for (const field of REVIEW_PACK_WORD_METADATA_FIELDS) {
++    const actual = valueAt(reviewPackWord, field.reviewPackPath);
++    const expected = valueAt(sourceWord, field.sourcePath);
++    if (actual !== expected) {
++      mismatches.push(mismatchDetail(field.name, actual, expected));
++    }
++  }
++  return mismatches;
++}
++
++export function verifySecureVocabularyRelease({ auditedSource, reviewPack } = {}) {
++  const auditedSourceWords = wordsFromPayload(auditedSource, 'auditedSource');
++  const reviewPackWords = wordsFromPayload(reviewPack, 'reviewPack');
++  const auditedSourceIndex = buildAuditedSourceIndex(auditedSourceWords);
++  const issues = [];
++
++  reviewPackWords.forEach((reviewPackWord, index) => {
++    const identity = wordIdentity(reviewPackWord);
++    const sourceWord = auditedSourceIndex.get(identity);
++    const mismatches = wordMetadataMismatches(reviewPackWord, sourceWord);
++
++    if (mismatches.length > 0) {
++      issues.push({
++        code: SECURE_VOCABULARY_REVIEW_PACK_WORD_METADATA_MISMATCH,
++        path: `reviewPack.words[${index}]`,
++        wordIdentity: identity || null,
++        fields: mismatches.map((entry) => entry.field),
++        mismatches,
++      });
++    }
++  });
++
++  return {
++    ok: issues.length === 0,
++    issueCount: issues.length,
++    checkedReviewPackWords: reviewPackWords.length,
++    checkedAuditedSourceWords: auditedSourceWords.length,
++    issues,
++  };
++}
++
++function parseArgs(argv) {
++  const options = {
++    auditedSourcePath: null,
++    reviewPackPath: null,
++    outPath: null,
++    json: false,
++    help: false,
++  };
++
++  for (let index = 2; index < argv.length; index += 1) {
++    const arg = argv[index];
++    if (arg === '--help' || arg === '-h') options.help = true;
++    else if (arg === '--json') options.json = true;
++    else if ((arg === '--audited-source' || arg === '--source') && argv[index + 1]) {
++      options.auditedSourcePath = argv[++index];
++    } else if (arg.startsWith('--audited-source=')) {
++      options.auditedSourcePath = arg.slice('--audited-source='.length);
++    } else if (arg.startsWith('--source=')) {
++      options.auditedSourcePath = arg.slice('--source='.length);
++    } else if (arg === '--review-pack' && argv[index + 1]) {
++      options.reviewPackPath = argv[++index];
++    } else if (arg.startsWith('--review-pack=')) {
++      options.reviewPackPath = arg.slice('--review-pack='.length);
++    } else if (arg === '--out' && argv[index + 1]) {
++      options.outPath = argv[++index];
++    } else if (arg.startsWith('--out=')) {
++      options.outPath = arg.slice('--out='.length);
++    }
++  }
++
++  return options;
++}
++
++function usage() {
++  return [
++    'Usage:',
++    '  node scripts/verify-spelling-secure-vocabulary-release.mjs --audited-source <source.json> --review-pack <review-pack.json> [--json] [--out <report.json>]',
++    '',
++    'The gate compares reviewPack.words metadata against the audited source word matched by slug, id, or word.',
++  ].join('\n');
++}
++
++function readJsonFile(path) {
++  const resolved = resolve(path);
++  if (!existsSync(resolved)) {
++    throw new Error(`JSON file not found: ${path}`);
++  }
++  return JSON.parse(readFileSync(resolved, 'utf8'));
++}
++
++function emitReport(report, options) {
++  const payload = JSON.stringify(report, null, 2);
++  if (options.outPath) {
++    writeFileSync(resolve(options.outPath), `${payload}\n`);
++  }
++  if (options.json || !options.outPath) {
++    console.log(payload);
++  } else {
++    console.log(`Secure vocabulary release verification ${report.ok ? 'passed' : 'failed'}: ${report.issueCount} issue(s)`);
++  }
++}
++
++function isMainModule() {
++  return process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url);
++}
++
++if (isMainModule()) {
++  try {
++    const options = parseArgs(process.argv);
++    if (options.help) {
++      console.log(usage());
++      process.exit(0);
++    }
++    if (!options.auditedSourcePath || !options.reviewPackPath) {
++      console.error(usage());
++      process.exit(2);
++    }
++
++    const report = verifySecureVocabularyRelease({
++      auditedSource: readJsonFile(options.auditedSourcePath),
++      reviewPack: readJsonFile(options.reviewPackPath),
++    });
++    emitReport(report, options);
++    process.exit(report.ok ? 0 : 1);
++  } catch (error) {
++    console.error(JSON.stringify({ ok: false, error: error?.message || String(error) }, null, 2));
++    process.exit(1);
++  }
++}
+diff --git a/tests/secure-vocabulary-release-gates.test.js b/tests/secure-vocabulary-release-gates.test.js
+new file mode 100644
+index 00000000..845f0b74
+--- /dev/null
++++ b/tests/secure-vocabulary-release-gates.test.js
+@@ -0,0 +1,79 @@
++import test from 'node:test';
++import assert from 'node:assert/strict';
++
++import {
++  SECURE_VOCABULARY_REVIEW_PACK_WORD_METADATA_MISMATCH,
++  verifySecureVocabularyRelease,
++} from '../scripts/verify-spelling-secure-vocabulary-release.mjs';
++
++function sourceWord(overrides = {}) {
++  return {
++    slug: 'accommodate',
++    word: 'accommodate',
++    review: {
++      status: 'approved',
++      reviewer: 'Adult Reviewer',
++      reviewedAt: '2026-05-17T10:00:00.000Z',
++    },
++    provenance: {
++      source: 'audited-ks2-secure-vocabulary',
++    },
++    safety: {
++      status: 'approved',
++    },
++    ...overrides,
++  };
++}
++
++function reviewPackWord(overrides = {}) {
++  return {
++    slug: 'accommodate',
++    word: 'accommodate',
++    reviewStatus: 'approved',
++    reviewer: 'Adult Reviewer',
++    reviewedAt: '2026-05-17T10:00:00.000Z',
++    provenanceSource: 'audited-ks2-secure-vocabulary',
++    safetyStatus: 'approved',
++    ...overrides,
++  };
++}
++
++test('secure vocabulary release gate passes when review-pack word metadata matches the audited source', () => {
++  const report = verifySecureVocabularyRelease({
++    auditedSource: { words: [sourceWord()] },
++    reviewPack: { words: [reviewPackWord()] },
++  });
++
++  assert.equal(report.ok, true);
++  assert.deepEqual(report.issues, []);
++});
++
++test('secure vocabulary release gate blocks review-pack word metadata mismatches', () => {
++  const report = verifySecureVocabularyRelease({
++    auditedSource: { words: [sourceWord()] },
++    reviewPack: {
++      words: [
++        reviewPackWord({
++          reviewStatus: 'pending',
++          reviewer: 'Different Reviewer',
++          reviewedAt: '2026-05-17T11:00:00.000Z',
++          provenanceSource: 'unverified-import',
++          safetyStatus: 'needs_review',
++        }),
++      ],
++    },
++  });
++
++  assert.equal(report.ok, false);
++  assert.equal(report.issues.length, 1);
++  assert.equal(
++    report.issues[0].code,
++    SECURE_VOCABULARY_REVIEW_PACK_WORD_METADATA_MISMATCH
++  );
++  assert.match(report.issues[0].path, /^reviewPack\.words\[0\]/);
++  assert.equal(report.issues[0].wordIdentity, 'accommodate');
++  assert.deepEqual(
++    report.issues[0].fields.sort(),
++    ['provenanceSource', 'reviewStatus', 'reviewedAt', 'reviewer', 'safetyStatus'].sort()
++  );
++});

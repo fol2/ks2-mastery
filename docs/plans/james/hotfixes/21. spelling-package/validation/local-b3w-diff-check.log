@@ -1,0 +1,17 @@
+Command: git diff --check -- <B3w files and named patch artefact>
+Exit: 0
+Output:
+warning: in the working copy of 'docs/plans/james/hotfixes/21. spelling-package/evidence/local-b3w-secure-vocabulary-release-gate.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/plans/james/hotfixes/21. spelling-package/patches/local-implemented-secure-vocabulary-b3w-review-pack-word-metadata-gate-2026-05-17.patch', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/plans/james/hotfixes/21. spelling-package/validation/local-b3w-cli-mismatch.exit', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/plans/james/hotfixes/21. spelling-package/validation/local-b3w-cli-mismatch.log', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/plans/james/hotfixes/21. spelling-package/validation/local-b3w-cli-review-pack-mismatch.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/plans/james/hotfixes/21. spelling-package/validation/local-b3w-cli-source.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/plans/james/hotfixes/21. spelling-package/validation/local-b3w-diff-check.exit', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/plans/james/hotfixes/21. spelling-package/validation/local-b3w-diff-check.log', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/plans/james/hotfixes/21. spelling-package/validation/local-b3w-red-test.exit', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/plans/james/hotfixes/21. spelling-package/validation/local-b3w-red-test.log', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/plans/james/hotfixes/21. spelling-package/validation/local-b3w-targeted-test.exit', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/plans/james/hotfixes/21. spelling-package/validation/local-b3w-targeted-test.log', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'scripts/verify-spelling-secure-vocabulary-release.mjs', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/secure-vocabulary-release-gates.test.js', LF will be replaced by CRLF the next time Git touches it

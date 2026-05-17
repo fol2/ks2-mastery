@@ -1,0 +1,47 @@
+{
+  "ok": false,
+  "issueCount": 1,
+  "checkedReviewPackWords": 1,
+  "checkedAuditedSourceWords": 1,
+  "issues": [
+    {
+      "code": "secure_vocabulary_review_pack_word_metadata_mismatch",
+      "path": "reviewPack.words[0]",
+      "wordIdentity": "accommodate",
+      "fields": [
+        "reviewStatus",
+        "reviewer",
+        "reviewedAt",
+        "provenanceSource",
+        "safetyStatus"
+      ],
+      "mismatches": [
+        {
+          "field": "reviewStatus",
+          "actual": "pending",
+          "expected": "approved"
+        },
+        {
+          "field": "reviewer",
+          "actual": "Different Reviewer",
+          "expected": "Adult Reviewer"
+        },
+        {
+          "field": "reviewedAt",
+          "actual": "2026-05-17T11:00:00.000Z",
+          "expected": "2026-05-17T10:00:00.000Z"
+        },
+        {
+          "field": "provenanceSource",
+          "actual": "unverified-import",
+          "expected": "audited-ks2-secure-vocabulary"
+        },
+        {
+          "field": "safetyStatus",
+          "actual": "needs_review",
+          "expected": "approved"
+        }
+      ]
+    }
+  ]
+}

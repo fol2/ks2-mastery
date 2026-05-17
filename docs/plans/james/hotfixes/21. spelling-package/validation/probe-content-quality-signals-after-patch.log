@@ -1,0 +1,12 @@
+node:internal/errors:496
+    ErrorCaptureStackTrace(err);
+    ^
+
+Error [ERR_UNKNOWN_BUILTIN_MODULE]: No such built-in module: node:sqlite
+    at new NodeError (node:internal/errors:405:5)
+    at ModuleLoader.builtinStrategy (node:internal/modules/esm/translators:300:11)
+    at ModuleLoader.moduleProvider (node:internal/modules/esm/loader:299:14) {
+  code: 'ERR_UNKNOWN_BUILTIN_MODULE'
+}
+
+Node.js v18.20.4

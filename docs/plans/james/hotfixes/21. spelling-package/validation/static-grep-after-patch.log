@@ -1,0 +1,9 @@
+grep: spellingRuntimeContentRowKey row.content_json direct key
+grep: spelling content quality runtimeWordCount lookup
+grep: new helper
+606:function hashSpellingContentCacheKey(contentJson) {
+625:    hashSpellingContentCacheKey(contentJson),
+2232:    let coveredWordCount = 0;
+2242:          const summary = runtimeContentSummary(bundle, snapshot);
+2244:          coveredWordCount = wordCount;
+2259:          value: coveredWordCount,
