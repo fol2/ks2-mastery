@@ -49,11 +49,12 @@ import {
 } from '../src/subjects/spelling/events.js';
 import { rewardEventsFromSpellingEvents } from '../src/subjects/spelling/event-hooks.js';
 import { WORDS } from '../src/subjects/spelling/data/word-data.js';
+import { isStatutoryCoreWord } from '../src/subjects/spelling/content/taxonomy.js';
 
 // Use real core slugs from WORD_BY_SLUG so the event factory doesn't reject
 // them. Event factories use wordFields() which returns null for unknown slugs.
 const REAL_CORE_SLUGS = WORDS
-  .filter((w) => w.spellingPool !== 'extra')
+  .filter(isStatutoryCoreWord)
   .slice(0, 12)
   .map((w) => w.slug);
 

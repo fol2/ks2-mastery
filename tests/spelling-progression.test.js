@@ -8,6 +8,7 @@ import { createSpellingPersistence } from '../src/subjects/spelling/repository.j
 import { SPELLING_EVENT_TYPES } from '../src/subjects/spelling/events.js';
 import { SPELLING_SERVICE_STATE_VERSION } from '../src/subjects/spelling/service-contract.js';
 import { WORDS, WORD_BY_SLUG } from '../src/subjects/spelling/data/word-data.js';
+import { isStatutoryCoreWord } from '../src/subjects/spelling/content/taxonomy.js';
 import { rewardEventsFromSpellingEvents } from '../src/subjects/spelling/event-hooks.js';
 import { monsterSummaryFromSpellingAnalytics } from '../src/platform/game/monster-system.js';
 import { getOverallSpellingStats, spellingModule } from '../src/subjects/spelling/module.js';
@@ -180,7 +181,7 @@ test('analytics snapshot is explicit and normalised', () => {
   assert.equal(snapshot.pools.all.total > 0, true);
   assert.deepEqual(snapshot.pools.all, snapshot.pools.core);
   assert.equal(snapshot.pools.all.accuracy, null);
-  assert.equal(snapshot.pools.secureExtension.total, 0);
+  assert.equal(snapshot.pools.secureExtension.total, 1217);
   assert.equal(snapshot.pools.extra.total, 33);
   assert.deepEqual(snapshot.wordGroups.map((group) => group.key), ['y3-4', 'y5-6', 'secure-extension', 'extra']);
   assert.equal(snapshot.wordGroups[0].title, 'Years 3-4');
@@ -197,7 +198,8 @@ test('analytics snapshot is explicit and normalised', () => {
   const extraGroup = snapshot.wordGroups.find((group) => group.key === 'extra');
   const secureExtensionGroup = snapshot.wordGroups.find((group) => group.key === 'secure-extension');
   assert.equal(secureExtensionGroup.title, 'Secure vocabulary');
-  assert.equal(secureExtensionGroup.words.length, 0);
+  assert.equal(secureExtensionGroup.words.length, 1217);
+  assert.ok(secureExtensionGroup.words.some((word) => word.slug === 'ability'));
   const mollusc = extraGroup.words.find((word) => word.slug === 'mollusc');
   assert.equal(extraGroup.spellingPool, 'extra');
   assert.ok(mollusc);
@@ -289,7 +291,7 @@ test('Smart Review fallback prioritises not-yet-secure historical-wrong words ov
   const targetSlugs = ['apparent', 'privilege'];
   const storage = installMemoryStorage();
   const repositories = createLocalPlatformRepositories({ storage });
-  const y56Words = WORDS.filter((word) => word.spellingPool === 'core' && word.year === '5-6');
+  const y56Words = WORDS.filter((word) => isStatutoryCoreWord(word) && word.year === '5-6');
 
   const progress = Object.fromEntries(y56Words.map((word) => {
     const blocking = targetSlugs.includes(word.slug);
@@ -537,7 +539,7 @@ test('U8 review: production-path Smart Review happy path has feedback.persistenc
 
 function seedFullCoreMega({ repositories, learnerId, today, guardian = {} }) {
   const progress = Object.fromEntries(WORDS
-    .filter((word) => word.spellingPool === 'core')
+    .filter(isStatutoryCoreWord)
     .map((word) => [word.slug, {
       stage: 4,
       attempts: 6,

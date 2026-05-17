@@ -17,9 +17,11 @@ It contains:
 - `validation/secure-vocabulary-release-readiness-gate-2026-05-17.md` - explicit evidence that the current approved source passes B3w metadata reconciliation and the source release-readiness gate.
 - `validation/secure-vocabulary-approved-source/release-gap-summary.md` - grouped counts for the current source artefact's secure-extension release readiness; current missing release-quality field counts are zero.
 - `validation/secure-vocabulary-approved-source/release-input-template/` - non-importing CSV template retained for future secure-extension source refreshes.
+- `validation/runtime-import-local-verification-2026-05-17.md` - local evidence that the approved source has been imported into the spelling runtime as `spelling-r6`, with `1217` secure-extension words and local `npm test` / `npm run check` passing.
+- `validation/secure-vocabulary-approved-source/runtime-import-*.json` and `runtime-verification-report.json` - applied import, manifest, and runtime verification evidence for the local `spelling-r6` runtime.
 - `evidence/secure-extension-import-approval-record-2026-05-17.md` / `.json` and `evidence/secure-extension-import-approval-pipeline-record-2026-05-17.json` - James's post-review owner approval for secure-extension import and generated release-quality fallback fields for all 1217 pinned candidate rows, now ingested into the audited source/review pack.
 - `validation/contract-current-state-audit-2026-05-17.md` - current HEAD audit showing the B3w source-list loop is closed while live secure-extension promotion remains blocked.
 - `validation/current-head-completion-audit-2026-05-17.md` - latest moving-branch completion audit, mapping the active goal and contract gates to concrete evidence, the reviewer-found Word Bank Guardian-chip fix, and remaining blockers.
 - `validation/reviewer-loop-current-head-2026-05-17.md` - latest independent Code Reviewer and Contract Auditor rerun for `9cc389568c2fc10b9d1d52d12d247bca1e4a7580`; both returned `NOT PASS` for full-contract blockers, while confirming the stale-evidence and Guardian-chip findings are closed.
 
-The patch, taxonomy backbone, and release-readiness gate are not the full thousands-word expansion. They are safe preparatory work for large spelling content releases.
+The patch, taxonomy backbone, release-readiness gate, and local runtime import are not yet live production completion. The remaining gates are independent reviewer/auditor PASS lines, deployment, and live hard-refresh proof on `https://ks2.eugnel.uk`.

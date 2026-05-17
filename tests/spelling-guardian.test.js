@@ -46,6 +46,7 @@ import { createSpellingPersistence } from '../src/subjects/spelling/repository.j
 import { createLocalPlatformRepositories } from '../src/platform/core/repositories/index.js';
 import { installMemoryStorage, MemoryStorage } from './helpers/memory-storage.js';
 import { WORDS, WORD_BY_SLUG } from '../src/subjects/spelling/data/word-data.js';
+import { isStatutoryCoreWord } from '../src/subjects/spelling/content/taxonomy.js';
 import {
   buildSpellingLearnerReadModel,
   getSpellingPostMasteryState,
@@ -54,6 +55,7 @@ import { seedFullCoreMega as seedFullCoreMegaShared } from './helpers/post-maste
 
 const TODAY = 18_000;
 const DAY_MS = 24 * 60 * 60 * 1000;
+const CORE_WORDS = WORDS.filter(isStatutoryCoreWord);
 
 test('SPELLING_MODES includes guardian alongside existing modes', () => {
   // Post-U9 the list also contains 'boss'; post-U11 (P2) it also contains
@@ -626,7 +628,7 @@ test('selectGuardianWords clamps length above 8 back to GUARDIAN_MAX_ROUND_LENGT
   const guardianMap = {};
   const progressMap = {};
   for (let i = 0; i < 20; i += 1) {
-    const slug = WORDS.filter((w) => w.spellingPool !== 'extra')[i].slug;
+    const slug = CORE_WORDS[i].slug;
     progressMap[slug] = { stage: 4, attempts: 8, correct: 7, wrong: 1 };
   }
   const selected = selectGuardianWords({
@@ -732,7 +734,7 @@ test('startSession({mode: guardian}) with allWordsMega starts a guardian session
   assert.ok(transition.state.session.uniqueWords.length <= GUARDIAN_MAX_ROUND_LENGTH);
   // All picked slugs must be core
   const pickedWords = transition.state.session.uniqueWords.map((slug) => WORD_BY_SLUG[slug]);
-  assert.ok(pickedWords.every((w) => w.spellingPool !== 'extra'));
+  assert.ok(pickedWords.every(isStatutoryCoreWord));
 });
 
 test('Full guardian round with all-correct answers emits N RENEWED + SESSION_COMPLETED + MISSION_COMPLETED', () => {
@@ -791,7 +793,7 @@ test('Full guardian round with all-correct answers emits N RENEWED + SESSION_COM
   for (const slug of seenSlugs) {
     const row = rowsBySlug.get(slug);
     const originalWord = WORDS.find((w) => w.slug === slug);
-    const originalIndex = WORDS.filter((w) => w.spellingPool !== 'extra').indexOf(originalWord);
+    const originalIndex = CORE_WORDS.indexOf(originalWord);
     const expectedCorrect = (5 + (originalIndex % 4)) + 1;
     assert.equal(row.progress.correct, expectedCorrect, `${slug} progress.correct bumped once`);
   }
@@ -2869,7 +2871,7 @@ test('U2 selector: orphan slug with wobbling: true + nextDueDay <= today still s
 test('U2 selector: 10 known + 2 orphan entries all due → picks up to 8 known, zero orphan', () => {
   // Mirror the plan "happy path" scenario: 10 known + 2 orphan entries, all due.
   // Use real WORD_BY_SLUG slugs so wordBySlug lookups succeed.
-  const knownSlugs = WORDS.filter((w) => w.spellingPool !== 'extra').slice(0, 10).map((w) => w.slug);
+  const knownSlugs = CORE_WORDS.slice(0, 10).map((w) => w.slug);
   const guardianMap = {};
   const progressMap = {};
   for (let i = 0; i < knownSlugs.length; i += 1) {
@@ -3045,7 +3047,7 @@ function makeGuardianBareStorageService({ now = () => Date.UTC(2026, 0, 10), ran
 
 function seedAllCoreMegaBare(storage, learnerId, todayDay) {
   const progress = Object.fromEntries(
-    WORDS.filter((word) => word.spellingPool !== 'extra').map((word, index) => [word.slug, {
+    CORE_WORDS.map((word, index) => [word.slug, {
       stage: 4,
       attempts: 6 + (index % 4),
       correct: 5 + (index % 4),
@@ -3866,7 +3868,7 @@ test('U8 review: production-path (createLocalPlatformRepositories) surfaces pers
   // starts, so the Guardian path sees every core word as Mega.
   const learnerId = 'learner-a';
   const allMegaProgress = Object.fromEntries(
-    WORDS.filter((word) => word.spellingPool !== 'extra').map((word, index) => [word.slug, {
+    CORE_WORDS.map((word, index) => [word.slug, {
       stage: 4,
       attempts: 6 + (index % 4),
       correct: 5 + (index % 4),
@@ -4080,7 +4082,7 @@ test('U1 review parity: service.getPostMasteryState and read-model getSpellingPo
   const { service, repositories } = makeParityService({ now });
 
   // Hand-build the progress + guardian map the service will read.
-  const coreWords = WORDS.filter((word) => word.spellingPool === 'core');
+  const coreWords = CORE_WORDS;
   const progress = Object.fromEntries(coreWords.map((word) => [word.slug, {
     stage: 4,
     attempts: 6,

@@ -31,6 +31,7 @@ import { installMemoryStorage } from './helpers/memory-storage.js';
 import { createLocalPlatformRepositories } from '../src/platform/core/repositories/index.js';
 import { SEEDED_SPELLING_CONTENT_BUNDLE } from '../src/subjects/spelling/data/content-data.js';
 import { resolveRuntimeSnapshot } from '../src/subjects/spelling/content/model.js';
+import { isStatutoryCoreWord } from '../src/subjects/spelling/content/taxonomy.js';
 import { getSpellingPostMasteryState } from '../src/subjects/spelling/read-model.js';
 import {
   POST_MEGA_SEED_SHAPES,
@@ -112,7 +113,7 @@ test('fresh-graduate: every core slug stage 4, empty guardian, no postMega persi
   assert.deepEqual(data.guardian, {});
   assert.equal(Object.prototype.hasOwnProperty.call(data, 'postMega'), false,
     'fresh-graduate simulates the moment before the first sticky write');
-  const coreSlugs = Object.keys(wordBySlug).filter((slug) => wordBySlug[slug].spellingPool !== 'extra');
+  const coreSlugs = Object.keys(wordBySlug).filter((slug) => isStatutoryCoreWord(wordBySlug[slug]));
   for (const slug of coreSlugs) {
     assert.equal(data.progress[slug].stage, 4, `${slug} should be at Mega`);
   }
@@ -267,12 +268,12 @@ test('Worker POST seed-post-mega: fresh-graduate writes child_subject_state, aut
     assert.ok(state.progress, 'progress map on persisted data');
     assert.deepEqual(state.guardian, {});
     assert.equal(Object.prototype.hasOwnProperty.call(state, 'postMega'), false);
-    // Every core slug should be Mega.
+    // Every statutory core slug should be Mega.
     const runtimeSnapshot = resolveRuntimeSnapshot(SEEDED_SPELLING_CONTENT_BUNDLE, {
       referenceBundle: SEEDED_SPELLING_CONTENT_BUNDLE,
     });
     const coreSlugs = (runtimeSnapshot?.words || [])
-      .filter((w) => w.spellingPool !== 'extra')
+      .filter(isStatutoryCoreWord)
       .map((w) => w.slug);
     for (const slug of coreSlugs) {
       assert.equal(state.progress[slug].stage, 4);

@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import { installMemoryStorage } from './helpers/memory-storage.js';
 import { createAppHarness } from './helpers/app-harness.js';
 import { WORD_BY_SLUG } from '../src/subjects/spelling/data/word-data.js';
+import { isStatutoryCoreWord } from '../src/subjects/spelling/content/taxonomy.js';
 import {
   isPostMasteryMode,
   isMegaSafeMode,
@@ -14,12 +15,12 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 
 // U6 mirrors the parity test's seed helper so the gate-behaviour tests can
 // drive Guardian/Boss shortcut-start without depending on cross-file imports.
-// Every core-pool word graduates to stage 4 with a 60-day dueDay cushion; the
+// Every statutory-core word graduates to stage 4 with a 60-day dueDay cushion; the
 // learner is a fresh all-core-Mega graduate at `todayDay`.
 function seedAllCoreMegaForGuardian(repositories, learnerId, todayDay) {
   const progress = Object.fromEntries(
     Object.keys(WORD_BY_SLUG)
-      .filter((slug) => WORD_BY_SLUG[slug].spellingPool !== 'extra')
+      .filter((slug) => isStatutoryCoreWord(WORD_BY_SLUG[slug]))
       .map((slug) => [slug, {
         stage: 4,
         attempts: 6,

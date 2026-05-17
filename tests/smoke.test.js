@@ -4,6 +4,9 @@ import assert from 'node:assert/strict';
 import { installMemoryStorage } from './helpers/memory-storage.js';
 import { createAppHarness } from './helpers/app-harness.js';
 import { exportPlatformSnapshot, importPlatformSnapshot } from '../src/platform/core/data-transfer.js';
+import { WORDS } from '../src/subjects/spelling/data/word-data.js';
+
+const TOTAL_SPELLING_WORDS = WORDS.length;
 
 function typedFormData(value) {
   const formData = new FormData();
@@ -301,7 +304,7 @@ test('spelling word bank opens from setup and exposes searchable progress with e
   html = harness.render();
   assert.match(html, />accommodate</);
   assert.doesNotMatch(html, />accident</);
-  assert.match(html, /Years 5-6 selected — 104 of 246 words, 0 secure, 1 due today, 0 weak spots/);
+  assert.match(html, new RegExp(`Years 5-6 selected . 104 of ${TOTAL_SPELLING_WORDS} words, 0 secure, 1 due today, 0 weak spots`));
   assert.match(html, /Showing 104 of 104 Years 5-6 spellings/);
   assert.deepEqual(extractWordBankAggregateStats(html, 'Upper KS2 spelling pool'), {
     Total: '104',
@@ -324,7 +327,7 @@ test('spelling word bank opens from setup and exposes searchable progress with e
   html = harness.render();
   assert.match(html, />accident</);
   assert.doesNotMatch(html, />accommodate</);
-  assert.match(html, /Years 3-4 selected — 109 of 246 words, 1 secure, 0 due today, 0 weak spots/);
+  assert.match(html, new RegExp(`Years 3-4 selected . 109 of ${TOTAL_SPELLING_WORDS} words, 1 secure, 0 due today, 0 weak spots`));
   assert.match(html, /Showing 109 of 109 Years 3-4 spellings/);
   assert.deepEqual(extractWordBankAggregateStats(html, 'Lower KS2 spelling pool'), {
     Total: '109',
@@ -346,7 +349,7 @@ test('spelling word bank opens from setup and exposes searchable progress with e
   html = harness.render();
   assert.match(html, />mollusc</);
   assert.doesNotMatch(html, />accident</);
-  assert.match(html, /Extra selected — 33 of 246 words, 0 secure, 0 due today, 0 weak spots/);
+  assert.match(html, new RegExp(`Extra selected . 33 of ${TOTAL_SPELLING_WORDS} words, 0 secure, 0 due today, 0 weak spots`));
   assert.match(html, /Showing 33 of 33 Extra spellings/);
 
   harness.dispatch('spelling-analytics-year-filter', { value: 'all' });
@@ -394,7 +397,7 @@ test('spelling word bank opens from setup and exposes searchable progress with e
   harness.dispatch('spelling-analytics-search', { value: 'division' });
   html = harness.render();
   assert.match(html, />divide</);
-  assert.match(html, /Showing 1 of 246 tracked spellings/);
+  assert.match(html, /Showing 2 matches for &quot;division&quot;/);
 
   harness.dispatch('spelling-word-detail-open', { slug: 'divide', value: 'explain' });
   html = harness.render();
@@ -408,7 +411,7 @@ test('spelling word bank opens from setup and exposes searchable progress with e
   assert.match(html, />mollusc</);
   assert.match(html, /title="mollusc[^"]*Correct: 0[^"]*Wrong: 0[^"]*Attempts: 0[^"]*Accuracy: —[^"]*Next due: Unseen"/);
   assert.doesNotMatch(html, /title="mollusc[^"]*Extra • Extra/);
-  assert.match(html, /Showing 1 of 246 tracked spellings/);
+  assert.match(html, new RegExp(`Showing 1 of ${TOTAL_SPELLING_WORDS} tracked spellings`));
   assert.doesNotMatch(html, />accident</);
 
   harness.dispatch('spelling-word-detail-open', { slug: 'mollusc', value: 'explain' });

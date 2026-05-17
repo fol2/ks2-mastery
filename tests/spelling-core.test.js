@@ -8,6 +8,7 @@ import { createSpellingPersistence } from '../src/subjects/spelling/repository.j
 import { SPELLING_EVENT_TYPES } from '../src/subjects/spelling/events.js';
 import { SPELLING_SERVICE_STATE_VERSION } from '../src/subjects/spelling/service-contract.js';
 import { WORDS, WORD_BY_SLUG } from '../src/subjects/spelling/data/word-data.js';
+import { isStatutoryCoreWord } from '../src/subjects/spelling/content/taxonomy.js';
 import { rewardEventsFromSpellingEvents } from '../src/subjects/spelling/event-hooks.js';
 import { monsterSummaryFromSpellingAnalytics } from '../src/platform/game/monster-system.js';
 import { getOverallSpellingStats, spellingModule } from '../src/subjects/spelling/module.js';
@@ -158,7 +159,7 @@ test('Smart Review reuses one progress snapshot when starting from dense learner
   const storage = installMemoryStorage();
   const repositories = createLocalPlatformRepositories({ storage });
   const progress = Object.fromEntries(WORDS
-    .filter((word) => word.spellingPool === 'core')
+    .filter(isStatutoryCoreWord)
     .map((word, index) => [word.slug, {
       stage: index % 6,
       attempts: 4 + (index % 5),
@@ -290,7 +291,7 @@ test('SATs Test ignores Extra filters and stays on core statutory spellings', ()
   assert.equal(transition.ok, true);
   assert.equal(transition.state.session.type, 'test');
   assert.equal(transition.state.session.uniqueWords.length, 20);
-  assert.ok(sessionWords(transition.state.session).every((word) => word.spellingPool === 'core'));
+  assert.ok(sessionWords(transition.state.session).every(isStatutoryCoreWord));
   assert.equal(sessionWords(transition.state.session).some((word) => word.year === 'extra'), false);
 });
 

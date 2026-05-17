@@ -50,6 +50,7 @@ import { createLocalPlatformRepositories } from '../src/platform/core/repositori
 import { createSpellingService } from '../src/subjects/spelling/service.js';
 import { createSpellingPersistence } from '../src/subjects/spelling/repository.js';
 import { WORDS, WORD_BY_SLUG } from '../src/subjects/spelling/data/word-data.js';
+import { isStatutoryCoreWord } from '../src/subjects/spelling/content/taxonomy.js';
 import { SPELLING_EVENT_TYPES } from '../src/subjects/spelling/events.js';
 import { seedFullCoreMega as seedFullCoreMegaShared } from './helpers/post-mastery-seeds.js';
 
@@ -86,7 +87,7 @@ const SEED_LAST_DAY = TODAY_DAY - 7;
 const SEED_LAST_RESULT = 'correct';
 const SEED_STAGE = 4;
 
-const CORE_SLUGS = WORDS.filter((word) => word.spellingPool !== 'extra').map((word) => word.slug);
+const CORE_SLUGS = WORDS.filter(isStatutoryCoreWord).map((word) => word.slug);
 
 // P2 U2: the composite invariant also covers postMega — once set, it must
 // NEVER revert to null across any action sequence. `SEED_POST_MEGA` stamps a

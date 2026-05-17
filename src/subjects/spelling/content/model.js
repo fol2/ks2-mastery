@@ -1,6 +1,7 @@
 import { cloneSerialisable } from '../../../platform/core/repositories/helpers.js';
 import { PATTERN_LAUNCH_THRESHOLD, SPELLING_PATTERN_IDS, SPELLING_PATTERNS } from './patterns.js';
 import {
+  coverageTierForWord,
   coverageTierCounts,
   isStatutoryCoreWord,
   normaliseCoverageTier,
@@ -141,7 +142,7 @@ function yearLabelFromBand(yearBand) {
 }
 
 function familyKeyForRuntime(word) {
-  return `${word.spellingPool || 'core'}::${word.year}::${word.family}`;
+  return `${word.spellingPool || 'core'}::${coverageTierForWord(word)}::${word.year}::${word.family}`;
 }
 
 function normaliseWordList(rawValue, index = 0) {
@@ -722,7 +723,7 @@ export function buildPublishedSnapshotFromDraft(rawDraft, { generatedAt = Date.n
         })
       : [];
     const year = word.spellingPool === 'extra' ? 'extra' : yearBandFromGroups(word.yearGroups);
-    const familyKey = `${word.spellingPool}::${year}::${word.family}`;
+    const familyKey = `${word.spellingPool}::${coverageTierForWord(word)}::${year}::${word.family}`;
     if (!familyMap.has(familyKey)) familyMap.set(familyKey, []);
     familyMap.get(familyKey).push(word.word);
     return normaliseRuntimeWord({

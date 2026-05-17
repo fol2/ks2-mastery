@@ -36,9 +36,11 @@ import {
   spellingSessionSubmitLabel,
 } from '../src/subjects/spelling/session-ui.js';
 import { WORDS, WORD_BY_SLUG } from '../src/subjects/spelling/data/word-data.js';
+import { isStatutoryCoreWord } from '../src/subjects/spelling/content/taxonomy.js';
 import { seedFullCoreMega as seedFullCoreMegaShared } from './helpers/post-mastery-seeds.js';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
+const CORE_WORDS = WORDS.filter(isStatutoryCoreWord);
 
 function makeSeededRandom(seed = 1) {
   let value = seed >>> 0;
@@ -162,7 +164,7 @@ test('createSpellingBossCompletedEvent returns null when session.id is missing',
 
 test('selectBossWords returns N slugs drawn only from Mega core-pool progress entries', () => {
   const progressMap = {};
-  for (const word of WORDS.filter((w) => w.spellingPool !== 'extra')) {
+  for (const word of CORE_WORDS) {
     progressMap[word.slug] = { stage: 4, attempts: 1, correct: 1, wrong: 0 };
   }
   // Add one extra-pool Mega entry that must NEVER be picked.
@@ -179,14 +181,14 @@ test('selectBossWords returns N slugs drawn only from Mega core-pool progress en
   assert.equal(selected.length, 10);
   for (const slug of selected) {
     assert.ok(WORD_BY_SLUG[slug], `${slug} must be a known word`);
-    assert.notEqual(WORD_BY_SLUG[slug].spellingPool, 'extra', `${slug} must be core`);
+    assert.equal(isStatutoryCoreWord(WORD_BY_SLUG[slug]), true, `${slug} must be statutory core`);
     assert.equal(progressMap[slug].stage, 4, `${slug} must be at Mega stage`);
   }
 });
 
 test('selectBossWords clamps length below 8 up to BOSS_MIN_ROUND_LENGTH', () => {
   const progressMap = {};
-  for (const word of WORDS.filter((w) => w.spellingPool !== 'extra')) {
+  for (const word of CORE_WORDS) {
     progressMap[word.slug] = { stage: 4, attempts: 1, correct: 1, wrong: 0 };
   }
   const selected = selectBossWords({
@@ -200,7 +202,7 @@ test('selectBossWords clamps length below 8 up to BOSS_MIN_ROUND_LENGTH', () => 
 
 test('selectBossWords clamps length above 12 down to BOSS_MAX_ROUND_LENGTH', () => {
   const progressMap = {};
-  for (const word of WORDS.filter((w) => w.spellingPool !== 'extra')) {
+  for (const word of CORE_WORDS) {
     progressMap[word.slug] = { stage: 4, attempts: 1, correct: 1, wrong: 0 };
   }
   const selected = selectBossWords({
@@ -214,7 +216,7 @@ test('selectBossWords clamps length above 12 down to BOSS_MAX_ROUND_LENGTH', () 
 
 test('selectBossWords returns deterministic ordering under a seeded random', () => {
   const progressMap = {};
-  for (const word of WORDS.filter((w) => w.spellingPool !== 'extra')) {
+  for (const word of CORE_WORDS) {
     progressMap[word.slug] = { stage: 4, attempts: 1, correct: 1, wrong: 0 };
   }
   const a = selectBossWords({
@@ -272,7 +274,7 @@ test('startSession({mode: boss}) with allWordsMega builds a test-shaped Boss ses
   assert.equal(session.uniqueWords.length, 10);
   // All selected slugs are Mega core-pool words.
   for (const slug of session.uniqueWords) {
-    assert.notEqual(WORD_BY_SLUG[slug].spellingPool, 'extra');
+    assert.equal(isStatutoryCoreWord(WORD_BY_SLUG[slug]), true);
   }
 });
 
@@ -305,7 +307,7 @@ test('startSession({mode: boss}) queue order exactly matches selectBossWords see
   seedAllCoreMega(repositories, 'learner-a', today);
 
   const progressMap = Object.fromEntries(
-    WORDS.filter((w) => w.spellingPool !== 'extra').map((w) => [w.slug, { stage: 4 }]),
+    CORE_WORDS.map((w) => [w.slug, { stage: 4 }]),
   );
   const expected = selectBossWords({
     progressMap,

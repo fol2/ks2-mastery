@@ -1,8 +1,9 @@
 import { cloneSerialisable } from '../../src/platform/core/repositories/helpers.js';
+import { isStatutoryCoreWord } from '../../src/subjects/spelling/content/taxonomy.js';
 
 export function coreOnlyVersionOneContent(bundle) {
   const next = cloneSerialisable(bundle);
-  const coreWords = next.draft.words.filter((word) => word.spellingPool !== 'extra');
+  const coreWords = next.draft.words.filter(isStatutoryCoreWord);
   const coreSlugs = new Set(coreWords.map((word) => word.slug));
   const coreListIds = new Set(coreWords.map((word) => word.listId));
   next.modelVersion = 1;
@@ -14,7 +15,7 @@ export function coreOnlyVersionOneContent(bundle) {
 
   const release = cloneSerialisable(next.releases.find((entry) => entry.version === 1) || next.releases[0]);
   const releaseWords = release.snapshot.words
-    .filter((word) => word.spellingPool !== 'extra')
+    .filter(isStatutoryCoreWord)
     .map(({ spellingPool: _spellingPool, ...word }) => word);
   release.snapshot.words = releaseWords;
   release.snapshot.wordBySlug = Object.fromEntries(releaseWords.map((word) => [word.slug, word]));

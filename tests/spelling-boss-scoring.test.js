@@ -36,9 +36,11 @@ import {
   spellingSessionSubmitLabel,
 } from '../src/subjects/spelling/session-ui.js';
 import { WORDS, WORD_BY_SLUG } from '../src/subjects/spelling/data/word-data.js';
+import { isStatutoryCoreWord } from '../src/subjects/spelling/content/taxonomy.js';
 import { seedFullCoreMega as seedFullCoreMegaShared } from './helpers/post-mastery-seeds.js';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
+const CORE_WORDS = WORDS.filter(isStatutoryCoreWord);
 
 function makeSeededRandom(seed = 1) {
   let value = seed >>> 0;
@@ -115,7 +117,7 @@ function u10SeedAllCoreMega(repositories, learnerId, todayDay) {
   // with Mega on every core-pool word flips `allWordsMega === true` and the
   // post-Mega dashboard renders.
   const progress = Object.fromEntries(
-    WORDS.filter((word) => word.spellingPool !== 'extra').map((word, index) => [word.slug, {
+    CORE_WORDS.map((word, index) => [word.slug, {
       stage: 4,
       attempts: 6 + (index % 4),
       correct: 5 + (index % 4),

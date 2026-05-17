@@ -35,6 +35,7 @@ import { createServerSpellingEngine } from '../worker/src/subjects/spelling/engi
 import { resolveRuntimeSnapshot } from '../src/subjects/spelling/content/model.js';
 import { SEEDED_SPELLING_CONTENT_BUNDLE } from '../src/subjects/spelling/data/content-data.js';
 import { WORDS } from '../src/subjects/spelling/data/word-data.js';
+import { isStatutoryCoreWord } from '../src/subjects/spelling/content/taxonomy.js';
 import { SPELLING_CONTENT_RELEASE_ID } from '../src/subjects/spelling/service-contract.js';
 import { createSpellingReadModelService } from '../src/subjects/spelling/client-read-models.js';
 import { createRemoteSpellingActionHandler } from '../src/subjects/spelling/remote-actions.js';
@@ -43,7 +44,7 @@ import { installMemoryStorage } from './helpers/memory-storage.js';
 const DAY_MS = 24 * 60 * 60 * 1000;
 const TODAY_MS = Date.UTC(2026, 0, 10);
 const TODAY_DAY = Math.floor(TODAY_MS / DAY_MS);
-const CORE_WORDS = WORDS.filter((word) => word.spellingPool !== 'extra');
+const CORE_WORDS = WORDS.filter(isStatutoryCoreWord);
 const CORE_SLUGS = CORE_WORDS.map((word) => word.slug);
 const ALL_CORE_COUNT = CORE_SLUGS.length;
 

@@ -12,12 +12,19 @@ import {
   buildSecureVocabularyArtifacts,
 } from '../scripts/spelling-secure-vocabulary-source.mjs';
 import {
+  buildSecureVocabularyRuntimeImport,
+} from '../scripts/import-spelling-secure-vocabulary.mjs';
+import {
+  verifySecureVocabularyRuntime,
+} from '../scripts/verify-spelling-secure-vocabulary-runtime.mjs';
+import {
   SECURE_VOCABULARY_RELEASE_PROMOTION_NOT_APPROVED,
   SECURE_VOCABULARY_RELEASE_WORD_MISSING_FIELD,
   SECURE_VOCABULARY_RELEASE_WORD_NOT_ADULT_APPROVED,
   verifySecureVocabularyRelease,
   verifySecureVocabularyReleaseReadiness,
 } from '../scripts/verify-spelling-secure-vocabulary-release.mjs';
+import { SEEDED_SPELLING_CONTENT_BUNDLE } from '../src/subjects/spelling/data/content-data.js';
 
 function writeFixture(records, approvalOverrides = {}) {
   const dir = mkdtempSync(join(tmpdir(), 'ks2-secure-vocabulary-'));
@@ -56,6 +63,70 @@ function sourceRecord(overrides = {}) {
     word: 'ability',
     yearBand: 'Y3-Y6',
     ...overrides,
+  };
+}
+
+function auditedSourceFixture() {
+  return {
+    kind: 'ks2-spelling-secure-vocabulary-audited-source',
+    version: 1,
+    source: {
+      artifactId: 'ks2-spelling-secure-vocabulary-source-v1',
+      sourceJsonlSha256: 'fixture-hash',
+      recordCount: 247,
+      uniqueWordCount: 247,
+      approvalDecision: DECISION_SECURE_EXTENSION_IMPORT,
+      reviewerName: 'James',
+      reviewerRole: 'Owner/adult reviewer',
+      reviewTimestamp: '2026-05-17T16:01:23+01:00',
+      importReviewerPackAllowed: true,
+      securePromotionAllowed: true,
+      counts: {
+        taxonomyTier: {
+          'statutory-core': 213,
+          'enrichment-extra': 33,
+          'secure-extension': 1,
+        },
+      },
+    },
+    words: [{
+      id: 'sv1-test-0001',
+      slug: 'cartographytest',
+      word: 'cartographytest',
+      sourceRecordId: 'sv1-test-0001',
+      taxonomyTier: 'secure-extension',
+      sourceBucket: 'geography_history_secure',
+      yearBand: 'Y5-Y6 or extension after adult review',
+      patternTags: ['base-word'],
+      advisories: [],
+      sourceReviewStatus: 'adult_approved_for_secure_extension_import',
+      sourceReviewStatusBeforeSecureImportApproval: 'candidate_source_supplied_not_adult_approved',
+      secureImportApprovalApplied: true,
+      review: {
+        status: 'approved',
+        decision: DECISION_SECURE_EXTENSION_IMPORT,
+        reviewer: 'James',
+        reviewedAt: '2026-05-17T16:01:23+01:00',
+        sourceJsonlSha256: 'fixture-hash',
+      },
+      safety: {
+        status: 'approved_for_secure_extension_import',
+        advisories: [],
+        securePromotionAllowed: true,
+      },
+      releaseReadiness: {
+        acceptedSpellings: ['cartographytest'],
+        rejectedVariants: [],
+        explanation: 'Cartographytest is an owner-approved secure-extension fixture for runtime import tests.',
+        exampleSentences: ['The teacher wrote the word cartographytest for secure vocabulary spelling practice.'],
+        ukSpellingDecision: 'UK spelling approved: cartographytest is the accepted fixture spelling.',
+        familyRoot: 'cartographytest',
+        morphologyTags: ['base-word'],
+        safetyNotes: 'Owner-approved fixture suitable for runtime import tests.',
+        audioStatus: 'tts_required',
+        ttsStatus: 'planned',
+      },
+    }],
   };
 }
 
@@ -262,4 +333,30 @@ test('owner-approved release-quality policy populates secure-extension release f
 
   assert.equal(readiness.ok, true);
   assert.equal(readiness.issueCount, 0);
+});
+
+test('secure vocabulary runtime import publishes approved secure-extension words without changing statutory semantics', () => {
+  const auditedSource = auditedSourceFixture();
+  const imported = buildSecureVocabularyRuntimeImport({
+    auditedSource,
+    contentBundle: SEEDED_SPELLING_CONTENT_BUNDLE,
+    publishedAt: 1779035400000,
+  });
+
+  const report = verifySecureVocabularyRuntime({
+    auditedSource,
+    contentBundle: imported.bundle,
+  });
+  const runtimeWord = imported.bundle.releases.at(-1).snapshot.wordBySlug.cartographytest;
+
+  assert.equal(imported.manifest.imported.secureExtensionWordCount, 1);
+  assert.equal(imported.manifest.release.id, 'spelling-r6');
+  assert.equal(report.ok, true);
+  assert.equal(report.issueCount, 0);
+  assert.equal(report.summary.statutoryCoreCount, 213);
+  assert.equal(report.summary.enrichmentExtraCount, 33);
+  assert.equal(report.summary.secureExtensionCount, 1);
+  assert.equal(runtimeWord.coverageTier, 'secure-extension');
+  assert.equal(runtimeWord.spellingPool, 'core');
+  assert.equal(runtimeWord.accepted.includes('cartographytest'), true);
 });

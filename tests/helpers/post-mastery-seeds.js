@@ -24,6 +24,7 @@
 // identical across every test.
 
 import { WORDS } from '../../src/subjects/spelling/data/word-data.js';
+import { isStatutoryCoreWord } from '../../src/subjects/spelling/content/taxonomy.js';
 import {
   POST_MEGA_SEED_SHAPES,
   resolvePostMegaSeedShape,
@@ -31,10 +32,10 @@ import {
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-// Canonical list of core slugs (filtered to pool !== 'extra'). Exported so
-// test files can reference the same list when asserting counts.
+// Canonical list of statutory-core slugs. Exported so test files can
+// reference the same list when asserting post-Mega counts.
 export const CORE_SLUGS = Object.freeze(
-  WORDS.filter((word) => word.spellingPool !== 'extra').map((word) => word.slug),
+  WORDS.filter(isStatutoryCoreWord).map((word) => word.slug),
 );
 
 // Canonical `SEED_POST_MEGA` sticky-graduation record used by the

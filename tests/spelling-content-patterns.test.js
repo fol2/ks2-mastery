@@ -20,6 +20,7 @@ import {
   isPatternEligibleSlug as SERVICE_CONTRACT_IS_PATTERN_ELIGIBLE,
 } from '../src/subjects/spelling/service-contract.js';
 import { SEEDED_SPELLING_CONTENT_BUNDLE } from '../src/subjects/spelling/data/content-data.js';
+import { isStatutoryCoreWord } from '../src/subjects/spelling/content/taxonomy.js';
 import { cloneSerialisable } from '../src/platform/core/repositories/helpers.js';
 
 test('SPELLING_PATTERNS exports exactly 15 patterns with the required shape', () => {
@@ -88,7 +89,7 @@ test('every core word in the seeded bundle has at least one patternId or excepti
   const validation = validateSpellingContentBundle(SEEDED_SPELLING_CONTENT_BUNDLE);
   assert.equal(validation.ok, true, `validation errors: ${JSON.stringify(validation.errors, null, 2)}`);
 
-  const coreWords = validation.bundle.draft.words.filter((word) => word.spellingPool === 'core');
+  const coreWords = validation.bundle.draft.words.filter(isStatutoryCoreWord);
   assert.ok(coreWords.length > 0);
   for (const word of coreWords) {
     const hasPatternId = Array.isArray(word.patternIds) && word.patternIds.length > 0;
@@ -102,7 +103,7 @@ test('every core word in the seeded bundle has at least one patternId or excepti
 
 test('every patternId on a core word resolves to a registered pattern', () => {
   const validation = validateSpellingContentBundle(SEEDED_SPELLING_CONTENT_BUNDLE);
-  const coreWords = validation.bundle.draft.words.filter((word) => word.spellingPool === 'core');
+  const coreWords = validation.bundle.draft.words.filter(isStatutoryCoreWord);
   for (const word of coreWords) {
     for (const patternId of word.patternIds) {
       assert.ok(

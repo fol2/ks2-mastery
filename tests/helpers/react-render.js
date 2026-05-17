@@ -911,6 +911,7 @@ export function renderSpellingSurfaceFixture({
     import { createLocalAppController } from ${JSON.stringify(absoluteSpecifier('src/platform/app/create-local-app-controller.js'))};
     import { installMemoryStorage } from ${JSON.stringify(absoluteSpecifier('tests/helpers/memory-storage.js'))};
     import { WORDS } from ${JSON.stringify(absoluteSpecifier('src/subjects/spelling/data/word-data.js'))};
+    import { isStatutoryCoreWord } from ${JSON.stringify(absoluteSpecifier('src/subjects/spelling/content/taxonomy.js'))};
 
     installMemoryStorage();
     const controller = createLocalAppController();
@@ -927,7 +928,7 @@ export function renderSpellingSurfaceFixture({
       const nowDay = Math.floor(Date.now() / (24 * 60 * 60 * 1000));
       const progress = {};
       for (const word of WORDS) {
-        if ((word.spellingPool === 'extra' ? 'extra' : 'core') !== 'core') continue;
+        if (!isStatutoryCoreWord(word)) continue;
         progress[word.slug] = {
           stage: 4,
           attempts: 6,
@@ -1018,6 +1019,7 @@ export function renderSpellingGuardianSummaryFixture({ correct = true } = {}) {
     import { createLocalAppController } from ${JSON.stringify(absoluteSpecifier('src/platform/app/create-local-app-controller.js'))};
     import { installMemoryStorage } from ${JSON.stringify(absoluteSpecifier('tests/helpers/memory-storage.js'))};
     import { WORDS } from ${JSON.stringify(absoluteSpecifier('src/subjects/spelling/data/word-data.js'))};
+    import { isStatutoryCoreWord } from ${JSON.stringify(absoluteSpecifier('src/subjects/spelling/content/taxonomy.js'))};
 
     installMemoryStorage();
     const controller = createLocalAppController();
@@ -1027,7 +1029,7 @@ export function renderSpellingGuardianSummaryFixture({ correct = true } = {}) {
     const nowDay = Math.floor(Date.now() / (24 * 60 * 60 * 1000));
     const progress = {};
     for (const word of WORDS) {
-      if ((word.spellingPool === 'extra' ? 'extra' : 'core') !== 'core') continue;
+      if (!isStatutoryCoreWord(word)) continue;
       progress[word.slug] = {
         stage: 4,
         attempts: 6,

@@ -1,0 +1,36 @@
+{
+  "ok": true,
+  "issueCount": 0,
+  "issues": [],
+  "checkedSecureExtensionWords": 1217,
+  "expectedSecureExtensionWords": 1217,
+  "summary": {
+    "wordListCount": 18,
+    "wordCount": 1463,
+    "sentenceCount": 3430,
+    "releaseCount": 6,
+    "errorCount": 0,
+    "warningCount": 6,
+    "publishedReleaseId": "spelling-r6",
+    "publishedVersion": 6,
+    "publishedAt": 1779035400000,
+    "runtimeWordCount": 1463,
+    "runtimeSentenceCount": 3430,
+    "coverageTierCounts": {
+      "statutoryCore": 213,
+      "secureExtension": 1217,
+      "enrichmentExtra": 33,
+      "total": 1463
+    },
+    "statutoryCoreCount": 213,
+    "secureExtensionCount": 1217,
+    "enrichmentExtraCount": 33,
+    "ok": true
+  },
+  "release": {
+    "id": "spelling-r6",
+    "version": 6,
+    "title": "Secure vocabulary expansion r6",
+    "publishedAt": 1779035400000
+  }
+}

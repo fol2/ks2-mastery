@@ -38,6 +38,7 @@ import {
 } from '../src/subjects/spelling/service-contract.js';
 import { SPELLING_EVENT_TYPES } from '../src/subjects/spelling/events.js';
 import { getSpellingPostMasteryState } from '../src/subjects/spelling/read-model.js';
+import { isStatutoryCoreWord } from '../src/subjects/spelling/content/taxonomy.js';
 import { normaliseServerSpellingData } from '../worker/src/subjects/spelling/engine.js';
 
 // ----- Fixtures -------------------------------------------------------------
@@ -45,7 +46,7 @@ import { normaliseServerSpellingData } from '../worker/src/subjects/spelling/eng
 const DAY_MS = 24 * 60 * 60 * 1000;
 const TODAY_MS = Date.UTC(2026, 0, 10);
 const TODAY_DAY = Math.floor(TODAY_MS / DAY_MS);
-const CORE_WORDS = WORDS.filter((word) => word.spellingPool !== 'extra');
+const CORE_WORDS = WORDS.filter(isStatutoryCoreWord);
 const CORE_SLUGS = CORE_WORDS.map((word) => word.slug);
 const ALL_CORE_COUNT = CORE_SLUGS.length;
 

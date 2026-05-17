@@ -42,6 +42,7 @@ import {
   normaliseSpellingSubjectData,
 } from '../src/subjects/spelling/repository.js';
 import { WORDS } from '../src/subjects/spelling/data/word-data.js';
+import { isStatutoryCoreWord } from '../src/subjects/spelling/content/taxonomy.js';
 import {
   SPELLING_PERSISTENCE_WARNING_REASON,
   normaliseDurablePersistenceWarning,
@@ -54,7 +55,7 @@ import {
 const DAY_MS = 24 * 60 * 60 * 1000;
 const TODAY_MS = Date.UTC(2026, 3, 26);
 const TODAY_DAY = Math.floor(TODAY_MS / DAY_MS);
-const CORE_WORDS = WORDS.filter((word) => word.spellingPool !== 'extra');
+const CORE_WORDS = WORDS.filter(isStatutoryCoreWord);
 const CORE_SLUGS = CORE_WORDS.map((word) => word.slug);
 
 function makeServiceWithRepositories({ now = () => TODAY_MS, random = () => 0.5 } = {}) {

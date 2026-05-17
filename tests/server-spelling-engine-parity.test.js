@@ -6,6 +6,7 @@ import { createSpellingPersistence } from '../src/subjects/spelling/repository.j
 import { createSpellingService } from '../src/subjects/spelling/service.js';
 import { SEEDED_SPELLING_CONTENT_BUNDLE } from '../src/subjects/spelling/data/content-data.js';
 import { resolveRuntimeSnapshot } from '../src/subjects/spelling/content/model.js';
+import { isStatutoryCoreWord } from '../src/subjects/spelling/content/taxonomy.js';
 import { createServerSpellingEngine, SPELLING_SERVER_AUTHORITY } from '../worker/src/subjects/spelling/engine.js';
 import { createWorkerRepositoryServer } from './helpers/worker-server.js';
 import { installMemoryStorage } from './helpers/memory-storage.js';
@@ -123,7 +124,7 @@ function seedAllCoreMegaForSnapshot(snapshot) {
   const progress = {};
   const todayDay = Math.floor(Date.UTC(2026, 0, 1) / (24 * 60 * 60 * 1000));
   for (const word of snapshot.words) {
-    if (word.spellingPool === 'extra') continue;
+    if (!isStatutoryCoreWord(word)) continue;
     progress[word.slug] = {
       stage: 4,
       attempts: 6,

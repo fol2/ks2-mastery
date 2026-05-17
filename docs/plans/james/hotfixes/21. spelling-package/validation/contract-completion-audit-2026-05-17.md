@@ -1,5 +1,16 @@
 # Contract Completion Audit - 2026-05-17
 
+## Superseded State Note
+
+This audit records an earlier clean-branch state before James's secure-import approval was applied to the local runtime. Its `0 secure-extension` runtime counts and "no runtime import" findings are historical and are superseded by:
+
+- `validation/runtime-import-local-verification-2026-05-17.md`
+- `validation/current-head-completion-audit-2026-05-17.md`
+- `validation/secure-vocabulary-approved-source/runtime-import-result.json`
+- `validation/secure-vocabulary-approved-source/runtime-verification-report.json`
+
+The current local runtime is `spelling-r6` with `213` statutory-core, `1217` secure-extension, and `33` enrichment-extra words. The active goal is still not complete until independent reviewer PASS lines, deployment, and live hard-refresh production proof are present.
+
 ## Objective
 
 Execute `docs/plans/james/hotfixes/21. spelling-package/contract/spelling-secure-vocabulary-expansion-contract.md` fully, using an isolated worktree, then validate, run the required reviewer loop, and verify the result on `https://ks2.eugnel.uk` after hard refresh before any live completion claim.

@@ -16,6 +16,7 @@ import {
   SPELLING_MODES,
 } from '../src/subjects/spelling/service-contract.js';
 import { WORDS, WORD_BY_SLUG } from '../src/subjects/spelling/data/word-data.js';
+import { isStatutoryCoreWord } from '../src/subjects/spelling/content/taxonomy.js';
 
 function typedFormData(value) {
   const formData = new FormData();
@@ -24,14 +25,15 @@ function typedFormData(value) {
 }
 
 const DAY_MS = 24 * 60 * 60 * 1000;
+const CORE_WORDS = WORDS.filter(isStatutoryCoreWord);
 
 // U5 helper — mirrors `seedAllCoreMega` in spelling-guardian.test.js so the
 // parity test can drive a Guardian round without a cross-test import. Every
-// core-pool word graduates to stage 4 with a 60-day dueDay cushion; the
+// statutory-core word graduates to stage 4 with a 60-day dueDay cushion; the
 // lastDay -7 means the word is comfortably past its Mega lockout.
 function seedAllCoreMegaForGuardian(repositories, learnerId, todayDay) {
   const progress = Object.fromEntries(
-    WORDS.filter((word) => word.spellingPool !== 'extra').map((word, index) => [word.slug, {
+    CORE_WORDS.map((word, index) => [word.slug, {
       stage: 4,
       attempts: 6 + (index % 4),
       correct: 5 + (index % 4),
@@ -110,7 +112,7 @@ test('SATs setup ignores a persisted Extra filter and stays core-only', () => {
   const session = harness.store.getState().subjectUi.spelling.session;
   assert.equal(session.type, 'test');
   assert.equal(session.uniqueWords.length, 20);
-  assert.ok(session.uniqueWords.every((slug) => WORD_BY_SLUG[slug].spellingPool === 'core'));
+  assert.ok(session.uniqueWords.every((slug) => isStatutoryCoreWord(WORD_BY_SLUG[slug])));
   assert.equal(session.uniqueWords.includes('mollusc'), false);
 });
 
@@ -487,7 +489,7 @@ test('U4 parity: Guardian session renders "I don\'t know" button label', () => {
   const today = Math.floor(nowRef.value / DAY_MS);
   const progress = Object.fromEntries(
     Object.keys(WORD_BY_SLUG)
-      .filter((slug) => WORD_BY_SLUG[slug].spellingPool !== 'extra')
+      .filter((slug) => isStatutoryCoreWord(WORD_BY_SLUG[slug]))
       .map((slug) => [slug, {
         stage: 4,
         attempts: 6,
