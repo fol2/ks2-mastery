@@ -8,7 +8,9 @@
       "Bash(mkdir -p /tmp/delete_batches)",
       "Bash(rm -f /tmp/delete_batches/*)",
       "Bash(split -l 50 /tmp/all_to_delete.txt /tmp/delete_batches/batch-)",
-      "Read(//tmp/**)"
+      "Read(//tmp/**)",
+      "WebFetch(domain:docs.github.com)",
+      "WebFetch(domain:zed.dev)"
     ]
   }
 }
