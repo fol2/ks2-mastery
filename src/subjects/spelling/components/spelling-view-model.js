@@ -7,7 +7,14 @@ import {
   heroBgStyle as platformHeroBgStyle,
   heroPanDelayStyle as platformHeroPanDelayStyle,
 } from '../../../platform/ui/hero-bg.js';
-import { createLockedPostMasteryState, isGuardianEligibleSlug } from '../service-contract.js';
+import {
+  coverageTierLabel,
+  createLockedPostMasteryState,
+  isEnrichmentExtraWord,
+  isGuardianEligibleSlug,
+  isSecureExtensionWord,
+  isStatutoryCoreWord,
+} from '../service-contract.js';
 
 export const SPELLING_ACCENT = '#3E6FA8';
 export const DAY_MS = 24 * 60 * 60 * 1000;
@@ -105,6 +112,7 @@ export const YEAR_FILTER_OPTIONS = Object.freeze([
   { value: 'core', label: 'Core' },
   { value: 'y3-4', label: 'Y3-4' },
   { value: 'y5-6', label: 'Y5-6' },
+  { value: 'secure-extension', label: 'Secure vocabulary' },
   { value: 'extra', label: 'Extra' },
 ]);
 export const WORD_BANK_FILTER_IDS = new Set([
@@ -132,7 +140,7 @@ export const WORD_BANK_GUARDIAN_FILTER_IDS = Object.freeze([
   'neverRenewed',
 ]);
 export const WORD_BANK_GUARDIAN_FILTER_ID_SET = new Set(WORD_BANK_GUARDIAN_FILTER_IDS);
-export const WORD_BANK_YEAR_FILTER_IDS = new Set(['all', 'y3-4', 'y5-6', 'extra']);
+export const WORD_BANK_YEAR_FILTER_IDS = new Set(['all', 'y3-4', 'y5-6', 'secure-extension', 'extra']);
 
 /* U5: Word Bank Guardian chip copy polish (R10).
  *
@@ -525,15 +533,18 @@ export function wordBankFilterMatchesStatus(filter, status, options = {}) {
 
 export function wordBankYearFilterMatches(filter, word) {
   if (filter === 'all') return true;
-  if (filter === 'y3-4') return word.year === '3-4';
-  if (filter === 'y5-6') return word.year === '5-6';
-  if (filter === 'extra') return word.spellingPool === 'extra';
+  if (filter === 'core') return isStatutoryCoreWord(word);
+  if (filter === 'y3-4') return isStatutoryCoreWord(word) && word.year === '3-4';
+  if (filter === 'y5-6') return isStatutoryCoreWord(word) && word.year === '5-6';
+  if (filter === 'secure-extension') return isSecureExtensionWord(word);
+  if (filter === 'extra') return isEnrichmentExtraWord(word);
   return true;
 }
 
 export function wordBankYearFilterLabel(filter) {
   if (filter === 'y3-4') return 'Years 3-4';
   if (filter === 'y5-6') return 'Years 5-6';
+  if (filter === 'secure-extension') return 'Secure vocabulary';
   if (filter === 'extra') return 'Extra';
   return 'All';
 }
@@ -556,12 +567,14 @@ export function wordBankPillClass(status) {
 }
 
 export function spellingPoolLabel(word) {
-  if (word?.spellingPool === 'extra') return 'Extra';
+  if (isSecureExtensionWord(word)) return 'Secure vocabulary';
+  if (isEnrichmentExtraWord(word)) return 'Extra';
   return word?.yearLabel || 'Core';
 }
 
 export function spellingPoolContextLabel(word) {
-  if (word?.spellingPool === 'extra') return 'Extra spelling';
+  if (isSecureExtensionWord(word)) return coverageTierLabel(word?.coverageTier);
+  if (isEnrichmentExtraWord(word)) return coverageTierLabel(word?.coverageTier);
   return word?.yearLabel || 'Core spelling';
 }
 
@@ -893,11 +906,15 @@ export function countWordBankStatus(words, status) {
 }
 
 export function countWordBankYear(words, year) {
-  return words.reduce((count, word) => count + (word.year === year ? 1 : 0), 0);
+  return words.reduce((count, word) => count + (isStatutoryCoreWord(word) && word.year === year ? 1 : 0), 0);
 }
 
 export function countWordBankExtra(words) {
-  return words.reduce((count, word) => count + (word.spellingPool === 'extra' ? 1 : 0), 0);
+  return words.reduce((count, word) => count + (isEnrichmentExtraWord(word) ? 1 : 0), 0);
+}
+
+export function countWordBankSecureExtension(words) {
+  return words.reduce((count, word) => count + (isSecureExtensionWord(word) ? 1 : 0), 0);
 }
 
 /**

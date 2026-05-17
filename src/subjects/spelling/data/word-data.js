@@ -1,4 +1,4 @@
-// Generated from content/spelling.seed.json via scripts/generate-spelling-content.mjs
+// Generated from content\spelling.seed.json via scripts/generate-spelling-content.mjs
 // This file stays as a small compatibility shim for the existing spelling runtime.
 
 export {
@@ -12,6 +12,7 @@ export const WORDS = [
     "word": "accident",
     "slug": "accident",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "accident",
@@ -60,6 +61,7 @@ export const WORDS = [
     "word": "accidentally",
     "slug": "accidentally",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "accident",
@@ -109,6 +111,7 @@ export const WORDS = [
     "word": "actual",
     "slug": "actual",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "actual",
@@ -156,6 +159,7 @@ export const WORDS = [
     "word": "actually",
     "slug": "actually",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "actual",
@@ -204,6 +208,7 @@ export const WORDS = [
     "word": "address",
     "slug": "address",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "address"
@@ -251,6 +256,7 @@ export const WORDS = [
     "word": "answer",
     "slug": "answer",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "answer"
@@ -298,6 +304,7 @@ export const WORDS = [
     "word": "appear",
     "slug": "appear",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "appear"
@@ -345,6 +352,7 @@ export const WORDS = [
     "word": "arrive",
     "slug": "arrive",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "arrive"
@@ -392,6 +400,7 @@ export const WORDS = [
     "word": "believe",
     "slug": "believe",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "believe"
@@ -439,6 +448,7 @@ export const WORDS = [
     "word": "bicycle",
     "slug": "bicycle",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "bicycle"
@@ -485,6 +495,7 @@ export const WORDS = [
     "word": "breath",
     "slug": "breath",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "breath"
@@ -531,6 +542,7 @@ export const WORDS = [
     "word": "breathe",
     "slug": "breathe",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "breathe"
@@ -577,6 +589,7 @@ export const WORDS = [
     "word": "build",
     "slug": "build",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "build"
@@ -624,6 +637,7 @@ export const WORDS = [
     "word": "busy",
     "slug": "busy",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "busy",
@@ -671,6 +685,7 @@ export const WORDS = [
     "word": "business",
     "slug": "business",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "busy",
@@ -718,6 +733,7 @@ export const WORDS = [
     "word": "calendar",
     "slug": "calendar",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "calendar"
@@ -764,6 +780,7 @@ export const WORDS = [
     "word": "caught",
     "slug": "caught",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "caught"
@@ -810,6 +827,7 @@ export const WORDS = [
     "word": "centre",
     "slug": "centre",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "centre"
@@ -856,6 +874,7 @@ export const WORDS = [
     "word": "century",
     "slug": "century",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "century"
@@ -902,6 +921,7 @@ export const WORDS = [
     "word": "certain",
     "slug": "certain",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "certain"
@@ -948,6 +968,7 @@ export const WORDS = [
     "word": "circle",
     "slug": "circle",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "circle"
@@ -994,6 +1015,7 @@ export const WORDS = [
     "word": "complete",
     "slug": "complete",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "complete"
@@ -1041,6 +1063,7 @@ export const WORDS = [
     "word": "consider",
     "slug": "consider",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "consider"
@@ -1087,6 +1110,7 @@ export const WORDS = [
     "word": "continue",
     "slug": "continue",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "continue"
@@ -1133,6 +1157,7 @@ export const WORDS = [
     "word": "decide",
     "slug": "decide",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "decide"
@@ -1180,6 +1205,7 @@ export const WORDS = [
     "word": "describe",
     "slug": "describe",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "describe"
@@ -1228,6 +1254,7 @@ export const WORDS = [
     "word": "different",
     "slug": "different",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "different"
@@ -1275,6 +1302,7 @@ export const WORDS = [
     "word": "difficult",
     "slug": "difficult",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "difficult"
@@ -1322,6 +1350,7 @@ export const WORDS = [
     "word": "disappear",
     "slug": "disappear",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "disappear"
@@ -1369,6 +1398,7 @@ export const WORDS = [
     "word": "early",
     "slug": "early",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "early"
@@ -1416,6 +1446,7 @@ export const WORDS = [
     "word": "earth",
     "slug": "earth",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "earth"
@@ -1462,6 +1493,7 @@ export const WORDS = [
     "word": "eight",
     "slug": "eight",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "eight",
@@ -1510,6 +1542,7 @@ export const WORDS = [
     "word": "eighth",
     "slug": "eighth",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "eight",
@@ -1558,6 +1591,7 @@ export const WORDS = [
     "word": "enough",
     "slug": "enough",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "enough"
@@ -1604,6 +1638,7 @@ export const WORDS = [
     "word": "exercise",
     "slug": "exercise",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "exercise"
@@ -1650,6 +1685,7 @@ export const WORDS = [
     "word": "experience",
     "slug": "experience",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "experience"
@@ -1696,6 +1732,7 @@ export const WORDS = [
     "word": "experiment",
     "slug": "experiment",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "experiment"
@@ -1742,6 +1779,7 @@ export const WORDS = [
     "word": "extreme",
     "slug": "extreme",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "extreme"
@@ -1788,6 +1826,7 @@ export const WORDS = [
     "word": "famous",
     "slug": "famous",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "famous"
@@ -1835,6 +1874,7 @@ export const WORDS = [
     "word": "favourite",
     "slug": "favourite",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "favourite"
@@ -1881,6 +1921,7 @@ export const WORDS = [
     "word": "February",
     "slug": "february",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "February"
@@ -1927,6 +1968,7 @@ export const WORDS = [
     "word": "forward",
     "slug": "forward",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "forward",
@@ -1974,6 +2016,7 @@ export const WORDS = [
     "word": "forwards",
     "slug": "forwards",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "forward",
@@ -2021,6 +2064,7 @@ export const WORDS = [
     "word": "fruit",
     "slug": "fruit",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "fruit"
@@ -2067,6 +2111,7 @@ export const WORDS = [
     "word": "grammar",
     "slug": "grammar",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "grammar"
@@ -2113,6 +2158,7 @@ export const WORDS = [
     "word": "group",
     "slug": "group",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "group"
@@ -2159,6 +2205,7 @@ export const WORDS = [
     "word": "guard",
     "slug": "guard",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "guard"
@@ -2205,6 +2252,7 @@ export const WORDS = [
     "word": "guide",
     "slug": "guide",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "guide"
@@ -2251,6 +2299,7 @@ export const WORDS = [
     "word": "heard",
     "slug": "heard",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "heard"
@@ -2298,6 +2347,7 @@ export const WORDS = [
     "word": "heart",
     "slug": "heart",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "heart"
@@ -2345,6 +2395,7 @@ export const WORDS = [
     "word": "height",
     "slug": "height",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "height"
@@ -2392,6 +2443,7 @@ export const WORDS = [
     "word": "history",
     "slug": "history",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "history"
@@ -2438,6 +2490,7 @@ export const WORDS = [
     "word": "imagine",
     "slug": "imagine",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "imagine"
@@ -2484,6 +2537,7 @@ export const WORDS = [
     "word": "increase",
     "slug": "increase",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "increase"
@@ -2530,6 +2584,7 @@ export const WORDS = [
     "word": "important",
     "slug": "important",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "important"
@@ -2578,6 +2633,7 @@ export const WORDS = [
     "word": "interest",
     "slug": "interest",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "interest"
@@ -2624,6 +2680,7 @@ export const WORDS = [
     "word": "island",
     "slug": "island",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "island"
@@ -2671,6 +2728,7 @@ export const WORDS = [
     "word": "knowledge",
     "slug": "knowledge",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "knowledge"
@@ -2718,6 +2776,7 @@ export const WORDS = [
     "word": "learn",
     "slug": "learn",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "learn"
@@ -2764,6 +2823,7 @@ export const WORDS = [
     "word": "length",
     "slug": "length",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "length"
@@ -2810,6 +2870,7 @@ export const WORDS = [
     "word": "library",
     "slug": "library",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "library"
@@ -2856,6 +2917,7 @@ export const WORDS = [
     "word": "material",
     "slug": "material",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "material"
@@ -2902,6 +2964,7 @@ export const WORDS = [
     "word": "medicine",
     "slug": "medicine",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "medicine"
@@ -2948,6 +3011,7 @@ export const WORDS = [
     "word": "mention",
     "slug": "mention",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "mention"
@@ -2995,6 +3059,7 @@ export const WORDS = [
     "word": "minute",
     "slug": "minute",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "minute"
@@ -3041,6 +3106,7 @@ export const WORDS = [
     "word": "natural",
     "slug": "natural",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "natural"
@@ -3087,6 +3153,7 @@ export const WORDS = [
     "word": "naughty",
     "slug": "naughty",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "naughty"
@@ -3133,6 +3200,7 @@ export const WORDS = [
     "word": "notice",
     "slug": "notice",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "notice"
@@ -3179,6 +3247,7 @@ export const WORDS = [
     "word": "occasion",
     "slug": "occasion",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "occasion",
@@ -3228,6 +3297,7 @@ export const WORDS = [
     "word": "occasionally",
     "slug": "occasionally",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "occasion",
@@ -3277,6 +3347,7 @@ export const WORDS = [
     "word": "often",
     "slug": "often",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "often"
@@ -3323,6 +3394,7 @@ export const WORDS = [
     "word": "opposite",
     "slug": "opposite",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "opposite"
@@ -3370,6 +3442,7 @@ export const WORDS = [
     "word": "ordinary",
     "slug": "ordinary",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "ordinary"
@@ -3416,6 +3489,7 @@ export const WORDS = [
     "word": "particular",
     "slug": "particular",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "particular"
@@ -3462,6 +3536,7 @@ export const WORDS = [
     "word": "peculiar",
     "slug": "peculiar",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "peculiar"
@@ -3508,6 +3583,7 @@ export const WORDS = [
     "word": "perhaps",
     "slug": "perhaps",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "perhaps"
@@ -3554,6 +3630,7 @@ export const WORDS = [
     "word": "popular",
     "slug": "popular",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "popular"
@@ -3600,6 +3677,7 @@ export const WORDS = [
     "word": "position",
     "slug": "position",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "position"
@@ -3647,6 +3725,7 @@ export const WORDS = [
     "word": "possess",
     "slug": "possess",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "possess",
@@ -3695,6 +3774,7 @@ export const WORDS = [
     "word": "possession",
     "slug": "possession",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "possess",
@@ -3744,6 +3824,7 @@ export const WORDS = [
     "word": "possible",
     "slug": "possible",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "possible"
@@ -3792,6 +3873,7 @@ export const WORDS = [
     "word": "potatoes",
     "slug": "potatoes",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "potatoes"
@@ -3838,6 +3920,7 @@ export const WORDS = [
     "word": "pressure",
     "slug": "pressure",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "pressure"
@@ -3885,6 +3968,7 @@ export const WORDS = [
     "word": "probably",
     "slug": "probably",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "probably"
@@ -3931,6 +4015,7 @@ export const WORDS = [
     "word": "promise",
     "slug": "promise",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "promise"
@@ -3977,6 +4062,7 @@ export const WORDS = [
     "word": "purpose",
     "slug": "purpose",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "purpose"
@@ -4023,6 +4109,7 @@ export const WORDS = [
     "word": "quarter",
     "slug": "quarter",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "quarter"
@@ -4069,6 +4156,7 @@ export const WORDS = [
     "word": "question",
     "slug": "question",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "question"
@@ -4116,6 +4204,7 @@ export const WORDS = [
     "word": "recent",
     "slug": "recent",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "recent"
@@ -4163,6 +4252,7 @@ export const WORDS = [
     "word": "regular",
     "slug": "regular",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "regular"
@@ -4209,6 +4299,7 @@ export const WORDS = [
     "word": "reign",
     "slug": "reign",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "reign"
@@ -4255,6 +4346,7 @@ export const WORDS = [
     "word": "remember",
     "slug": "remember",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "remember"
@@ -4302,6 +4394,7 @@ export const WORDS = [
     "word": "sentence",
     "slug": "sentence",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "sentence"
@@ -4348,6 +4441,7 @@ export const WORDS = [
     "word": "separate",
     "slug": "separate",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "separate"
@@ -4394,6 +4488,7 @@ export const WORDS = [
     "word": "special",
     "slug": "special",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "special"
@@ -4440,6 +4535,7 @@ export const WORDS = [
     "word": "straight",
     "slug": "straight",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "straight"
@@ -4486,6 +4582,7 @@ export const WORDS = [
     "word": "strange",
     "slug": "strange",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "strange"
@@ -4532,6 +4629,7 @@ export const WORDS = [
     "word": "strength",
     "slug": "strength",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "strength"
@@ -4578,6 +4676,7 @@ export const WORDS = [
     "word": "suppose",
     "slug": "suppose",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "suppose"
@@ -4625,6 +4724,7 @@ export const WORDS = [
     "word": "surprise",
     "slug": "surprise",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "surprise"
@@ -4671,6 +4771,7 @@ export const WORDS = [
     "word": "therefore",
     "slug": "therefore",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "therefore"
@@ -4717,6 +4818,7 @@ export const WORDS = [
     "word": "though",
     "slug": "though",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "though",
@@ -4764,6 +4866,7 @@ export const WORDS = [
     "word": "although",
     "slug": "although",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "though",
@@ -4811,6 +4914,7 @@ export const WORDS = [
     "word": "thought",
     "slug": "thought",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "thought"
@@ -4857,6 +4961,7 @@ export const WORDS = [
     "word": "through",
     "slug": "through",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "through"
@@ -4903,6 +5008,7 @@ export const WORDS = [
     "word": "various",
     "slug": "various",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "various"
@@ -4950,6 +5056,7 @@ export const WORDS = [
     "word": "weight",
     "slug": "weight",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "weight"
@@ -4997,6 +5104,7 @@ export const WORDS = [
     "word": "woman",
     "slug": "woman",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "woman",
@@ -5044,6 +5152,7 @@ export const WORDS = [
     "word": "women",
     "slug": "women",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "woman",
@@ -5091,6 +5200,7 @@ export const WORDS = [
     "word": "accommodate",
     "slug": "accommodate",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "accommodate"
@@ -5138,6 +5248,7 @@ export const WORDS = [
     "word": "accompany",
     "slug": "accompany",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "accompany"
@@ -5185,6 +5296,7 @@ export const WORDS = [
     "word": "according",
     "slug": "according",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "according"
@@ -5232,6 +5344,7 @@ export const WORDS = [
     "word": "achieve",
     "slug": "achieve",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "achieve"
@@ -5279,6 +5392,7 @@ export const WORDS = [
     "word": "aggressive",
     "slug": "aggressive",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "aggressive"
@@ -5326,6 +5440,7 @@ export const WORDS = [
     "word": "amateur",
     "slug": "amateur",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "amateur"
@@ -5372,6 +5487,7 @@ export const WORDS = [
     "word": "ancient",
     "slug": "ancient",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "ancient"
@@ -5419,6 +5535,7 @@ export const WORDS = [
     "word": "apparent",
     "slug": "apparent",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "apparent"
@@ -5466,6 +5583,7 @@ export const WORDS = [
     "word": "appreciate",
     "slug": "appreciate",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "appreciate"
@@ -5513,6 +5631,7 @@ export const WORDS = [
     "word": "attached",
     "slug": "attached",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "attached"
@@ -5560,6 +5679,7 @@ export const WORDS = [
     "word": "available",
     "slug": "available",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "available"
@@ -5607,6 +5727,7 @@ export const WORDS = [
     "word": "average",
     "slug": "average",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "average"
@@ -5653,6 +5774,7 @@ export const WORDS = [
     "word": "awkward",
     "slug": "awkward",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "awkward"
@@ -5699,6 +5821,7 @@ export const WORDS = [
     "word": "bargain",
     "slug": "bargain",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "bargain"
@@ -5745,6 +5868,7 @@ export const WORDS = [
     "word": "bruise",
     "slug": "bruise",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "bruise"
@@ -5792,6 +5916,7 @@ export const WORDS = [
     "word": "category",
     "slug": "category",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "category"
@@ -5838,6 +5963,7 @@ export const WORDS = [
     "word": "cemetery",
     "slug": "cemetery",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "cemetery"
@@ -5884,6 +6010,7 @@ export const WORDS = [
     "word": "committee",
     "slug": "committee",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "committee"
@@ -5931,6 +6058,7 @@ export const WORDS = [
     "word": "communicate",
     "slug": "communicate",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "communicate"
@@ -5978,6 +6106,7 @@ export const WORDS = [
     "word": "community",
     "slug": "community",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "community"
@@ -6025,6 +6154,7 @@ export const WORDS = [
     "word": "competition",
     "slug": "competition",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "competition"
@@ -6072,6 +6202,7 @@ export const WORDS = [
     "word": "conscience",
     "slug": "conscience",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "conscience"
@@ -6119,6 +6250,7 @@ export const WORDS = [
     "word": "conscious",
     "slug": "conscious",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "conscious"
@@ -6166,6 +6298,7 @@ export const WORDS = [
     "word": "controversy",
     "slug": "controversy",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "controversy"
@@ -6212,6 +6345,7 @@ export const WORDS = [
     "word": "convenience",
     "slug": "convenience",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "convenience"
@@ -6258,6 +6392,7 @@ export const WORDS = [
     "word": "correspond",
     "slug": "correspond",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "correspond"
@@ -6305,6 +6440,7 @@ export const WORDS = [
     "word": "criticise",
     "slug": "criticise",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "criticise"
@@ -6352,6 +6488,7 @@ export const WORDS = [
     "word": "curiosity",
     "slug": "curiosity",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "curiosity"
@@ -6398,6 +6535,7 @@ export const WORDS = [
     "word": "definite",
     "slug": "definite",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "definite"
@@ -6444,6 +6582,7 @@ export const WORDS = [
     "word": "desperate",
     "slug": "desperate",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "desperate"
@@ -6490,6 +6629,7 @@ export const WORDS = [
     "word": "determined",
     "slug": "determined",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "determined"
@@ -6536,6 +6676,7 @@ export const WORDS = [
     "word": "develop",
     "slug": "develop",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "develop"
@@ -6583,6 +6724,7 @@ export const WORDS = [
     "word": "dictionary",
     "slug": "dictionary",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "dictionary"
@@ -6629,6 +6771,7 @@ export const WORDS = [
     "word": "disastrous",
     "slug": "disastrous",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "disastrous"
@@ -6676,6 +6819,7 @@ export const WORDS = [
     "word": "embarrass",
     "slug": "embarrass",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "embarrass"
@@ -6723,6 +6867,7 @@ export const WORDS = [
     "word": "environment",
     "slug": "environment",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "environment"
@@ -6769,6 +6914,7 @@ export const WORDS = [
     "word": "equip",
     "slug": "equip",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "equip",
@@ -6817,6 +6963,7 @@ export const WORDS = [
     "word": "equipped",
     "slug": "equipped",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "equip",
@@ -6866,6 +7013,7 @@ export const WORDS = [
     "word": "equipment",
     "slug": "equipment",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "equip",
@@ -6914,6 +7062,7 @@ export const WORDS = [
     "word": "especially",
     "slug": "especially",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "especially"
@@ -6962,6 +7111,7 @@ export const WORDS = [
     "word": "exaggerate",
     "slug": "exaggerate",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "exaggerate"
@@ -7009,6 +7159,7 @@ export const WORDS = [
     "word": "excellent",
     "slug": "excellent",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "excellent"
@@ -7056,6 +7207,7 @@ export const WORDS = [
     "word": "existence",
     "slug": "existence",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "existence"
@@ -7102,6 +7254,7 @@ export const WORDS = [
     "word": "explanation",
     "slug": "explanation",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "explanation"
@@ -7149,6 +7302,7 @@ export const WORDS = [
     "word": "familiar",
     "slug": "familiar",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "familiar"
@@ -7195,6 +7349,7 @@ export const WORDS = [
     "word": "foreign",
     "slug": "foreign",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "foreign"
@@ -7241,6 +7396,7 @@ export const WORDS = [
     "word": "forty",
     "slug": "forty",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "forty"
@@ -7287,6 +7443,7 @@ export const WORDS = [
     "word": "frequently",
     "slug": "frequently",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "frequently"
@@ -7334,6 +7491,7 @@ export const WORDS = [
     "word": "government",
     "slug": "government",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "government"
@@ -7380,6 +7538,7 @@ export const WORDS = [
     "word": "guarantee",
     "slug": "guarantee",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "guarantee"
@@ -7426,6 +7585,7 @@ export const WORDS = [
     "word": "harass",
     "slug": "harass",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "harass"
@@ -7473,6 +7633,7 @@ export const WORDS = [
     "word": "hindrance",
     "slug": "hindrance",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "hindrance"
@@ -7519,6 +7680,7 @@ export const WORDS = [
     "word": "identity",
     "slug": "identity",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "identity"
@@ -7565,6 +7727,7 @@ export const WORDS = [
     "word": "immediate",
     "slug": "immediate",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "immediate",
@@ -7614,6 +7777,7 @@ export const WORDS = [
     "word": "immediately",
     "slug": "immediately",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "immediate",
@@ -7664,6 +7828,7 @@ export const WORDS = [
     "word": "individual",
     "slug": "individual",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "individual"
@@ -7710,6 +7875,7 @@ export const WORDS = [
     "word": "interfere",
     "slug": "interfere",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "interfere"
@@ -7756,6 +7922,7 @@ export const WORDS = [
     "word": "interrupt",
     "slug": "interrupt",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "interrupt"
@@ -7803,6 +7970,7 @@ export const WORDS = [
     "word": "language",
     "slug": "language",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "language"
@@ -7849,6 +8017,7 @@ export const WORDS = [
     "word": "leisure",
     "slug": "leisure",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "leisure"
@@ -7895,6 +8064,7 @@ export const WORDS = [
     "word": "lightning",
     "slug": "lightning",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "lightning"
@@ -7941,6 +8111,7 @@ export const WORDS = [
     "word": "marvellous",
     "slug": "marvellous",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "marvellous"
@@ -7989,6 +8160,7 @@ export const WORDS = [
     "word": "mischievous",
     "slug": "mischievous",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "mischievous"
@@ -8036,6 +8208,7 @@ export const WORDS = [
     "word": "muscle",
     "slug": "muscle",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "muscle"
@@ -8083,6 +8256,7 @@ export const WORDS = [
     "word": "necessary",
     "slug": "necessary",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "necessary"
@@ -8130,6 +8304,7 @@ export const WORDS = [
     "word": "neighbour",
     "slug": "neighbour",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "neighbour"
@@ -8176,6 +8351,7 @@ export const WORDS = [
     "word": "nuisance",
     "slug": "nuisance",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "nuisance"
@@ -8222,6 +8398,7 @@ export const WORDS = [
     "word": "occupy",
     "slug": "occupy",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "occupy"
@@ -8269,6 +8446,7 @@ export const WORDS = [
     "word": "occur",
     "slug": "occur",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "occur"
@@ -8316,6 +8494,7 @@ export const WORDS = [
     "word": "opportunity",
     "slug": "opportunity",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "opportunity"
@@ -8364,6 +8543,7 @@ export const WORDS = [
     "word": "parliament",
     "slug": "parliament",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "parliament"
@@ -8410,6 +8590,7 @@ export const WORDS = [
     "word": "persuade",
     "slug": "persuade",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "persuade"
@@ -8456,6 +8637,7 @@ export const WORDS = [
     "word": "physical",
     "slug": "physical",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "physical"
@@ -8502,6 +8684,7 @@ export const WORDS = [
     "word": "prejudice",
     "slug": "prejudice",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "prejudice"
@@ -8549,6 +8732,7 @@ export const WORDS = [
     "word": "privilege",
     "slug": "privilege",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "privilege"
@@ -8595,6 +8779,7 @@ export const WORDS = [
     "word": "profession",
     "slug": "profession",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "profession"
@@ -8642,6 +8827,7 @@ export const WORDS = [
     "word": "programme",
     "slug": "programme",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "programme"
@@ -8689,6 +8875,7 @@ export const WORDS = [
     "word": "pronunciation",
     "slug": "pronunciation",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "pronunciation"
@@ -8736,6 +8923,7 @@ export const WORDS = [
     "word": "queue",
     "slug": "queue",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "queue"
@@ -8782,6 +8970,7 @@ export const WORDS = [
     "word": "recognise",
     "slug": "recognise",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "recognise"
@@ -8830,6 +9019,7 @@ export const WORDS = [
     "word": "recommend",
     "slug": "recommend",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "recommend"
@@ -8878,6 +9068,7 @@ export const WORDS = [
     "word": "relevant",
     "slug": "relevant",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "relevant"
@@ -8924,6 +9115,7 @@ export const WORDS = [
     "word": "restaurant",
     "slug": "restaurant",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "restaurant"
@@ -8970,6 +9162,7 @@ export const WORDS = [
     "word": "rhyme",
     "slug": "rhyme",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "rhyme"
@@ -9016,6 +9209,7 @@ export const WORDS = [
     "word": "rhythm",
     "slug": "rhythm",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "rhythm"
@@ -9062,6 +9256,7 @@ export const WORDS = [
     "word": "sacrifice",
     "slug": "sacrifice",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "sacrifice"
@@ -9108,6 +9303,7 @@ export const WORDS = [
     "word": "secretary",
     "slug": "secretary",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "secretary"
@@ -9154,6 +9350,7 @@ export const WORDS = [
     "word": "shoulder",
     "slug": "shoulder",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "shoulder"
@@ -9200,6 +9397,7 @@ export const WORDS = [
     "word": "signature",
     "slug": "signature",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "signature"
@@ -9246,6 +9444,7 @@ export const WORDS = [
     "word": "sincere",
     "slug": "sincere",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "sincere",
@@ -9293,6 +9492,7 @@ export const WORDS = [
     "word": "sincerely",
     "slug": "sincerely",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "sincere",
@@ -9341,6 +9541,7 @@ export const WORDS = [
     "word": "soldier",
     "slug": "soldier",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "soldier"
@@ -9387,6 +9588,7 @@ export const WORDS = [
     "word": "stomach",
     "slug": "stomach",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "stomach"
@@ -9433,6 +9635,7 @@ export const WORDS = [
     "word": "sufficient",
     "slug": "sufficient",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "sufficient"
@@ -9481,6 +9684,7 @@ export const WORDS = [
     "word": "suggest",
     "slug": "suggest",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "suggest"
@@ -9528,6 +9732,7 @@ export const WORDS = [
     "word": "symbol",
     "slug": "symbol",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "symbol"
@@ -9574,6 +9779,7 @@ export const WORDS = [
     "word": "system",
     "slug": "system",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "system"
@@ -9620,6 +9826,7 @@ export const WORDS = [
     "word": "temperature",
     "slug": "temperature",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "temperature"
@@ -9666,6 +9873,7 @@ export const WORDS = [
     "word": "thorough",
     "slug": "thorough",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "thorough"
@@ -9712,6 +9920,7 @@ export const WORDS = [
     "word": "twelfth",
     "slug": "twelfth",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "twelfth"
@@ -9758,6 +9967,7 @@ export const WORDS = [
     "word": "variety",
     "slug": "variety",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "variety"
@@ -9804,6 +10014,7 @@ export const WORDS = [
     "word": "vegetable",
     "slug": "vegetable",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "vegetable"
@@ -9850,6 +10061,7 @@ export const WORDS = [
     "word": "vehicle",
     "slug": "vehicle",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "vehicle"
@@ -9896,6 +10108,7 @@ export const WORDS = [
     "word": "yacht",
     "slug": "yacht",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "yacht"
@@ -9942,6 +10155,7 @@ export const WORDS = [
     "word": "divide",
     "slug": "divide",
     "spellingPool": "extra",
+    "coverageTier": "enrichment-extra",
     "yearLabel": "Extra",
     "familyWords": [
       "divide",
@@ -10017,6 +10231,7 @@ export const WORDS = [
     "word": "collide",
     "slug": "collide",
     "spellingPool": "extra",
+    "coverageTier": "enrichment-extra",
     "yearLabel": "Extra",
     "familyWords": [
       "collide",
@@ -10073,6 +10288,7 @@ export const WORDS = [
     "word": "explode",
     "slug": "explode",
     "spellingPool": "extra",
+    "coverageTier": "enrichment-extra",
     "yearLabel": "Extra",
     "familyWords": [
       "explode",
@@ -10148,6 +10364,7 @@ export const WORDS = [
     "word": "corrode",
     "slug": "corrode",
     "spellingPool": "extra",
+    "coverageTier": "enrichment-extra",
     "yearLabel": "Extra",
     "familyWords": [
       "corrode",
@@ -10223,6 +10440,7 @@ export const WORDS = [
     "word": "conclude",
     "slug": "conclude",
     "spellingPool": "extra",
+    "coverageTier": "enrichment-extra",
     "yearLabel": "Extra",
     "familyWords": [
       "conclude",
@@ -10279,6 +10497,7 @@ export const WORDS = [
     "word": "extend",
     "slug": "extend",
     "spellingPool": "extra",
+    "coverageTier": "enrichment-extra",
     "yearLabel": "Extra",
     "familyWords": [
       "extend",
@@ -10354,6 +10573,7 @@ export const WORDS = [
     "word": "comprehend",
     "slug": "comprehend",
     "spellingPool": "extra",
+    "coverageTier": "enrichment-extra",
     "yearLabel": "Extra",
     "familyWords": [
       "comprehend",
@@ -10410,6 +10630,7 @@ export const WORDS = [
     "word": "evade",
     "slug": "evade",
     "spellingPool": "extra",
+    "coverageTier": "enrichment-extra",
     "yearLabel": "Extra",
     "familyWords": [
       "evade",
@@ -10485,6 +10706,7 @@ export const WORDS = [
     "word": "intrude",
     "slug": "intrude",
     "spellingPool": "extra",
+    "coverageTier": "enrichment-extra",
     "yearLabel": "Extra",
     "familyWords": [
       "intrude",
@@ -10560,6 +10782,7 @@ export const WORDS = [
     "word": "interlude",
     "slug": "interlude",
     "spellingPool": "extra",
+    "coverageTier": "enrichment-extra",
     "yearLabel": "Extra",
     "familyWords": [
       "interlude",
@@ -10616,6 +10839,7 @@ export const WORDS = [
     "word": "classification",
     "slug": "classification",
     "spellingPool": "extra",
+    "coverageTier": "enrichment-extra",
     "yearLabel": "Extra",
     "familyWords": [
       "classification",
@@ -10690,6 +10914,7 @@ export const WORDS = [
     "word": "backbone",
     "slug": "backbone",
     "spellingPool": "extra",
+    "coverageTier": "enrichment-extra",
     "yearLabel": "Extra",
     "familyWords": [
       "backbone",
@@ -10746,6 +10971,7 @@ export const WORDS = [
     "word": "skeleton",
     "slug": "skeleton",
     "spellingPool": "extra",
+    "coverageTier": "enrichment-extra",
     "yearLabel": "Extra",
     "familyWords": [
       "skeleton",
@@ -10802,6 +11028,7 @@ export const WORDS = [
     "word": "cold-blooded",
     "slug": "cold-blooded",
     "spellingPool": "extra",
+    "coverageTier": "enrichment-extra",
     "yearLabel": "Extra",
     "familyWords": [
       "cold-blooded"
@@ -10838,6 +11065,7 @@ export const WORDS = [
     "word": "amphibians",
     "slug": "amphibians",
     "spellingPool": "extra",
+    "coverageTier": "enrichment-extra",
     "yearLabel": "Extra",
     "familyWords": [
       "amphibians",
@@ -10894,6 +11122,7 @@ export const WORDS = [
     "word": "metamorphosis",
     "slug": "metamorphosis",
     "spellingPool": "extra",
+    "coverageTier": "enrichment-extra",
     "yearLabel": "Extra",
     "familyWords": [
       "metamorphosis",
@@ -10950,6 +11179,7 @@ export const WORDS = [
     "word": "reptiles",
     "slug": "reptiles",
     "spellingPool": "extra",
+    "coverageTier": "enrichment-extra",
     "yearLabel": "Extra",
     "familyWords": [
       "reptiles",
@@ -11006,6 +11236,7 @@ export const WORDS = [
     "word": "mammals",
     "slug": "mammals",
     "spellingPool": "extra",
+    "coverageTier": "enrichment-extra",
     "yearLabel": "Extra",
     "familyWords": [
       "mammals",
@@ -11062,6 +11293,7 @@ export const WORDS = [
     "word": "vertebrates",
     "slug": "vertebrates",
     "spellingPool": "extra",
+    "coverageTier": "enrichment-extra",
     "yearLabel": "Extra",
     "familyWords": [
       "vertebrates",
@@ -11118,6 +11350,7 @@ export const WORDS = [
     "word": "arachnid",
     "slug": "arachnid",
     "spellingPool": "extra",
+    "coverageTier": "enrichment-extra",
     "yearLabel": "Extra",
     "familyWords": [
       "arachnid",
@@ -11174,6 +11407,7 @@ export const WORDS = [
     "word": "mollusc",
     "slug": "mollusc",
     "spellingPool": "extra",
+    "coverageTier": "enrichment-extra",
     "yearLabel": "Extra",
     "familyWords": [
       "mollusc",
@@ -11230,6 +11464,7 @@ export const WORDS = [
     "word": "botanist",
     "slug": "botanist",
     "spellingPool": "extra",
+    "coverageTier": "enrichment-extra",
     "yearLabel": "Extra",
     "familyWords": [
       "botanist",
@@ -11304,6 +11539,7 @@ export const WORDS = [
     "word": "flowering",
     "slug": "flowering",
     "spellingPool": "extra",
+    "coverageTier": "enrichment-extra",
     "yearLabel": "Extra",
     "familyWords": [
       "flowering",
@@ -11378,6 +11614,7 @@ export const WORDS = [
     "word": "abscess",
     "slug": "abscess",
     "spellingPool": "extra",
+    "coverageTier": "enrichment-extra",
     "yearLabel": "Extra",
     "familyWords": [
       "abscess",
@@ -11455,6 +11692,7 @@ export const WORDS = [
     "word": "ascend",
     "slug": "ascend",
     "spellingPool": "extra",
+    "coverageTier": "enrichment-extra",
     "yearLabel": "Extra",
     "familyWords": [
       "ascend",
@@ -11533,6 +11771,7 @@ export const WORDS = [
     "word": "descend",
     "slug": "descend",
     "spellingPool": "extra",
+    "coverageTier": "enrichment-extra",
     "yearLabel": "Extra",
     "familyWords": [
       "descend",
@@ -11611,6 +11850,7 @@ export const WORDS = [
     "word": "fascinate",
     "slug": "fascinate",
     "spellingPool": "extra",
+    "coverageTier": "enrichment-extra",
     "yearLabel": "Extra",
     "familyWords": [
       "fascinate",
@@ -11689,6 +11929,7 @@ export const WORDS = [
     "word": "scene",
     "slug": "scene",
     "spellingPool": "extra",
+    "coverageTier": "enrichment-extra",
     "yearLabel": "Extra",
     "familyWords": [
       "scene",
@@ -11766,6 +12007,7 @@ export const WORDS = [
     "word": "school",
     "slug": "school",
     "spellingPool": "extra",
+    "coverageTier": "enrichment-extra",
     "yearLabel": "Extra",
     "familyWords": [
       "school",
@@ -11841,6 +12083,7 @@ export const WORDS = [
     "word": "science",
     "slug": "science",
     "spellingPool": "extra",
+    "coverageTier": "enrichment-extra",
     "yearLabel": "Extra",
     "familyWords": [
       "science",
@@ -11918,6 +12161,7 @@ export const WORDS = [
     "word": "scissors",
     "slug": "scissors",
     "spellingPool": "extra",
+    "coverageTier": "enrichment-extra",
     "yearLabel": "Extra",
     "familyWords": [
       "scissors",
@@ -11976,6 +12220,7 @@ export const WORDS = [
     "word": "scented",
     "slug": "scented",
     "spellingPool": "extra",
+    "coverageTier": "enrichment-extra",
     "yearLabel": "Extra",
     "familyWords": [
       "scented",
@@ -12054,6 +12299,7 @@ export const WORDS = [
     "word": "crescent",
     "slug": "crescent",
     "spellingPool": "extra",
+    "coverageTier": "enrichment-extra",
     "yearLabel": "Extra",
     "familyWords": [
       "crescent",
@@ -12134,6 +12380,7 @@ export const WORD_BY_SLUG = {
     "word": "accident",
     "slug": "accident",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "accident",
@@ -12182,6 +12429,7 @@ export const WORD_BY_SLUG = {
     "word": "accidentally",
     "slug": "accidentally",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "accident",
@@ -12231,6 +12479,7 @@ export const WORD_BY_SLUG = {
     "word": "actual",
     "slug": "actual",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "actual",
@@ -12278,6 +12527,7 @@ export const WORD_BY_SLUG = {
     "word": "actually",
     "slug": "actually",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "actual",
@@ -12326,6 +12576,7 @@ export const WORD_BY_SLUG = {
     "word": "address",
     "slug": "address",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "address"
@@ -12373,6 +12624,7 @@ export const WORD_BY_SLUG = {
     "word": "answer",
     "slug": "answer",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "answer"
@@ -12420,6 +12672,7 @@ export const WORD_BY_SLUG = {
     "word": "appear",
     "slug": "appear",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "appear"
@@ -12467,6 +12720,7 @@ export const WORD_BY_SLUG = {
     "word": "arrive",
     "slug": "arrive",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "arrive"
@@ -12514,6 +12768,7 @@ export const WORD_BY_SLUG = {
     "word": "believe",
     "slug": "believe",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "believe"
@@ -12561,6 +12816,7 @@ export const WORD_BY_SLUG = {
     "word": "bicycle",
     "slug": "bicycle",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "bicycle"
@@ -12607,6 +12863,7 @@ export const WORD_BY_SLUG = {
     "word": "breath",
     "slug": "breath",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "breath"
@@ -12653,6 +12910,7 @@ export const WORD_BY_SLUG = {
     "word": "breathe",
     "slug": "breathe",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "breathe"
@@ -12699,6 +12957,7 @@ export const WORD_BY_SLUG = {
     "word": "build",
     "slug": "build",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "build"
@@ -12746,6 +13005,7 @@ export const WORD_BY_SLUG = {
     "word": "busy",
     "slug": "busy",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "busy",
@@ -12793,6 +13053,7 @@ export const WORD_BY_SLUG = {
     "word": "business",
     "slug": "business",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "busy",
@@ -12840,6 +13101,7 @@ export const WORD_BY_SLUG = {
     "word": "calendar",
     "slug": "calendar",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "calendar"
@@ -12886,6 +13148,7 @@ export const WORD_BY_SLUG = {
     "word": "caught",
     "slug": "caught",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "caught"
@@ -12932,6 +13195,7 @@ export const WORD_BY_SLUG = {
     "word": "centre",
     "slug": "centre",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "centre"
@@ -12978,6 +13242,7 @@ export const WORD_BY_SLUG = {
     "word": "century",
     "slug": "century",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "century"
@@ -13024,6 +13289,7 @@ export const WORD_BY_SLUG = {
     "word": "certain",
     "slug": "certain",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "certain"
@@ -13070,6 +13336,7 @@ export const WORD_BY_SLUG = {
     "word": "circle",
     "slug": "circle",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "circle"
@@ -13116,6 +13383,7 @@ export const WORD_BY_SLUG = {
     "word": "complete",
     "slug": "complete",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "complete"
@@ -13163,6 +13431,7 @@ export const WORD_BY_SLUG = {
     "word": "consider",
     "slug": "consider",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "consider"
@@ -13209,6 +13478,7 @@ export const WORD_BY_SLUG = {
     "word": "continue",
     "slug": "continue",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "continue"
@@ -13255,6 +13525,7 @@ export const WORD_BY_SLUG = {
     "word": "decide",
     "slug": "decide",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "decide"
@@ -13302,6 +13573,7 @@ export const WORD_BY_SLUG = {
     "word": "describe",
     "slug": "describe",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "describe"
@@ -13350,6 +13622,7 @@ export const WORD_BY_SLUG = {
     "word": "different",
     "slug": "different",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "different"
@@ -13397,6 +13670,7 @@ export const WORD_BY_SLUG = {
     "word": "difficult",
     "slug": "difficult",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "difficult"
@@ -13444,6 +13718,7 @@ export const WORD_BY_SLUG = {
     "word": "disappear",
     "slug": "disappear",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "disappear"
@@ -13491,6 +13766,7 @@ export const WORD_BY_SLUG = {
     "word": "early",
     "slug": "early",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "early"
@@ -13538,6 +13814,7 @@ export const WORD_BY_SLUG = {
     "word": "earth",
     "slug": "earth",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "earth"
@@ -13584,6 +13861,7 @@ export const WORD_BY_SLUG = {
     "word": "eight",
     "slug": "eight",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "eight",
@@ -13632,6 +13910,7 @@ export const WORD_BY_SLUG = {
     "word": "eighth",
     "slug": "eighth",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "eight",
@@ -13680,6 +13959,7 @@ export const WORD_BY_SLUG = {
     "word": "enough",
     "slug": "enough",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "enough"
@@ -13726,6 +14006,7 @@ export const WORD_BY_SLUG = {
     "word": "exercise",
     "slug": "exercise",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "exercise"
@@ -13772,6 +14053,7 @@ export const WORD_BY_SLUG = {
     "word": "experience",
     "slug": "experience",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "experience"
@@ -13818,6 +14100,7 @@ export const WORD_BY_SLUG = {
     "word": "experiment",
     "slug": "experiment",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "experiment"
@@ -13864,6 +14147,7 @@ export const WORD_BY_SLUG = {
     "word": "extreme",
     "slug": "extreme",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "extreme"
@@ -13910,6 +14194,7 @@ export const WORD_BY_SLUG = {
     "word": "famous",
     "slug": "famous",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "famous"
@@ -13957,6 +14242,7 @@ export const WORD_BY_SLUG = {
     "word": "favourite",
     "slug": "favourite",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "favourite"
@@ -14003,6 +14289,7 @@ export const WORD_BY_SLUG = {
     "word": "February",
     "slug": "february",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "February"
@@ -14049,6 +14336,7 @@ export const WORD_BY_SLUG = {
     "word": "forward",
     "slug": "forward",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "forward",
@@ -14096,6 +14384,7 @@ export const WORD_BY_SLUG = {
     "word": "forwards",
     "slug": "forwards",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "forward",
@@ -14143,6 +14432,7 @@ export const WORD_BY_SLUG = {
     "word": "fruit",
     "slug": "fruit",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "fruit"
@@ -14189,6 +14479,7 @@ export const WORD_BY_SLUG = {
     "word": "grammar",
     "slug": "grammar",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "grammar"
@@ -14235,6 +14526,7 @@ export const WORD_BY_SLUG = {
     "word": "group",
     "slug": "group",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "group"
@@ -14281,6 +14573,7 @@ export const WORD_BY_SLUG = {
     "word": "guard",
     "slug": "guard",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "guard"
@@ -14327,6 +14620,7 @@ export const WORD_BY_SLUG = {
     "word": "guide",
     "slug": "guide",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "guide"
@@ -14373,6 +14667,7 @@ export const WORD_BY_SLUG = {
     "word": "heard",
     "slug": "heard",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "heard"
@@ -14420,6 +14715,7 @@ export const WORD_BY_SLUG = {
     "word": "heart",
     "slug": "heart",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "heart"
@@ -14467,6 +14763,7 @@ export const WORD_BY_SLUG = {
     "word": "height",
     "slug": "height",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "height"
@@ -14514,6 +14811,7 @@ export const WORD_BY_SLUG = {
     "word": "history",
     "slug": "history",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "history"
@@ -14560,6 +14858,7 @@ export const WORD_BY_SLUG = {
     "word": "imagine",
     "slug": "imagine",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "imagine"
@@ -14606,6 +14905,7 @@ export const WORD_BY_SLUG = {
     "word": "increase",
     "slug": "increase",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "increase"
@@ -14652,6 +14952,7 @@ export const WORD_BY_SLUG = {
     "word": "important",
     "slug": "important",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "important"
@@ -14700,6 +15001,7 @@ export const WORD_BY_SLUG = {
     "word": "interest",
     "slug": "interest",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "interest"
@@ -14746,6 +15048,7 @@ export const WORD_BY_SLUG = {
     "word": "island",
     "slug": "island",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "island"
@@ -14793,6 +15096,7 @@ export const WORD_BY_SLUG = {
     "word": "knowledge",
     "slug": "knowledge",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "knowledge"
@@ -14840,6 +15144,7 @@ export const WORD_BY_SLUG = {
     "word": "learn",
     "slug": "learn",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "learn"
@@ -14886,6 +15191,7 @@ export const WORD_BY_SLUG = {
     "word": "length",
     "slug": "length",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "length"
@@ -14932,6 +15238,7 @@ export const WORD_BY_SLUG = {
     "word": "library",
     "slug": "library",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "library"
@@ -14978,6 +15285,7 @@ export const WORD_BY_SLUG = {
     "word": "material",
     "slug": "material",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "material"
@@ -15024,6 +15332,7 @@ export const WORD_BY_SLUG = {
     "word": "medicine",
     "slug": "medicine",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "medicine"
@@ -15070,6 +15379,7 @@ export const WORD_BY_SLUG = {
     "word": "mention",
     "slug": "mention",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "mention"
@@ -15117,6 +15427,7 @@ export const WORD_BY_SLUG = {
     "word": "minute",
     "slug": "minute",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "minute"
@@ -15163,6 +15474,7 @@ export const WORD_BY_SLUG = {
     "word": "natural",
     "slug": "natural",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "natural"
@@ -15209,6 +15521,7 @@ export const WORD_BY_SLUG = {
     "word": "naughty",
     "slug": "naughty",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "naughty"
@@ -15255,6 +15568,7 @@ export const WORD_BY_SLUG = {
     "word": "notice",
     "slug": "notice",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "notice"
@@ -15301,6 +15615,7 @@ export const WORD_BY_SLUG = {
     "word": "occasion",
     "slug": "occasion",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "occasion",
@@ -15350,6 +15665,7 @@ export const WORD_BY_SLUG = {
     "word": "occasionally",
     "slug": "occasionally",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "occasion",
@@ -15399,6 +15715,7 @@ export const WORD_BY_SLUG = {
     "word": "often",
     "slug": "often",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "often"
@@ -15445,6 +15762,7 @@ export const WORD_BY_SLUG = {
     "word": "opposite",
     "slug": "opposite",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "opposite"
@@ -15492,6 +15810,7 @@ export const WORD_BY_SLUG = {
     "word": "ordinary",
     "slug": "ordinary",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "ordinary"
@@ -15538,6 +15857,7 @@ export const WORD_BY_SLUG = {
     "word": "particular",
     "slug": "particular",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "particular"
@@ -15584,6 +15904,7 @@ export const WORD_BY_SLUG = {
     "word": "peculiar",
     "slug": "peculiar",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "peculiar"
@@ -15630,6 +15951,7 @@ export const WORD_BY_SLUG = {
     "word": "perhaps",
     "slug": "perhaps",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "perhaps"
@@ -15676,6 +15998,7 @@ export const WORD_BY_SLUG = {
     "word": "popular",
     "slug": "popular",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "popular"
@@ -15722,6 +16045,7 @@ export const WORD_BY_SLUG = {
     "word": "position",
     "slug": "position",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "position"
@@ -15769,6 +16093,7 @@ export const WORD_BY_SLUG = {
     "word": "possess",
     "slug": "possess",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "possess",
@@ -15817,6 +16142,7 @@ export const WORD_BY_SLUG = {
     "word": "possession",
     "slug": "possession",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "possess",
@@ -15866,6 +16192,7 @@ export const WORD_BY_SLUG = {
     "word": "possible",
     "slug": "possible",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "possible"
@@ -15914,6 +16241,7 @@ export const WORD_BY_SLUG = {
     "word": "potatoes",
     "slug": "potatoes",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "potatoes"
@@ -15960,6 +16288,7 @@ export const WORD_BY_SLUG = {
     "word": "pressure",
     "slug": "pressure",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "pressure"
@@ -16007,6 +16336,7 @@ export const WORD_BY_SLUG = {
     "word": "probably",
     "slug": "probably",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "probably"
@@ -16053,6 +16383,7 @@ export const WORD_BY_SLUG = {
     "word": "promise",
     "slug": "promise",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "promise"
@@ -16099,6 +16430,7 @@ export const WORD_BY_SLUG = {
     "word": "purpose",
     "slug": "purpose",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "purpose"
@@ -16145,6 +16477,7 @@ export const WORD_BY_SLUG = {
     "word": "quarter",
     "slug": "quarter",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "quarter"
@@ -16191,6 +16524,7 @@ export const WORD_BY_SLUG = {
     "word": "question",
     "slug": "question",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "question"
@@ -16238,6 +16572,7 @@ export const WORD_BY_SLUG = {
     "word": "recent",
     "slug": "recent",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "recent"
@@ -16285,6 +16620,7 @@ export const WORD_BY_SLUG = {
     "word": "regular",
     "slug": "regular",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "regular"
@@ -16331,6 +16667,7 @@ export const WORD_BY_SLUG = {
     "word": "reign",
     "slug": "reign",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "reign"
@@ -16377,6 +16714,7 @@ export const WORD_BY_SLUG = {
     "word": "remember",
     "slug": "remember",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "remember"
@@ -16424,6 +16762,7 @@ export const WORD_BY_SLUG = {
     "word": "sentence",
     "slug": "sentence",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "sentence"
@@ -16470,6 +16809,7 @@ export const WORD_BY_SLUG = {
     "word": "separate",
     "slug": "separate",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "separate"
@@ -16516,6 +16856,7 @@ export const WORD_BY_SLUG = {
     "word": "special",
     "slug": "special",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "special"
@@ -16562,6 +16903,7 @@ export const WORD_BY_SLUG = {
     "word": "straight",
     "slug": "straight",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "straight"
@@ -16608,6 +16950,7 @@ export const WORD_BY_SLUG = {
     "word": "strange",
     "slug": "strange",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "strange"
@@ -16654,6 +16997,7 @@ export const WORD_BY_SLUG = {
     "word": "strength",
     "slug": "strength",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "strength"
@@ -16700,6 +17044,7 @@ export const WORD_BY_SLUG = {
     "word": "suppose",
     "slug": "suppose",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "suppose"
@@ -16747,6 +17092,7 @@ export const WORD_BY_SLUG = {
     "word": "surprise",
     "slug": "surprise",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "surprise"
@@ -16793,6 +17139,7 @@ export const WORD_BY_SLUG = {
     "word": "therefore",
     "slug": "therefore",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "therefore"
@@ -16839,6 +17186,7 @@ export const WORD_BY_SLUG = {
     "word": "though",
     "slug": "though",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "though",
@@ -16886,6 +17234,7 @@ export const WORD_BY_SLUG = {
     "word": "although",
     "slug": "although",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "though",
@@ -16933,6 +17282,7 @@ export const WORD_BY_SLUG = {
     "word": "thought",
     "slug": "thought",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "thought"
@@ -16979,6 +17329,7 @@ export const WORD_BY_SLUG = {
     "word": "through",
     "slug": "through",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "through"
@@ -17025,6 +17376,7 @@ export const WORD_BY_SLUG = {
     "word": "various",
     "slug": "various",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "various"
@@ -17072,6 +17424,7 @@ export const WORD_BY_SLUG = {
     "word": "weight",
     "slug": "weight",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "weight"
@@ -17119,6 +17472,7 @@ export const WORD_BY_SLUG = {
     "word": "woman",
     "slug": "woman",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "woman",
@@ -17166,6 +17520,7 @@ export const WORD_BY_SLUG = {
     "word": "women",
     "slug": "women",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 3-4",
     "familyWords": [
       "woman",
@@ -17213,6 +17568,7 @@ export const WORD_BY_SLUG = {
     "word": "accommodate",
     "slug": "accommodate",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "accommodate"
@@ -17260,6 +17616,7 @@ export const WORD_BY_SLUG = {
     "word": "accompany",
     "slug": "accompany",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "accompany"
@@ -17307,6 +17664,7 @@ export const WORD_BY_SLUG = {
     "word": "according",
     "slug": "according",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "according"
@@ -17354,6 +17712,7 @@ export const WORD_BY_SLUG = {
     "word": "achieve",
     "slug": "achieve",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "achieve"
@@ -17401,6 +17760,7 @@ export const WORD_BY_SLUG = {
     "word": "aggressive",
     "slug": "aggressive",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "aggressive"
@@ -17448,6 +17808,7 @@ export const WORD_BY_SLUG = {
     "word": "amateur",
     "slug": "amateur",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "amateur"
@@ -17494,6 +17855,7 @@ export const WORD_BY_SLUG = {
     "word": "ancient",
     "slug": "ancient",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "ancient"
@@ -17541,6 +17903,7 @@ export const WORD_BY_SLUG = {
     "word": "apparent",
     "slug": "apparent",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "apparent"
@@ -17588,6 +17951,7 @@ export const WORD_BY_SLUG = {
     "word": "appreciate",
     "slug": "appreciate",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "appreciate"
@@ -17635,6 +17999,7 @@ export const WORD_BY_SLUG = {
     "word": "attached",
     "slug": "attached",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "attached"
@@ -17682,6 +18047,7 @@ export const WORD_BY_SLUG = {
     "word": "available",
     "slug": "available",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "available"
@@ -17729,6 +18095,7 @@ export const WORD_BY_SLUG = {
     "word": "average",
     "slug": "average",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "average"
@@ -17775,6 +18142,7 @@ export const WORD_BY_SLUG = {
     "word": "awkward",
     "slug": "awkward",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "awkward"
@@ -17821,6 +18189,7 @@ export const WORD_BY_SLUG = {
     "word": "bargain",
     "slug": "bargain",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "bargain"
@@ -17867,6 +18236,7 @@ export const WORD_BY_SLUG = {
     "word": "bruise",
     "slug": "bruise",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "bruise"
@@ -17914,6 +18284,7 @@ export const WORD_BY_SLUG = {
     "word": "category",
     "slug": "category",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "category"
@@ -17960,6 +18331,7 @@ export const WORD_BY_SLUG = {
     "word": "cemetery",
     "slug": "cemetery",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "cemetery"
@@ -18006,6 +18378,7 @@ export const WORD_BY_SLUG = {
     "word": "committee",
     "slug": "committee",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "committee"
@@ -18053,6 +18426,7 @@ export const WORD_BY_SLUG = {
     "word": "communicate",
     "slug": "communicate",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "communicate"
@@ -18100,6 +18474,7 @@ export const WORD_BY_SLUG = {
     "word": "community",
     "slug": "community",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "community"
@@ -18147,6 +18522,7 @@ export const WORD_BY_SLUG = {
     "word": "competition",
     "slug": "competition",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "competition"
@@ -18194,6 +18570,7 @@ export const WORD_BY_SLUG = {
     "word": "conscience",
     "slug": "conscience",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "conscience"
@@ -18241,6 +18618,7 @@ export const WORD_BY_SLUG = {
     "word": "conscious",
     "slug": "conscious",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "conscious"
@@ -18288,6 +18666,7 @@ export const WORD_BY_SLUG = {
     "word": "controversy",
     "slug": "controversy",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "controversy"
@@ -18334,6 +18713,7 @@ export const WORD_BY_SLUG = {
     "word": "convenience",
     "slug": "convenience",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "convenience"
@@ -18380,6 +18760,7 @@ export const WORD_BY_SLUG = {
     "word": "correspond",
     "slug": "correspond",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "correspond"
@@ -18427,6 +18808,7 @@ export const WORD_BY_SLUG = {
     "word": "criticise",
     "slug": "criticise",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "criticise"
@@ -18474,6 +18856,7 @@ export const WORD_BY_SLUG = {
     "word": "curiosity",
     "slug": "curiosity",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "curiosity"
@@ -18520,6 +18903,7 @@ export const WORD_BY_SLUG = {
     "word": "definite",
     "slug": "definite",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "definite"
@@ -18566,6 +18950,7 @@ export const WORD_BY_SLUG = {
     "word": "desperate",
     "slug": "desperate",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "desperate"
@@ -18612,6 +18997,7 @@ export const WORD_BY_SLUG = {
     "word": "determined",
     "slug": "determined",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "determined"
@@ -18658,6 +19044,7 @@ export const WORD_BY_SLUG = {
     "word": "develop",
     "slug": "develop",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "develop"
@@ -18705,6 +19092,7 @@ export const WORD_BY_SLUG = {
     "word": "dictionary",
     "slug": "dictionary",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "dictionary"
@@ -18751,6 +19139,7 @@ export const WORD_BY_SLUG = {
     "word": "disastrous",
     "slug": "disastrous",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "disastrous"
@@ -18798,6 +19187,7 @@ export const WORD_BY_SLUG = {
     "word": "embarrass",
     "slug": "embarrass",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "embarrass"
@@ -18845,6 +19235,7 @@ export const WORD_BY_SLUG = {
     "word": "environment",
     "slug": "environment",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "environment"
@@ -18891,6 +19282,7 @@ export const WORD_BY_SLUG = {
     "word": "equip",
     "slug": "equip",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "equip",
@@ -18939,6 +19331,7 @@ export const WORD_BY_SLUG = {
     "word": "equipped",
     "slug": "equipped",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "equip",
@@ -18988,6 +19381,7 @@ export const WORD_BY_SLUG = {
     "word": "equipment",
     "slug": "equipment",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "equip",
@@ -19036,6 +19430,7 @@ export const WORD_BY_SLUG = {
     "word": "especially",
     "slug": "especially",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "especially"
@@ -19084,6 +19479,7 @@ export const WORD_BY_SLUG = {
     "word": "exaggerate",
     "slug": "exaggerate",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "exaggerate"
@@ -19131,6 +19527,7 @@ export const WORD_BY_SLUG = {
     "word": "excellent",
     "slug": "excellent",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "excellent"
@@ -19178,6 +19575,7 @@ export const WORD_BY_SLUG = {
     "word": "existence",
     "slug": "existence",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "existence"
@@ -19224,6 +19622,7 @@ export const WORD_BY_SLUG = {
     "word": "explanation",
     "slug": "explanation",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "explanation"
@@ -19271,6 +19670,7 @@ export const WORD_BY_SLUG = {
     "word": "familiar",
     "slug": "familiar",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "familiar"
@@ -19317,6 +19717,7 @@ export const WORD_BY_SLUG = {
     "word": "foreign",
     "slug": "foreign",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "foreign"
@@ -19363,6 +19764,7 @@ export const WORD_BY_SLUG = {
     "word": "forty",
     "slug": "forty",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "forty"
@@ -19409,6 +19811,7 @@ export const WORD_BY_SLUG = {
     "word": "frequently",
     "slug": "frequently",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "frequently"
@@ -19456,6 +19859,7 @@ export const WORD_BY_SLUG = {
     "word": "government",
     "slug": "government",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "government"
@@ -19502,6 +19906,7 @@ export const WORD_BY_SLUG = {
     "word": "guarantee",
     "slug": "guarantee",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "guarantee"
@@ -19548,6 +19953,7 @@ export const WORD_BY_SLUG = {
     "word": "harass",
     "slug": "harass",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "harass"
@@ -19595,6 +20001,7 @@ export const WORD_BY_SLUG = {
     "word": "hindrance",
     "slug": "hindrance",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "hindrance"
@@ -19641,6 +20048,7 @@ export const WORD_BY_SLUG = {
     "word": "identity",
     "slug": "identity",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "identity"
@@ -19687,6 +20095,7 @@ export const WORD_BY_SLUG = {
     "word": "immediate",
     "slug": "immediate",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "immediate",
@@ -19736,6 +20145,7 @@ export const WORD_BY_SLUG = {
     "word": "immediately",
     "slug": "immediately",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "immediate",
@@ -19786,6 +20196,7 @@ export const WORD_BY_SLUG = {
     "word": "individual",
     "slug": "individual",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "individual"
@@ -19832,6 +20243,7 @@ export const WORD_BY_SLUG = {
     "word": "interfere",
     "slug": "interfere",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "interfere"
@@ -19878,6 +20290,7 @@ export const WORD_BY_SLUG = {
     "word": "interrupt",
     "slug": "interrupt",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "interrupt"
@@ -19925,6 +20338,7 @@ export const WORD_BY_SLUG = {
     "word": "language",
     "slug": "language",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "language"
@@ -19971,6 +20385,7 @@ export const WORD_BY_SLUG = {
     "word": "leisure",
     "slug": "leisure",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "leisure"
@@ -20017,6 +20432,7 @@ export const WORD_BY_SLUG = {
     "word": "lightning",
     "slug": "lightning",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "lightning"
@@ -20063,6 +20479,7 @@ export const WORD_BY_SLUG = {
     "word": "marvellous",
     "slug": "marvellous",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "marvellous"
@@ -20111,6 +20528,7 @@ export const WORD_BY_SLUG = {
     "word": "mischievous",
     "slug": "mischievous",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "mischievous"
@@ -20158,6 +20576,7 @@ export const WORD_BY_SLUG = {
     "word": "muscle",
     "slug": "muscle",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "muscle"
@@ -20205,6 +20624,7 @@ export const WORD_BY_SLUG = {
     "word": "necessary",
     "slug": "necessary",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "necessary"
@@ -20252,6 +20672,7 @@ export const WORD_BY_SLUG = {
     "word": "neighbour",
     "slug": "neighbour",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "neighbour"
@@ -20298,6 +20719,7 @@ export const WORD_BY_SLUG = {
     "word": "nuisance",
     "slug": "nuisance",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "nuisance"
@@ -20344,6 +20766,7 @@ export const WORD_BY_SLUG = {
     "word": "occupy",
     "slug": "occupy",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "occupy"
@@ -20391,6 +20814,7 @@ export const WORD_BY_SLUG = {
     "word": "occur",
     "slug": "occur",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "occur"
@@ -20438,6 +20862,7 @@ export const WORD_BY_SLUG = {
     "word": "opportunity",
     "slug": "opportunity",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "opportunity"
@@ -20486,6 +20911,7 @@ export const WORD_BY_SLUG = {
     "word": "parliament",
     "slug": "parliament",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "parliament"
@@ -20532,6 +20958,7 @@ export const WORD_BY_SLUG = {
     "word": "persuade",
     "slug": "persuade",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "persuade"
@@ -20578,6 +21005,7 @@ export const WORD_BY_SLUG = {
     "word": "physical",
     "slug": "physical",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "physical"
@@ -20624,6 +21052,7 @@ export const WORD_BY_SLUG = {
     "word": "prejudice",
     "slug": "prejudice",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "prejudice"
@@ -20671,6 +21100,7 @@ export const WORD_BY_SLUG = {
     "word": "privilege",
     "slug": "privilege",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "privilege"
@@ -20717,6 +21147,7 @@ export const WORD_BY_SLUG = {
     "word": "profession",
     "slug": "profession",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "profession"
@@ -20764,6 +21195,7 @@ export const WORD_BY_SLUG = {
     "word": "programme",
     "slug": "programme",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "programme"
@@ -20811,6 +21243,7 @@ export const WORD_BY_SLUG = {
     "word": "pronunciation",
     "slug": "pronunciation",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "pronunciation"
@@ -20858,6 +21291,7 @@ export const WORD_BY_SLUG = {
     "word": "queue",
     "slug": "queue",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "queue"
@@ -20904,6 +21338,7 @@ export const WORD_BY_SLUG = {
     "word": "recognise",
     "slug": "recognise",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "recognise"
@@ -20952,6 +21387,7 @@ export const WORD_BY_SLUG = {
     "word": "recommend",
     "slug": "recommend",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "recommend"
@@ -21000,6 +21436,7 @@ export const WORD_BY_SLUG = {
     "word": "relevant",
     "slug": "relevant",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "relevant"
@@ -21046,6 +21483,7 @@ export const WORD_BY_SLUG = {
     "word": "restaurant",
     "slug": "restaurant",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "restaurant"
@@ -21092,6 +21530,7 @@ export const WORD_BY_SLUG = {
     "word": "rhyme",
     "slug": "rhyme",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "rhyme"
@@ -21138,6 +21577,7 @@ export const WORD_BY_SLUG = {
     "word": "rhythm",
     "slug": "rhythm",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "rhythm"
@@ -21184,6 +21624,7 @@ export const WORD_BY_SLUG = {
     "word": "sacrifice",
     "slug": "sacrifice",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "sacrifice"
@@ -21230,6 +21671,7 @@ export const WORD_BY_SLUG = {
     "word": "secretary",
     "slug": "secretary",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "secretary"
@@ -21276,6 +21718,7 @@ export const WORD_BY_SLUG = {
     "word": "shoulder",
     "slug": "shoulder",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "shoulder"
@@ -21322,6 +21765,7 @@ export const WORD_BY_SLUG = {
     "word": "signature",
     "slug": "signature",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "signature"
@@ -21368,6 +21812,7 @@ export const WORD_BY_SLUG = {
     "word": "sincere",
     "slug": "sincere",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "sincere",
@@ -21415,6 +21860,7 @@ export const WORD_BY_SLUG = {
     "word": "sincerely",
     "slug": "sincerely",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "sincere",
@@ -21463,6 +21909,7 @@ export const WORD_BY_SLUG = {
     "word": "soldier",
     "slug": "soldier",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "soldier"
@@ -21509,6 +21956,7 @@ export const WORD_BY_SLUG = {
     "word": "stomach",
     "slug": "stomach",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "stomach"
@@ -21555,6 +22003,7 @@ export const WORD_BY_SLUG = {
     "word": "sufficient",
     "slug": "sufficient",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "sufficient"
@@ -21603,6 +22052,7 @@ export const WORD_BY_SLUG = {
     "word": "suggest",
     "slug": "suggest",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "suggest"
@@ -21650,6 +22100,7 @@ export const WORD_BY_SLUG = {
     "word": "symbol",
     "slug": "symbol",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "symbol"
@@ -21696,6 +22147,7 @@ export const WORD_BY_SLUG = {
     "word": "system",
     "slug": "system",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "system"
@@ -21742,6 +22194,7 @@ export const WORD_BY_SLUG = {
     "word": "temperature",
     "slug": "temperature",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "temperature"
@@ -21788,6 +22241,7 @@ export const WORD_BY_SLUG = {
     "word": "thorough",
     "slug": "thorough",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "thorough"
@@ -21834,6 +22288,7 @@ export const WORD_BY_SLUG = {
     "word": "twelfth",
     "slug": "twelfth",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "twelfth"
@@ -21880,6 +22335,7 @@ export const WORD_BY_SLUG = {
     "word": "variety",
     "slug": "variety",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "variety"
@@ -21926,6 +22382,7 @@ export const WORD_BY_SLUG = {
     "word": "vegetable",
     "slug": "vegetable",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "vegetable"
@@ -21972,6 +22429,7 @@ export const WORD_BY_SLUG = {
     "word": "vehicle",
     "slug": "vehicle",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "vehicle"
@@ -22018,6 +22476,7 @@ export const WORD_BY_SLUG = {
     "word": "yacht",
     "slug": "yacht",
     "spellingPool": "core",
+    "coverageTier": "statutory-core",
     "yearLabel": "Years 5-6",
     "familyWords": [
       "yacht"
@@ -22064,6 +22523,7 @@ export const WORD_BY_SLUG = {
     "word": "divide",
     "slug": "divide",
     "spellingPool": "extra",
+    "coverageTier": "enrichment-extra",
     "yearLabel": "Extra",
     "familyWords": [
       "divide",
@@ -22139,6 +22599,7 @@ export const WORD_BY_SLUG = {
     "word": "collide",
     "slug": "collide",
     "spellingPool": "extra",
+    "coverageTier": "enrichment-extra",
     "yearLabel": "Extra",
     "familyWords": [
       "collide",
@@ -22195,6 +22656,7 @@ export const WORD_BY_SLUG = {
     "word": "explode",
     "slug": "explode",
     "spellingPool": "extra",
+    "coverageTier": "enrichment-extra",
     "yearLabel": "Extra",
     "familyWords": [
       "explode",
@@ -22270,6 +22732,7 @@ export const WORD_BY_SLUG = {
     "word": "corrode",
     "slug": "corrode",
     "spellingPool": "extra",
+    "coverageTier": "enrichment-extra",
     "yearLabel": "Extra",
     "familyWords": [
       "corrode",
@@ -22345,6 +22808,7 @@ export const WORD_BY_SLUG = {
     "word": "conclude",
     "slug": "conclude",
     "spellingPool": "extra",
+    "coverageTier": "enrichment-extra",
     "yearLabel": "Extra",
     "familyWords": [
       "conclude",
@@ -22401,6 +22865,7 @@ export const WORD_BY_SLUG = {
     "word": "extend",
     "slug": "extend",
     "spellingPool": "extra",
+    "coverageTier": "enrichment-extra",
     "yearLabel": "Extra",
     "familyWords": [
       "extend",
@@ -22476,6 +22941,7 @@ export const WORD_BY_SLUG = {
     "word": "comprehend",
     "slug": "comprehend",
     "spellingPool": "extra",
+    "coverageTier": "enrichment-extra",
     "yearLabel": "Extra",
     "familyWords": [
       "comprehend",
@@ -22532,6 +22998,7 @@ export const WORD_BY_SLUG = {
     "word": "evade",
     "slug": "evade",
     "spellingPool": "extra",
+    "coverageTier": "enrichment-extra",
     "yearLabel": "Extra",
     "familyWords": [
       "evade",
@@ -22607,6 +23074,7 @@ export const WORD_BY_SLUG = {
     "word": "intrude",
     "slug": "intrude",
     "spellingPool": "extra",
+    "coverageTier": "enrichment-extra",
     "yearLabel": "Extra",
     "familyWords": [
       "intrude",
@@ -22682,6 +23150,7 @@ export const WORD_BY_SLUG = {
     "word": "interlude",
     "slug": "interlude",
     "spellingPool": "extra",
+    "coverageTier": "enrichment-extra",
     "yearLabel": "Extra",
     "familyWords": [
       "interlude",
@@ -22738,6 +23207,7 @@ export const WORD_BY_SLUG = {
     "word": "classification",
     "slug": "classification",
     "spellingPool": "extra",
+    "coverageTier": "enrichment-extra",
     "yearLabel": "Extra",
     "familyWords": [
       "classification",
@@ -22812,6 +23282,7 @@ export const WORD_BY_SLUG = {
     "word": "backbone",
     "slug": "backbone",
     "spellingPool": "extra",
+    "coverageTier": "enrichment-extra",
     "yearLabel": "Extra",
     "familyWords": [
       "backbone",
@@ -22868,6 +23339,7 @@ export const WORD_BY_SLUG = {
     "word": "skeleton",
     "slug": "skeleton",
     "spellingPool": "extra",
+    "coverageTier": "enrichment-extra",
     "yearLabel": "Extra",
     "familyWords": [
       "skeleton",
@@ -22924,6 +23396,7 @@ export const WORD_BY_SLUG = {
     "word": "cold-blooded",
     "slug": "cold-blooded",
     "spellingPool": "extra",
+    "coverageTier": "enrichment-extra",
     "yearLabel": "Extra",
     "familyWords": [
       "cold-blooded"
@@ -22960,6 +23433,7 @@ export const WORD_BY_SLUG = {
     "word": "amphibians",
     "slug": "amphibians",
     "spellingPool": "extra",
+    "coverageTier": "enrichment-extra",
     "yearLabel": "Extra",
     "familyWords": [
       "amphibians",
@@ -23016,6 +23490,7 @@ export const WORD_BY_SLUG = {
     "word": "metamorphosis",
     "slug": "metamorphosis",
     "spellingPool": "extra",
+    "coverageTier": "enrichment-extra",
     "yearLabel": "Extra",
     "familyWords": [
       "metamorphosis",
@@ -23072,6 +23547,7 @@ export const WORD_BY_SLUG = {
     "word": "reptiles",
     "slug": "reptiles",
     "spellingPool": "extra",
+    "coverageTier": "enrichment-extra",
     "yearLabel": "Extra",
     "familyWords": [
       "reptiles",
@@ -23128,6 +23604,7 @@ export const WORD_BY_SLUG = {
     "word": "mammals",
     "slug": "mammals",
     "spellingPool": "extra",
+    "coverageTier": "enrichment-extra",
     "yearLabel": "Extra",
     "familyWords": [
       "mammals",
@@ -23184,6 +23661,7 @@ export const WORD_BY_SLUG = {
     "word": "vertebrates",
     "slug": "vertebrates",
     "spellingPool": "extra",
+    "coverageTier": "enrichment-extra",
     "yearLabel": "Extra",
     "familyWords": [
       "vertebrates",
@@ -23240,6 +23718,7 @@ export const WORD_BY_SLUG = {
     "word": "arachnid",
     "slug": "arachnid",
     "spellingPool": "extra",
+    "coverageTier": "enrichment-extra",
     "yearLabel": "Extra",
     "familyWords": [
       "arachnid",
@@ -23296,6 +23775,7 @@ export const WORD_BY_SLUG = {
     "word": "mollusc",
     "slug": "mollusc",
     "spellingPool": "extra",
+    "coverageTier": "enrichment-extra",
     "yearLabel": "Extra",
     "familyWords": [
       "mollusc",
@@ -23352,6 +23832,7 @@ export const WORD_BY_SLUG = {
     "word": "botanist",
     "slug": "botanist",
     "spellingPool": "extra",
+    "coverageTier": "enrichment-extra",
     "yearLabel": "Extra",
     "familyWords": [
       "botanist",
@@ -23426,6 +23907,7 @@ export const WORD_BY_SLUG = {
     "word": "flowering",
     "slug": "flowering",
     "spellingPool": "extra",
+    "coverageTier": "enrichment-extra",
     "yearLabel": "Extra",
     "familyWords": [
       "flowering",
@@ -23500,6 +23982,7 @@ export const WORD_BY_SLUG = {
     "word": "abscess",
     "slug": "abscess",
     "spellingPool": "extra",
+    "coverageTier": "enrichment-extra",
     "yearLabel": "Extra",
     "familyWords": [
       "abscess",
@@ -23577,6 +24060,7 @@ export const WORD_BY_SLUG = {
     "word": "ascend",
     "slug": "ascend",
     "spellingPool": "extra",
+    "coverageTier": "enrichment-extra",
     "yearLabel": "Extra",
     "familyWords": [
       "ascend",
@@ -23655,6 +24139,7 @@ export const WORD_BY_SLUG = {
     "word": "descend",
     "slug": "descend",
     "spellingPool": "extra",
+    "coverageTier": "enrichment-extra",
     "yearLabel": "Extra",
     "familyWords": [
       "descend",
@@ -23733,6 +24218,7 @@ export const WORD_BY_SLUG = {
     "word": "fascinate",
     "slug": "fascinate",
     "spellingPool": "extra",
+    "coverageTier": "enrichment-extra",
     "yearLabel": "Extra",
     "familyWords": [
       "fascinate",
@@ -23811,6 +24297,7 @@ export const WORD_BY_SLUG = {
     "word": "scene",
     "slug": "scene",
     "spellingPool": "extra",
+    "coverageTier": "enrichment-extra",
     "yearLabel": "Extra",
     "familyWords": [
       "scene",
@@ -23888,6 +24375,7 @@ export const WORD_BY_SLUG = {
     "word": "school",
     "slug": "school",
     "spellingPool": "extra",
+    "coverageTier": "enrichment-extra",
     "yearLabel": "Extra",
     "familyWords": [
       "school",
@@ -23963,6 +24451,7 @@ export const WORD_BY_SLUG = {
     "word": "science",
     "slug": "science",
     "spellingPool": "extra",
+    "coverageTier": "enrichment-extra",
     "yearLabel": "Extra",
     "familyWords": [
       "science",
@@ -24040,6 +24529,7 @@ export const WORD_BY_SLUG = {
     "word": "scissors",
     "slug": "scissors",
     "spellingPool": "extra",
+    "coverageTier": "enrichment-extra",
     "yearLabel": "Extra",
     "familyWords": [
       "scissors",
@@ -24098,6 +24588,7 @@ export const WORD_BY_SLUG = {
     "word": "scented",
     "slug": "scented",
     "spellingPool": "extra",
+    "coverageTier": "enrichment-extra",
     "yearLabel": "Extra",
     "familyWords": [
       "scented",
@@ -24176,6 +24667,7 @@ export const WORD_BY_SLUG = {
     "word": "crescent",
     "slug": "crescent",
     "spellingPool": "extra",
+    "coverageTier": "enrichment-extra",
     "yearLabel": "Extra",
     "familyWords": [
       "crescent",

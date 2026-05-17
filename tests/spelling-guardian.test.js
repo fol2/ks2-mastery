@@ -2722,6 +2722,18 @@ test('U2: isGuardianEligibleSlug returns false when word has been demoted to spe
   assert.equal(isGuardianEligibleSlug('demoted', progressMap, wordBySlug), false);
 });
 
+test('taxonomy: isGuardianEligibleSlug returns false for secure-extension words', () => {
+  const progressMap = { extension: { stage: 4 } };
+  const wordBySlug = {
+    extension: {
+      slug: 'extension',
+      spellingPool: 'core',
+      coverageTier: 'secure-extension',
+    },
+  };
+  assert.equal(isGuardianEligibleSlug('extension', progressMap, wordBySlug), false);
+});
+
 test('U2: isGuardianEligibleSlug returns false when progress stage is below GUARDIAN_SECURE_STAGE', () => {
   const wordBySlug = { weak: { slug: 'weak', spellingPool: 'core' } };
   assert.equal(isGuardianEligibleSlug('weak', { weak: { stage: 3 } }, wordBySlug), false);

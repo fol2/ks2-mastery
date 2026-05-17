@@ -17,6 +17,7 @@ import {
   WORD_BANK_GUARDIAN_FILTER_ID_SET,
   WORD_BANK_YEAR_FILTER_IDS,
   countWordBankExtra,
+  countWordBankSecureExtension,
   countWordBankStatus,
   countWordBankYear,
   dueLabel,
@@ -120,6 +121,7 @@ function YearChips({ counts, activeYearFilter, actions }) {
     { id: 'all', label: 'All' },
     { id: 'y3-4', label: 'Years 3-4' },
     { id: 'y5-6', label: 'Years 5-6' },
+    { id: 'secure-extension', label: 'Secure vocabulary' },
     { id: 'extra', label: 'Extra' },
   ];
   return (
@@ -306,6 +308,7 @@ function WordBankCard({ learner, analytics, appState, actions, postMastery = nul
     all: allWords.length,
     'y3-4': countWordBankYear(allWords, '3-4'),
     'y5-6': countWordBankYear(allWords, '5-6'),
+    'secure-extension': countWordBankSecureExtension(allWords),
     extra: countWordBankExtra(allWords),
   };
   const totalWords = allWords.length;
@@ -451,15 +454,16 @@ function WordBankAggregates({ analytics, postMastery = null }) {
     ? { guardianMap, todayDay, progressMap: orphanProgressMap, wordBySlug: orphanWordBySlug }
     : undefined;
   const cardOptions = showGuardianCards ? { showGuardian: true } : undefined;
-  const core = wordBankAggregateStats(allWords.filter((word) => word.spellingPool !== 'extra'), statsOptions);
-  const y34 = wordBankAggregateStats(allWords.filter((word) => word.year === '3-4'), statsOptions);
-  const y56 = wordBankAggregateStats(allWords.filter((word) => word.year === '5-6'), statsOptions);
-  const extra = wordBankAggregateStats(allWords.filter((word) => word.spellingPool === 'extra'), statsOptions);
+  const core = wordBankAggregateStats(allWords.filter((word) => wordBankYearFilterMatches('core', word)), statsOptions);
+  const y34 = wordBankAggregateStats(allWords.filter((word) => wordBankYearFilterMatches('y3-4', word)), statsOptions);
+  const y56 = wordBankAggregateStats(allWords.filter((word) => wordBankYearFilterMatches('y5-6', word)), statsOptions);
+  const secureExtension = wordBankAggregateStats(allWords.filter((word) => wordBankYearFilterMatches('secure-extension', word)), statsOptions);
+  const extra = wordBankAggregateStats(allWords.filter((word) => wordBankYearFilterMatches('extra', word)), statsOptions);
   const cards = [
     {
       eyebrow: 'Core spellings',
       title: 'Core statutory progress',
-      stats: wordBankAggregateCards(core, 'Words in core pool', cardOptions),
+      stats: wordBankAggregateCards(core, 'Words in official statutory pool', cardOptions),
     },
     {
       eyebrow: 'Years 3-4',
@@ -472,13 +476,18 @@ function WordBankAggregates({ analytics, postMastery = null }) {
       stats: wordBankAggregateCards(y56, 'Words in pool', cardOptions),
     },
     {
+      eyebrow: 'Secure vocabulary',
+      title: 'Approved secure-extension progress',
+      stats: wordBankAggregateCards(secureExtension, 'Words in secure vocabulary', cardOptions),
+    },
+    {
       eyebrow: 'Extra',
       // Extra pool is never Guardian-eligible (Guardian Mega is core-only),
       // so we always use the legacy card shape here regardless of
       // showGuardianCards. This keeps the Extra card's visual rhythm
       // identical across the post-Mega transition.
       title: 'Expansion spelling pool',
-      stats: wordBankAggregateCards(extra, 'Words in pool'),
+      stats: wordBankAggregateCards(extra, 'Words in enrichment pool'),
     },
   ];
   return (

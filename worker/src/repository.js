@@ -24,6 +24,7 @@ import {
   SEEDED_SPELLING_CONTENT_SUMMARY,
   SEEDED_SPELLING_PUBLISHED_SNAPSHOT,
 } from '../../src/subjects/spelling/data/content-data.js';
+import { coverageTierCounts } from '../../src/subjects/spelling/content/taxonomy.js';
 import {
   POST_MEGA_SEED_SHAPES,
   resolvePostMegaSeedShape,
@@ -2230,7 +2231,7 @@ async function readContentQualitySignalsData(db, { actorAccountId, actor = null 
         const summary = runtimeContentSummary(bundle, snapshot);
         const words = Array.isArray(snapshot?.words) ? snapshot.words : [];
         wordCount = Number(summary.runtimeWordCount) || words.length || 0;
-        runtimeCoreCount = words.filter((word) => word?.spellingPool !== 'extra').length;
+        runtimeCoreCount = coverageTierCounts(words).statutoryCore;
       }
     } catch {
       // Soft-fail: content may not be available.

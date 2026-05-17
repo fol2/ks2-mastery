@@ -1,3 +1,9 @@
+import {
+  isEnrichmentExtraWord,
+  isSecureExtensionWord,
+  isStatutoryCoreWord,
+} from '../../src/subjects/spelling/content/taxonomy.js';
+
 // Generated from legacy/spelling-engine.source.js.
 // This is the preserved English Spelling engine, wrapped as a pure-ish factory
 // so the new platform can inject content, storage and TTS adapters cleanly.
@@ -53,12 +59,9 @@ export function createLegacySpellingEngine({ words, wordMeta, storage, tts, now 
       var WORD_BY_SLUG = Object.create(null);
       for (var i = 0; i < WORDS.length; i++) WORD_BY_SLUG[WORDS[i].slug] = WORDS[i];
 
-      function spellingPoolForWord(word) {
-        return word && word.spellingPool === "extra" ? "extra" : "core";
-      }
-
       function normaliseFilter(yearFilter) {
         if (yearFilter === "extra") return "extra";
+        if (yearFilter === "secure-extension") return "secure-extension";
         if (yearFilter === "y3-4") return "y3-4";
         if (yearFilter === "y5-6") return "y5-6";
         return "core";
@@ -66,10 +69,11 @@ export function createLegacySpellingEngine({ words, wordMeta, storage, tts, now 
 
       // Runtime pools drive filtering. The y3-4/y5-6 pools stay core-only.
       var POOLS = {
-        core: WORDS.filter(function (w) { return spellingPoolForWord(w) === "core"; }),
-        "y3-4": WORDS.filter(function (w) { return spellingPoolForWord(w) === "core" && w.year === "3-4"; }),
-        "y5-6": WORDS.filter(function (w) { return spellingPoolForWord(w) === "core" && w.year === "5-6"; }),
-        extra: WORDS.filter(function (w) { return spellingPoolForWord(w) === "extra"; }),
+        core: WORDS.filter(function (w) { return isStatutoryCoreWord(w); }),
+        "y3-4": WORDS.filter(function (w) { return isStatutoryCoreWord(w) && w.year === "3-4"; }),
+        "y5-6": WORDS.filter(function (w) { return isStatutoryCoreWord(w) && w.year === "5-6"; }),
+        "secure-extension": WORDS.filter(function (w) { return isSecureExtensionWord(w); }),
+        extra: WORDS.filter(function (w) { return isEnrichmentExtraWord(w); }),
       };
 
       // ----- helpers ------------------------------------------------------------
@@ -133,7 +137,7 @@ export function createLegacySpellingEngine({ words, wordMeta, storage, tts, now 
 
       function promptFormsForWord(word) {
         var forms = [basePromptForm(word)];
-        if (spellingPoolForWord(word) !== "extra") return forms;
+        if (!isEnrichmentExtraWord(word)) return forms;
         if (!Array.isArray(word.variants)) return forms;
         for (var i = 0; i < word.variants.length; i++) {
           var variant = word.variants[i];
@@ -234,6 +238,7 @@ export function createLegacySpellingEngine({ words, wordMeta, storage, tts, now 
         var value = normaliseFilter(yearFilter);
         if (value === "y3-4") return POOLS["y3-4"].slice();
         if (value === "y5-6") return POOLS["y5-6"].slice();
+        if (value === "secure-extension") return POOLS["secure-extension"].slice();
         if (value === "extra") return POOLS.extra.slice();
         return POOLS.core.slice();
       }

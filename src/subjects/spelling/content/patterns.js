@@ -1,3 +1,5 @@
+import { isStatutoryCoreWord } from './taxonomy.js';
+
 /**
  * P2 U10: Spelling pattern registry.
  *
@@ -269,7 +271,7 @@ export function isPatternEligibleSlug(slug, patternId, wordBySlug) {
   if (!wordBySlug || typeof wordBySlug !== 'object') return false;
   const word = wordBySlug[slug];
   if (!word || typeof word !== 'object') return false;
-  if (word.spellingPool === 'extra') return false;
+  if (!isStatutoryCoreWord(word)) return false;
   // The word must actually carry the requested patternId. Otherwise a content hot-swap
   // that retags a word (without removing the slug or pattern) would still pass as eligible.
   if (!Array.isArray(word.patternIds) || !word.patternIds.includes(patternId)) {

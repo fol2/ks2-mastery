@@ -35,11 +35,15 @@ import {
   aggregateAchievementState,
   cloneSerialisable,
   computeLaunchedPatternIds,
+  coverageTierForWord,
   createInitialSpellingState,
   defaultLearningStatus,
   evaluateAchievements,
+  isEnrichmentExtraWord,
   isGuardianEligibleSlug,
   isPatternEligibleSlug,
+  isSecureExtensionWord,
+  isStatutoryCoreWord,
   normaliseAchievementsMap,
   normaliseBoolean,
   normaliseDurablePersistenceWarning,
@@ -1375,6 +1379,7 @@ export function createSpellingService({ repository, storage, tts, now, random, c
       year: word.year,
       yearLabel: word.yearLabel,
       spellingPool: word.spellingPool === 'extra' ? 'extra' : 'core',
+      coverageTier: coverageTierForWord(word),
       familyWords: Array.isArray(word.familyWords) ? [...word.familyWords] : [],
       sentence: word.sentence || '',
       explanation: word.explanation || '',
@@ -1398,6 +1403,7 @@ export function createSpellingService({ repository, storage, tts, now, random, c
     const groups = [
       { key: 'y3-4', title: 'Years 3-4', spellingPool: 'core', year: '3-4' },
       { key: 'y5-6', title: 'Years 5-6', spellingPool: 'core', year: '5-6' },
+      { key: 'secure-extension', title: 'Secure vocabulary', spellingPool: 'core', year: 'secure-extension' },
       { key: 'extra', title: 'Extra', spellingPool: 'extra', year: 'extra' },
     ];
     return groups.map((group) => ({
@@ -1406,7 +1412,11 @@ export function createSpellingService({ repository, storage, tts, now, random, c
       spellingPool: group.spellingPool,
       year: group.year,
       words: runtimeWords
-        .filter((word) => (word.spellingPool === 'extra' ? 'extra' : 'core') === group.spellingPool && word.year === group.year)
+        .filter((word) => {
+          if (group.key === 'secure-extension') return isSecureExtensionWord(word);
+          if (group.key === 'extra') return isEnrichmentExtraWord(word);
+          return isStatutoryCoreWord(word) && word.year === group.year;
+        })
         .map((word) => analyticsWordRow(learnerId, word, progressStore)),
     }));
   }
@@ -1745,13 +1755,13 @@ export function createSpellingService({ repository, storage, tts, now, random, c
   }
 
   function coreWordCount() {
-    return runtimeWords.filter((word) => (word?.spellingPool === 'extra' ? 'extra' : 'core') === 'core').length;
+    return runtimeWords.filter((word) => isStatutoryCoreWord(word)).length;
   }
 
   function secureCoreCount(progressStore) {
     let count = 0;
     for (const word of runtimeWords) {
-      if ((word.spellingPool === 'extra' ? 'extra' : 'core') !== 'core') continue;
+      if (!isStatutoryCoreWord(word)) continue;
       const progress = progressStore?.[word.slug];
       if (progress && Number(progress.stage) >= GUARDIAN_SECURE_STAGE) count += 1;
     }
@@ -1884,6 +1894,7 @@ export function createSpellingService({ repository, storage, tts, now, random, c
         core: getStats(learnerId, 'core', progressStore),
         y34: getStats(learnerId, 'y3-4', progressStore),
         y56: getStats(learnerId, 'y5-6', progressStore),
+        secureExtension: getStats(learnerId, 'secure-extension', progressStore),
         extra: getStats(learnerId, 'extra', progressStore),
       },
       wordGroups: analyticsWordGroups(learnerId, progressStore),

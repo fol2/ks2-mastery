@@ -10,6 +10,7 @@ import {
   SPELLING_CONTENT_MODEL_VERSION,
   publishSpellingContentBundle,
 } from '../src/subjects/spelling/content/model.js';
+import { isStatutoryCoreWord } from '../src/subjects/spelling/content/taxonomy.js';
 import { createApiSpellingContentRepository } from '../src/subjects/spelling/content/repository.js';
 import { SEEDED_SPELLING_CONTENT_BUNDLE } from '../src/subjects/spelling/data/content-data.js';
 import { installMemoryStorage } from './helpers/memory-storage.js';
@@ -254,7 +255,7 @@ test('admin content-quality spelling item coverage derives from the persisted ru
     const latestRelease = published.releases.at(-1);
     const expectedWordCount = latestRelease.snapshot.words.length;
     const expectedCoreCount = latestRelease.snapshot.words
-      .filter((word) => word.spellingPool !== 'extra').length;
+      .filter(isStatutoryCoreWord).length;
 
     const writeResponse = await fetchAdmin(server, 'https://repo.test/api/content/spelling', {
       method: 'PUT',
@@ -371,12 +372,15 @@ test('worker spelling content route backfills version-one core bundles without p
 
     assert.equal(response.status, 200);
     // P2 U10: normaliser bumps any stored bundle with modelVersion < current
-    // to `SPELLING_CONTENT_MODEL_VERSION` (now 4, skipping 3 per H7 synthesis)
+    // to `SPELLING_CONTENT_MODEL_VERSION` (currently even, per H7 synthesis)
     // so the UI never reads a stale shape.
     assert.equal(payload.content.modelVersion, SPELLING_CONTENT_MODEL_VERSION);
     assert.equal(payload.content.draft.wordLists.every((list) => list.spellingPool === 'core'), true);
+    assert.equal(payload.content.draft.wordLists.every((list) => list.coverageTier === 'statutory-core'), true);
     assert.equal(payload.content.draft.words.every((word) => word.spellingPool === 'core'), true);
+    assert.equal(payload.content.draft.words.every((word) => word.coverageTier === 'statutory-core'), true);
     assert.equal(payload.content.releases[0].snapshot.words.every((word) => word.spellingPool === 'core'), true);
+    assert.equal(payload.content.releases[0].snapshot.words.every((word) => word.coverageTier === 'statutory-core'), true);
   } finally {
     server.close();
   }

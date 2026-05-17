@@ -1,5 +1,10 @@
 import { cloneSerialisable } from '../../../platform/core/repositories/helpers.js';
 import { PATTERN_LAUNCH_THRESHOLD, SPELLING_PATTERN_IDS, SPELLING_PATTERNS } from './patterns.js';
+import {
+  coverageTierCounts,
+  isStatutoryCoreWord,
+  normaliseCoverageTier,
+} from './taxonomy.js';
 
 export const SPELLING_CONTENT_SUBJECT_ID = 'spelling';
 /**
@@ -11,7 +16,7 @@ export const SPELLING_CONTENT_SUBJECT_ID = 'spelling';
  * a cached bundle — runtime consumers treat `modelVersion < MODEL_VERSION`
  * as "normalise and rewrite" on next save.
  */
-export const SPELLING_CONTENT_MODEL_VERSION = 4;
+export const SPELLING_CONTENT_MODEL_VERSION = 6;
 export const SPELLING_CONTENT_EXPORT_KIND = 'ks2-spelling-content';
 export const SPELLING_CONTENT_EXPORT_VERSION = 1;
 export const SPELLING_CONTENT_POOLS = Object.freeze(['core', 'extra']);
@@ -141,10 +146,12 @@ function familyKeyForRuntime(word) {
 
 function normaliseWordList(rawValue, index = 0) {
   const raw = isPlainObject(rawValue) ? rawValue : {};
+  const spellingPool = normaliseSpellingPool(raw.spellingPool);
   return {
     id: normaliseString(raw.id, `list-${index + 1}`),
     title: normaliseString(raw.title, `Word list ${index + 1}`),
-    spellingPool: normaliseSpellingPool(raw.spellingPool),
+    spellingPool,
+    coverageTier: normaliseCoverageTier(raw.coverageTier, { spellingPool }),
     yearGroups: normaliseYearGroups(raw.yearGroups),
     tags: normaliseTags(raw.tags),
     wordSlugs: uniqueStrings(raw.wordSlugs, { lowerCase: true }),
@@ -159,7 +166,9 @@ function normaliseWordEntry(rawValue, index = 0, wordListsById = new Map()) {
   const word = normaliseString(raw.word);
   const slug = normaliseString(raw.slug, slugifyWord(word));
   const listId = normaliseString(raw.listId);
-  const listPool = normaliseSpellingPool(wordListsById.get(listId)?.spellingPool);
+  const wordList = wordListsById.get(listId);
+  const listPool = normaliseSpellingPool(wordList?.spellingPool);
+  const spellingPool = normaliseSpellingPool(raw.spellingPool, listPool);
   const variants = (Array.isArray(raw.variants) ? raw.variants : [])
     .map((entry, variantIndex) => normaliseWordVariant(entry, variantIndex));
 
@@ -168,7 +177,11 @@ function normaliseWordEntry(rawValue, index = 0, wordListsById = new Map()) {
     word,
     family: normaliseString(raw.family),
     listId,
-    spellingPool: normaliseSpellingPool(raw.spellingPool, listPool),
+    spellingPool,
+    coverageTier: normaliseCoverageTier(raw.coverageTier, {
+      spellingPool,
+      fallback: wordList?.coverageTier,
+    }),
     yearGroups: normaliseYearGroups(raw.yearGroups),
     tags: normaliseTags(raw.tags),
     patternIds: normalisePatternIds(raw.patternIds),
@@ -215,6 +228,7 @@ function normaliseRuntimeWord(rawValue, index = 0) {
   const word = normaliseString(raw.word);
   const slug = normaliseString(raw.slug, slugifyWord(word));
   const spellingPool = normaliseSpellingPool(raw.spellingPool, raw.year === 'extra' ? 'extra' : 'core');
+  const coverageTier = normaliseCoverageTier(raw.coverageTier, { spellingPool });
   const year = spellingPool === 'extra' ? 'extra' : raw.year === '5-6' ? '5-6' : '3-4';
   const sentences = uniqueStrings(raw.sentences);
   const sentence = normaliseString(raw.sentence, sentences[0] || '');
@@ -228,6 +242,7 @@ function normaliseRuntimeWord(rawValue, index = 0) {
     word,
     slug,
     spellingPool,
+    coverageTier,
     yearLabel: normaliseString(raw.yearLabel, yearLabelFromBand(year)),
     familyWords: uniqueStrings(raw.familyWords),
     sentence,
@@ -429,6 +444,12 @@ export function validateSpellingContentBundle(rawBundle) {
     if (list.spellingPool === 'core' && !list.yearGroups.length) {
       errors.push(issue('error', 'missing_year_group_metadata', `draft.wordLists[${index}].yearGroups`, `Word list "${list.id}" is missing year-group metadata.`));
     }
+    if (list.spellingPool === 'extra' && list.coverageTier !== 'enrichment-extra') {
+      errors.push(issue('error', 'coverage_tier_mismatch', `draft.wordLists[${index}].coverageTier`, `Extra word list "${list.id}" must use the enrichment-extra coverage tier.`));
+    }
+    if (list.spellingPool === 'core' && list.coverageTier === 'enrichment-extra') {
+      errors.push(issue('error', 'coverage_tier_mismatch', `draft.wordLists[${index}].coverageTier`, `Core word list "${list.id}" cannot use the enrichment-extra coverage tier.`));
+    }
   });
 
   bundle.draft.words.forEach((word, index) => {
@@ -447,6 +468,12 @@ export function validateSpellingContentBundle(rawBundle) {
     if (word.spellingPool === 'core' && !word.yearGroups.length) {
       errors.push(issue('error', 'missing_year_group_metadata', `draft.words[${index}].yearGroups`, `Word "${word.slug}" is missing year-group metadata.`));
     }
+    if (word.spellingPool === 'extra' && word.coverageTier !== 'enrichment-extra') {
+      errors.push(issue('error', 'coverage_tier_mismatch', `draft.words[${index}].coverageTier`, `Extra word "${word.slug}" must use the enrichment-extra coverage tier.`));
+    }
+    if (word.spellingPool === 'core' && word.coverageTier === 'enrichment-extra') {
+      errors.push(issue('error', 'coverage_tier_mismatch', `draft.words[${index}].coverageTier`, `Core word "${word.slug}" cannot use the enrichment-extra coverage tier.`));
+    }
     if (!hasUsableWordExplanation(word.explanation)) {
       errors.push(issue('error', 'missing_word_explanation', `draft.words[${index}].explanation`, `Word "${word.slug}" must include a learner-facing explanation.`));
     }
@@ -455,11 +482,13 @@ export function validateSpellingContentBundle(rawBundle) {
       errors.push(issue('error', 'malformed_entry', `draft.words[${index}].listId`, `Word "${word.slug}" must point at a valid word list.`));
     } else if (word.spellingPool !== wordList.spellingPool) {
       errors.push(issue('error', 'pool_mismatch', `draft.words[${index}].spellingPool`, `Word "${word.slug}" uses pool "${word.spellingPool}" but list "${word.listId}" uses pool "${wordList.spellingPool}".`));
+    } else if (word.coverageTier !== wordList.coverageTier) {
+      errors.push(issue('error', 'coverage_tier_mismatch', `draft.words[${index}].coverageTier`, `Word "${word.slug}" uses coverage tier "${word.coverageTier}" but list "${word.listId}" uses coverage tier "${wordList.coverageTier}".`));
     }
     if (!word.sentenceEntryIds.length) {
       errors.push(issue('error', 'broken_sentence_reference', `draft.words[${index}].sentenceEntryIds`, `Word "${word.slug}" must reference at least one sentence entry.`));
     }
-    if (word.spellingPool === 'core') {
+    if (isStatutoryCoreWord(word)) {
       const hasPatternId = Array.isArray(word.patternIds) && word.patternIds.length > 0;
       const exceptionTag = Array.isArray(word.tags)
         && (word.tags.includes('exception-word') || word.tags.includes('statutory-exception'));
@@ -597,7 +626,7 @@ export function validateSpellingContentBundle(rawBundle) {
   // never permanently report below threshold.
   const patternCounts = new Map(SPELLING_PATTERN_IDS.map((id) => [id, 0]));
   for (const word of bundle.draft.words) {
-    if (word.spellingPool !== 'core') continue;
+    if (!isStatutoryCoreWord(word)) continue;
     for (const patternId of word.patternIds || []) {
       if (patternCounts.has(patternId)) {
         patternCounts.set(patternId, patternCounts.get(patternId) + 1);
@@ -699,6 +728,7 @@ export function buildPublishedSnapshotFromDraft(rawDraft, { generatedAt = Date.n
     return normaliseRuntimeWord({
       year,
       spellingPool: word.spellingPool,
+      coverageTier: word.coverageTier,
       family: word.family,
       word: word.word,
       slug: word.slug,
@@ -837,6 +867,7 @@ export function publishSpellingContentBundle(rawBundle, { notes = '', publishedA
 export function buildSpellingContentSummary(rawBundle) {
   const validation = validateSpellingContentBundle(rawBundle);
   const published = resolvePublishedRelease(validation.bundle, { fallbackToLatest: true });
+  const counts = coverageTierCounts(published?.snapshot?.words || []);
   return {
     ...validation.summary,
     publishedReleaseId: published?.id || '',
@@ -849,6 +880,10 @@ export function buildSpellingContentSummary(rawBundle) {
         .reduce((sum, variant) => sum + (Array.isArray(variant.sentences) ? variant.sentences.length : 0), 0);
       return total + baseCount + variantCount;
     }, 0) || 0,
+    coverageTierCounts: counts,
+    statutoryCoreCount: counts.statutoryCore,
+    secureExtensionCount: counts.secureExtension,
+    enrichmentExtraCount: counts.enrichmentExtra,
     ok: validation.ok,
   };
 }

@@ -176,13 +176,33 @@ function makeExtraWord(index) {
   };
 }
 
-function makeRuntimeSnapshot({ coreCount = 20, extraCount = 0, extraWords = [] } = {}) {
+function makeSecureExtensionWord(index) {
+  return {
+    slug: `secure-extension-${String(index).padStart(3, '0')}`,
+    word: `secure-extension-${index}`,
+    family: `family-secure-extension-${index % 4}`,
+    year: index % 2 === 0 ? '3-4' : '5-6',
+    yearLabel: index % 2 === 0 ? 'Years 3-4' : 'Years 5-6',
+    spellingPool: 'core',
+    coverageTier: 'secure-extension',
+    accepted: [`secure-extension-${index}`],
+    sentence: `Sentence for secure-extension word ${index}.`,
+  };
+}
+
+function makeRuntimeSnapshot({
+  coreCount = 20,
+  secureExtensionCount = 0,
+  extraCount = 0,
+  extraWords = [],
+} = {}) {
   const coreWords = Array.from({ length: coreCount }, (_, i) => makeCoreWord(i + 1));
+  const secureExtensionWords = Array.from({ length: secureExtensionCount }, (_, i) => makeSecureExtensionWord(i + 1));
   const extras = Array.from({ length: extraCount }, (_, i) => makeExtraWord(i + 1));
   const allExtras = [...extras, ...extraWords];
-  const words = [...coreWords, ...allExtras];
+  const words = [...coreWords, ...secureExtensionWords, ...allExtras];
   const wordBySlug = Object.fromEntries(words.map((word) => [word.slug, word]));
-  return { words, wordBySlug, coreWords, extraWords: allExtras };
+  return { words, wordBySlug, coreWords, secureExtensionWords, extraWords: allExtras };
 }
 
 function secureProgressEntries(words) {
@@ -270,6 +290,8 @@ test('U1 happy: sourceHint "service" yields postMasteryDebug.source === "service
   });
   assert.equal(state.postMasteryDebug.source, 'service');
   assert.equal(state.postMasteryDebug.publishedCoreCount, 5);
+  assert.equal(state.postMasteryDebug.publishedSecureExtensionCount, 0);
+  assert.equal(state.postMasteryDebug.publishedEnrichmentExtraCount, 0);
   assert.equal(state.postMasteryDebug.secureCoreCount, 2);
   assert.equal(state.postMasteryDebug.blockingCoreCount, 3);
   assert.equal(state.postMasteryDebug.allWordsMega, false);
@@ -469,6 +491,26 @@ test('U1 edge: extraWordsIgnoredCount counts extra-pool progress entries without
   assert.equal(state.postMasteryDebug.blockingCoreCount, 0);
   assert.equal(state.postMasteryDebug.allWordsMega, true);
   assert.equal(state.postMasteryDebug.extraWordsIgnoredCount, 5);
+});
+
+test('taxonomy: secure-extension progress is ignored by statutory Mega counts', () => {
+  const runtimeSnapshot = makeRuntimeSnapshot({ coreCount: 3, secureExtensionCount: 2, extraCount: 1 });
+  const subjectStateRecord = makeSubjectStateRecord({
+    progress: {
+      ...secureProgressEntries(runtimeSnapshot.coreWords),
+      ...partialProgressEntries(runtimeSnapshot.secureExtensionWords, { stage: 2 }),
+      ...partialProgressEntries(runtimeSnapshot.extraWords, { stage: 2 }),
+    },
+  });
+  const state = getSpellingPostMasteryState({ subjectStateRecord, runtimeSnapshot, now: NOW_MS });
+  assert.equal(state.postMasteryDebug.publishedCoreCount, 3);
+  assert.equal(state.postMasteryDebug.publishedSecureExtensionCount, 2);
+  assert.equal(state.postMasteryDebug.publishedEnrichmentExtraCount, 1);
+  assert.equal(state.postMasteryDebug.secureCoreCount, 3);
+  assert.equal(state.postMasteryDebug.blockingCoreCount, 0);
+  assert.equal(state.postMasteryDebug.allWordsMega, true);
+  assert.equal(state.postMasteryDebug.secureExtensionWordsIgnoredCount, 2);
+  assert.equal(state.postMasteryDebug.extraWordsIgnoredCount, 1);
 });
 
 // --------------------------------------------------------------------------

@@ -50,6 +50,7 @@ function emptyAnalytics() {
       core: normaliseStats({}),
       y34: normaliseStats({}),
       y56: normaliseStats({}),
+      secureExtension: normaliseStats({}),
       extra: normaliseStats({}),
     },
     wordGroups: [],
@@ -63,9 +64,11 @@ function statsForFilter(stats, yearFilter) {
     ? 'y34'
     : yearFilter === 'y5-6'
       ? 'y56'
-      : yearFilter === 'extra'
-        ? 'extra'
-        : 'core';
+      : yearFilter === 'secure-extension'
+        ? 'secureExtension'
+        : yearFilter === 'extra'
+          ? 'extra'
+          : 'core';
   return normaliseStats(safeStats[key] || safeStats.core || safeStats.all || {});
 }
 
@@ -109,10 +112,13 @@ function buildLockedFallback({ source, todayDay }) {
     postMasteryDebug: {
       source,
       publishedCoreCount: 0,
+      publishedSecureExtensionCount: 0,
+      publishedEnrichmentExtraCount: 0,
       secureCoreCount: 0,
       blockingCoreCount: 0,
       blockingCoreSlugsPreview: [],
       extraWordsIgnoredCount: 0,
+      secureExtensionWordsIgnoredCount: 0,
       guardianMapCount: 0,
       contentReleaseId: null,
       allWordsMega: false,

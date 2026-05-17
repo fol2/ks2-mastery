@@ -2,7 +2,7 @@
 
 ## Verdict
 
-The current Spelling module is mature for the uploaded 246-word runtime snapshot, but the requested expansion to thousands of secure words is not already implemented and must not be treated as a simple Extra-pool import. The present source has only two spelling pools, `core` and `extra`; existing mature semantics reserve core/statutory words for key mastery and SATs-style behaviours, while Extra is treated separately. A secure-vocabulary expansion needs a new explicit coverage taxonomy and release pipeline.
+The current Spelling module is mature for the uploaded 246-word runtime snapshot, but the requested expansion to thousands of secure words is not fully implemented and must not be treated as a simple Extra-pool import. The present source still has only two spelling pools, `core` and `extra`; existing mature semantics reserve core/statutory words for key mastery and SATs-style behaviours, while Extra is treated separately. A local taxonomy backbone now exists for `statutory-core`, `secure-extension`, and `enrichment-extra`, but the secure-extension candidate list is not imported or live.
 
 A small high-confidence patch is included for two adjacent problems that become more important at thousands-word scale:
 
@@ -36,6 +36,18 @@ The patch does not implement the full vocabulary expansion.
 - Review timestamp: `2026-05-17T12:15:41+01:00`
 
 This breaks the previous missing-source-list loop. It does not approve live secure-extension promotion or prove production deployment.
+
+### Local taxonomy backbone proof
+
+Local evidence under `validation/taxonomy-backbone-local-verification-2026-05-17.md` proves the runtime taxonomy seam now exists:
+
+- Canonical tiers: `statutory-core`, `secure-extension`, `enrichment-extra`.
+- Current published runtime counts: `213` statutory-core, `0` secure-extension, `33` enrichment-extra.
+- The approved-source aliases `current_statutory_core`, `current_extra`, and `secure_extension_candidate` normalise to the canonical tiers.
+- Guardian, Pattern Quest, post-mastery counts, analytics, Word Bank filters, admin read models, Worker read models, and generated spelling data now use tier-aware helpers.
+- Secure-extension words remain excluded from statutory Mega/Guardian eligibility unless a later explicit import and release promotes them.
+
+This closes the taxonomy-backbone blocker. It does not import the 1217 secure-extension candidate records, generate their learner-facing sentence/audio coverage, publish a release, deploy, or prove production.
 
 ### Approved-source import and reviewer-pack proof
 
@@ -97,10 +109,11 @@ Production is not proven. `https://ks2.eugnel.uk` was only checked for public re
 - errors: `0`
 - warnings: `6`
 
-Current published release pool split observed from generated/seeded content:
+Current published release coverage split observed from generated/seeded content:
 
-- core/statutory runtime words: `213`
-- extra runtime words: `33`
+- statutory-core runtime words: `213`
+- secure-extension runtime words: `0`
+- enrichment-extra runtime words: `33`
 
 This is far below the requested “thousands of new words” coverage level.
 
@@ -164,13 +177,13 @@ Local Codex Node 22 update:
 
 ## Blockers for the full expansion
 
-1. **No secure-extension taxonomy yet.** Current spelling content supports only `core` and `extra`. Existing mature behaviours distinguish Extra from core. Thousands of “need to be secured” words need a separate taxonomy rather than being forced into either current pool.
+1. **No live secure-extension import or release yet.** The taxonomy backbone exists locally, but current spelling content still publishes `0` secure-extension runtime words. The 1217 secure-extension candidate records remain approved for import/reviewer-pack generation only.
 
 2. **Current content size implies scale risk.** The current 246-word snapshot already produces multi-megabyte generated content data. Thousands of words may need content splitting, lazy loading, Worker-only release reads, or stricter generation boundaries.
 
 3. **Existing pattern warnings remain.** Several registered spelling patterns have below-threshold core coverage. Expansion must improve pattern coverage or explicitly keep those patterns non-launchable.
 
-4. **Full content import and release remain required.** The source list is now pinned, approved for import/reviewer-pack generation, mapped into a check-mode import plan, and B3w-verified as a reviewer pack. The full secure-extension content import, generated sentences/audio, release manifest, CI, deployment, and production verification are still not complete.
+4. **Full content import and release remain required.** The source list is now pinned, approved for import/reviewer-pack generation, mapped into a check-mode import plan, B3w-verified as a reviewer pack, and backed by a local taxonomy seam. The full secure-extension content import, generated sentences/audio, release manifest, CI, deployment, and production verification are still not complete.
 
 5. **Production is not proven.** No live hard-refresh spelling journey, deployed commit/release id, content-quality endpoint evidence, or logs/screenshots were captured.
 
@@ -189,6 +202,10 @@ Until live verification is complete, final status must be:
 or, after local import/reviewer-pack verification:
 
 `IMPLEMENTED + LOCAL VERIFIED — PRODUCTION NOT PROVEN`
+
+or, after the taxonomy-backbone implementation:
+
+`TAXONOMY BACKBONE IMPLEMENTED + LOCAL VERIFIED — SECURE IMPORT/PRODUCTION NOT PROVEN`
 
 or, before implementation:
 

@@ -1,3 +1,5 @@
+import { isStatutoryCoreWord } from '../../src/subjects/spelling/content/taxonomy.js';
+
 // P2 U3: Pure seed-shape builders for the QA seed harness.
 //
 // Each shape is a pure function `(wordBySlug, today) => data` that returns a
@@ -57,7 +59,7 @@ function coreSlugsFrom(wordBySlug) {
     .filter((slug) => {
       const word = wordBySlug[slug];
       if (!word || typeof word !== 'object') return false;
-      return (word.spellingPool === 'extra' ? 'extra' : 'core') === 'core';
+      return isStatutoryCoreWord(word);
     })
     .sort();
 }

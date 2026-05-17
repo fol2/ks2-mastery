@@ -1,6 +1,10 @@
 import { WORD_BY_SLUG as DEFAULT_WORD_BY_SLUG } from './data/word-data.js';
 import {
+  SPELLING_COVERAGE_TIER,
+  coverageTierCounts,
+  coverageTierForWord,
   GUARDIAN_SECURE_STAGE,
+  isStatutoryCoreWord,
   SPELLING_CONTENT_RELEASE_ID,
   normaliseGuardianMap,
   normalisePostMegaRecord,
@@ -189,18 +193,14 @@ export function getSpellingPostMasteryState({
   // published-core count, AND (2) the published core count is non-zero.
   // Extra-pool entries are excluded entirely from either side of the
   // comparison — graduation is a statutory-pool concept only.
-  let publishedCoreCount = 0;
-  for (const word of runtime.words) {
-    if (!word) continue;
-    if ((word.spellingPool === 'extra' ? 'extra' : 'core') === 'core') publishedCoreCount += 1;
-  }
+  const publishedCoverageCounts = coverageTierCounts(runtime.words);
+  const publishedCoreCount = publishedCoverageCounts.statutoryCore;
   let secureCoreCount = 0;
   for (const [slug, entry] of Object.entries(progressMap)) {
     const progress = normaliseProgressRecord(entry);
     if (progress.stage < SECURE_STAGE) continue;
     const word = runtime.bySlug[slug] || DEFAULT_WORD_BY_SLUG[slug];
-    const pool = word ? (word.spellingPool === 'extra' ? 'extra' : 'core') : 'core';
-    if (pool !== 'core') continue;
+    if (!isStatutoryCoreWord(word)) continue;
     secureCoreCount += 1;
   }
   const allWordsMega = publishedCoreCount > 0 && secureCoreCount === publishedCoreCount;
@@ -352,8 +352,7 @@ export function getSpellingPostMasteryState({
     const blocking = [];
     for (const word of runtime.words) {
       if (!word || typeof word !== 'object') continue;
-      const pool = word.spellingPool === 'extra' ? 'extra' : 'core';
-      if (pool !== 'core') continue;
+      if (!isStatutoryCoreWord(word)) continue;
       // Release-level publication state is enforced by the publisher; per-
       // word publication is not a production contract — the shape + length
       // scrub below is the only line of defence in this selector.
@@ -370,10 +369,12 @@ export function getSpellingPostMasteryState({
   const blockingCoreCount = Math.max(0, publishedCoreCount - secureCoreCount);
 
   let extraWordsIgnoredCount = 0;
+  let secureExtensionWordsIgnoredCount = 0;
   for (const [slug] of Object.entries(progressMap)) {
     const word = runtime.bySlug[slug] || DEFAULT_WORD_BY_SLUG[slug];
-    const pool = word ? (word.spellingPool === 'extra' ? 'extra' : 'core') : 'core';
-    if (pool === 'extra') extraWordsIgnoredCount += 1;
+    const coverageTier = coverageTierForWord(word);
+    if (coverageTier === SPELLING_COVERAGE_TIER.ENRICHMENT_EXTRA) extraWordsIgnoredCount += 1;
+    if (coverageTier === SPELLING_COVERAGE_TIER.SECURE_EXTENSION) secureExtensionWordsIgnoredCount += 1;
   }
 
   const guardianMapCount = Object.keys(guardianMap).length;
@@ -386,10 +387,13 @@ export function getSpellingPostMasteryState({
   const postMasteryDebug = {
     source: resolvedSource,
     publishedCoreCount,
+    publishedSecureExtensionCount: publishedCoverageCounts.secureExtension,
+    publishedEnrichmentExtraCount: publishedCoverageCounts.enrichmentExtra,
     secureCoreCount,
     blockingCoreCount,
     blockingCoreSlugsPreview,
     extraWordsIgnoredCount,
+    secureExtensionWordsIgnoredCount,
     guardianMapCount,
     contentReleaseId: null,
     allWordsMega,

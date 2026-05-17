@@ -1,3 +1,8 @@
+import {
+  SPELLING_COVERAGE_TIER as SPELLING_COVERAGE_TIER_VALUE,
+  coverageTierForWord as coverageTierForWordValue,
+} from './content/taxonomy.js';
+
 /**
  * P2 versioning convention (H7 synthesis, documented at U10): content-model
  * versions use EVEN numbers; service-state versions use ODD numbers. The two
@@ -5,7 +10,7 @@
  * cadences, but a collision (e.g. both at 3) would blow an entire day in
  * triage to re-establish which counter moved. The even/odd split rules out
  * collisions by construction — see `SPELLING_CONTENT_MODEL_VERSION` in
- * `src/subjects/spelling/content/model.js` (currently 4).
+ * `src/subjects/spelling/content/model.js` (currently 6).
  */
 export const SPELLING_SERVICE_STATE_VERSION = 3;
 
@@ -35,6 +40,18 @@ export {
   computeLaunchedPatternIds,
   isPatternEligibleSlug,
 } from './content/patterns.js';
+
+export {
+  SPELLING_COVERAGE_TIER,
+  SPELLING_COVERAGE_TIERS,
+  coverageTierCounts,
+  coverageTierForWord,
+  coverageTierLabel,
+  isEnrichmentExtraWord,
+  isSecureExtensionWord,
+  isStatutoryCoreWord,
+  normaliseCoverageTier,
+} from './content/taxonomy.js';
 
 /**
  * P2 U12: re-export of the achievement-framework canonical identifiers so
@@ -143,6 +160,9 @@ export function createLockedPostMasteryState() {
     postMegaUnlockedEver: false,
     postMegaDashboardAvailable: false,
     newCoreWordsSinceGraduation: 0,
+    publishedCoreCount: 0,
+    publishedSecureExtensionCount: 0,
+    publishedEnrichmentExtraCount: 0,
     guardianDueCount: 0,
     wobblingCount: 0,
     wobblingDueCount: 0,
@@ -224,7 +244,7 @@ export function isGuardianEligibleSlug(slug, progressMap, wordBySlug) {
   if (!wordBySlug || typeof wordBySlug !== 'object') return false;
   const word = wordBySlug[slug];
   if (!word || typeof word !== 'object') return false;
-  if (word.spellingPool === 'extra') return false;
+  if (coverageTierForWordValue(word) !== SPELLING_COVERAGE_TIER_VALUE.STATUTORY_CORE) return false;
   if (!progressMap || typeof progressMap !== 'object') return false;
   const record = progressMap[slug];
   const stage = Number(record?.stage);
@@ -270,7 +290,7 @@ export function isMegaSafeMode(mode, options = {}) {
 export function isSingleAttemptMegaSafeMode(mode) {
   return isPostMasteryMode(mode);
 }
-export const SPELLING_YEAR_FILTERS = Object.freeze(['core', 'y3-4', 'y5-6', 'extra']);
+export const SPELLING_YEAR_FILTERS = Object.freeze(['core', 'y3-4', 'y5-6', 'secure-extension', 'extra']);
 export const LEGACY_SPELLING_YEAR_FILTER_ALIASES = Object.freeze({
   all: 'core',
 });

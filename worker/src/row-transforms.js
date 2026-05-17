@@ -141,6 +141,7 @@ export function publicSpellingStats(progressPools) {
     core: cloneSerialisable(progressPools.core || progressPools.all || {}),
     y34: cloneSerialisable(progressPools.y34 || {}),
     y56: cloneSerialisable(progressPools.y56 || {}),
+    secureExtension: cloneSerialisable(progressPools.secureExtension || {}),
     extra: cloneSerialisable(progressPools.extra || {}),
   };
 }

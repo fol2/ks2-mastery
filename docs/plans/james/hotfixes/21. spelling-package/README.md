@@ -13,5 +13,6 @@ It contains:
 - `validation/` — patch dry-run/apply logs, content validation output, static grep, and Node runtime limitation log.
 - `validation/secure-vocabulary-approved-source/` - approved-source audit, check-mode import plan, reviewer pack, audited source, and B3w verification evidence.
 - `validation/task-b-local-patch-equivalence-2026-05-17.md` - local Node 22 evidence that the cache-key and admin signal patch-equivalent fixes are implemented and verified in the worktree.
+- `validation/taxonomy-backbone-local-verification-2026-05-17.md` - local verification for the statutory-core / secure-extension / enrichment-extra taxonomy backbone.
 
-The patch is not the full thousands-word expansion. It is a safe preparatory hardening patch for large spelling content releases.
+The patch and taxonomy backbone are not the full thousands-word expansion. They are safe preparatory work for large spelling content releases.

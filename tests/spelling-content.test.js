@@ -10,10 +10,17 @@ import { createLocalSpellingContentRepository } from '../src/subjects/spelling/c
 import { createSpellingContentService } from '../src/subjects/spelling/content/service.js';
 import {
   SPELLING_CONTENT_MODEL_VERSION,
+  buildSpellingContentSummary,
   extractPortableSpellingContent,
   publishSpellingContentBundle,
   validateSpellingContentBundle,
 } from '../src/subjects/spelling/content/model.js';
+import {
+  SPELLING_COVERAGE_TIER,
+  isEnrichmentExtraWord,
+  isStatutoryCoreWord,
+  normaliseCoverageTier,
+} from '../src/subjects/spelling/content/taxonomy.js';
 import { SEEDED_SPELLING_CONTENT_BUNDLE } from '../src/subjects/spelling/data/content-data.js';
 import { coreOnlyVersionOneContent } from './helpers/spelling-content.js';
 import { installMemoryStorage } from './helpers/memory-storage.js';
@@ -100,6 +107,50 @@ function addExtraWordList(bundle, { wordSpellingPool } = {}) {
   return next;
 }
 
+function addSecureExtensionWordList(bundle) {
+  const next = cloneSerialisable(bundle);
+  const listId = 'secure-extension-test-vocabulary';
+  next.draft.wordLists.push({
+    id: listId,
+    title: 'Secure extension test vocabulary',
+    spellingPool: 'core',
+    coverageTier: SPELLING_COVERAGE_TIER.SECURE_EXTENSION,
+    yearGroups: ['Y5', 'Y6'],
+    tags: ['secure-extension', 'test'],
+    wordSlugs: ['cartographer'],
+    sourceNote: 'Secure-extension test list',
+    provenance: { source: 'tests', note: 'Added inside tests.' },
+    sortIndex: 9999,
+  });
+  next.draft.words.push({
+    slug: 'cartographer',
+    word: 'cartographer',
+    family: 'Maps and navigation',
+    listId,
+    spellingPool: 'core',
+    coverageTier: SPELLING_COVERAGE_TIER.SECURE_EXTENSION,
+    yearGroups: ['Y5', 'Y6'],
+    tags: ['secure-extension', 'occupation'],
+    accepted: ['cartographer'],
+    explanation: 'A cartographer is a person who draws or studies maps.',
+    sentenceEntryIds: ['cartographer__01'],
+    sourceNote: 'Secure-extension test word',
+    provenance: { source: 'tests', note: 'Added inside tests.' },
+    sortIndex: 9999,
+  });
+  next.draft.sentences.push({
+    id: 'cartographer__01',
+    wordSlug: 'cartographer',
+    text: 'The cartographer checked every coast and river before printing the map.',
+    variantLabel: 'baseline',
+    tags: ['secure-extension'],
+    sourceNote: 'Secure-extension test sentence',
+    provenance: { source: 'tests', note: 'Added inside tests.' },
+    sortIndex: 9999,
+  });
+  return next;
+}
+
 function ensureLearner(repositories) {
   const snapshot = repositories.learners.read();
   if (snapshot?.selectedId) return snapshot.selectedId;
@@ -150,19 +201,30 @@ test('seeded spelling content validates and round-trips through the portable exp
   const validation = content.validate();
   assert.equal(validation.ok, true);
   assert.equal(validation.bundle.modelVersion, SPELLING_CONTENT_MODEL_VERSION);
-  assert.equal(SPELLING_CONTENT_MODEL_VERSION, 4, 'P2 U10: content-model version skips 3 per H7 synthesis.');
+  assert.equal(SPELLING_CONTENT_MODEL_VERSION, 6, 'Spelling content model keeps the even-version convention.');
   assert.equal(validation.errors.length, 0);
   assert.equal(validation.bundle.releases.length, 5);
   assert.equal(validation.bundle.publication.publishedVersion, 5);
   assert.ok(validation.bundle.draft.wordLists
     .filter((list) => list.id.startsWith('statutory-'))
     .every((list) => list.spellingPool === 'core'));
+  assert.ok(validation.bundle.draft.wordLists
+    .filter((list) => list.id.startsWith('statutory-'))
+    .every((list) => list.coverageTier === SPELLING_COVERAGE_TIER.STATUTORY_CORE));
   assert.ok(validation.bundle.draft.words
     .filter((word) => word.listId.startsWith('statutory-'))
     .every((word) => word.spellingPool === 'core'));
+  assert.ok(validation.bundle.draft.words
+    .filter((word) => word.listId.startsWith('statutory-'))
+    .every((word) => word.coverageTier === SPELLING_COVERAGE_TIER.STATUTORY_CORE));
   assert.ok(validation.bundle.releases[0].snapshot.words.every((word) => word.spellingPool === 'core'));
+  assert.ok(validation.bundle.releases[0].snapshot.words.every(isStatutoryCoreWord));
   assert.ok(validation.bundle.draft.words.every((word) => word.explanation));
   assert.ok(validation.bundle.releases.at(-1).snapshot.words.every((word) => word.explanation));
+  const summary = buildSpellingContentSummary(validation.bundle);
+  assert.equal(summary.statutoryCoreCount, 213);
+  assert.equal(summary.secureExtensionCount, 0);
+  assert.equal(summary.enrichmentExtraCount, 33);
 
   // P2 U10: every core word carries a patternIds field AND either at least
   // one registered patternId OR the exception-word / statutory-exception tag.
@@ -192,11 +254,13 @@ test('seeded spelling content includes the Extra expansion and current word-fami
   const extraList = validation.bundle.draft.wordLists.find((list) => list.id === 'extra-science-word-building');
   assert.ok(extraList);
   assert.equal(extraList.spellingPool, 'extra');
+  assert.equal(extraList.coverageTier, SPELLING_COVERAGE_TIER.ENRICHMENT_EXTRA);
   assert.deepEqual(extraList.yearGroups, []);
   assert.equal(extraList.wordSlugs.length, 33);
 
   const extraWords = validation.bundle.draft.words.filter((word) => word.spellingPool === 'extra');
   assert.equal(extraWords.length, 33);
+  assert.ok(extraWords.every(isEnrichmentExtraWord));
 
   const baselineRelease = validation.bundle.releases[0];
   const currentRelease = validation.bundle.releases.at(-1);
@@ -206,6 +270,7 @@ test('seeded spelling content includes the Extra expansion and current word-fami
   const runtimeWord = currentRelease.snapshot.wordBySlug.mollusc;
   assert.equal(runtimeWord.word, 'mollusc');
   assert.equal(runtimeWord.spellingPool, 'extra');
+  assert.equal(runtimeWord.coverageTier, SPELLING_COVERAGE_TIER.ENRICHMENT_EXTRA);
   assert.equal(runtimeWord.year, 'extra');
   assert.deepEqual(runtimeWord.accepted, ['mollusc']);
   assert.equal(runtimeWord.accepted.includes('mollusk'), false);
@@ -226,6 +291,7 @@ test('seeded spelling content includes the Extra expansion and current word-fami
   const science = currentRelease.snapshot.wordBySlug.science;
   assert.equal(science.word, 'science');
   assert.equal(science.spellingPool, 'extra');
+  assert.equal(science.coverageTier, SPELLING_COVERAGE_TIER.ENRICHMENT_EXTRA);
   assert.ok(science.tags.includes('silent-c'));
   assert.deepEqual(science.familyWords, ['science', 'scientist', 'scientific']);
   assert.equal(science.variants[0].sentence, 'The scientist recorded the results carefully.');
@@ -247,8 +313,10 @@ test('extra spelling pool validates without statutory year groups and publishes 
   const extraList = validation.bundle.draft.wordLists.find((list) => list.id === 'extra-test-science');
   const extraWord = validation.bundle.draft.words.find((word) => word.slug === 'cephalopod');
   assert.equal(extraList.spellingPool, 'extra');
+  assert.equal(extraList.coverageTier, SPELLING_COVERAGE_TIER.ENRICHMENT_EXTRA);
   assert.deepEqual(extraList.yearGroups, []);
   assert.equal(extraWord.spellingPool, 'extra');
+  assert.equal(extraWord.coverageTier, SPELLING_COVERAGE_TIER.ENRICHMENT_EXTRA);
   assert.deepEqual(extraWord.yearGroups, []);
 
   const published = publishSpellingContentBundle(bundle, {
@@ -258,6 +326,7 @@ test('extra spelling pool validates without statutory year groups and publishes 
   const runtimeWord = published.releases.at(-1).snapshot.wordBySlug.cephalopod;
 
   assert.equal(runtimeWord.spellingPool, 'extra');
+  assert.equal(runtimeWord.coverageTier, SPELLING_COVERAGE_TIER.ENRICHMENT_EXTRA);
   assert.equal(runtimeWord.year, 'extra');
   assert.equal(runtimeWord.yearLabel, 'Extra');
   assert.deepEqual(runtimeWord.yearGroups, []);
@@ -271,6 +340,56 @@ test('validation catches spelling-pool mismatches between word lists and words',
   const validation = validateSpellingContentBundle(broken);
   assert.equal(validation.ok, false);
   assert.ok(validation.errors.some((issue) => issue.code === 'pool_mismatch'));
+});
+
+test('secure-extension content stays separate from statutory-core and publishes with its coverage tier', () => {
+  const bundle = addSecureExtensionWordList(SEEDED_SPELLING_CONTENT_BUNDLE);
+  const validation = validateSpellingContentBundle(bundle);
+
+  assert.equal(validation.ok, true);
+  const secureList = validation.bundle.draft.wordLists.find((list) => list.id === 'secure-extension-test-vocabulary');
+  const secureWord = validation.bundle.draft.words.find((word) => word.slug === 'cartographer');
+  assert.equal(secureList.spellingPool, 'core');
+  assert.equal(secureList.coverageTier, SPELLING_COVERAGE_TIER.SECURE_EXTENSION);
+  assert.equal(secureWord.spellingPool, 'core');
+  assert.equal(secureWord.coverageTier, SPELLING_COVERAGE_TIER.SECURE_EXTENSION);
+
+  const published = publishSpellingContentBundle(bundle, {
+    notes: 'Publish secure-extension taxonomy test word.',
+    publishedAt: 34567,
+  });
+  const runtimeWord = published.releases.at(-1).snapshot.wordBySlug.cartographer;
+  assert.equal(runtimeWord.spellingPool, 'core');
+  assert.equal(runtimeWord.coverageTier, SPELLING_COVERAGE_TIER.SECURE_EXTENSION);
+
+  const summary = buildSpellingContentSummary(published);
+  assert.equal(summary.statutoryCoreCount, 213);
+  assert.equal(summary.secureExtensionCount, 1);
+  assert.equal(summary.enrichmentExtraCount, 33);
+});
+
+test('coverage-tier normalisation accepts approved-source tier aliases', () => {
+  assert.equal(
+    normaliseCoverageTier('secure_extension_candidate', { spellingPool: 'core' }),
+    SPELLING_COVERAGE_TIER.SECURE_EXTENSION,
+  );
+  assert.equal(
+    normaliseCoverageTier('current_statutory_core', { spellingPool: 'extra' }),
+    SPELLING_COVERAGE_TIER.STATUTORY_CORE,
+  );
+  assert.equal(
+    normaliseCoverageTier('current_extra', { spellingPool: 'core' }),
+    SPELLING_COVERAGE_TIER.ENRICHMENT_EXTRA,
+  );
+});
+
+test('validation catches coverage-tier mismatches between word lists and words', () => {
+  const broken = addExtraWordList(SEEDED_SPELLING_CONTENT_BUNDLE);
+  broken.draft.wordLists.find((list) => list.id === 'extra-test-science').coverageTier = SPELLING_COVERAGE_TIER.SECURE_EXTENSION;
+
+  const validation = validateSpellingContentBundle(broken);
+  assert.equal(validation.ok, false);
+  assert.ok(validation.errors.some((issue) => issue.code === 'coverage_tier_mismatch'));
 });
 
 test('validation keeps word-family variants out of the core pool', () => {
