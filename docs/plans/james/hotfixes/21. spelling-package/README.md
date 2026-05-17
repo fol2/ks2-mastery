@@ -19,5 +19,6 @@ It contains:
 - `validation/secure-vocabulary-approved-source/release-input-template/` - non-importing CSV template for filling the secure-extension release-quality fields needed by a future approved source artefact.
 - `validation/contract-current-state-audit-2026-05-17.md` - current HEAD audit showing the B3w source-list loop is closed while live secure-extension promotion remains blocked.
 - `validation/current-head-completion-audit-2026-05-17.md` - latest moving-branch completion audit, mapping the active goal and contract gates to concrete evidence, the reviewer-found Word Bank Guardian-chip fix, and remaining blockers.
+- `validation/reviewer-loop-current-head-2026-05-17.md` - latest independent Code Reviewer and Contract Auditor rerun for `9cc389568c2fc10b9d1d52d12d247bca1e4a7580`; both returned `NOT PASS` for full-contract blockers, while confirming the stale-evidence and Guardian-chip findings are closed.
 
 The patch, taxonomy backbone, and release-readiness gate are not the full thousands-word expansion. They are safe preparatory work for large spelling content releases.

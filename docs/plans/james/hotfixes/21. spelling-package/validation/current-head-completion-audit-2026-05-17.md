@@ -57,6 +57,11 @@ git rev-parse HEAD origin/codex/spelling-package-b3w-completion origin/main
 - `node --test tests\spelling-view-model.test.js`
   - Red result before the fix: exit `1`; `U2 view-model: renewedRecently and neverRenewed reject secure-extension slugs` failed because `renewedRecently` returned `true` for a secure-extension slug.
   - Green result after the fix: exit `0`, `58` tests passed, `0` failed.
+- `validation/reviewer-loop-current-head-2026-05-17.md`
+  - Latest independent Code Reviewer and Contract Auditor rerun for head `9cc389568c2fc10b9d1d52d12d247bca1e4a7580`.
+  - Result: both returned `NOT PASS`.
+  - Closed: stale-evidence blocker and reviewer-found Word Bank Guardian-chip blocker.
+  - Still blocking: secure-extension promotion approval, Task D release-quality fields, live secure-extension runtime/release, production hard-refresh proof, and exact reviewer PASS lines.
 
 ## Missing Inputs
 
