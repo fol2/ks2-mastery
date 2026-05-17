@@ -48,6 +48,7 @@ The ZIP's `contract/LOCAL_AGENT_STOP_LOOP_CONTRACT.md` is now in scope. It expli
 | Generate reviewer-pack proof | `validation/secure-vocabulary-approved-source/review-pack.json` and `.md` exist; B3w metadata verifier reports `ok: true`, `issueCount: 0`, `checkedReviewPackWords: 1463`. | Met |
 | Prevent reviewer-pack approval from being mistaken for live release approval | `scripts/verify-spelling-secure-vocabulary-release.mjs --release-ready` and `tests/secure-vocabulary-release-gates.test.js` add an explicit release-readiness gate. | Met |
 | Task D release-quality fields for every secure-extension word | `release-gap-summary.md` reports all `1217` secure-extension candidates are missing accepted spellings, explanations, example sentences, UK spelling decision, pattern/morphology tags, family/root, and audio/TTS status on both audited source and review pack. | Not met |
+| Next-source input template for Task D blockers | `validation/secure-vocabulary-approved-source/release-input-template/` contains a non-importing 1217-row CSV template and manifest for filling release-quality fields and `APPROVED_FOR_SECURE_EXTENSION_IMPORT` decisions. | Prepared for next source input |
 | Adult approval for live secure-extension promotion | Approval decision is `APPROVED_FOR_IMPORT_REVIEWER_PACK_ONLY`, not `APPROVED_FOR_SECURE_EXTENSION_IMPORT`. | Not met |
 | Runtime import of secure-extension words | Current runtime still has `0` secure-extension words; import plan is check-mode only. | Not met |
 | Content release manifest and migration semantics | No secure-extension content release, release manifest, audio manifest, or production migration evidence exists. | Not met |
@@ -84,6 +85,18 @@ Current summary: `validation/secure-vocabulary-approved-source/release-gap-summa
 - Missing release fields on review pack: `1217` each for the same fields.
 
 This proves the remaining blocker is not source-list discovery or reviewer-pack reconciliation. The finite blocker is release approval plus release-quality content for the candidate words.
+
+## Release input template
+
+Current template folder: `validation/secure-vocabulary-approved-source/release-input-template/`
+
+- CSV rows: `1217`
+- Advisory rows: `12`
+- Source JSONL SHA-256: `ae39bfc5091525d602f158c18d254b57c498683f9ae81da4d2733f225862a42c`
+- Required approval decision: `APPROVED_FOR_SECURE_EXTENSION_IMPORT`
+- Safety: the template is non-importing, does not grant approval, and writes no live content.
+
+The template gives the next source owner a finite row-and-field target for closing the release blocker. It does not alter the current release status.
 
 ## Current completion decision
 

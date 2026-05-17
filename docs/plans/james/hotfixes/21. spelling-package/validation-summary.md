@@ -62,6 +62,7 @@ Generated local evidence under `validation/secure-vocabulary-approved-source/`:
 - `release-gate-report.json`: direct CLI verification with the same `ok: true` and zero issues.
 - `release-readiness-report.json`: explicit live-promotion gate with `ok: false`, `issueCount: 18256`, `metadataIssueCount: 0`, and `checkedSecureExtensionWords: 1217`.
 - `release-gap-summary.json` / `.md`: grouped release blocker summary showing zero missing review-pack entries, zero secure-import adult-approved words, all 1217 secure-extension candidates missing the required release-quality fields, and 12 advisory words.
+- `release-input-template/`: non-importing CSV input template with 1217 secure-extension rows, 12 advisory rows, the pinned source hash, and columns for the release-quality fields required before a future `APPROVED_FOR_SECURE_EXTENSION_IMPORT` source can be considered.
 - `targeted-tests.log`: original B3w run passed 5 tests. The release-readiness addendum reran `node --test tests/spelling-secure-vocabulary-source.test.js tests/secure-vocabulary-release-gates.test.js` after adding release-readiness coverage, and 10 tests passed.
 - `content-validate.log`: `npm run content:validate`, `ok: true`, 246 runtime words, 2213 runtime sentences, 0 errors, 6 existing pattern warnings.
 - `npm-run-check.log`: `npm run check`, exit `0`; Wrangler dry-run build and client bundle audit passed.
@@ -74,6 +75,7 @@ Commands recorded:
 - `node scripts/verify-spelling-secure-vocabulary-release.mjs --source validation/secure-vocabulary-approved-source/audited-source.json --review-pack validation/secure-vocabulary-approved-source/review-pack.json --json --out validation/secure-vocabulary-approved-source/release-gate-report.json`
 - `node scripts/verify-spelling-secure-vocabulary-release.mjs --release-ready --audited-source validation/secure-vocabulary-approved-source/audited-source.json --review-pack validation/secure-vocabulary-approved-source/review-pack.json --json --out validation/secure-vocabulary-approved-source/release-readiness-report.json`
 - `node scripts/summarise-spelling-secure-vocabulary-release-gaps.mjs --audited-source validation/secure-vocabulary-approved-source/audited-source.json --review-pack validation/secure-vocabulary-approved-source/review-pack.json --out validation/secure-vocabulary-approved-source/release-gap-summary.json --md-out validation/secure-vocabulary-approved-source/release-gap-summary.md`
+- `node scripts/build-spelling-secure-vocabulary-release-input-template.mjs --audited-source validation/secure-vocabulary-approved-source/audited-source.json --out-dir validation/secure-vocabulary-approved-source/release-input-template --json`
 - `node --test tests/spelling-secure-vocabulary-source.test.js tests/secure-vocabulary-release-gates.test.js`
 - `npm run content:validate`
 - `npm run check`

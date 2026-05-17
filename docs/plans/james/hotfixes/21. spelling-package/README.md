@@ -16,6 +16,7 @@ It contains:
 - `validation/taxonomy-backbone-local-verification-2026-05-17.md` - local verification for the statutory-core / secure-extension / enrichment-extra taxonomy backbone.
 - `validation/secure-vocabulary-release-readiness-gate-2026-05-17.md` - explicit evidence that the current approved source passes B3w metadata reconciliation but is blocked from live secure-extension promotion.
 - `validation/secure-vocabulary-approved-source/release-gap-summary.md` - grouped blocker counts for the current source artefact's secure-extension release gaps.
+- `validation/secure-vocabulary-approved-source/release-input-template/` - non-importing CSV template for filling the secure-extension release-quality fields needed by a future approved source artefact.
 - `validation/contract-current-state-audit-2026-05-17.md` - current HEAD audit showing the B3w source-list loop is closed while live secure-extension promotion remains blocked.
 
 The patch, taxonomy backbone, and release-readiness gate are not the full thousands-word expansion. They are safe preparatory work for large spelling content releases.

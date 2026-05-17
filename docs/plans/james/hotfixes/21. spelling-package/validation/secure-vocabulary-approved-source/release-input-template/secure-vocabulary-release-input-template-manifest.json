@@ -1,0 +1,68 @@
+{
+  "kind": "ks2-spelling-secure-vocabulary-release-input-template",
+  "version": 1,
+  "generatedAt": "2026-05-17T14:16:10.025Z",
+  "source": {
+    "artifactId": "ks2-spelling-secure-vocabulary-source-v1",
+    "sourceJsonlSha256": "ae39bfc5091525d602f158c18d254b57c498683f9ae81da4d2733f225862a42c",
+    "approvalDecision": "APPROVED_FOR_IMPORT_REVIEWER_PACK_ONLY",
+    "securePromotionAllowed": false
+  },
+  "requiredApprovalDecision": "APPROVED_FOR_SECURE_EXTENSION_IMPORT",
+  "counts": {
+    "secureExtensionRows": 1217,
+    "advisoryRows": 12,
+    "currentReviewStatus": {
+      "candidate_source_supplied_not_adult_approved": 1217
+    }
+  },
+  "columns": [
+    "sourceRecordId",
+    "word",
+    "taxonomyTier",
+    "yearBand",
+    "sourceBucket",
+    "existingPatternTags",
+    "existingAdvisories",
+    "currentSourceReviewStatus",
+    "secureImportReviewStatus",
+    "acceptedSpellings",
+    "rejectedVariants",
+    "explanation",
+    "exampleSentence1",
+    "exampleSentence2",
+    "exampleSentence3",
+    "ukSpellingDecision",
+    "patternTags",
+    "morphologyTags",
+    "familyRoot",
+    "safetyNotes",
+    "audioStatus",
+    "ttsStatus",
+    "reviewerName",
+    "reviewedAt",
+    "secureImportApprovalDecision"
+  ],
+  "fieldGuidance": {
+    "secureImportReviewStatus": "Use adult_approved_for_secure_extension_import only after the word is approved for live secure-extension import. Use rejected_needs_source_revision when it must not ship.",
+    "acceptedSpellings": "Pipe-separated spellings accepted by the marker. Include the canonical word when approved.",
+    "rejectedVariants": "Pipe-separated common confusions or variants that must not be accepted, where useful.",
+    "explanation": "One child-safe KS2 explanation of the word or spelling point.",
+    "exampleSentence1": "A KS2-suitable sentence using the word naturally.",
+    "exampleSentence2": "Optional second KS2-suitable sentence.",
+    "exampleSentence3": "Optional third KS2-suitable sentence.",
+    "ukSpellingDecision": "Explicit UK spelling policy decision, including whether US variants are rejected or absent.",
+    "patternTags": "Pipe-separated spelling pattern tags, if applicable.",
+    "morphologyTags": "Pipe-separated morphology tags, if applicable.",
+    "familyRoot": "Word family/root relation used for grouping and teaching.",
+    "safetyNotes": "Safety, exclusion, age-suitability, or advisory-resolution notes.",
+    "audioStatus": "Audio requirement or availability status, for example tts_required, audio_available, or not_required.",
+    "ttsStatus": "TTS plan/status, for example planned, verified, not_required, or blocked.",
+    "secureImportApprovalDecision": "Use APPROVED_FOR_SECURE_EXTENSION_IMPORT only when the row is approved for live secure-extension import."
+  },
+  "safety": {
+    "writesLiveContent": false,
+    "grantsApproval": false,
+    "purpose": "Data collection template for a future release-approved secure-extension source artefact."
+  }
+}
