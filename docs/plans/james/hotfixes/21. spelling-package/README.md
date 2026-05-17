@@ -18,5 +18,6 @@ It contains:
 - `validation/secure-vocabulary-approved-source/release-gap-summary.md` - grouped blocker counts for the current source artefact's secure-extension release gaps.
 - `validation/secure-vocabulary-approved-source/release-input-template/` - non-importing CSV template for filling the secure-extension release-quality fields needed by a future approved source artefact.
 - `validation/contract-current-state-audit-2026-05-17.md` - current HEAD audit showing the B3w source-list loop is closed while live secure-extension promotion remains blocked.
+- `validation/current-head-completion-audit-2026-05-17.md` - latest current-HEAD completion audit for `a1cc46406568418c352778705854f34d79c2c43b`, mapping the active goal and contract gates to concrete evidence and remaining blockers.
 
 The patch, taxonomy backbone, and release-readiness gate are not the full thousands-word expansion. They are safe preparatory work for large spelling content releases.
