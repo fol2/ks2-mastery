@@ -47,7 +47,7 @@ The ZIP's `contract/LOCAL_AGENT_STOP_LOOP_CONTRACT.md` is now in scope. It expli
 | Keep statutory/current-extra/candidate records distinct | Taxonomy backbone and import plan keep `current_statutory_core`, `current_extra`, and `secure_extension_candidate` separate. Runtime still reports `213` statutory-core, `0` secure-extension, `33` enrichment-extra. | Met locally |
 | Generate reviewer-pack proof | `validation/secure-vocabulary-approved-source/review-pack.json` and `.md` exist; B3w metadata verifier reports `ok: true`, `issueCount: 0`, `checkedReviewPackWords: 1463`. | Met |
 | Prevent reviewer-pack approval from being mistaken for live release approval | `scripts/verify-spelling-secure-vocabulary-release.mjs --release-ready` and `tests/secure-vocabulary-release-gates.test.js` add an explicit release-readiness gate. | Met |
-| Task D release-quality fields for every secure-extension word | `release-readiness-report.json` reports missing release-quality fields including accepted spellings, explanations, example sentences, UK spelling decision, family/morphology evidence, and audio/TTS status. | Not met |
+| Task D release-quality fields for every secure-extension word | `release-gap-summary.md` reports all `1217` secure-extension candidates are missing accepted spellings, explanations, example sentences, UK spelling decision, pattern/morphology tags, family/root, and audio/TTS status on both audited source and review pack. | Not met |
 | Adult approval for live secure-extension promotion | Approval decision is `APPROVED_FOR_IMPORT_REVIEWER_PACK_ONLY`, not `APPROVED_FOR_SECURE_EXTENSION_IMPORT`. | Not met |
 | Runtime import of secure-extension words | Current runtime still has `0` secure-extension words; import plan is check-mode only. | Not met |
 | Content release manifest and migration semantics | No secure-extension content release, release manifest, audio manifest, or production migration evidence exists. | Not met |
@@ -69,6 +69,21 @@ Current report: `validation/secure-vocabulary-approved-source/release-readiness-
 - `checkedSecureExtensionWords`: `1217`
 
 The first stored issue is `secure_vocabulary_release_promotion_not_approved`: secure-extension promotion requires `APPROVED_FOR_SECURE_EXTENSION_IMPORT` on both audited source and review pack. The next issues show the same secure-extension words are not release-ready because they are not adult-approved for secure import and lack release-quality fields.
+
+## Release gap summary
+
+Current summary: `validation/secure-vocabulary-approved-source/release-gap-summary.md`
+
+- Status: `RELEASE BLOCKED`
+- Secure-extension words: `1217`
+- Missing review-pack entries: `0`
+- Adult-approved for secure import: `0`
+- Not adult-approved for secure import: `1217`
+- Advisory words: `12`
+- Missing release fields on audited source: `1217` each for accepted spellings, explanations, example sentences, UK spelling decision, pattern/morphology tags, family/root, and audio/TTS status.
+- Missing release fields on review pack: `1217` each for the same fields.
+
+This proves the remaining blocker is not source-list discovery or reviewer-pack reconciliation. The finite blocker is release approval plus release-quality content for the candidate words.
 
 ## Current completion decision
 

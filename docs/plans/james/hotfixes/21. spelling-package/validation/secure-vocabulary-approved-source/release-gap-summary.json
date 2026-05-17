@@ -1,0 +1,734 @@
+{
+  "ok": false,
+  "status": "RELEASE BLOCKED",
+  "approval": {
+    "auditedSourceDecision": "APPROVED_FOR_IMPORT_REVIEWER_PACK_ONLY",
+    "reviewPackDecision": "APPROVED_FOR_IMPORT_REVIEWER_PACK_ONLY",
+    "auditedSourceSecurePromotionAllowed": false,
+    "reviewPackSecurePromotionAllowed": false,
+    "promotionApproved": false
+  },
+  "counts": {
+    "auditedSourceWords": 1463,
+    "reviewPackWords": 1463,
+    "secureExtensionWords": 1217,
+    "missingReviewPackEntries": 0,
+    "adultApprovedForSecureImport": 0,
+    "notAdultApprovedForSecureImport": 1217,
+    "advisoryWordCount": 12,
+    "noAdvisoryWordCount": 1205
+  },
+  "releaseReadiness": {
+    "ok": false,
+    "issueCount": 18256,
+    "metadataIssueCount": 0,
+    "checkedSecureExtensionWords": 1217,
+    "checkedAuditedSourceWords": 1463,
+    "checkedReviewPackWords": 1463
+  },
+  "missingFields": {
+    "auditedSource": {
+      "acceptedSpellings": 1217,
+      "explanation": 1217,
+      "exampleSentences": 1217,
+      "ukSpellingDecision": 1217,
+      "patternOrMorphologyTags": 1217,
+      "familyRoot": 1217,
+      "audioOrTtsStatus": 1217
+    },
+    "reviewPack": {
+      "acceptedSpellings": 1217,
+      "explanation": 1217,
+      "exampleSentences": 1217,
+      "ukSpellingDecision": 1217,
+      "patternOrMorphologyTags": 1217,
+      "familyRoot": 1217,
+      "audioOrTtsStatus": 1217
+    }
+  },
+  "distributions": {
+    "reviewStatus": {
+      "candidate_source_supplied_not_adult_approved": 1217
+    },
+    "sourceBucket": {
+      "school_academic_secure": 281,
+      "writing_grammar_secure": 91,
+      "maths_secure": 107,
+      "science_secure": 70,
+      "geography_history_secure": 63,
+      "spelling_pattern_secure": 83,
+      "morphology_family_secure": 212,
+      "tier_two_general_secure": 46,
+      "safe_subject_vocabulary_secure": 39,
+      "derived_forms_candidate": 225
+    },
+    "yearBand": {
+      "Y3-Y6": 497,
+      "Y5-Y6 or extension after adult review": 720
+    },
+    "advisories": {
+      "adult_review_context_sensitivity": 12
+    }
+  },
+  "examples": {
+    "notAdultApproved": [
+      {
+        "word": "ability",
+        "sourceRecordId": "sv1-0001"
+      },
+      {
+        "word": "able",
+        "sourceRecordId": "sv1-0002"
+      },
+      {
+        "word": "absence",
+        "sourceRecordId": "sv1-0003"
+      },
+      {
+        "word": "absent",
+        "sourceRecordId": "sv1-0004"
+      },
+      {
+        "word": "absolutely",
+        "sourceRecordId": "sv1-0005"
+      },
+      {
+        "word": "absorb",
+        "sourceRecordId": "sv1-0006"
+      },
+      {
+        "word": "absorbed",
+        "sourceRecordId": "sv1-0007"
+      },
+      {
+        "word": "absorbing",
+        "sourceRecordId": "sv1-0008"
+      },
+      {
+        "word": "absorption",
+        "sourceRecordId": "sv1-0009"
+      },
+      {
+        "word": "abstract",
+        "sourceRecordId": "sv1-0010"
+      },
+      {
+        "word": "acceptable",
+        "sourceRecordId": "sv1-0011"
+      },
+      {
+        "word": "acceptance",
+        "sourceRecordId": "sv1-0012"
+      },
+      {
+        "word": "access",
+        "sourceRecordId": "sv1-0013"
+      },
+      {
+        "word": "accessible",
+        "sourceRecordId": "sv1-0014"
+      },
+      {
+        "word": "accessory",
+        "sourceRecordId": "sv1-0015"
+      },
+      {
+        "word": "account",
+        "sourceRecordId": "sv1-0016"
+      },
+      {
+        "word": "accuracy",
+        "sourceRecordId": "sv1-0017"
+      },
+      {
+        "word": "accurate",
+        "sourceRecordId": "sv1-0018"
+      },
+      {
+        "word": "accurately",
+        "sourceRecordId": "sv1-0019"
+      },
+      {
+        "word": "accusation",
+        "sourceRecordId": "sv1-0020"
+      }
+    ],
+    "missingReviewPackEntries": [],
+    "missingFields": {
+      "acceptedSpellings": [
+        {
+          "word": "ability",
+          "sourceRecordId": "sv1-0001"
+        },
+        {
+          "word": "able",
+          "sourceRecordId": "sv1-0002"
+        },
+        {
+          "word": "absence",
+          "sourceRecordId": "sv1-0003"
+        },
+        {
+          "word": "absent",
+          "sourceRecordId": "sv1-0004"
+        },
+        {
+          "word": "absolutely",
+          "sourceRecordId": "sv1-0005"
+        },
+        {
+          "word": "absorb",
+          "sourceRecordId": "sv1-0006"
+        },
+        {
+          "word": "absorbed",
+          "sourceRecordId": "sv1-0007"
+        },
+        {
+          "word": "absorbing",
+          "sourceRecordId": "sv1-0008"
+        },
+        {
+          "word": "absorption",
+          "sourceRecordId": "sv1-0009"
+        },
+        {
+          "word": "abstract",
+          "sourceRecordId": "sv1-0010"
+        },
+        {
+          "word": "acceptable",
+          "sourceRecordId": "sv1-0011"
+        },
+        {
+          "word": "acceptance",
+          "sourceRecordId": "sv1-0012"
+        },
+        {
+          "word": "access",
+          "sourceRecordId": "sv1-0013"
+        },
+        {
+          "word": "accessible",
+          "sourceRecordId": "sv1-0014"
+        },
+        {
+          "word": "accessory",
+          "sourceRecordId": "sv1-0015"
+        },
+        {
+          "word": "account",
+          "sourceRecordId": "sv1-0016"
+        },
+        {
+          "word": "accuracy",
+          "sourceRecordId": "sv1-0017"
+        },
+        {
+          "word": "accurate",
+          "sourceRecordId": "sv1-0018"
+        },
+        {
+          "word": "accurately",
+          "sourceRecordId": "sv1-0019"
+        },
+        {
+          "word": "accusation",
+          "sourceRecordId": "sv1-0020"
+        }
+      ],
+      "explanation": [
+        {
+          "word": "ability",
+          "sourceRecordId": "sv1-0001"
+        },
+        {
+          "word": "able",
+          "sourceRecordId": "sv1-0002"
+        },
+        {
+          "word": "absence",
+          "sourceRecordId": "sv1-0003"
+        },
+        {
+          "word": "absent",
+          "sourceRecordId": "sv1-0004"
+        },
+        {
+          "word": "absolutely",
+          "sourceRecordId": "sv1-0005"
+        },
+        {
+          "word": "absorb",
+          "sourceRecordId": "sv1-0006"
+        },
+        {
+          "word": "absorbed",
+          "sourceRecordId": "sv1-0007"
+        },
+        {
+          "word": "absorbing",
+          "sourceRecordId": "sv1-0008"
+        },
+        {
+          "word": "absorption",
+          "sourceRecordId": "sv1-0009"
+        },
+        {
+          "word": "abstract",
+          "sourceRecordId": "sv1-0010"
+        },
+        {
+          "word": "acceptable",
+          "sourceRecordId": "sv1-0011"
+        },
+        {
+          "word": "acceptance",
+          "sourceRecordId": "sv1-0012"
+        },
+        {
+          "word": "access",
+          "sourceRecordId": "sv1-0013"
+        },
+        {
+          "word": "accessible",
+          "sourceRecordId": "sv1-0014"
+        },
+        {
+          "word": "accessory",
+          "sourceRecordId": "sv1-0015"
+        },
+        {
+          "word": "account",
+          "sourceRecordId": "sv1-0016"
+        },
+        {
+          "word": "accuracy",
+          "sourceRecordId": "sv1-0017"
+        },
+        {
+          "word": "accurate",
+          "sourceRecordId": "sv1-0018"
+        },
+        {
+          "word": "accurately",
+          "sourceRecordId": "sv1-0019"
+        },
+        {
+          "word": "accusation",
+          "sourceRecordId": "sv1-0020"
+        }
+      ],
+      "exampleSentences": [
+        {
+          "word": "ability",
+          "sourceRecordId": "sv1-0001"
+        },
+        {
+          "word": "able",
+          "sourceRecordId": "sv1-0002"
+        },
+        {
+          "word": "absence",
+          "sourceRecordId": "sv1-0003"
+        },
+        {
+          "word": "absent",
+          "sourceRecordId": "sv1-0004"
+        },
+        {
+          "word": "absolutely",
+          "sourceRecordId": "sv1-0005"
+        },
+        {
+          "word": "absorb",
+          "sourceRecordId": "sv1-0006"
+        },
+        {
+          "word": "absorbed",
+          "sourceRecordId": "sv1-0007"
+        },
+        {
+          "word": "absorbing",
+          "sourceRecordId": "sv1-0008"
+        },
+        {
+          "word": "absorption",
+          "sourceRecordId": "sv1-0009"
+        },
+        {
+          "word": "abstract",
+          "sourceRecordId": "sv1-0010"
+        },
+        {
+          "word": "acceptable",
+          "sourceRecordId": "sv1-0011"
+        },
+        {
+          "word": "acceptance",
+          "sourceRecordId": "sv1-0012"
+        },
+        {
+          "word": "access",
+          "sourceRecordId": "sv1-0013"
+        },
+        {
+          "word": "accessible",
+          "sourceRecordId": "sv1-0014"
+        },
+        {
+          "word": "accessory",
+          "sourceRecordId": "sv1-0015"
+        },
+        {
+          "word": "account",
+          "sourceRecordId": "sv1-0016"
+        },
+        {
+          "word": "accuracy",
+          "sourceRecordId": "sv1-0017"
+        },
+        {
+          "word": "accurate",
+          "sourceRecordId": "sv1-0018"
+        },
+        {
+          "word": "accurately",
+          "sourceRecordId": "sv1-0019"
+        },
+        {
+          "word": "accusation",
+          "sourceRecordId": "sv1-0020"
+        }
+      ],
+      "ukSpellingDecision": [
+        {
+          "word": "ability",
+          "sourceRecordId": "sv1-0001"
+        },
+        {
+          "word": "able",
+          "sourceRecordId": "sv1-0002"
+        },
+        {
+          "word": "absence",
+          "sourceRecordId": "sv1-0003"
+        },
+        {
+          "word": "absent",
+          "sourceRecordId": "sv1-0004"
+        },
+        {
+          "word": "absolutely",
+          "sourceRecordId": "sv1-0005"
+        },
+        {
+          "word": "absorb",
+          "sourceRecordId": "sv1-0006"
+        },
+        {
+          "word": "absorbed",
+          "sourceRecordId": "sv1-0007"
+        },
+        {
+          "word": "absorbing",
+          "sourceRecordId": "sv1-0008"
+        },
+        {
+          "word": "absorption",
+          "sourceRecordId": "sv1-0009"
+        },
+        {
+          "word": "abstract",
+          "sourceRecordId": "sv1-0010"
+        },
+        {
+          "word": "acceptable",
+          "sourceRecordId": "sv1-0011"
+        },
+        {
+          "word": "acceptance",
+          "sourceRecordId": "sv1-0012"
+        },
+        {
+          "word": "access",
+          "sourceRecordId": "sv1-0013"
+        },
+        {
+          "word": "accessible",
+          "sourceRecordId": "sv1-0014"
+        },
+        {
+          "word": "accessory",
+          "sourceRecordId": "sv1-0015"
+        },
+        {
+          "word": "account",
+          "sourceRecordId": "sv1-0016"
+        },
+        {
+          "word": "accuracy",
+          "sourceRecordId": "sv1-0017"
+        },
+        {
+          "word": "accurate",
+          "sourceRecordId": "sv1-0018"
+        },
+        {
+          "word": "accurately",
+          "sourceRecordId": "sv1-0019"
+        },
+        {
+          "word": "accusation",
+          "sourceRecordId": "sv1-0020"
+        }
+      ],
+      "patternOrMorphologyTags": [
+        {
+          "word": "ability",
+          "sourceRecordId": "sv1-0001"
+        },
+        {
+          "word": "able",
+          "sourceRecordId": "sv1-0002"
+        },
+        {
+          "word": "absence",
+          "sourceRecordId": "sv1-0003"
+        },
+        {
+          "word": "absent",
+          "sourceRecordId": "sv1-0004"
+        },
+        {
+          "word": "absolutely",
+          "sourceRecordId": "sv1-0005"
+        },
+        {
+          "word": "absorb",
+          "sourceRecordId": "sv1-0006"
+        },
+        {
+          "word": "absorbed",
+          "sourceRecordId": "sv1-0007"
+        },
+        {
+          "word": "absorbing",
+          "sourceRecordId": "sv1-0008"
+        },
+        {
+          "word": "absorption",
+          "sourceRecordId": "sv1-0009"
+        },
+        {
+          "word": "abstract",
+          "sourceRecordId": "sv1-0010"
+        },
+        {
+          "word": "acceptable",
+          "sourceRecordId": "sv1-0011"
+        },
+        {
+          "word": "acceptance",
+          "sourceRecordId": "sv1-0012"
+        },
+        {
+          "word": "access",
+          "sourceRecordId": "sv1-0013"
+        },
+        {
+          "word": "accessible",
+          "sourceRecordId": "sv1-0014"
+        },
+        {
+          "word": "accessory",
+          "sourceRecordId": "sv1-0015"
+        },
+        {
+          "word": "account",
+          "sourceRecordId": "sv1-0016"
+        },
+        {
+          "word": "accuracy",
+          "sourceRecordId": "sv1-0017"
+        },
+        {
+          "word": "accurate",
+          "sourceRecordId": "sv1-0018"
+        },
+        {
+          "word": "accurately",
+          "sourceRecordId": "sv1-0019"
+        },
+        {
+          "word": "accusation",
+          "sourceRecordId": "sv1-0020"
+        }
+      ],
+      "familyRoot": [
+        {
+          "word": "ability",
+          "sourceRecordId": "sv1-0001"
+        },
+        {
+          "word": "able",
+          "sourceRecordId": "sv1-0002"
+        },
+        {
+          "word": "absence",
+          "sourceRecordId": "sv1-0003"
+        },
+        {
+          "word": "absent",
+          "sourceRecordId": "sv1-0004"
+        },
+        {
+          "word": "absolutely",
+          "sourceRecordId": "sv1-0005"
+        },
+        {
+          "word": "absorb",
+          "sourceRecordId": "sv1-0006"
+        },
+        {
+          "word": "absorbed",
+          "sourceRecordId": "sv1-0007"
+        },
+        {
+          "word": "absorbing",
+          "sourceRecordId": "sv1-0008"
+        },
+        {
+          "word": "absorption",
+          "sourceRecordId": "sv1-0009"
+        },
+        {
+          "word": "abstract",
+          "sourceRecordId": "sv1-0010"
+        },
+        {
+          "word": "acceptable",
+          "sourceRecordId": "sv1-0011"
+        },
+        {
+          "word": "acceptance",
+          "sourceRecordId": "sv1-0012"
+        },
+        {
+          "word": "access",
+          "sourceRecordId": "sv1-0013"
+        },
+        {
+          "word": "accessible",
+          "sourceRecordId": "sv1-0014"
+        },
+        {
+          "word": "accessory",
+          "sourceRecordId": "sv1-0015"
+        },
+        {
+          "word": "account",
+          "sourceRecordId": "sv1-0016"
+        },
+        {
+          "word": "accuracy",
+          "sourceRecordId": "sv1-0017"
+        },
+        {
+          "word": "accurate",
+          "sourceRecordId": "sv1-0018"
+        },
+        {
+          "word": "accurately",
+          "sourceRecordId": "sv1-0019"
+        },
+        {
+          "word": "accusation",
+          "sourceRecordId": "sv1-0020"
+        }
+      ],
+      "audioOrTtsStatus": [
+        {
+          "word": "ability",
+          "sourceRecordId": "sv1-0001"
+        },
+        {
+          "word": "able",
+          "sourceRecordId": "sv1-0002"
+        },
+        {
+          "word": "absence",
+          "sourceRecordId": "sv1-0003"
+        },
+        {
+          "word": "absent",
+          "sourceRecordId": "sv1-0004"
+        },
+        {
+          "word": "absolutely",
+          "sourceRecordId": "sv1-0005"
+        },
+        {
+          "word": "absorb",
+          "sourceRecordId": "sv1-0006"
+        },
+        {
+          "word": "absorbed",
+          "sourceRecordId": "sv1-0007"
+        },
+        {
+          "word": "absorbing",
+          "sourceRecordId": "sv1-0008"
+        },
+        {
+          "word": "absorption",
+          "sourceRecordId": "sv1-0009"
+        },
+        {
+          "word": "abstract",
+          "sourceRecordId": "sv1-0010"
+        },
+        {
+          "word": "acceptable",
+          "sourceRecordId": "sv1-0011"
+        },
+        {
+          "word": "acceptance",
+          "sourceRecordId": "sv1-0012"
+        },
+        {
+          "word": "access",
+          "sourceRecordId": "sv1-0013"
+        },
+        {
+          "word": "accessible",
+          "sourceRecordId": "sv1-0014"
+        },
+        {
+          "word": "accessory",
+          "sourceRecordId": "sv1-0015"
+        },
+        {
+          "word": "account",
+          "sourceRecordId": "sv1-0016"
+        },
+        {
+          "word": "accuracy",
+          "sourceRecordId": "sv1-0017"
+        },
+        {
+          "word": "accurate",
+          "sourceRecordId": "sv1-0018"
+        },
+        {
+          "word": "accurately",
+          "sourceRecordId": "sv1-0019"
+        },
+        {
+          "word": "accusation",
+          "sourceRecordId": "sv1-0020"
+        }
+      ]
+    }
+  }
+}
