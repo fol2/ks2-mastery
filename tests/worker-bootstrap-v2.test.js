@@ -145,12 +145,12 @@ function insertLargeSpellingContentRow(server, accountId) {
   ]);
 }
 
-function guardAgainstUnboundedSpellingContentRead(server) {
+function guardAgainstBootstrapSpellingContentRead(server) {
   const originalPrepare = server.env.DB.prepare.bind(server.env.DB);
   server.env.DB.prepare = (sql) => {
     const normalised = String(sql || '').replace(/\s+/g, ' ').trim();
-    if (/SELECT account_id, subject_id, content_json, updated_at FROM account_subject_content\b/.test(normalised)) {
-      throw new Error('Unbounded spelling content_json read should not run on bootstrap read-model paths.');
+    if (/\baccount_subject_content\b/.test(normalised)) {
+      throw new Error('Bootstrap read-model paths must not read account_subject_content.');
     }
     return originalPrepare(sql);
   };
@@ -1065,13 +1065,13 @@ test('U1 hotfix: GET /api/bootstrap also ships child_subject_state for all writa
   }
 });
 
-test('public bootstrap does not pull oversized spelling content_json from D1', async () => {
+test('public bootstrap does not touch account spelling content rows', async () => {
   const server = createServer();
   try {
     insertLearner(server, 'adult-u7', { id: 'learner-a', name: 'Alpha', sortIndex: 0, selected: true });
     insertSubjectStateFor(server, 'adult-u7', 'learner-a', 'spelling');
     insertLargeSpellingContentRow(server, 'adult-u7');
-    guardAgainstUnboundedSpellingContentRead(server);
+    guardAgainstBootstrapSpellingContentRead(server);
 
     const response = await getBootstrap(server);
     assert.equal(response.status, 200);

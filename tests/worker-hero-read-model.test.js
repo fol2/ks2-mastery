@@ -71,12 +71,12 @@ function insertLargeSpellingContentRow(server, accountId) {
   ]);
 }
 
-function guardAgainstUnboundedSpellingContentRead(server) {
+function guardAgainstHeroSpellingContentRead(server) {
   const originalPrepare = server.env.DB.prepare.bind(server.env.DB);
   server.env.DB.prepare = (sql) => {
     const normalised = String(sql || '').replace(/\s+/g, ' ').trim();
-    if (/SELECT account_id, subject_id, content_json, updated_at FROM account_subject_content\b/.test(normalised)) {
-      throw new Error('Unbounded spelling content_json read should not run on Hero read-model paths.');
+    if (/\baccount_subject_content\b/.test(normalised)) {
+      throw new Error('Hero read-model paths must not read account_subject_content.');
     }
     return originalPrepare(sql);
   };
@@ -105,13 +105,13 @@ test('hero read-model: flag on + authenticated returns shadow read model', async
   server.close();
 });
 
-test('hero read-model avoids unbounded spelling content_json reads', async () => {
+test('hero read-model avoids account spelling content rows', async () => {
   const server = createServerWithHeroFlag(true);
   try {
     await seedLearner(server, 'adult-a', 'learner-a');
     insertSpellingSubjectState(server, 'adult-a', 'learner-a');
     insertLargeSpellingContentRow(server, 'adult-a');
-    guardAgainstUnboundedSpellingContentRead(server);
+    guardAgainstHeroSpellingContentRead(server);
 
     const response = await server.fetch(`${HERO_URL}?learnerId=learner-a`);
     const payload = await response.json();

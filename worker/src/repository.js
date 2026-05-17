@@ -510,7 +510,17 @@ async function readSubjectContentBundle(db, accountId, subjectId = 'spelling') {
   return row ? contentRowToBundle(row) : cloneSerialisable(SEEDED_SPELLING_CONTENT_BUNDLE);
 }
 
-async function readSpellingRuntimeContentBundle(db, accountId, subjectId = 'spelling') {
+function readSeededSpellingRuntimeContentBundle(subjectId = 'spelling') {
+  const key = spellingRuntimeContentSeedKey(subjectId);
+  return readCachedSpellingRuntimeContent(key)
+    || rememberSpellingRuntimeContent(key, buildSpellingRuntimeContent(null, subjectId));
+}
+
+async function readSpellingRuntimeContentBundle(db, accountId, subjectId = 'spelling', {
+  includeAccountContent = true,
+} = {}) {
+  if (!includeAccountContent) return readSeededSpellingRuntimeContentBundle(subjectId);
+
   const row = await first(db, `
     SELECT
       account_id,
@@ -7289,7 +7299,7 @@ async function bootstrapBundle(db, accountId, {
   ));
   const publicSpellingContent = await measureBootstrapPhase(capacity, BOOTSTRAP_PHASE_TIMING.readModel, () => (
     publicReadModels && subjectRows.some((row) => row.subject_id === 'spelling')
-      ? readSpellingRuntimeContentBundle(db, accountId, 'spelling')
+      ? readSpellingRuntimeContentBundle(db, accountId, 'spelling', { includeAccountContent: false })
       : null
   ));
   const publicReadModelNow = Date.now();
@@ -9811,7 +9821,7 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
       `, [learnerId]);
       const result = {};
       const spellingContent = accountId && rows.some((row) => row.subject_id === 'spelling')
-        ? await readSpellingRuntimeContentBundle(db, accountId, 'spelling')
+        ? await readSpellingRuntimeContentBundle(db, accountId, 'spelling', { includeAccountContent: false })
         : null;
       for (const row of rows) {
         const rawRecord = subjectStateRowToRecord(row);
