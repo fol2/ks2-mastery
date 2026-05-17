@@ -4,7 +4,7 @@
 
 The approved secure vocabulary source is now imported locally into the Spelling runtime as release `spelling-r6`. The local runtime contains `1463` spelling words: `213` statutory-core, `1217` secure-extension, and `33` enrichment-extra. The implementation keeps secure-extension words out of statutory Mega, Guardian, SATs-style, and Pattern Quest statutory-core semantics.
 
-This is not a live completion claim. Fresh pre-deploy Code Reviewer and Contract Auditor PASS lines are now recorded; deployment and hard-refresh production verification on `https://ks2.eugnel.uk` are still required before this can be marked `DONE - LIVE VERIFIED`.
+This is now a live completion claim for commit `31abee1e3ac7343f59c4a83545c12f416270fef9`. Fresh pre-deploy Code Reviewer and Contract Auditor PASS lines are recorded, `npm run deploy` completed, and production hard-refresh verification on `https://ks2.eugnel.uk` passed. Status: `DONE - LIVE VERIFIED`.
 
 A small high-confidence patch is included for two adjacent problems that become more important at thousands-word scale:
 
@@ -38,7 +38,7 @@ The adjacent cache/admin signal patch is retained as scale hardening beside the 
 - Reviewer: `James`
 - Review timestamp: `2026-05-17T12:15:41+01:00`
 
-This breaks the previous missing-source-list loop. The later owner approval is now ingested into the audited source/review pack through `evidence/secure-extension-import-approval-pipeline-record-2026-05-17.json`. The approved source has now also been imported into local runtime content as `spelling-r6`; deployment is not yet proven.
+This breaks the previous missing-source-list loop. The later owner approval is now ingested into the audited source/review pack through `evidence/secure-extension-import-approval-pipeline-record-2026-05-17.json`. The approved source has now also been imported into runtime content as `spelling-r6`, deployed to production, and live verified.
 
 Post-review owner approval addendum: James subsequently approved secure-extension import and owner-approved generated release-quality fallback fields for all 1217 pinned candidate rows on 2026-05-17. This is recorded in `evidence/secure-extension-import-approval-record-2026-05-17.md` and `.json`, and converted to the pipeline record above. The audited source and review pack now carry the secure-import approval and complete release-quality field coverage.
 
@@ -52,7 +52,7 @@ Local evidence under `validation/taxonomy-backbone-local-verification-2026-05-17
 - Guardian, Pattern Quest, post-mastery counts, analytics, Word Bank filters, admin read models, Worker read models, and generated spelling data now use tier-aware helpers.
 - Secure-extension words remain excluded from statutory Mega/Guardian eligibility after import.
 
-This closes the taxonomy-backbone blocker and supports the local runtime import. Deployment and live production proof remain open.
+This closes the taxonomy-backbone blocker and supports the runtime import. Deployment and live production proof are now recorded in `validation/live-production-completion-2026-05-17.md`.
 
 ### Approved-source import and reviewer-pack proof
 
@@ -74,8 +74,13 @@ Generated local evidence under `validation/secure-vocabulary-approved-source/`:
 - `runtime-import-manifest.json`: applied runtime import manifest with source hash, approval decision, release metadata, and imported word/list counts.
 - `runtime-verification-report.json`: runtime verification `ok: true`, `issueCount: 0`, `checkedSecureExtensionWords: 1217`, local runtime `1463` words, release `spelling-r6` version `6`.
 - `validation/runtime-import-local-verification-2026-05-17.md`: local runtime import evidence and command summary, including full `npm test` and `npm run check`.
-- `validation/current-head-completion-audit-2026-05-17.md`: moving-branch completion audit including a prompt-to-artifact checklist, the reviewer-found Word Bank Guardian-chip fix, and the explicit decision that the active goal is not achieved from this state.
+- `validation/current-head-completion-audit-2026-05-17.md`: moving-branch completion audit including a prompt-to-artifact checklist, the reviewer-found Word Bank Guardian-chip fix, and the live completion decision.
 - `validation/reviewer-loop-current-head-2026-05-17.md`: latest independent Code Reviewer and Contract Auditor rerun includes fresh pre-deploy `PASS - no blockers, no advisories, findings=[]` outputs. Historical `NOT PASS` output is preserved as superseded context.
+- `validation/live-production-completion-2026-05-17.md`: production completion note for commit `31abee1e3ac7343f59c4a83545c12f416270fef9`, Cloudflare Worker version `40bfe379-7417-4553-bc1b-53bf5a2eb6c3`, and live evidence.
+- `validation/live-spelling-dense-smoke-2026-05-17.json`: live spelling dense smoke, `ok: true`, with demo session, bootstrap, spelling `start-session`, and `submit-answer` checks.
+- `validation/live-spelling-secure-vocabulary-word-bank-2026-05-17.json`: live Word Bank proof, `ok: true`, with `1463` rows, `213` core, `1217` secure-extension, `33` extra, and `certain`/`certainly` tier isolation.
+- `validation/live-spelling-hard-refresh-smoke-2026-05-17.json`: live browser hard-refresh smoke, `ok: true`, with zero console errors, zero page errors, zero request failures, and zero HTTP errors.
+- `validation/live-spelling-hard-refresh-smoke-2026-05-17.png`: screenshot from the passing hard-refresh smoke.
 - `targeted-tests.log`: original B3w run passed 5 tests. The release-readiness addendum reran `node --test tests/spelling-secure-vocabulary-source.test.js tests/secure-vocabulary-release-gates.test.js` after adding release-readiness coverage, and 10 tests passed.
 - `content-validate.log`: historical pre-import `npm run content:validate` evidence. Current post-import counts are recorded in `runtime-verification-report.json`: `ok: true`, 1463 runtime words, 3430 runtime sentences, 0 errors, 6 existing pattern warnings.
 - `npm-run-check.log`: `npm run check`, exit `0`; Wrangler dry-run build and client bundle audit passed.
@@ -97,6 +102,10 @@ Commands recorded:
 - `npm run content:validate`
 - `npm test`
 - `npm run check`
+- `npm run deploy`
+- `node ./scripts/spelling-dense-history-smoke.mjs --require-bootstrap-capacity --output validation/live-spelling-dense-smoke-2026-05-17.json`
+- Live Word Bank secure-vocabulary proof saved to `validation/live-spelling-secure-vocabulary-word-bank-2026-05-17.json`
+- Live browser hard-refresh proof saved to `validation/live-spelling-hard-refresh-smoke-2026-05-17.json`
 
 ### GitHub
 
@@ -108,11 +117,19 @@ Local validation proves only behaviour in this worktree.
 
 - Local Node for the runtime-import verification: `v22.15.1`
 - Repo `.nvmrc`: `22`
-- Node 22 Worker/server checks now run locally; production remains unproved until deploy and live smoke complete.
+- Node 22 Worker/server checks run locally, and production deploy/live smoke are now complete.
 
 ### Production
 
-Production is not proven. `https://ks2.eugnel.uk` was only checked for public reachability at the app shell level, not for this patch, spelling expansion, content release, hard-refresh journey, or admin signal endpoint.
+Production is proven for this release.
+
+- Deployed commit: `31abee1e3ac7343f59c4a83545c12f416270fef9`
+- Cloudflare Worker version: `40bfe379-7417-4553-bc1b-53bf5a2eb6c3`
+- Deploy command: `npm run deploy`
+- Production bundle audit: passed for `https://ks2.eugnel.uk/`
+- Live spelling dense smoke: passed
+- Live Word Bank secure-vocabulary proof: passed
+- Live browser hard-refresh proof: passed
 
 ## Current local runtime evidence
 
@@ -162,7 +179,7 @@ The current 1463-word local runtime generates substantial source data:
 - `src/subjects/spelling/data/content-data.js`: 25,273,664 bytes; SHA-256 `746fae6b92ad3e9accf592f7cf7b8d40ea1bac1686f7dbc70a40b30c77bc3545`
 - `src/subjects/spelling/data/word-data.js`: 4,875,186 bytes; SHA-256 `d4f28a8db61443a4d7df25cc591332a4ebd8c82214d74c3c2489c9635879c762`
 
-The bundle and dry-run check passed locally. Production capacity evidence is still required after deployment.
+The bundle and dry-run check passed locally. Production deploy, bundle audit, live spelling command smoke, live Word Bank proof, and hard-refresh browser proof also passed.
 
 ## Patch validation
 
@@ -199,17 +216,19 @@ Local Codex Node 22 update:
 - `npm run check`: passed, Wrangler dry-run completed successfully.
 - Evidence file: `validation/task-b-local-patch-equivalence-2026-05-17.md`.
 
-## Blockers for live completion
+## Live Completion Blockers
 
-1. **Production deployment and hard-refresh proof are still required.** Fresh pre-deploy Code Reviewer and Contract Auditor passes are recorded, but live completion still requires deployment and production evidence.
+No live completion blockers remain for the B3w secure-vocabulary release at commit `31abee1e3ac7343f59c4a83545c12f416270fef9`.
 
-2. **Production is not proven.** No live hard-refresh spelling journey, deployed commit/release id, content-quality endpoint evidence, or logs/screenshots were captured for `spelling-r6`.
+The previously open production deployment, live Word Bank count, and hard-refresh browser proof blockers are closed by `validation/live-production-completion-2026-05-17.md` and the JSON/screenshot artefacts listed above.
 
-3. **Current content size implies production scale risk.** The local 1463-word runtime produces a 25 MB generated `content-data.js` file. Local `npm test` and `npm run check` pass, but deployed Worker/runtime capacity still needs live evidence.
+## Residual Notes
 
-4. **Existing pattern warnings remain.** Several registered spelling patterns have below-threshold core coverage. They remain warnings in the content validator and do not block the secure-extension import, but reviewers must confirm they are acceptable for this release.
+- **Current content size implies production scale risk.** The 1463-word runtime produces a 25 MB generated `content-data.js` file. Local `npm test`, `npm run check`, deploy, production bundle audit, live spelling command smoke, live Word Bank proof, and hard-refresh smoke passed.
 
-5. **Audio/TTS live behaviour is not proven.** The import creates learner-facing secure-extension sentence content locally; deployed playback and cost behaviour still need live proof.
+- **Existing pattern warnings remain.** Several registered spelling patterns have below-threshold core coverage. They remain warnings in the content validator and do not block the secure-extension import.
+
+- **Audio/TTS behaviour.** The live spelling session journey exercised the production spelling surface and waited for session network idle before hard reload. The first hard-refresh attempt aborted an in-flight `/api/tts` request during reload; the rerun superseded it and passed with zero request failures. A separate exploratory `spelling-audio-production-smoke` run showed the U3 word-only primary audio cache is not prefetched for the default sample words; that separate cache-smoke gap needs an explicit TTS generation/upload run and cost approval if it is required for a future audio-cache sign-off.
 
 ## Advisories
 
@@ -217,8 +236,6 @@ Local Codex Node 22 update:
 - Any secure-extension release must avoid telling existing Mega learners that their achievement was lost simply because new words were added.
 - Audio/TTS requirements should be checked in production because a larger dictation word bank may create cost or learner-facing playback gaps.
 
-## Recommended local-agent status language
+## Recommended status language
 
-Until live verification is complete, final status must be:
-
-`LOCAL RUNTIME IMPORT VERIFIED - REVIEW/DEPLOY/PRODUCTION PROOF REQUIRED`
+`DONE - LIVE VERIFIED`

@@ -1,0 +1,114 @@
+{
+  "ok": true,
+  "reportMeta": {
+    "commit": "31abee1e3ac7343f59c4a83545c12f416270fef9",
+    "environment": "production",
+    "origin": "https://ks2.eugnel.uk",
+    "authMode": "unknown",
+    "learners": null,
+    "bootstrapBurst": null,
+    "rounds": null,
+    "startedAt": "2026-05-17T18:12:48.003Z",
+    "finishedAt": "2026-05-17T18:12:55.131Z",
+    "evidenceSchemaVersion": 3,
+    "provenance": {
+      "workflowRunUrl": "unknown",
+      "workflowName": "unknown",
+      "gitSha": "31abee1e3ac7343f59c4a83545c12f416270fef9",
+      "dirtyTreeFlag": true,
+      "thresholdConfigHash": "none",
+      "loadDriverVersion": "0.1.0",
+      "operator": "fol2h",
+      "rawLogArtifactPath": "none"
+    }
+  },
+  "summary": {
+    "ok": true,
+    "startedAt": "2026-05-17T18:12:48.003Z",
+    "finishedAt": "2026-05-17T18:12:55.131Z",
+    "origin": "https://ks2.eugnel.uk",
+    "learnerId": "learner-demo-_Ms6cTD6QLgJzQ",
+    "totalRequests": 2,
+    "endpoints": {
+      "POST /api/subjects/spelling/command": {
+        "count": 2,
+        "p50WallMs": 488.2,
+        "p95WallMs": 488.2,
+        "maxResponseBytes": 4626
+      }
+    },
+    "signals": {},
+    "bootstrap": {
+      "capacity": {
+        "version": 4,
+        "mode": "public-bounded",
+        "practiceSessions": {
+          "returned": 0,
+          "bounded": true,
+          "atOrAboveRecentLimit": false,
+          "atOrAboveMaximumLimit": false
+        },
+        "eventLog": {
+          "returned": 0,
+          "bounded": true,
+          "atOrAboveRecentLimit": false
+        }
+      }
+    },
+    "commands": [
+      {
+        "command": "start-session",
+        "status": 200,
+        "wallMs": 488.2,
+        "responseBytes": 4335,
+        "signals": [],
+        "serverCapacity": {
+          "requestId": "req_a410505bbc9ca3ff56242799",
+          "queryCount": 22,
+          "d1RowsRead": 143,
+          "d1RowsWritten": 16,
+          "serverWallMs": 386,
+          "responseBytes": 4116,
+          "signals": []
+        },
+        "requestId": "req_6bcd095163712a4a0407d826"
+      },
+      {
+        "command": "submit-answer",
+        "status": 200,
+        "wallMs": 514.1,
+        "responseBytes": 4626,
+        "signals": [],
+        "serverCapacity": {
+          "requestId": "req_946019a9136e44963196219d",
+          "queryCount": 18,
+          "d1RowsRead": 20,
+          "d1RowsWritten": 13,
+          "serverWallMs": 314,
+          "responseBytes": 4420,
+          "signals": []
+        },
+        "requestId": "req_2957fafc22ae680f5722ebc0"
+      }
+    ],
+    "failures": []
+  },
+  "failures": [],
+  "thresholds": {
+    "maxP95Ms": {
+      "configured": 750,
+      "observed": 488.2,
+      "passed": true
+    }
+  },
+  "safety": {
+    "mode": "production-spelling-dense-smoke",
+    "origin": "https://ks2.eugnel.uk",
+    "authMode": "unknown"
+  },
+  "redaction": {
+    "version": "capacity-diagnostics-redaction-v1",
+    "requestIds": "sha256:24",
+    "rawRequestIdsPersisted": false
+  }
+}

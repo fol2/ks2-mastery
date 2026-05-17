@@ -1,0 +1,28 @@
+{
+  "ok": true,
+  "startedAt": "2026-05-17T18:19:33.100Z",
+  "finishedAt": "2026-05-17T18:19:44.422Z",
+  "origin": "https://ks2.eugnel.uk",
+  "commit": "31abee1e3ac7343f59c4a83545c12f416270fef9",
+  "deployVersionId": "40bfe379-7417-4553-bc1b-53bf5a2eb6c3",
+  "journey": [
+    "GET /demo",
+    "open spelling subject",
+    "start spelling session",
+    "wait for session network idle",
+    "hard reload",
+    "verify spelling/dashboard marker"
+  ],
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "finalUrl": "https://ks2.eugnel.uk/?demo=1",
+  "visibleMarker": ".subject-grid [data-action=open-subject][data-subject-id=spelling]",
+  "screenshot": "docs/plans/james/hotfixes/21. spelling-package/validation/live-spelling-hard-refresh-smoke-2026-05-17.png",
+  "consoleErrors": [],
+  "pageErrors": [],
+  "requestFailures": [],
+  "httpErrors": [],
+  "markerText": "K\nKS2 Mastery\nCODEX JOURNAL\nDemo Learner · Y5\nNothing caught yet\n\nNothing caught yet. Your meadow stays tidy. Finish a round to see your first monster appear.\n\nEvening, Demo Learner. A fresh round is waiting.\nToday's words are waiting.\nNothing due today — explore for fun.\nBegin today's round\nOpen codex\nYour subjects\nTHE SCRIBE DOWNS\nSpelling\n\nLearn tricky words by sound, sight and meaning.\n\n0%\nFresh spellings · 0 due\nTHE PRISM STEPS\nArithmetic\n\nBuild KS2 arithmetic fluency through mixed retrieval, written methods, exact marking, SATs-style practice and spaced review.\n\n0%\nSmart Arithmetic review · 0 due\nPARADOX SPIRES\nReasoning\n\nPlan multi-step maths, choose the structure, work accurately and check reasonableness.\n\n0%\nSmart Reasoning review · 0 due\nTHE CLAUSE CONSERVATORY\nGrammar\n\nWord classes, clauses, tenses and sentence shape.\n\n0%\nStart Grammar retrieval · 0 due\nBELLSTORM COAST\nPunctuation\n\nPractise the KS2 punctuation progression: Smart Review, Guided focus, Weak Spots, GPS tests, s"
+}

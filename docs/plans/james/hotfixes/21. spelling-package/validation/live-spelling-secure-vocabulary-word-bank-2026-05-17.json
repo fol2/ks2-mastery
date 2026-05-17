@@ -1,0 +1,103 @@
+{
+  "ok": true,
+  "startedAt": "2026-05-17T18:16:48.404Z",
+  "finishedAt": "2026-05-17T18:16:51.272Z",
+  "origin": "https://ks2.eugnel.uk",
+  "command": "live production word-bank secure vocabulary proof",
+  "commit": "31abee1e3ac7343f59c4a83545c12f416270fef9",
+  "deployVersionId": "40bfe379-7417-4553-bc1b-53bf5a2eb6c3",
+  "learnerId": "learner-demo-GxftjyHGZ7p40Q",
+  "statuses": {
+    "demo": 201,
+    "base": 200,
+    "certain": 200,
+    "certainly": 200
+  },
+  "wordBankTotals": {
+    "filters": {
+      "query": "",
+      "rawQuery": "",
+      "status": "all",
+      "year": "all",
+      "page": 1,
+      "pageSize": 50,
+      "detailSlug": ""
+    },
+    "page": 1,
+    "pageSize": 50,
+    "totalRows": 1463,
+    "filteredRows": 1463,
+    "returnedRows": 50,
+    "hasNextPage": true
+  },
+  "pools": {
+    "core": {
+      "total": 213,
+      "secure": 0,
+      "due": 0,
+      "fresh": 213,
+      "trouble": 0,
+      "attempts": 0,
+      "correct": 0,
+      "accuracy": null
+    },
+    "secureExtension": {
+      "total": 1217,
+      "secure": 0,
+      "due": 0,
+      "fresh": 1217,
+      "trouble": 0,
+      "attempts": 0,
+      "correct": 0,
+      "accuracy": null
+    },
+    "extra": {
+      "total": 33,
+      "secure": 0,
+      "due": 0,
+      "fresh": 33,
+      "trouble": 0,
+      "attempts": 0,
+      "correct": 0,
+      "accuracy": null
+    }
+  },
+  "checks": {
+    "demoOk": true,
+    "baseOk": true,
+    "certainOk": true,
+    "certainlyOk": true,
+    "totalRows": true,
+    "secureExtensionTotal": true,
+    "coreTotal": true,
+    "extraTotal": true,
+    "certainStatutory": true,
+    "certainlySecure": true,
+    "certainFamilyIsolated": true,
+    "certainlyFamilyIsolated": true
+  },
+  "certain": {
+    "slug": "certain",
+    "word": "certain",
+    "coverageTier": "statutory-core",
+    "spellingPool": "core",
+    "family": "certain",
+    "familyWords": [
+      "certain"
+    ],
+    "sentence": "I am certain that this is mine.",
+    "explanation": "Certain means sure, or known to be true."
+  },
+  "certainly": {
+    "slug": "certainly",
+    "word": "certainly",
+    "coverageTier": "secure-extension",
+    "spellingPool": "core",
+    "family": "certain",
+    "familyWords": [
+      "certainly"
+    ],
+    "sentence": "The teacher wrote the word certainly on the board for secure vocabulary spelling practice.",
+    "explanation": "Certainly is an owner-approved generated KS2 secure-extension spelling-practice entry. Pupils should read it clearly, spell each letter in order, and keep the accepted UK form unchanged."
+  }
+}
