@@ -151,9 +151,16 @@ Executed local checks:
 - `npm run content:validate` after patch: exit `0`.
 - Static grep after patch: direct `return row.content_json` and old nonexistent-field lookups were not present in patched source.
 
-Not fully run in this environment:
+Local Codex Node 22 update:
 
-- The new Worker endpoint test/probe failed to load under local Node 18 because `node:sqlite` is unavailable. This is an environment limitation, not proof that the patch fails. The local agent must run it under Node 22.
+- Node: `v22.15.1`.
+- The Task B fix is now implemented in the worktree.
+- `node --test tests\spelling-content-api.test.js`: passed, `12` tests, `0` failures.
+- `node --test tests\worker-hubs.test.js`: passed, `7` tests, `0` failures.
+- `npm run content:validate`: passed, `ok: true`, `246` runtime words, `2213` runtime sentences, `0` errors, `6` existing pattern warnings.
+- `npm run audit:client`: passed, main bundle gzip `210699 / 232000` bytes.
+- `npm run check`: passed, Wrangler dry-run completed successfully.
+- Evidence file: `validation/task-b-local-patch-equivalence-2026-05-17.md`.
 
 ## Blockers for the full expansion
 

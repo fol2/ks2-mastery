@@ -11,7 +11,7 @@ import {
   normaliseSubjectStateRecord,
   subjectStateKey,
 } from '../../src/platform/core/repositories/helpers.js';
-import { uid } from '../../src/platform/core/utils.js';
+import { stableHash, uid } from '../../src/platform/core/utils.js';
 import {
   backfillSpellingWordExplanations,
   buildSpellingContentSummary,
@@ -605,7 +605,14 @@ function spellingRuntimeContentSeedKey(subjectId) {
 
 function spellingRuntimeContentRowKey(row, subjectId) {
   if (!row) return spellingRuntimeContentSeedKey(subjectId);
-  return row.content_json || `row:${subjectId}:${row.updated_at || 0}:empty`;
+  const contentJson = typeof row.content_json === 'string' ? row.content_json : '';
+  return [
+    'row',
+    subjectId,
+    row.updated_at || 0,
+    contentJson.length,
+    stableHash(contentJson),
+  ].join(':');
 }
 
 function rememberSpellingRuntimeContent(key, value) {
@@ -2211,18 +2218,19 @@ async function readContentQualitySignalsData(db, { actorAccountId, actor = null 
   // Spelling signals: word-bank coverage from account_subject_content.
   const spellingSignals = await safeSignalSection('spelling', async () => {
     let wordCount = 0;
-    let secureCoreCount = 0;
+    let runtimeCoreCount = 0;
     try {
       const contentRow = await first(db,
         `SELECT content_json FROM account_subject_content WHERE subject_id = 'spelling' LIMIT 1`,
         [],
       );
       if (contentRow?.content_json) {
-        const bundle = JSON.parse(contentRow.content_json);
-        if (bundle && typeof bundle === 'object') {
-          wordCount = Number(bundle?.publication?.runtimeWordCount) || 0;
-          secureCoreCount = Number(bundle?.secureCoreCount) || 0;
-        }
+        const bundle = contentRowToBundle(contentRow);
+        const snapshot = runtimeSnapshotForBundle(bundle);
+        const summary = runtimeContentSummary(bundle, snapshot);
+        const words = Array.isArray(snapshot?.words) ? snapshot.words : [];
+        wordCount = Number(summary.runtimeWordCount) || words.length || 0;
+        runtimeCoreCount = words.filter((word) => word?.spellingPool !== 'extra').length;
       }
     } catch {
       // Soft-fail: content may not be available.
@@ -2236,7 +2244,7 @@ async function readContentQualitySignalsData(db, { actorAccountId, actor = null 
         templateCoverage: { status: 'not_available', value: 0, total: 0 },
         itemCoverage: {
           status: wordCount > 0 ? 'available' : 'not_available',
-          value: secureCoreCount,
+          value: runtimeCoreCount,
           total: wordCount,
         },
         commonMisconceptions: { status: 'not_available', items: [] },

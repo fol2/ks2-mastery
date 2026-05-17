@@ -1,11 +1,15 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 
 import {
   createApiPlatformRepositories,
 } from '../src/platform/core/repositories/index.js';
 import { cloneSerialisable } from '../src/platform/core/repositories/helpers.js';
-import { SPELLING_CONTENT_MODEL_VERSION } from '../src/subjects/spelling/content/model.js';
+import {
+  SPELLING_CONTENT_MODEL_VERSION,
+  publishSpellingContentBundle,
+} from '../src/subjects/spelling/content/model.js';
 import { createApiSpellingContentRepository } from '../src/subjects/spelling/content/repository.js';
 import { SEEDED_SPELLING_CONTENT_BUNDLE } from '../src/subjects/spelling/data/content-data.js';
 import { installMemoryStorage } from './helpers/memory-storage.js';
@@ -234,6 +238,56 @@ test('worker spelling content route accepts valid Extra pool content without sta
   } finally {
     server.close();
   }
+});
+
+test('admin content-quality spelling item coverage derives from the persisted runtime snapshot', async () => {
+  const server = createWorkerRepositoryServer();
+  try {
+    const initialResponse = await fetchAdmin(server, 'https://repo.test/api/content/spelling');
+    const initial = await initialResponse.json();
+    const draftWithExtra = addExtraWordList(initial.content);
+    const published = publishSpellingContentBundle(draftWithExtra, {
+      title: 'Runtime snapshot coverage test release',
+      notes: 'Publishes a new Extra word so admin item coverage must read the runtime snapshot.',
+      publishedAt: Date.UTC(2026, 4, 17),
+    });
+    const latestRelease = published.releases.at(-1);
+    const expectedWordCount = latestRelease.snapshot.words.length;
+    const expectedCoreCount = latestRelease.snapshot.words
+      .filter((word) => word.spellingPool !== 'extra').length;
+
+    const writeResponse = await fetchAdmin(server, 'https://repo.test/api/content/spelling', {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        content: published,
+        mutation: {
+          requestId: 'content-quality-spelling-runtime-coverage-1',
+          correlationId: 'content-quality-spelling-runtime-coverage-1',
+          expectedAccountRevision: initial.mutation.accountRevision,
+        },
+      }),
+    });
+    assert.equal(writeResponse.status, 200);
+
+    const signalsResponse = await fetchAdmin(server, 'https://repo.test/api/admin/ops/content-quality-signals');
+    const signalsPayload = await signalsResponse.json();
+    const spelling = signalsPayload.subjectSignals.find((entry) => entry.subjectKey === 'spelling');
+
+    assert.equal(signalsResponse.status, 200);
+    assert.equal(spelling.signals.itemCoverage.status, 'available');
+    assert.equal(spelling.signals.itemCoverage.total, expectedWordCount);
+    assert.equal(spelling.signals.itemCoverage.value, expectedCoreCount);
+  } finally {
+    server.close();
+  }
+});
+
+test('worker spelling runtime cache key does not store the full content JSON as the Map key', async () => {
+  const source = await readFile(new URL('../worker/src/repository.js', import.meta.url), 'utf8');
+  assert.doesNotMatch(source, /return\s+row\.content_json\s*\|\|/);
+  assert.match(source, /stableHash\(contentJson\)/);
+  assert.match(source, /contentJson\.length/);
 });
 
 test('worker spelling word bank route returns paginated public rows and detail audio tokens', async () => {

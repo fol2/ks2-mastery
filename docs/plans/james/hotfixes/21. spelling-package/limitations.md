@@ -9,3 +9,4 @@
 - Production was not validated. A reachable app shell at `https://ks2.eugnel.uk` is not proof that this patch or expansion is live, hard-refresh-safe, or usable.
 - The secure-vocabulary source list is now approved by James for import/reviewer-pack generation only. It is not approved for live secure-extension promotion without an explicit `APPROVED_FOR_SECURE_EXTENSION_IMPORT` decision plus import, release, CI, and production evidence.
 - The secure-vocabulary import proof is check-mode only and writes no spelling content, D1 data, generated runtime bundle, or production release.
+- Local Node 22 Task B patch-equivalent tests now pass for the runtime cache key and admin content-quality signal fix. This removes the earlier Node 18 limitation only for Task B; it does not prove the full secure-extension expansion.
