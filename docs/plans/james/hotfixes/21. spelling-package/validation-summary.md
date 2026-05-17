@@ -22,6 +22,21 @@ The patch does not implement the full vocabulary expansion.
 - `.git`: absent.
 - Manifest: review bundle; source, scripts, tests, fixtures, and repo config included; assets/reports/output omitted.
 
+### Secure vocabulary source artifact
+
+- Artifact: `secure-vocabulary-source-v1-input-artifact.zip`
+- Artifact SHA-256: `cdf18f85c37f94274608193fe31dc0dd93b23e153b4e492ffd25fb9b924d889e`
+- Source JSONL SHA-256: `ae39bfc5091525d602f158c18d254b57c498683f9ae81da4d2733f225862a42c`
+- Records: `1463`
+- Unique words: `1463`
+- Current published spelling snapshot records: `246`
+- Secure-extension candidate records: `1217`
+- Approval decision: `APPROVED_FOR_IMPORT_REVIEWER_PACK_ONLY`
+- Reviewer: `James`
+- Review timestamp: `2026-05-17T12:15:41+01:00`
+
+This breaks the previous missing-source-list loop. It does not approve live secure-extension promotion or prove production deployment.
+
 ### GitHub
 
 GitHub was used only as a supplementary exact-file check. Repository `fol2/ks2-mastery` default branch was reported as `main`. Exact file `worker/src/repository.js` at `main` had blob SHA `a20215b8519c99fca4c05922ba1bc0c47c17108f`, matching the ZIP local blob SHA for the same file. This confirms the two patched adjacent issues were also present in fetched GitHub `main` for that file. It does not prove whole-repo identity.
@@ -123,7 +138,7 @@ Not fully run in this environment:
 
 3. **Existing pattern warnings remain.** Several registered spelling patterns have below-threshold core coverage. Expansion must improve pattern coverage or explicitly keep those patterns non-launchable.
 
-4. **Provenance/review gates are insufficient for arbitrary mass import.** Shape validation alone is not enough for KS2 age suitability, UK spelling variants, source provenance, review status, offensive/sensitive terms, pattern quality, or example sentence suitability.
+4. **Import/reviewer-pack proof is still required.** The source list is now pinned and approved for import/reviewer-pack generation only. The next local agent must generate import proof and reviewer-pack proof against the exact JSONL hash before any release gate can pass.
 
 5. **Production is not proven.** No live hard-refresh spelling journey, deployed commit/release id, content-quality endpoint evidence, or logs/screenshots were captured.
 
@@ -136,6 +151,10 @@ Not fully run in this environment:
 ## Recommended local-agent status language
 
 Until live verification is complete, final status must be:
+
+`SOURCE LIST APPROVED - IMPORT/REVIEWER PACK REQUIRED`
+
+or, after local import/reviewer-pack verification:
 
 `IMPLEMENTED + LOCAL VERIFIED — PRODUCTION NOT PROVEN`
 

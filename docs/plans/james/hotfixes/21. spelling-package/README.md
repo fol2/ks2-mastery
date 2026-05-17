@@ -4,6 +4,7 @@ This package is for a local Codex agent working on the KS2 Mastery webapp.
 
 It contains:
 
+- `secure-vocabulary-source-v1-input-artifact.zip` - the pinned secure-vocabulary source list, approved by James for import/reviewer-pack generation only.
 - `contract/spelling-secure-vocabulary-expansion-contract.md` — the execution contract.
 - `patches/001-spelling-expansion-cache-and-admin-signal.patch` — narrow patch for two adjacent spelling expansion risks.
 - `validation-summary.md` — source-boundary summary, findings, validation results, blockers, and advisories.
