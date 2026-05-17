@@ -31,7 +31,7 @@ Result: exit `1`, expected for the current source.
 Report: `validation/secure-vocabulary-approved-source/release-readiness-report.json`
 
 - `ok`: `false`
-- `issueCount`: `18256`
+- `issueCount`: `17038`
 - `issuesTruncated`: `true`
 - `checkedReviewPackWords`: `1463`
 - `checkedAuditedSourceWords`: `1463`
@@ -40,22 +40,21 @@ Report: `validation/secure-vocabulary-approved-source/release-readiness-report.j
 
 The `metadataIssueCount: 0` result confirms that the B3w reviewer-pack metadata still reconciles with the audited source. The additional release-readiness issues are the intended blockers for live promotion.
 
-Issue classes:
+Current issue classes:
 
-- `secure_vocabulary_release_promotion_not_approved`: the source decision is still `APPROVED_FOR_IMPORT_REVIEWER_PACK_ONLY`, not `APPROVED_FOR_SECURE_EXTENSION_IMPORT`.
-- `secure_vocabulary_release_word_missing_review_pack_entry`: a live release cannot pass if an audited secure-extension word is absent from the review pack.
-- `secure_vocabulary_release_word_not_adult_approved`: secure-extension candidates still carry candidate review status, not a release-ready adult approval status.
 - `secure_vocabulary_release_word_missing_field`: secure-extension candidates are missing release-quality fields required before learner-facing import on either the audited source word or the matching review-pack word.
+
+The gate still supports the other release-blocking classes (`secure_vocabulary_release_promotion_not_approved`, `secure_vocabulary_release_word_missing_review_pack_entry`, and `secure_vocabulary_release_word_not_adult_approved`), but they are not present in the current report after James's secure-import approval was ingested.
 
 ## Interpretation
 
-This stops the review loop from treating B3w source approval as live import approval.
+This stops the review loop from treating B3w source approval, or the later owner secure-import approval, as sufficient live import proof.
 
-The current source is suitable for import/reviewer-pack generation and validation. It is not suitable for live secure-extension promotion without a revised source or a narrower tooling-only contract slice.
+The current source has secure-import approval and adult-approved per-word status. It is not suitable for live secure-extension promotion until the missing release-quality fields are supplied and validated.
 
 No spelling content was imported, published, deployed, or promoted by this gate.
 
 ## Verification
 
-- `node --test tests\secure-vocabulary-release-gates.test.js tests\spelling-secure-vocabulary-source.test.js`: passed, `10` tests, `0` failures.
-- Current approved source release-readiness gate: failed as expected with `issueCount: 18256`, `metadataIssueCount: 0`, and `checkedSecureExtensionWords: 1217`.
+- `node --test tests\spelling-secure-vocabulary-source.test.js tests\secure-vocabulary-release-gates.test.js tests\secure-vocabulary-release-gap-summary.test.js tests\secure-vocabulary-release-input-template.test.js`: passed, `16` tests, `0` failures.
+- Current approved source release-readiness gate: failed as expected with `issueCount: 17038`, `metadataIssueCount: 0`, and `checkedSecureExtensionWords: 1217`.

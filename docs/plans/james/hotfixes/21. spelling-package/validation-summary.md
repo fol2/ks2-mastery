@@ -31,13 +31,14 @@ The patch does not implement the full vocabulary expansion.
 - Unique words: `1463`
 - Current published spelling snapshot records: `246`
 - Secure-extension candidate records: `1217`
-- Approval decision: `APPROVED_FOR_IMPORT_REVIEWER_PACK_ONLY`
+- Original ZIP approval decision: `APPROVED_FOR_IMPORT_REVIEWER_PACK_ONLY`
+- Current pipeline approval decision: `APPROVED_FOR_SECURE_EXTENSION_IMPORT`
 - Reviewer: `James`
 - Review timestamp: `2026-05-17T12:15:41+01:00`
 
-This breaks the previous missing-source-list loop. It does not approve live secure-extension promotion or prove production deployment.
+This breaks the previous missing-source-list loop. The later owner approval is now ingested into the audited source/review pack through `evidence/secure-extension-import-approval-pipeline-record-2026-05-17.json`, but no live secure-extension content has been imported or deployed.
 
-Post-review owner approval addendum: James subsequently approved secure-extension import for all 1217 pinned candidate rows on 2026-05-17. This is recorded in `evidence/secure-extension-import-approval-record-2026-05-17.md` and `.json`. It closes the adult secure-import approval evidence gap, but the approval still has to be ingested into a revised audited source/review pack and does not provide the missing row-specific release-quality field values.
+Post-review owner approval addendum: James subsequently approved secure-extension import for all 1217 pinned candidate rows on 2026-05-17. This is recorded in `evidence/secure-extension-import-approval-record-2026-05-17.md` and `.json`, and converted to the pipeline record above. It closes the adult secure-import approval evidence gap, but does not provide the missing row-specific release-quality field values.
 
 ### Local taxonomy backbone proof
 
@@ -56,15 +57,15 @@ This closes the taxonomy-backbone blocker. It does not import the 1217 secure-ex
 Generated local evidence under `validation/secure-vocabulary-approved-source/`:
 
 - `audit-report.json`: `ok: true`, zero issues, exact source hash matched.
-- `import-plan.json`: check-mode import plan, `writes: false`, status `approved_for_import_reviewer_pack_only_not_applied`.
+- `import-plan.json`: check-mode import plan, `writes: false`, status `approved_for_secure_extension_import_not_applied`.
 - `audited-source.json`: audited-source input for the B3w release gate.
 - `review-pack.json`: reviewer-pack output with 1463 words.
 - `review-pack.md`: human-readable reviewer summary and advisory-word list.
 - `verification-report.json`: B3w verification `ok: true`, `issueCount: 0`, `checkedReviewPackWords: 1463`, `checkedAuditedSourceWords: 1463`.
 - `release-gate-report.json`: direct CLI verification with the same `ok: true` and zero issues.
-- `release-readiness-report.json`: explicit live-promotion gate with `ok: false`, `issueCount: 18256`, `metadataIssueCount: 0`, and `checkedSecureExtensionWords: 1217`.
-- `release-gap-summary.json` / `.md`: grouped release blocker summary for the current generated source/review-pack artefacts, showing zero missing review-pack entries, zero secure-import adult-approved words in those generated artefacts, all 1217 secure-extension candidates missing the required release-quality fields, and 12 advisory words. The later owner approval record is not yet ingested into those generated artefacts.
-- `release-input-template/`: non-importing CSV input template with 1217 secure-extension rows, 12 advisory rows, the pinned source hash, and columns for the release-quality fields required before a future `APPROVED_FOR_SECURE_EXTENSION_IMPORT` source can be considered.
+- `release-readiness-report.json`: explicit live-promotion gate with `ok: false`, `issueCount: 17038`, `metadataIssueCount: 0`, and `checkedSecureExtensionWords: 1217`.
+- `release-gap-summary.json` / `.md`: grouped release blocker summary for the current generated source/review-pack artefacts, showing zero missing review-pack entries, 1217 secure-import adult-approved words, zero not-adult-approved words, all 1217 secure-extension candidates missing the required release-quality fields, and 12 advisory words.
+- `release-input-template/`: non-importing CSV input template with 1217 secure-extension rows, 12 advisory rows, the pinned source hash, the ingested secure-extension approval decision, and columns for the release-quality fields still required before live import.
 - `evidence/secure-extension-import-approval-record-2026-05-17.md` / `.json`: owner/adult-reviewer approval for secure-extension import of all 1217 pinned candidate rows, with an explicit limitation that it does not fill the row-specific release-quality values.
 - `validation/current-head-completion-audit-2026-05-17.md`: moving-branch completion audit including a prompt-to-artifact checklist, the reviewer-found Word Bank Guardian-chip fix, and the explicit decision that the active goal is not achieved from this state.
 - `validation/reviewer-loop-current-head-2026-05-17.md`: latest independent Code Reviewer and Contract Auditor rerun for head `9cc389568c2fc10b9d1d52d12d247bca1e4a7580`; both returned `NOT PASS` for full-contract blockers, while confirming the stale-evidence and Guardian-chip findings are closed.

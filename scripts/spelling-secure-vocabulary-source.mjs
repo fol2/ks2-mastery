@@ -245,7 +245,13 @@ function auditedWordFromSourceRecord(record, approval, sourceJsonlSha256, index)
   const decision = normaliseString(approval.decision);
   const reviewer = normaliseString(approval.reviewerName);
   const reviewedAt = normaliseString(approval.reviewTimestamp);
-  const safetyStatus = decision === DECISION_SECURE_EXTENSION_IMPORT
+  const secureImportApprovalApplied = decision === DECISION_SECURE_EXTENSION_IMPORT
+    && taxonomyTier === 'secure-extension';
+  const sourceReviewStatusBeforeSecureImportApproval = normaliseString(record.reviewStatus);
+  const sourceReviewStatus = secureImportApprovalApplied
+    ? 'adult_approved_for_secure_extension_import'
+    : sourceReviewStatusBeforeSecureImportApproval;
+  const safetyStatus = secureImportApprovalApplied
     ? 'approved_for_secure_extension_import'
     : 'approved_for_import_reviewer_pack_only';
 
@@ -261,7 +267,9 @@ function auditedWordFromSourceRecord(record, approval, sourceJsonlSha256, index)
     sourceBucket: normaliseString(record.sourceBucket),
     patternTags: Array.isArray(record.patternTags) ? record.patternTags : [],
     advisories: Array.isArray(record.advisories) ? record.advisories : [],
-    sourceReviewStatus: normaliseString(record.reviewStatus),
+    sourceReviewStatus,
+    sourceReviewStatusBeforeSecureImportApproval,
+    secureImportApprovalApplied,
     review: {
       status: 'approved',
       decision,
@@ -343,6 +351,9 @@ export function buildSecureVocabularyArtifacts({ sourceJsonlPath, approvalPath, 
     sourceBucket: word.sourceBucket,
     patternTags: word.patternTags,
     advisories: word.advisories,
+    sourceReviewStatus: word.sourceReviewStatus,
+    sourceReviewStatusBeforeSecureImportApproval: word.sourceReviewStatusBeforeSecureImportApproval,
+    secureImportApprovalApplied: word.secureImportApprovalApplied,
     reviewStatus: word.review.status,
     reviewer: word.review.reviewer,
     reviewedAt: word.review.reviewedAt,
@@ -385,6 +396,9 @@ export function buildSecureVocabularyArtifacts({ sourceJsonlPath, approvalPath, 
         ? 'plan_secure_extension_candidate'
         : 'preserve_current_snapshot_record',
       reviewStatus: word.review.status,
+      sourceReviewStatus: word.sourceReviewStatus,
+      sourceReviewStatusBeforeSecureImportApproval: word.sourceReviewStatusBeforeSecureImportApproval,
+      secureImportApprovalApplied: word.secureImportApprovalApplied,
       reviewer: word.review.reviewer,
       reviewedAt: word.review.reviewedAt,
       sourceJsonlSha256: word.review.sourceJsonlSha256,

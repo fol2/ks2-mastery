@@ -1,0 +1,18 @@
+{
+  "artifactId": "ks2-spelling-secure-vocabulary-source-v1",
+  "decision": "APPROVED_FOR_SECURE_EXTENSION_IMPORT",
+  "reviewerName": "James",
+  "reviewerRole": "Owner/adult reviewer",
+  "reviewTimestamp": "2026-05-17T16:01:23+01:00",
+  "sourceJsonlSha256": "ae39bfc5091525d602f158c18d254b57c498683f9ae81da4d2733f225862a42c",
+  "evidenceRecord": "docs/plans/james/hotfixes/21. spelling-package/evidence/secure-extension-import-approval-record-2026-05-17.json",
+  "scope": {
+    "secureExtensionCandidateRows": 1217,
+    "allSecureExtensionCandidateRowsInPinnedSource": true,
+    "reviewStatusAppliedByPipeline": "adult_approved_for_secure_extension_import"
+  },
+  "limitations": [
+    "This approval record does not supply row-specific release-quality fields.",
+    "The generated release-readiness gate must still fail until accepted spellings, explanations, example sentences, UK spelling decisions, tags, family/root data, safety notes where needed, and audio/TTS status are present."
+  ]
+}

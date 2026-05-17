@@ -24,7 +24,7 @@ Execute `docs/plans/james/hotfixes/21. spelling-package/contract/spelling-secure
 | Task A: source ledger and divergence check | `validation-summary.md`, `evidence/source-ledger.md`, GitHub/ZIP source notes, commit chain through `7ee26734`. | Mostly met for current branch; production source still not proven. |
 | Task B: patch-equivalent cache/admin signal fix under Node 22 | Commit `10b0f4b2`; `validation/task-b-local-patch-equivalence-2026-05-17.md`; full test runs with zero failures. | Met locally |
 | Task C: durable taxonomy | Commit `7ee26734`; `src/subjects/spelling/content/taxonomy.js`; generated data includes `coverageTier`; `validation/taxonomy-backbone-local-verification-2026-05-17.md`. | Met locally |
-| Task D: import and review provenance for every new secure-extension word | `validation/secure-vocabulary-approved-source/audited-source.json` sample for `ability`; approval record says import/reviewer-pack only. Candidate records lack learner explanations, example sentences, accepted/rejected variants, UK policy decision, and audio/TTS status. | Not met |
+| Task D: import and review provenance for every new secure-extension word | `validation/secure-vocabulary-approved-source/audited-source.json` sample for `ability`; secure-import approval is now ingested, but candidate records lack learner explanations, example sentences, accepted/rejected variants, UK policy decision, and audio/TTS status. | Not met |
 | Task E: release-blocking validators/audits for expanded content | Existing source audit and reviewer-pack verification pass. Current runtime `content:validate` has zero errors but six known pattern warnings. No validator yet proves all 1217 secure-extension candidates have full release-quality sentence/explanation/audio/provenance fields. | Partially met |
 | Task F: preserve mode semantics | Local taxonomy now keeps secure-extension out of statutory Mega/Guardian/Pattern Quest counts and Word Bank can distinguish secure vocabulary. No live secure-extension scheduling/import path has been exercised. | Partially met |
 | Task G: scale/performance proof for thousands of words | `npm run audit:client` and `npm run check` passed for the 246-word runtime. No proof exists for the 1217-candidate secure-extension runtime bundle, Worker cold start, D1 reads, generated JS size, or TTS spend. | Not met |
@@ -62,11 +62,11 @@ Evidence:
 Current approved-source result:
 
 - `ok`: `false`
-- `issueCount`: `18256`
+- `issueCount`: `17038`
 - `metadataIssueCount`: `0`
 - `checkedSecureExtensionWords`: `1217`
 
-This confirms that B3w metadata reconciliation is clean while live secure-extension promotion remains blocked by missing `APPROVED_FOR_SECURE_EXTENSION_IMPORT`, missing adult-approved per-word status, and missing release-quality word fields on the audited source and review pack.
+This confirms that B3w metadata reconciliation is clean while live secure-extension promotion remains blocked by missing release-quality word fields on the audited source and review pack. `APPROVED_FOR_SECURE_EXTENSION_IMPORT` and adult-approved per-word status are now present.
 
 ## Commands And Evidence Inspected
 
@@ -86,13 +86,13 @@ The full contract goal is not achieved.
 
 The B3w source/taxonomy loop is resolved enough to continue the goal: the source is pinned, reviewer-pack evidence exists, and the local runtime has a safe taxonomy backbone.
 
-The full spelling secure-vocabulary expansion remains blocked by missing live-import approval and missing release-quality content for the 1217 secure-extension candidates. The current approved-source decision is `APPROVED_FOR_IMPORT_REVIEWER_PACK_ONLY`, not `APPROVED_FOR_SECURE_EXTENSION_IMPORT`; the candidate records do not yet provide the full learner-facing release fields required by Task D.
+The full spelling secure-vocabulary expansion remains blocked by missing release-quality content for the 1217 secure-extension candidates. The current generated artefacts carry `APPROVED_FOR_SECURE_EXTENSION_IMPORT`, but the candidate records do not yet provide the full learner-facing release fields required by Task D.
 
 ## Required Next Action
 
 Before a live secure-extension import can be implemented or deployed, the project needs either:
 
-1. a revised source artifact that includes release-quality explanations, example sentences, variant policy, UK spelling decisions, safety exclusions, pattern/family tags, and audio/TTS status for every secure-extension word, plus explicit `APPROVED_FOR_SECURE_EXTENSION_IMPORT`; or
+1. a revised source artifact that includes release-quality explanations, example sentences, variant policy, UK spelling decisions, safety exclusions, pattern/family tags, and audio/TTS status for every secure-extension word; or
 2. a narrowed next contract slice that explicitly limits the work to building the missing import/release tooling and validation gates without promoting the candidates live.
 
 Until then, the only defensible status is:

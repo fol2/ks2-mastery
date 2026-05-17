@@ -1,5 +1,11 @@
 # Reviewer Loop - Current Branch Head - 2026-05-17
 
+## Superseded Approval Finding Note
+
+This reviewer loop was run before James's secure-import approval was ingested into the generated audited source and review pack. Its approval-related findings are superseded by `evidence/secure-extension-import-approval-pipeline-record-2026-05-17.json` and the regenerated `validation/secure-vocabulary-approved-source/` artefacts, which now show `APPROVED_FOR_SECURE_EXTENSION_IMPORT`, `1217` adult-approved secure-import rows, and `0` not-adult-approved rows.
+
+The reviewer loop still remains `NOT PASS` for the full contract because release-quality fields, live secure-extension runtime import, production proof, and exact reviewer PASS lines are still missing.
+
 ## Scope
 
 This evidence records the independent Code Reviewer and Contract Auditor rerun after the reviewer-found Word Bank Guardian-chip bug was fixed.

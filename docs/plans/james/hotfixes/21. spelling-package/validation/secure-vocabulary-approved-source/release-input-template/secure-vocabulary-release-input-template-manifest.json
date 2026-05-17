@@ -1,19 +1,19 @@
 {
   "kind": "ks2-spelling-secure-vocabulary-release-input-template",
   "version": 1,
-  "generatedAt": "2026-05-17T14:16:10.025Z",
+  "generatedAt": "2026-05-17T15:19:21.536Z",
   "source": {
     "artifactId": "ks2-spelling-secure-vocabulary-source-v1",
     "sourceJsonlSha256": "ae39bfc5091525d602f158c18d254b57c498683f9ae81da4d2733f225862a42c",
-    "approvalDecision": "APPROVED_FOR_IMPORT_REVIEWER_PACK_ONLY",
-    "securePromotionAllowed": false
+    "approvalDecision": "APPROVED_FOR_SECURE_EXTENSION_IMPORT",
+    "securePromotionAllowed": true
   },
   "requiredApprovalDecision": "APPROVED_FOR_SECURE_EXTENSION_IMPORT",
   "counts": {
     "secureExtensionRows": 1217,
     "advisoryRows": 12,
     "currentReviewStatus": {
-      "candidate_source_supplied_not_adult_approved": 1217
+      "adult_approved_for_secure_extension_import": 1217
     }
   },
   "columns": [

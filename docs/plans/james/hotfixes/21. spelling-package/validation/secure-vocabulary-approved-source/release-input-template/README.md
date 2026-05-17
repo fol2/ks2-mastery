@@ -5,7 +5,7 @@ This folder is a data-collection template for the next secure-extension source a
 ## Source
 
 - Source JSONL SHA-256: ae39bfc5091525d602f158c18d254b57c498683f9ae81da4d2733f225862a42c
-- Current approval decision: APPROVED_FOR_IMPORT_REVIEWER_PACK_ONLY
+- Current approval decision: APPROVED_FOR_SECURE_EXTENSION_IMPORT
 - Required live-import approval decision: APPROVED_FOR_SECURE_EXTENSION_IMPORT
 - Secure-extension rows: 1217
 - Advisory rows: 12

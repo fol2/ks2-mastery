@@ -2,25 +2,25 @@
   "ok": false,
   "status": "RELEASE BLOCKED",
   "approval": {
-    "auditedSourceDecision": "APPROVED_FOR_IMPORT_REVIEWER_PACK_ONLY",
-    "reviewPackDecision": "APPROVED_FOR_IMPORT_REVIEWER_PACK_ONLY",
-    "auditedSourceSecurePromotionAllowed": false,
-    "reviewPackSecurePromotionAllowed": false,
-    "promotionApproved": false
+    "auditedSourceDecision": "APPROVED_FOR_SECURE_EXTENSION_IMPORT",
+    "reviewPackDecision": "APPROVED_FOR_SECURE_EXTENSION_IMPORT",
+    "auditedSourceSecurePromotionAllowed": true,
+    "reviewPackSecurePromotionAllowed": true,
+    "promotionApproved": true
   },
   "counts": {
     "auditedSourceWords": 1463,
     "reviewPackWords": 1463,
     "secureExtensionWords": 1217,
     "missingReviewPackEntries": 0,
-    "adultApprovedForSecureImport": 0,
-    "notAdultApprovedForSecureImport": 1217,
+    "adultApprovedForSecureImport": 1217,
+    "notAdultApprovedForSecureImport": 0,
     "advisoryWordCount": 12,
     "noAdvisoryWordCount": 1205
   },
   "releaseReadiness": {
     "ok": false,
-    "issueCount": 18256,
+    "issueCount": 17038,
     "metadataIssueCount": 0,
     "checkedSecureExtensionWords": 1217,
     "checkedAuditedSourceWords": 1463,
@@ -48,7 +48,7 @@
   },
   "distributions": {
     "reviewStatus": {
-      "candidate_source_supplied_not_adult_approved": 1217
+      "adult_approved_for_secure_extension_import": 1217
     },
     "sourceBucket": {
       "school_academic_secure": 281,
@@ -71,88 +71,7 @@
     }
   },
   "examples": {
-    "notAdultApproved": [
-      {
-        "word": "ability",
-        "sourceRecordId": "sv1-0001"
-      },
-      {
-        "word": "able",
-        "sourceRecordId": "sv1-0002"
-      },
-      {
-        "word": "absence",
-        "sourceRecordId": "sv1-0003"
-      },
-      {
-        "word": "absent",
-        "sourceRecordId": "sv1-0004"
-      },
-      {
-        "word": "absolutely",
-        "sourceRecordId": "sv1-0005"
-      },
-      {
-        "word": "absorb",
-        "sourceRecordId": "sv1-0006"
-      },
-      {
-        "word": "absorbed",
-        "sourceRecordId": "sv1-0007"
-      },
-      {
-        "word": "absorbing",
-        "sourceRecordId": "sv1-0008"
-      },
-      {
-        "word": "absorption",
-        "sourceRecordId": "sv1-0009"
-      },
-      {
-        "word": "abstract",
-        "sourceRecordId": "sv1-0010"
-      },
-      {
-        "word": "acceptable",
-        "sourceRecordId": "sv1-0011"
-      },
-      {
-        "word": "acceptance",
-        "sourceRecordId": "sv1-0012"
-      },
-      {
-        "word": "access",
-        "sourceRecordId": "sv1-0013"
-      },
-      {
-        "word": "accessible",
-        "sourceRecordId": "sv1-0014"
-      },
-      {
-        "word": "accessory",
-        "sourceRecordId": "sv1-0015"
-      },
-      {
-        "word": "account",
-        "sourceRecordId": "sv1-0016"
-      },
-      {
-        "word": "accuracy",
-        "sourceRecordId": "sv1-0017"
-      },
-      {
-        "word": "accurate",
-        "sourceRecordId": "sv1-0018"
-      },
-      {
-        "word": "accurately",
-        "sourceRecordId": "sv1-0019"
-      },
-      {
-        "word": "accusation",
-        "sourceRecordId": "sv1-0020"
-      }
-    ],
+    "notAdultApproved": [],
     "missingReviewPackEntries": [],
     "missingFields": {
       "acceptedSpellings": [

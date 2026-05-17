@@ -1,10 +1,10 @@
 # Spelling Secure Vocabulary Review Pack
 
-Generated at: 2026-05-17T11:45:47.411Z
+Generated at: 2026-05-17T15:18:48.688Z
 Source JSONL SHA-256: ae39bfc5091525d602f158c18d254b57c498683f9ae81da4d2733f225862a42c
-Approval decision: APPROVED_FOR_IMPORT_REVIEWER_PACK_ONLY
+Approval decision: APPROVED_FOR_SECURE_EXTENSION_IMPORT
 Reviewer: James
-Review timestamp: 2026-05-17T12:15:41+01:00
+Review timestamp: 2026-05-17T16:01:23+01:00
 
 ## Counts
 
@@ -17,7 +17,7 @@ Review timestamp: 2026-05-17T12:15:41+01:00
 
 ## Scope
 
-The source is approved for import/reviewer-pack generation only. It is not approved for live secure-extension promotion.
+The source is approved for secure-extension import, but production still requires release, CI, deployment, and live verification evidence.
 
 ## Advisory Words
 

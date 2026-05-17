@@ -161,3 +161,65 @@ test('secure vocabulary release gap markdown renders blocker counts', () => {
   assert.match(markdown, /\| acceptedSpellings \| 1 \| 1 \|/);
   assert.match(markdown, /\| ability \| sv1-0001 \|/);
 });
+
+test('secure vocabulary release gap markdown does not request another approval after secure import is approved', () => {
+  const markdown = renderSecureVocabularyReleaseGapMarkdown({
+    status: 'RELEASE BLOCKED',
+    approval: {
+      auditedSourceDecision: 'APPROVED_FOR_SECURE_EXTENSION_IMPORT',
+      reviewPackDecision: 'APPROVED_FOR_SECURE_EXTENSION_IMPORT',
+      auditedSourceSecurePromotionAllowed: true,
+      reviewPackSecurePromotionAllowed: true,
+      promotionApproved: true,
+    },
+    counts: {
+      auditedSourceWords: 1463,
+      reviewPackWords: 1463,
+      secureExtensionWords: 1217,
+      missingReviewPackEntries: 0,
+      adultApprovedForSecureImport: 1217,
+      notAdultApprovedForSecureImport: 0,
+      advisoryWordCount: 12,
+      noAdvisoryWordCount: 1205,
+    },
+    releaseReadiness: {
+      issueCount: 17038,
+      metadataIssueCount: 0,
+    },
+    missingFields: {
+      auditedSource: {
+        acceptedSpellings: 1217,
+        explanation: 1217,
+        exampleSentences: 1217,
+        ukSpellingDecision: 1217,
+        patternOrMorphologyTags: 1217,
+        familyRoot: 1217,
+        audioOrTtsStatus: 1217,
+      },
+      reviewPack: {
+        acceptedSpellings: 1217,
+        explanation: 1217,
+        exampleSentences: 1217,
+        ukSpellingDecision: 1217,
+        patternOrMorphologyTags: 1217,
+        familyRoot: 1217,
+        audioOrTtsStatus: 1217,
+      },
+    },
+    distributions: {
+      reviewStatus: {
+        adult_approved_for_secure_extension_import: 1217,
+      },
+      advisories: {
+        adult_review_context_sensitivity: 12,
+      },
+    },
+    examples: {
+      notAdultApproved: [],
+    },
+  });
+
+  assert.match(markdown, /has `APPROVED_FOR_SECURE_EXTENSION_IMPORT`/);
+  assert.match(markdown, /still requires all missing release fields/);
+  assert.doesNotMatch(markdown, /requires `APPROVED_FOR_SECURE_EXTENSION_IMPORT`, adult-approved/);
+});

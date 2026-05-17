@@ -27,7 +27,8 @@ Execute `docs/plans/james/hotfixes/21. spelling-package/contract/spelling-secure
 - Current statutory-core records: `213`
 - Current extra records: `33`
 - Secure-extension candidate records: `1217`
-- Approval decision: `APPROVED_FOR_IMPORT_REVIEWER_PACK_ONLY`
+- Original ZIP approval decision: `APPROVED_FOR_IMPORT_REVIEWER_PACK_ONLY`
+- Current pipeline approval decision: `APPROVED_FOR_SECURE_EXTENSION_IMPORT`
 - Reviewer: `James`
 - Review timestamp: `2026-05-17T12:15:41+01:00`
 
@@ -42,14 +43,14 @@ The ZIP's `contract/LOCAL_AGENT_STOP_LOOP_CONTRACT.md` is now in scope. It expli
 | Source-list discovery must not loop | Repo contains `secure-vocabulary-source-v1-input-artifact.zip`; ZIP stop-loop contract says the exact source list exists and is authoritative for this slice. | Met |
 | Verify source artefact identity | Local ZIP SHA-256 is `cdf18f85c37f94274608193fe31dc0dd93b23e153b4e492ffd25fb9b924d889e`; manifest names JSONL SHA `ae39bfc5091525d602f158c18d254b57c498683f9ae81da4d2733f225862a42c`. | Met |
 | Verify source schema/no duplicate words | `validation/secure-vocabulary-approved-source/audit-report.json` reports `ok: true`; ZIP `validation/source-sanity-check.txt` reports PASS, `duplicate_words=0`, `invalid_word_tokens=0`. | Met for source intake |
-| Read approval decision | ZIP `approval/owner-approval-record.json` decision is `APPROVED_FOR_IMPORT_REVIEWER_PACK_ONLY`; reviewer is James; source hash matches. | Met |
-| Import according to approval decision | `validation/secure-vocabulary-approved-source/import-plan.json` is check-mode only, `writes: false`, status `approved_for_import_reviewer_pack_only_not_applied`. | Met for the allowed decision; no live import allowed |
+| Read approval decision | ZIP `approval/owner-approval-record.json` decision is `APPROVED_FOR_IMPORT_REVIEWER_PACK_ONLY`; James's later secure-import approval is captured in `evidence/secure-extension-import-approval-pipeline-record-2026-05-17.json`. | Met |
+| Import according to approval decision | `validation/secure-vocabulary-approved-source/import-plan.json` is check-mode only, `writes: false`, status `approved_for_secure_extension_import_not_applied`. | Met for check-mode planning; no live import performed |
 | Keep statutory/current-extra/candidate records distinct | Taxonomy backbone and import plan keep `current_statutory_core`, `current_extra`, and `secure_extension_candidate` separate. Runtime still reports `213` statutory-core, `0` secure-extension, `33` enrichment-extra. | Met locally |
 | Generate reviewer-pack proof | `validation/secure-vocabulary-approved-source/review-pack.json` and `.md` exist; B3w metadata verifier reports `ok: true`, `issueCount: 0`, `checkedReviewPackWords: 1463`. | Met |
 | Prevent reviewer-pack approval from being mistaken for live release approval | `scripts/verify-spelling-secure-vocabulary-release.mjs --release-ready` and `tests/secure-vocabulary-release-gates.test.js` add an explicit release-readiness gate. | Met |
 | Task D release-quality fields for every secure-extension word | `release-gap-summary.md` reports all `1217` secure-extension candidates are missing accepted spellings, explanations, example sentences, UK spelling decision, pattern/morphology tags, family/root, and audio/TTS status on both audited source and review pack. | Not met |
 | Next-source input template for Task D blockers | `validation/secure-vocabulary-approved-source/release-input-template/` contains a non-importing 1217-row CSV template and manifest for filling release-quality fields and `APPROVED_FOR_SECURE_EXTENSION_IMPORT` decisions. | Prepared for next source input |
-| Adult approval for live secure-extension promotion | Approval decision is `APPROVED_FOR_IMPORT_REVIEWER_PACK_ONLY`, not `APPROVED_FOR_SECURE_EXTENSION_IMPORT`. | Not met |
+| Adult approval for live secure-extension promotion | Audited source and review pack now carry `APPROVED_FOR_SECURE_EXTENSION_IMPORT`; release gap summary shows `1217` adult-approved secure-import rows and `0` not-adult-approved rows. | Met for approval; live import still blocked by fields |
 | Runtime import of secure-extension words | Current runtime still has `0` secure-extension words; import plan is check-mode only. | Not met |
 | Content release manifest and migration semantics | No secure-extension content release, release manifest, audio manifest, or production migration evidence exists. | Not met |
 | Scale/performance proof for expanded word count | `npm run check` and bundle audit pass for the current 246-word runtime, not a 1217-candidate secure-extension runtime. | Not met |
@@ -61,7 +62,7 @@ The ZIP's `contract/LOCAL_AGENT_STOP_LOOP_CONTRACT.md` is now in scope. It expli
 Current report: `validation/secure-vocabulary-approved-source/release-readiness-report.json`
 
 - `ok`: `false`
-- `issueCount`: `18256`
+- `issueCount`: `17038`
 - `issuesStored`: `200`
 - `issuesTruncated`: `true`
 - `metadataIssueCount`: `0`
@@ -69,7 +70,7 @@ Current report: `validation/secure-vocabulary-approved-source/release-readiness-
 - `checkedAuditedSourceWords`: `1463`
 - `checkedSecureExtensionWords`: `1217`
 
-The first stored issue is `secure_vocabulary_release_promotion_not_approved`: secure-extension promotion requires `APPROVED_FOR_SECURE_EXTENSION_IMPORT` on both audited source and review pack. The next issues show the same secure-extension words are not release-ready because they are not adult-approved for secure import and lack release-quality fields.
+The stored issues are `secure_vocabulary_release_word_missing_field`: secure-extension promotion approval and adult-approved per-word status are present, but the same secure-extension words are not release-ready because they lack release-quality fields.
 
 ## Release gap summary
 
@@ -78,13 +79,13 @@ Current summary: `validation/secure-vocabulary-approved-source/release-gap-summa
 - Status: `RELEASE BLOCKED`
 - Secure-extension words: `1217`
 - Missing review-pack entries: `0`
-- Adult-approved for secure import: `0`
-- Not adult-approved for secure import: `1217`
+- Adult-approved for secure import: `1217`
+- Not adult-approved for secure import: `0`
 - Advisory words: `12`
 - Missing release fields on audited source: `1217` each for accepted spellings, explanations, example sentences, UK spelling decision, pattern/morphology tags, family/root, and audio/TTS status.
 - Missing release fields on review pack: `1217` each for the same fields.
 
-This proves the remaining blocker is not source-list discovery or reviewer-pack reconciliation. The finite blocker is release approval plus release-quality content for the candidate words.
+This proves the remaining blocker is not source-list discovery, reviewer-pack reconciliation, or secure-import approval. The finite blocker is release-quality content for the candidate words.
 
 ## Release input template
 
@@ -93,7 +94,7 @@ Current template folder: `validation/secure-vocabulary-approved-source/release-i
 - CSV rows: `1217`
 - Advisory rows: `12`
 - Source JSONL SHA-256: `ae39bfc5091525d602f158c18d254b57c498683f9ae81da4d2733f225862a42c`
-- Required approval decision: `APPROVED_FOR_SECURE_EXTENSION_IMPORT`
+- Required approval decision: `APPROVED_FOR_SECURE_EXTENSION_IMPORT` is now present in the generated artefacts.
 - Safety: the template is non-importing, does not grant approval, and writes no live content.
 
 The template gives the next source owner a finite row-and-field target for closing the release blocker. It does not alter the current release status.
@@ -102,23 +103,21 @@ The template gives the next source owner a finite row-and-field target for closi
 
 The B3w source-list loop is closed. The source list exists, the exact hash is pinned, James's approval is recorded for import/reviewer-pack generation, the reviewer pack reconciles with the audited source, and a release-readiness gate now blocks unsafe live promotion.
 
-The full secure-vocabulary expansion contract is not complete. The current finite blocker is no longer "missing source list"; it is that the supplied source is approved only for import/reviewer-pack generation and lacks the release-quality content required for live secure-extension promotion.
+The full secure-vocabulary expansion contract is not complete. The current finite blocker is no longer "missing source list" or "missing secure-import approval"; it is that the supplied source lacks the release-quality content required for live secure-extension promotion.
 
 ## Reviewer loop result
 
 The latest reviewer loop did not return the contract PASS line:
 
 - Code Reviewer: not PASS. Findings were that the full contract is not complete and that this current-state evidence must avoid stale branch-head claims.
-- Contract Auditor: not PASS. Findings were that the full contract is not complete, the ZIP approval forbids live promotion under the current decision, runtime secure-extension count is still zero, release/performance/audio/migration evidence is absent, reviewer PASS lines are absent, production proof is absent, and current-state evidence must avoid stale branch-head claims.
+- Contract Auditor: not PASS. Historical findings included that the full contract is not complete, the ZIP approval forbade live promotion under the then-current decision, runtime secure-extension count was still zero, release/performance/audio/migration evidence was absent, reviewer PASS lines were absent, production proof was absent, and current-state evidence needed to avoid stale branch-head claims. The approval finding is superseded by the ingested secure-import approval; the other full-contract blockers remain.
 
 The stale branch-head evidence issue is addressed above by recording the audited implementation commit and current-state evidence commit separately, and by requiring a fresh `git rev-parse` check when this evidence is consumed. The remaining reviewer findings are full-contract blockers and cannot be closed without a release-approved source artefact and live production evidence.
 
-## Required next approval or source input
+## Required next source input
 
 To continue toward a live secure-extension import, the project needs a replacement or revised source artefact with:
 
-- approval decision `APPROVED_FOR_SECURE_EXTENSION_IMPORT`;
-- adult-approved per-word secure import status;
 - accepted spellings and rejected variants where applicable;
 - UK spelling decisions;
 - explanations;

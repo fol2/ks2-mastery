@@ -15,7 +15,7 @@ James gave owner/adult-reviewer approval for secure-extension import in Codex ch
 
 This record closes the missing adult secure-import approval as owner evidence.
 
-It does not make the current audited source or review pack release-ready by itself. The current generated files still carry the earlier `APPROVED_FOR_IMPORT_REVIEWER_PACK_ONLY` decision and empty release-quality fields. A revised audited source and review pack must ingest this approval and provide row-specific release-quality values before any live import.
+It does not make the current audited source or review pack release-ready by itself. The approval is ingested through `secure-extension-import-approval-pipeline-record-2026-05-17.json`; the generated files now carry `APPROVED_FOR_SECURE_EXTENSION_IMPORT` and adult-approved secure-import status for all 1217 pinned secure-extension rows. They still have empty release-quality fields, so row-specific release-quality values are required before any live import.
 
 The remaining field values are real content inputs, not approval labels:
 

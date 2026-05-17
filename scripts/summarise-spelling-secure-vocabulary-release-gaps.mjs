@@ -314,7 +314,11 @@ export function renderSecureVocabularyReleaseGapMarkdown(summary) {
   lines.push('');
   lines.push('## Required Next Source Input');
   lines.push('');
-  lines.push('The current artefact is suitable for import/reviewer-pack generation only. A live secure-extension import requires `APPROVED_FOR_SECURE_EXTENSION_IMPORT`, adult-approved per-word secure import status, and all missing release fields above on both the audited source and review pack.');
+  if (summary.approval.promotionApproved && summary.counts.notAdultApprovedForSecureImport === 0) {
+    lines.push('The current artefact has `APPROVED_FOR_SECURE_EXTENSION_IMPORT` and adult-approved per-word secure import status. A live secure-extension import still requires all missing release fields above on both the audited source and review pack.');
+  } else {
+    lines.push('The current artefact is suitable for import/reviewer-pack generation only. A live secure-extension import requires `APPROVED_FOR_SECURE_EXTENSION_IMPORT`, adult-approved per-word secure import status, and all missing release fields above on both the audited source and review pack.');
+  }
   lines.push('');
 
   return lines.join('\n');

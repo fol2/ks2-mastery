@@ -7,10 +7,17 @@ import { tmpdir } from 'node:os';
 
 import {
   DECISION_IMPORT_REVIEWER_PACK_ONLY,
+  DECISION_SECURE_EXTENSION_IMPORT,
   auditSecureVocabularySource,
   buildSecureVocabularyArtifacts,
 } from '../scripts/spelling-secure-vocabulary-source.mjs';
-import { verifySecureVocabularyRelease } from '../scripts/verify-spelling-secure-vocabulary-release.mjs';
+import {
+  SECURE_VOCABULARY_RELEASE_PROMOTION_NOT_APPROVED,
+  SECURE_VOCABULARY_RELEASE_WORD_MISSING_FIELD,
+  SECURE_VOCABULARY_RELEASE_WORD_NOT_ADULT_APPROVED,
+  verifySecureVocabularyRelease,
+  verifySecureVocabularyReleaseReadiness,
+} from '../scripts/verify-spelling-secure-vocabulary-release.mjs';
 
 function writeFixture(records, approvalOverrides = {}) {
   const dir = mkdtempSync(join(tmpdir(), 'ks2-secure-vocabulary-'));
@@ -118,4 +125,57 @@ test('review-pack build emits metadata that passes the B3w release gate', () => 
   assert.equal(artifacts.reviewPack.words[0].reviewer, 'James');
   assert.equal(artifacts.reviewPack.words[0].provenanceSource, 'ks2-spelling-secure-vocabulary-source-v1');
   assert.equal(artifacts.reviewPack.words[0].safetyStatus, 'approved_for_import_reviewer_pack_only');
+});
+
+test('secure-extension import approval is applied to every secure-extension candidate row without fabricating release fields', () => {
+  const fixture = writeFixture([
+    sourceRecord(),
+    sourceRecord({
+      coverageTier: 'current_statutory_core',
+      normalisedWord: 'accident',
+      recommendedPool: 'core',
+      recordId: 'current-0001',
+      reviewStatus: 'already_in_current_published_spelling_snapshot',
+      word: 'accident',
+      yearBand: 'Years 3-4',
+    }),
+  ], {
+    decision: DECISION_SECURE_EXTENSION_IMPORT,
+  });
+
+  const artifacts = buildSecureVocabularyArtifacts(fixture);
+  const secureWord = artifacts.auditedSource.words.find((word) => word.word === 'ability');
+  const statutoryWord = artifacts.auditedSource.words.find((word) => word.word === 'accident');
+  const reviewPackSecureWord = artifacts.reviewPack.words.find((word) => word.word === 'ability');
+  const importPlanSecureRecord = artifacts.importPlan.records.find((record) => record.word === 'ability');
+
+  assert.equal(artifacts.audit.approval.securePromotionAllowed, true);
+  assert.equal(artifacts.importPlan.status, 'approved_for_secure_extension_import_not_applied');
+  assert.equal(secureWord.sourceReviewStatus, 'adult_approved_for_secure_extension_import');
+  assert.equal(
+    secureWord.sourceReviewStatusBeforeSecureImportApproval,
+    'candidate_source_supplied_not_adult_approved'
+  );
+  assert.equal(secureWord.secureImportApprovalApplied, true);
+  assert.equal(secureWord.safety.status, 'approved_for_secure_extension_import');
+  assert.equal(statutoryWord.sourceReviewStatus, 'already_in_current_published_spelling_snapshot');
+  assert.equal(statutoryWord.secureImportApprovalApplied, false);
+  assert.equal(reviewPackSecureWord.sourceReviewStatus, 'adult_approved_for_secure_extension_import');
+  assert.equal(importPlanSecureRecord.sourceReviewStatus, 'adult_approved_for_secure_extension_import');
+
+  const readiness = verifySecureVocabularyReleaseReadiness({
+    auditedSource: artifacts.auditedSource,
+    reviewPack: artifacts.reviewPack,
+  });
+
+  assert.equal(readiness.ok, false);
+  assert.ok(readiness.issues.some(
+    (issue) => issue.code === SECURE_VOCABULARY_RELEASE_WORD_MISSING_FIELD
+  ));
+  assert.equal(readiness.issues.some(
+    (issue) => issue.code === SECURE_VOCABULARY_RELEASE_PROMOTION_NOT_APPROVED
+  ), false);
+  assert.equal(readiness.issues.some(
+    (issue) => issue.code === SECURE_VOCABULARY_RELEASE_WORD_NOT_ADULT_APPROVED
+  ), false);
 });

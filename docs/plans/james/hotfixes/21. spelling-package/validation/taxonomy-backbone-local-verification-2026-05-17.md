@@ -34,7 +34,7 @@ Approved-source tier aliases are accepted at the runtime boundary:
 - Errors: `0`
 - Existing pattern warnings: `6`
 
-The zero secure-extension runtime count is intentional for this slice. Source approval remains import/reviewer-pack only, not live secure-extension promotion.
+The zero secure-extension runtime count is intentional for this slice. Source approval is now ingested for secure-extension import, but live secure-extension promotion is still blocked by missing release-quality fields and absent runtime import.
 
 ## Validation
 
@@ -70,9 +70,9 @@ Commands run locally:
 
 The previous B3w loop was caused by an approved adult-reviewed source boundary being absent or not connected to a runtime-safe taxonomy. That loop now has an exit:
 
-- The source artifact is pinned by hash and approved by James for import/reviewer-pack generation.
+- The source artifact is pinned by hash, and James's later secure-import approval is ingested into the audited source/review pack.
 - The local release gate verifies the reviewer pack and audited source.
 - The runtime now has a canonical taxonomy seam for future secure-extension import.
 - Secure-extension candidates cannot accidentally inflate statutory-core Mega, Guardian, Pattern Quest, or admin counts.
 
-Remaining work is not the same loop. It is the next production slice: explicit secure-extension import approval, generated learner-facing content, release metadata, CI, deployment, and production evidence.
+Remaining work is not the same loop. It is the next production slice: release-quality field content, generated learner-facing content, release metadata, CI, deployment, and production evidence.
