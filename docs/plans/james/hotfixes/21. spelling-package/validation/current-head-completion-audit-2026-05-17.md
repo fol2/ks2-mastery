@@ -4,12 +4,18 @@
 
 Execute `docs/plans/james/hotfixes/21. spelling-package/contract/spelling-secure-vocabulary-expansion-contract.md` from an isolated worktree, validate all contract requirements, obtain the exact Code Reviewer and Contract Auditor PASS lines, and only claim live completion after `https://ks2.eugnel.uk` is hard-refresh verified.
 
-## Current State Checked
+## Current Worktree State Checked
+
+This is a moving-branch audit artefact. Do not treat a SHA embedded in this file as an immutable branch-head claim after the file is committed. When consuming this evidence, refresh:
+
+```bash
+git rev-parse HEAD origin/codex/spelling-package-b3w-completion origin/main
+```
 
 - Worktree: `D:\Coding\ks2-mastery\.worktrees\spelling-package-b3w-completion`
 - Branch: `codex/spelling-package-b3w-completion`
-- Current HEAD: `a1cc46406568418c352778705854f34d79c2c43b`
-- Remote branch: `origin/codex/spelling-package-b3w-completion` at `a1cc46406568418c352778705854f34d79c2c43b`
+- Last pushed branch head before the reviewer-fix edits in this audit: `557b9c9f6ceb1ee925a0e766007613c562238702`
+- Remote branch at that check: `origin/codex/spelling-package-b3w-completion` at `557b9c9f6ceb1ee925a0e766007613c562238702`
 - `origin/main`: `10b0f4b2e112f2cb354b5dac11997b9cdf2ecc26`
 - Rebase check: `git fetch origin main` followed by `git rebase origin/main` reported the branch was up to date; `git merge-base --is-ancestor origin/main HEAD` exited `0`.
 - Node runtime for current audit commands: `v22.15.1`
@@ -25,7 +31,7 @@ Execute `docs/plans/james/hotfixes/21. spelling-package/contract/spelling-secure
 | Taxonomy must distinguish statutory-core, secure-extension, and enrichment-extra | Existing taxonomy backbone keeps statutory/current extra/secure-extension candidates separate; current runtime remains `213` statutory-core, `0` secure-extension, `33` enrichment-extra. | Partially met; no live secure-extension runtime yet |
 | Import and review provenance for every new secure-extension word | `release-gap-summary.md` shows all `1217` secure-extension candidates lack live secure-import adult approval and release-quality fields. | Not met |
 | Validators and audits must fail on release-blocking issues | `verify-spelling-secure-vocabulary-release.mjs --release-ready` exits `1` with `ok=false`, `issueCount=18256`; `summarise-spelling-secure-vocabulary-release-gaps.mjs` exits `1` with `status=RELEASE BLOCKED`. | Met as a blocking gate |
-| Preserve mode semantics for SATs/Test, Smart Review, Trouble Drill, Word Bank, Mega/post-Mega, Guardian/Boss | No live secure-extension import was performed; mature mode changes for expanded secure vocabulary are therefore not implemented or production-proven. | Not met for full expansion |
+| Preserve mode semantics for SATs/Test, Smart Review, Trouble Drill, Word Bank, Mega/post-Mega, Guardian/Boss | A reviewer-found Word Bank Guardian chip leak for non-statutory secure-extension rows was fixed locally by applying Guardian eligibility to `renewedRecently` and `neverRenewed`; `tests\spelling-view-model.test.js` now covers the regression. No live secure-extension import or production proof exists. | Partially met for the B3w slice; not met for full expansion |
 | Scale and performance proof for expanded word count | Current checks cover the existing runtime and the non-importing release gate/template. No 1217-word secure-extension runtime, bundle, Worker cold-start, D1, audio, or production performance proof exists. | Not met |
 | UI and copy must honestly distinguish statutory/core, secure-extension, and enrichment | Current preparatory artefacts document the distinction, but no live learner/adult secure-extension journey has been implemented and hard-refresh verified. | Not met for full expansion |
 | Release ID and migration semantics | No secure-extension content release was imported, no learner-facing release metadata was bumped for secure coverage, and no migration proof exists. | Not met |
@@ -48,6 +54,9 @@ Execute `docs/plans/james/hotfixes/21. spelling-package/contract/spelling-secure
   - Result: exit `0`, `secureExtensionRows=1217`, `advisoryRows=12`.
 - `node --test tests\secure-vocabulary-release-input-template.test.js tests\secure-vocabulary-release-gap-summary.test.js tests\secure-vocabulary-release-gates.test.js tests\spelling-secure-vocabulary-source.test.js`
   - Result: exit `0`, `14` tests passed, `0` failed.
+- `node --test tests\spelling-view-model.test.js`
+  - Red result before the fix: exit `1`; `U2 view-model: renewedRecently and neverRenewed reject secure-extension slugs` failed because `renewedRecently` returned `true` for a secure-extension slug.
+  - Green result after the fix: exit `0`, `58` tests passed, `0` failed.
 
 ## Missing Inputs
 
@@ -65,6 +74,6 @@ The current source artefact is not enough to finish the full live secure-vocabul
 
 ## Completion Decision
 
-The active goal is not achieved at current HEAD. The B3w source-list loop is closed, and the branch now has a finite, test-backed release gate plus a 1217-row release input template. The full contract remains blocked because live secure-extension import, release-quality fields, reviewer PASS lines, deployment, and production hard-refresh evidence are all absent.
+The active goal is not achieved in the current worktree state. The B3w source-list loop is closed, the branch has a finite, test-backed release gate plus a 1217-row release input template, and the reviewer-found Word Bank Guardian chip leak for non-statutory secure-extension rows has a local regression test and fix. The full contract remains blocked because live secure-extension import, release-quality fields, reviewer PASS lines, deployment, and production hard-refresh evidence are all absent.
 
 Do not mark the thread goal complete from this state.

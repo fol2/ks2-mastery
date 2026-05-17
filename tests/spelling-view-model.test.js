@@ -852,6 +852,36 @@ test('U2 view-model: orphan sanitiser options are opt-in — omitting slug/progr
   );
 });
 
+test('U2 view-model: renewedRecently and neverRenewed reject secure-extension slugs', () => {
+  const today = 20_000;
+  const progressMap = { extension: { stage: 4 } };
+  const wordBySlug = { extension: { slug: 'extension', spellingPool: 'core', coverageTier: 'secure-extension' } };
+
+  assert.equal(
+    wordBankFilterMatchesStatus('renewedRecently', 'secure', {
+      guardian: { lastReviewedDay: today - 1 },
+      todayDay: today,
+      slug: 'extension',
+      progressMap,
+      wordBySlug,
+    }),
+    false,
+    'secure-extension slug must not match the Guardian renewed chip',
+  );
+
+  assert.equal(
+    wordBankFilterMatchesStatus('neverRenewed', 'secure', {
+      guardian: null,
+      todayDay: today,
+      slug: 'extension',
+      progressMap,
+      wordBySlug,
+    }),
+    false,
+    'secure-extension slug must not match the Guardian untouched chip',
+  );
+});
+
 // --------------------------------------------------------------------------
 // Post-Mega hero backgrounds (`f` region with branch suffix).
 // --------------------------------------------------------------------------

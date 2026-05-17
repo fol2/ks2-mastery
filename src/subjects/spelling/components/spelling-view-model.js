@@ -431,13 +431,13 @@ export function normaliseSearchText(value) {
  * record for the slug so "renewed recently" isn't guessed from `progress`
  * alone.
  *
- * U2: `guardianDue` and `wobbling` additionally run the row through
- * `isGuardianEligibleSlug` when the caller supplies the orphan-sanitiser
- * context (`slug`, `progressMap`, `wordBySlug`). A slug that the runtime no
- * longer publishes, has demoted to the extra pool, or whose progress stage
- * dropped below `GUARDIAN_SECURE_STAGE` must not surface under these chips,
- * even when the persisted guardian record still claims `wobbling: true` or
- * has a due date in the past. Omitting the context preserves the pre-U2
+ * U2: Guardian chips additionally run the row through `isGuardianEligibleSlug`
+ * when the caller supplies the orphan-sanitiser context (`slug`, `progressMap`,
+ * `wordBySlug`). A slug that the runtime no longer publishes, has demoted to
+ * the extra pool, is non-statutory, or whose progress stage dropped below
+ * `GUARDIAN_SECURE_STAGE` must not surface under these chips, even when the
+ * persisted guardian record still claims `wobbling: true`, has a due date in
+ * the past, or has a recent renewal. Omitting the context preserves the pre-U2
  * behaviour so existing two-arg callers stay byte-compatible.
  *
  * @param {string} filter Active filter id from `WORD_BANK_FILTER_IDS`.
@@ -514,6 +514,7 @@ export function wordBankFilterMatchesStatus(filter, status, options = {}) {
 
   if (filter === 'renewedRecently') {
     if (!hasGuardian) return false;
+    if (!isEligible) return false;
     if (guardian.lastReviewedDay == null) return false;
     const last = Number(guardian.lastReviewedDay);
     if (!Number.isFinite(last)) return false;
@@ -525,7 +526,7 @@ export function wordBankFilterMatchesStatus(filter, status, options = {}) {
     // but has no guardian record yet because the learner hasn't touched it
     // in a Guardian round. Non-secure words don't qualify because they
     // never crossed into the maintenance loop in the first place.
-    return status === 'secure' && !hasGuardian;
+    return status === 'secure' && !hasGuardian && isEligible;
   }
 
   return false;
@@ -929,9 +930,9 @@ export function countWordBankSecureExtension(words) {
  * fields without a second reducer pass.
  *
  * U2: pass `{ progressMap, wordBySlug }` alongside `{ guardianMap, todayDay }`
- * to engage the orphan sanitiser for `guardianDue` and `wobbling` counts.
- * Omitting the sanitiser context keeps the pre-U2 behaviour, so existing
- * two-field callers stay byte-compatible.
+ * to engage the orphan sanitiser for the Guardian counts. Omitting the
+ * sanitiser context keeps the pre-U2 behaviour, so existing two-field callers
+ * stay byte-compatible.
  *
  * @param {Array} words Word-bank rows (each has `slug`, `status`).
  * @param {object} [options]
@@ -978,9 +979,9 @@ export function wordBankAggregateStats(words, options = {}) {
 
     if (!hasGuardianContext) continue;
     const guardian = word && word.slug ? guardianMap[word.slug] : null;
-    // U2: pass orphan context through so `guardianDue` / `wobbling` counts
-    // track the visible-row count exactly even when a content hot-swap
-    // leaves a stale guardianMap entry behind.
+    // U2: pass orphan context through so Guardian counts track the visible-row
+    // count exactly even when a content hot-swap leaves a stale guardianMap
+    // entry behind.
     const sanitiserOptions = { guardian, todayDay, slug: word && word.slug, progressMap, wordBySlug };
     if (wordBankFilterMatchesStatus('guardianDue', word.status, sanitiserOptions)) stats.guardianDue += 1;
     if (wordBankFilterMatchesStatus('wobbling', word.status, sanitiserOptions)) stats.wobbling += 1;
