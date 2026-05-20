@@ -1,0 +1,321 @@
+{
+  "ok": true,
+  "generatedAt": "2026-05-20T18:38:20.691Z",
+  "origin": "https://ks2.eugnel.uk",
+  "version": {
+    "ok": true,
+    "buildId": "b7eab6e",
+    "buildHash": "b7eab6e",
+    "release": null,
+    "source": "git.rev-parse",
+    "generatedAt": "2026-05-20T18:36:19.972Z"
+  },
+  "demoSession": {
+    "accountId": "demo-yNKCRlkTsOkzWw",
+    "learnerId": "learner-demo-wLppZFx2XNDsYQ",
+    "demo": true,
+    "bootstrapSessionMatches": true
+  },
+  "request": {
+    "method": "GET",
+    "path": "/api/subjects/spelling/word-bank?learnerId=learner-demo-wLppZFx2XNDsYQ&year=extra&pageSize=250",
+    "status": 200
+  },
+  "contract": {
+    "expectedWords": [
+      "roughest",
+      "leadership",
+      "quietest",
+      "sponsorship",
+      "partnership",
+      "lightest",
+      "brightest",
+      "membership",
+      "ownership",
+      "hardship",
+      "championship",
+      "admission",
+      "aggression",
+      "compassion",
+      "confession",
+      "mission",
+      "permission",
+      "progression",
+      "procession"
+    ],
+    "expectedCount": 19,
+    "missing": [],
+    "wrongPool": [],
+    "matchedCount": 19
+  },
+  "productionWordBank": {
+    "subjectId": "spelling",
+    "learnerId": "learner-demo-wLppZFx2XNDsYQ",
+    "filters": {
+      "query": "",
+      "rawQuery": "",
+      "status": "all",
+      "year": "extra",
+      "page": 1,
+      "pageSize": 250,
+      "detailSlug": ""
+    },
+    "totalRows": 1480,
+    "filteredRows": 52,
+    "returnedRows": 52,
+    "pools": {
+      "all": {
+        "total": 213,
+        "secure": 0,
+        "due": 0,
+        "fresh": 213,
+        "trouble": 0,
+        "attempts": 0,
+        "correct": 0,
+        "accuracy": null
+      },
+      "core": {
+        "total": 213,
+        "secure": 0,
+        "due": 0,
+        "fresh": 213,
+        "trouble": 0,
+        "attempts": 0,
+        "correct": 0,
+        "accuracy": null
+      },
+      "y34": {
+        "total": 109,
+        "secure": 0,
+        "due": 0,
+        "fresh": 109,
+        "trouble": 0,
+        "attempts": 0,
+        "correct": 0,
+        "accuracy": null
+      },
+      "y56": {
+        "total": 104,
+        "secure": 0,
+        "due": 0,
+        "fresh": 104,
+        "trouble": 0,
+        "attempts": 0,
+        "correct": 0,
+        "accuracy": null
+      },
+      "secureExtension": {
+        "total": 1215,
+        "secure": 0,
+        "due": 0,
+        "fresh": 1215,
+        "trouble": 0,
+        "attempts": 0,
+        "correct": 0,
+        "accuracy": null
+      },
+      "extra": {
+        "total": 52,
+        "secure": 0,
+        "due": 0,
+        "fresh": 52,
+        "trouble": 0,
+        "attempts": 0,
+        "correct": 0,
+        "accuracy": null
+      }
+    }
+  },
+  "matches": [
+    {
+      "word": "roughest",
+      "found": true,
+      "slug": "roughest",
+      "spellingPool": "extra",
+      "coverageTier": "enrichment-extra",
+      "year": "extra",
+      "yearLabel": "Extra",
+      "status": "new"
+    },
+    {
+      "word": "leadership",
+      "found": true,
+      "slug": "leadership",
+      "spellingPool": "extra",
+      "coverageTier": "enrichment-extra",
+      "year": "extra",
+      "yearLabel": "Extra",
+      "status": "new"
+    },
+    {
+      "word": "quietest",
+      "found": true,
+      "slug": "quietest",
+      "spellingPool": "extra",
+      "coverageTier": "enrichment-extra",
+      "year": "extra",
+      "yearLabel": "Extra",
+      "status": "new"
+    },
+    {
+      "word": "sponsorship",
+      "found": true,
+      "slug": "sponsorship",
+      "spellingPool": "extra",
+      "coverageTier": "enrichment-extra",
+      "year": "extra",
+      "yearLabel": "Extra",
+      "status": "new"
+    },
+    {
+      "word": "partnership",
+      "found": true,
+      "slug": "partnership",
+      "spellingPool": "extra",
+      "coverageTier": "enrichment-extra",
+      "year": "extra",
+      "yearLabel": "Extra",
+      "status": "new"
+    },
+    {
+      "word": "lightest",
+      "found": true,
+      "slug": "lightest",
+      "spellingPool": "extra",
+      "coverageTier": "enrichment-extra",
+      "year": "extra",
+      "yearLabel": "Extra",
+      "status": "new"
+    },
+    {
+      "word": "brightest",
+      "found": true,
+      "slug": "brightest",
+      "spellingPool": "extra",
+      "coverageTier": "enrichment-extra",
+      "year": "extra",
+      "yearLabel": "Extra",
+      "status": "new"
+    },
+    {
+      "word": "membership",
+      "found": true,
+      "slug": "membership",
+      "spellingPool": "extra",
+      "coverageTier": "enrichment-extra",
+      "year": "extra",
+      "yearLabel": "Extra",
+      "status": "new"
+    },
+    {
+      "word": "ownership",
+      "found": true,
+      "slug": "ownership",
+      "spellingPool": "extra",
+      "coverageTier": "enrichment-extra",
+      "year": "extra",
+      "yearLabel": "Extra",
+      "status": "new"
+    },
+    {
+      "word": "hardship",
+      "found": true,
+      "slug": "hardship",
+      "spellingPool": "extra",
+      "coverageTier": "enrichment-extra",
+      "year": "extra",
+      "yearLabel": "Extra",
+      "status": "new"
+    },
+    {
+      "word": "championship",
+      "found": true,
+      "slug": "championship",
+      "spellingPool": "extra",
+      "coverageTier": "enrichment-extra",
+      "year": "extra",
+      "yearLabel": "Extra",
+      "status": "new"
+    },
+    {
+      "word": "admission",
+      "found": true,
+      "slug": "admission",
+      "spellingPool": "extra",
+      "coverageTier": "enrichment-extra",
+      "year": "extra",
+      "yearLabel": "Extra",
+      "status": "new"
+    },
+    {
+      "word": "aggression",
+      "found": true,
+      "slug": "aggression",
+      "spellingPool": "extra",
+      "coverageTier": "enrichment-extra",
+      "year": "extra",
+      "yearLabel": "Extra",
+      "status": "new"
+    },
+    {
+      "word": "compassion",
+      "found": true,
+      "slug": "compassion",
+      "spellingPool": "extra",
+      "coverageTier": "enrichment-extra",
+      "year": "extra",
+      "yearLabel": "Extra",
+      "status": "new"
+    },
+    {
+      "word": "confession",
+      "found": true,
+      "slug": "confession",
+      "spellingPool": "extra",
+      "coverageTier": "enrichment-extra",
+      "year": "extra",
+      "yearLabel": "Extra",
+      "status": "new"
+    },
+    {
+      "word": "mission",
+      "found": true,
+      "slug": "mission",
+      "spellingPool": "extra",
+      "coverageTier": "enrichment-extra",
+      "year": "extra",
+      "yearLabel": "Extra",
+      "status": "new"
+    },
+    {
+      "word": "permission",
+      "found": true,
+      "slug": "permission",
+      "spellingPool": "extra",
+      "coverageTier": "enrichment-extra",
+      "year": "extra",
+      "yearLabel": "Extra",
+      "status": "new"
+    },
+    {
+      "word": "progression",
+      "found": true,
+      "slug": "progression",
+      "spellingPool": "extra",
+      "coverageTier": "enrichment-extra",
+      "year": "extra",
+      "yearLabel": "Extra",
+      "status": "new"
+    },
+    {
+      "word": "procession",
+      "found": true,
+      "slug": "procession",
+      "spellingPool": "extra",
+      "coverageTier": "enrichment-extra",
+      "year": "extra",
+      "yearLabel": "Extra",
+      "status": "new"
+    }
+  ]
+}

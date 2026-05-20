@@ -1,0 +1,28 @@
+{
+  "ok": true,
+  "generatedAt": "2026-05-20T18:41:46.322Z",
+  "origin": "https://ks2.eugnel.uk",
+  "version": {
+    "ok": true,
+    "buildId": "b7eab6e",
+    "buildHash": "b7eab6e",
+    "release": null,
+    "source": "git.rev-parse",
+    "generatedAt": "2026-05-20T18:36:19.972Z"
+  },
+  "browser": {
+    "viewport": {
+      "width": 1366,
+      "height": 900
+    },
+    "path": "https://ks2.eugnel.uk/?demo=1",
+    "spellingSetupExtraButtonVisible": true,
+    "spellingSetupExtraButtonSelectedBeforeWordBank": true,
+    "spellingWordBankVisible": true,
+    "wordBankHeading": "Demo Learner’s word bank",
+    "wordBankEmptyStateVisible": true,
+    "consoleErrors": [],
+    "pageErrors": [],
+    "screenshotPath": "docs/plans/james/hotfixes/21. spelling-package/validation/spelling-extra-word-bank-production-browser-smoke-2026-05-20.png"
+  }
+}
