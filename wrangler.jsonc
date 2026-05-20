@@ -1,7 +1,7 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "ks2-mastery",
-  "main": "./worker/src/index.js",
+  "main": "./dist/worker/index.js",
   "compatibility_date": "2026-04-20",
   "preview_urls": true,
   "observability": {
@@ -17,7 +17,7 @@
   // download by default. No extra env var is required.
   // (See `docs/operations/capacity.md#playwright-test-suite`.)
   "build": {
-    "command": "npm run build && npm run assert:build-public && npm run audit:client"
+    "command": "npm run build && npm run build:worker && npm run assert:build-public && npm run audit:client"
   },
   "assets": {
     "directory": "./dist/public",

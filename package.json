@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "node ./scripts/build-bundles.mjs && node ./scripts/build-public.mjs",
+    "build:worker": "node ./scripts/build-worker.mjs",
     "build:bundles": "node ./scripts/build-bundles.mjs",
     "audit:client": "node ./scripts/audit-client-bundle.mjs",
     "audit:reading-content": "node scripts/audit-reading-content-quality.mjs --out=reports/reading/reading-content-quality-audit.json",

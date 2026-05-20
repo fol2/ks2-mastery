@@ -144,6 +144,39 @@ test('repository reuses cached spelling runtime content for hot subject paths', 
   }
 });
 
+test('repository reads full spelling runtime content rows when they exceed the public inline budget', async () => {
+  const DB = createMigratedSqliteD1Database();
+  const repository = createWorkerRepository({ env: { DB }, now: () => 1_776_000_000_000 });
+  try {
+    const content = JSON.parse(JSON.stringify(SEEDED_SPELLING_CONTENT_BUNDLE));
+    const release = content.releases.at(-1);
+    release.id = 'spelling-r987';
+    release.version = 987;
+    release.publishedAt = 1_776_000_000_000;
+    content.publication.currentReleaseId = release.id;
+    content.publication.publishedVersion = release.version;
+    content.publication.updatedAt = release.publishedAt;
+    const contentJson = JSON.stringify(content);
+    assert.ok(contentJson.length > 1_000_000, 'fixture must exercise the large-row path');
+
+    DB.db.prepare(`
+      INSERT INTO adult_accounts (id, email, display_name, platform_role, created_at, updated_at)
+      VALUES ('adult-large', 'adult-large@example.test', 'Adult Large', 'admin', ?, ?)
+    `).run(release.publishedAt, release.publishedAt);
+    DB.db.prepare(`
+      INSERT INTO account_subject_content (account_id, subject_id, content_json, updated_at, updated_by_account_id)
+      VALUES ('adult-large', 'spelling', ?, ?, 'adult-large')
+    `).run(contentJson, release.publishedAt);
+
+    const runtime = await repository.readSpellingRuntimeContent('adult-large', 'spelling');
+
+    assert.equal(runtime.summary.publishedVersion, 987);
+    assert.equal(runtime.snapshot.words.length, release.snapshot.words.length);
+  } finally {
+    DB.close();
+  }
+});
+
 test('spelling command runtime prefers repository runtime content over raw content reads', async () => {
   const snapshot = resolveRuntimeSnapshot(SEEDED_SPELLING_CONTENT_BUNDLE, {
     referenceBundle: SEEDED_SPELLING_CONTENT_BUNDLE,
