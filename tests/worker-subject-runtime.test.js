@@ -9,9 +9,13 @@ import { normaliseSubjectCommandRequest } from '../worker/src/subjects/command-c
 import { resolveRuntimeSnapshot } from '../src/subjects/spelling/content/model.js';
 import {
   SEEDED_SPELLING_CONTENT_BUNDLE,
-  SEEDED_SPELLING_CONTENT_SUMMARY,
   SEEDED_SPELLING_PUBLISHED_SNAPSHOT,
 } from '../src/subjects/spelling/data/content-data.js';
+import {
+  SEEDED_SPELLING_CONTENT_SUMMARY,
+  readSeededSpellingContentBundle,
+  readSeededSpellingPublishedSnapshot,
+} from '../worker/src/generated-spelling-content-seed.js';
 import { createWorkerRepositoryServer } from './helpers/worker-server.js';
 import { createMigratedSqliteD1Database } from './helpers/sqlite-d1.js';
 
@@ -19,6 +23,14 @@ function cookieFrom(response) {
   const setCookie = response.headers.get('set-cookie') || '';
   const match = /ks2_session=([^;]+)/.exec(setCookie);
   return match ? `ks2_session=${match[1]}` : '';
+}
+
+function accountContentQueries(db) {
+  return db.takeQueryLog().filter((entry) => /account_subject_content/i.test(entry.sql || ''));
+}
+
+function selectsRawContentJson(sql = '') {
+  return /\n\s*content_json\s*(?:,|\n|\r)/i.test(sql);
 }
 
 async function postJson(server, path, body = {}, headers = {}) {
@@ -136,8 +148,10 @@ test('repository reuses cached spelling runtime content for hot subject paths', 
     assert.equal(second.snapshot, first.snapshot);
     assert.equal(second.summary, first.summary);
     assert.equal(second.content, first.content);
-    assert.equal(first.snapshot, SEEDED_SPELLING_PUBLISHED_SNAPSHOT);
+    assert.equal(first.snapshot, await readSeededSpellingPublishedSnapshot());
     assert.equal(first.summary, SEEDED_SPELLING_CONTENT_SUMMARY);
+    assert.equal(first.content, await readSeededSpellingContentBundle());
+    assert.deepEqual(first.snapshot, SEEDED_SPELLING_PUBLISHED_SNAPSHOT);
     assert.equal(second.snapshot.words.length, SEEDED_SPELLING_CONTENT_BUNDLE.releases.at(-1).snapshot.words.length);
   } finally {
     DB.close();
@@ -148,11 +162,16 @@ test('repository reads full spelling runtime content rows when they exceed the p
   const DB = createMigratedSqliteD1Database();
   const repository = createWorkerRepository({ env: { DB }, now: () => 1_776_000_000_000 });
   try {
-    const content = JSON.parse(JSON.stringify(SEEDED_SPELLING_CONTENT_BUNDLE));
+    const content = JSON.parse(JSON.stringify(await readSeededSpellingContentBundle()));
     const release = content.releases.at(-1);
-    release.id = 'spelling-r987';
+    const sentinelSourceNote = 'large-row regression sentinel '.repeat(45_000);
+    release.id = 'spelling-large-row-test';
     release.version = 987;
-    release.publishedAt = 1_776_000_000_000;
+    release.publishedAt = 1_779_293_842_422;
+    release.snapshot.words[0] = {
+      ...release.snapshot.words[0],
+      sourceNote: sentinelSourceNote,
+    };
     content.publication.currentReleaseId = release.id;
     content.publication.publishedVersion = release.version;
     content.publication.updatedAt = release.publishedAt;
@@ -160,18 +179,39 @@ test('repository reads full spelling runtime content rows when they exceed the p
     assert.ok(contentJson.length > 1_000_000, 'fixture must exercise the large-row path');
 
     DB.db.prepare(`
-      INSERT INTO adult_accounts (id, email, display_name, platform_role, created_at, updated_at)
-      VALUES ('adult-large', 'adult-large@example.test', 'Adult Large', 'admin', ?, ?)
+      INSERT INTO adult_accounts (id, email, display_name, platform_role, selected_learner_id, created_at, updated_at, repo_revision)
+      VALUES ('adult-large', 'adult-large@example.test', 'Adult Large', 'parent', NULL, ?, ?, 0)
     `).run(release.publishedAt, release.publishedAt);
     DB.db.prepare(`
       INSERT INTO account_subject_content (account_id, subject_id, content_json, updated_at, updated_by_account_id)
       VALUES ('adult-large', 'spelling', ?, ?, 'adult-large')
     `).run(contentJson, release.publishedAt);
 
+    DB.clearQueryLog();
     const runtime = await repository.readSpellingRuntimeContent('adult-large', 'spelling');
+    const firstContentQueries = accountContentQueries(DB);
+    const firstRawFetchCount = firstContentQueries.filter((entry) => selectsRawContentJson(entry.sql)).length;
 
+    assert.equal(runtime.content.publication.publishedVersion, 987);
     assert.equal(runtime.summary.publishedVersion, 987);
     assert.equal(runtime.snapshot.words.length, release.snapshot.words.length);
+    assert.match(runtime.snapshot.words[0].sourceNote, /^large-row regression sentinel /);
+    assert.ok(runtime.snapshot.words[0].sourceNote.length > sentinelSourceNote.length - 100);
+    assert.ok(firstContentQueries.length >= 2, 'cache miss reads metadata first, then the full content row');
+    assert.match(firstContentQueries[0].sql, /NULL\s+AS\s+content_json/i);
+    assert.equal(firstRawFetchCount, 1, 'cache miss fetches the raw content_json exactly once');
+
+    DB.clearQueryLog();
+    const cachedRuntime = await repository.readSpellingRuntimeContent('adult-large', 'spelling');
+    const cachedContentQueries = accountContentQueries(DB);
+    const cachedRawFetchCount = cachedContentQueries.filter((entry) => selectsRawContentJson(entry.sql)).length;
+
+    assert.equal(cachedRuntime.content, runtime.content);
+    assert.equal(cachedRuntime.summary, runtime.summary);
+    assert.equal(cachedRuntime.snapshot, runtime.snapshot);
+    assert.ok(cachedContentQueries.length >= 1, 'cache hit still checks content metadata for freshness');
+    assert.match(cachedContentQueries[0].sql, /NULL\s+AS\s+content_json/i);
+    assert.equal(cachedRawFetchCount, 0, 'cache hit must not fetch raw content_json');
   } finally {
     DB.close();
   }

@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { promisify } from 'node:util';
+import { build } from 'esbuild';
 
 import {
   CACHE_SPLIT_RULES,
@@ -491,10 +492,57 @@ test('client bundle audit fails when public output exposes shared punctuation so
 test('worker spelling runtime imports the shared domain service instead of the browser service entrypoint', async () => {
   const workerEngine = await readFile('worker/src/subjects/spelling/engine.js', 'utf8');
   const browserService = await readFile('src/subjects/spelling/service.js', 'utf8');
+  const sharedService = await readFile('shared/spelling/service.js', 'utf8');
 
   assert.doesNotMatch(workerEngine, /src\/subjects\/spelling\/service\.js/);
   assert.match(workerEngine, /shared\/spelling\/service\.js/);
   assert.match(browserService, /shared\/spelling\/service\.js/);
+  assert.doesNotMatch(sharedService, /src\/subjects\/spelling\/data\/word-data\.js/);
+});
+
+test('worker spelling runtime keeps the generated spelling datasets compressed', async () => {
+  const sources = await Promise.all([
+    'worker/src/repository.js',
+    'worker/src/row-transforms.js',
+    'worker/src/subjects/spelling/audio.js',
+    'worker/src/subjects/spelling/commands.js',
+    'shared/spelling/service.js',
+  ].map(async (filePath) => [filePath, await readFile(filePath, 'utf8')]));
+
+  for (const [filePath, source] of sources) {
+    assert.doesNotMatch(
+      source,
+      /src\/subjects\/spelling\/data\/(?:content-data|word-data)\.js/,
+      `${filePath} must use worker/src/generated-spelling-content-seed.js instead of bundling the full spelling dataset.`,
+    );
+  }
+});
+
+test('worker deploy bundle excludes the public spelling dataset modules', async () => {
+  const result = await build({
+    entryPoints: ['worker/src/index.js'],
+    bundle: true,
+    format: 'esm',
+    platform: 'browser',
+    write: false,
+    metafile: true,
+    logLevel: 'silent',
+  });
+  const inputs = Object.keys(result.metafile.inputs).map((inputPath) => inputPath.replace(/\\/g, '/'));
+  const forbiddenInputs = inputs.filter((inputPath) => (
+    inputPath === 'src/subjects/spelling/data/content-data.js'
+      || inputPath === 'src/subjects/spelling/data/word-data.js'
+  ));
+
+  assert.deepEqual(
+    forbiddenInputs,
+    [],
+    'Worker bundle must not include the public generated spelling data modules; use worker/src/generated-spelling-content-seed.js instead.',
+  );
+  assert.ok(
+    inputs.includes('worker/src/generated-spelling-content-seed.js'),
+    'Worker bundle must include the compressed Worker spelling seed.',
+  );
 });
 
 // Regression pin for the 2026-04-26 deploy failure: events.js is reachable

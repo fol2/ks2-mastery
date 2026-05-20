@@ -15,8 +15,8 @@ import {
 } from '../../src/platform/core/repositories/helpers.js';
 import {
   backfillSpellingWordExplanations,
+  normaliseSpellingContentBundle,
 } from '../../src/subjects/spelling/content/model.js';
-import { SEEDED_SPELLING_CONTENT_BUNDLE } from '../../src/subjects/spelling/data/content-data.js';
 import {
   normalisePunctuationSummary,
 } from '../../src/subjects/punctuation/service-contract.js';
@@ -445,9 +445,10 @@ export function publicEventRowToRecord(row) {
 
 // ─── Content row transforms ─────────────────────────────────────────────────
 
-export function contentRowToBundle(row) {
+export function contentRowToBundle(row, referenceBundle = null) {
+  const fallback = referenceBundle ? normaliseSpellingContentBundle(referenceBundle) : normaliseSpellingContentBundle({});
   return backfillSpellingWordExplanations(
-    safeJsonParse(row.content_json, SEEDED_SPELLING_CONTENT_BUNDLE),
-    SEEDED_SPELLING_CONTENT_BUNDLE,
+    safeJsonParse(row.content_json, fallback),
+    fallback,
   );
 }

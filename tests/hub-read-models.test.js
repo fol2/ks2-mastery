@@ -23,6 +23,12 @@ import { createPunctuationMasteryKey, PUNCTUATION_RELEASE_ID } from '../shared/p
 import { createMemoryState, updateMemoryState } from '../shared/punctuation/scheduler.js';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
+const SEEDED_SPELLING_RUNTIME_SNAPSHOT = Object.freeze({
+  words: SEEDED_SPELLING_CONTENT_BUNDLE.draft.words,
+  wordBySlug: Object.freeze(Object.fromEntries(
+    SEEDED_SPELLING_CONTENT_BUNDLE.draft.words.map((word) => [word.slug, word]),
+  )),
+});
 
 function makeLearner(id = 'learner-a', name = 'Ava') {
   return {
@@ -181,7 +187,7 @@ test('parent hub read model summarises due work, recent sessions, strengths, and
         createdAt: 3600,
       },
     ],
-    runtimeSnapshots: {},
+    runtimeSnapshots: { spelling: SEEDED_SPELLING_RUNTIME_SNAPSHOT },
     now: () => 10 * 24 * 60 * 60 * 1000,
   });
 
@@ -216,7 +222,7 @@ test('parent hub read model keeps recently missed secure words in the trouble co
     },
     practiceSessions: [],
     eventLog: [],
-    runtimeSnapshots: {},
+    runtimeSnapshots: { spelling: SEEDED_SPELLING_RUNTIME_SNAPSHOT },
     now: () => 10 * 24 * 60 * 60 * 1000,
   });
 
@@ -580,7 +586,7 @@ test('admin hub read model reports published release status, validation state, a
         gameState: {},
       },
     },
-    runtimeSnapshots: {},
+    runtimeSnapshots: { spelling: SEEDED_SPELLING_RUNTIME_SNAPSHOT },
     demoOperations: {
       sessionsCreated: 9,
       activeSessions: 2,

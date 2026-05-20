@@ -1,8 +1,8 @@
 import { sha256 } from '../../auth.js';
 import { BadRequestError } from '../../errors.js';
 import { resolveRuntimeSnapshot } from '../../../../src/subjects/spelling/content/model.js';
-import { SEEDED_SPELLING_CONTENT_BUNDLE } from '../../../../src/subjects/spelling/data/content-data.js';
 import { resolveSentenceIndex } from '../../../../shared/spelling-audio.js';
+import { readSeededSpellingContentBundle } from '../../generated-spelling-content-seed.js';
 
 function cleanText(value) {
   return String(value || '').replace(/\s+/g, ' ').trim();
@@ -55,8 +55,9 @@ async function readRuntimeSnapshot({ repository, accountId } = {}) {
     const contentResult = typeof repository.readSpellingRuntimeContent === 'function'
       ? await repository.readSpellingRuntimeContent(accountId, 'spelling')
       : await repository.readSubjectContent(accountId, 'spelling');
+    const seededBundle = await readSeededSpellingContentBundle();
     return contentResult.snapshot || resolveRuntimeSnapshot(contentResult.content, {
-      referenceBundle: SEEDED_SPELLING_CONTENT_BUNDLE,
+      referenceBundle: seededBundle,
     });
   } catch {
     return null;
@@ -128,8 +129,9 @@ async function wordBankPromptParts({ repository, accountId, learnerId, slug } = 
   const contentResult = typeof repository.readSpellingRuntimeContent === 'function'
     ? await repository.readSpellingRuntimeContent(accountId, 'spelling')
     : await repository.readSubjectContent(accountId, 'spelling');
+  const seededBundle = await readSeededSpellingContentBundle();
   const snapshot = contentResult.snapshot || resolveRuntimeSnapshot(contentResult.content, {
-    referenceBundle: SEEDED_SPELLING_CONTENT_BUNDLE,
+    referenceBundle: seededBundle,
   });
   const word = snapshot?.wordBySlug?.[safeSlug];
   if (!word) return null;

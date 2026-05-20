@@ -37,7 +37,7 @@ import {
   SPELLING_SERVICE_STATE_VERSION,
 } from '../src/subjects/spelling/service-contract.js';
 import { SPELLING_EVENT_TYPES } from '../src/subjects/spelling/events.js';
-import { getSpellingPostMasteryState } from '../src/subjects/spelling/read-model.js';
+import { getSpellingPostMasteryState as getSpellingPostMasteryStateFromRuntime } from '../src/subjects/spelling/read-model.js';
 import { isStatutoryCoreWord } from '../src/subjects/spelling/content/taxonomy.js';
 import { normaliseServerSpellingData } from '../worker/src/subjects/spelling/engine.js';
 
@@ -49,6 +49,18 @@ const TODAY_DAY = Math.floor(TODAY_MS / DAY_MS);
 const CORE_WORDS = WORDS.filter(isStatutoryCoreWord);
 const CORE_SLUGS = CORE_WORDS.map((word) => word.slug);
 const ALL_CORE_COUNT = CORE_SLUGS.length;
+const WORD_BY_SLUG = Object.freeze(Object.fromEntries(WORDS.map((word) => [word.slug, word])));
+const SEEDED_RUNTIME_SNAPSHOT = Object.freeze({
+  words: WORDS,
+  wordBySlug: WORD_BY_SLUG,
+});
+
+function getSpellingPostMasteryState(params = {}) {
+  return getSpellingPostMasteryStateFromRuntime({
+    runtimeSnapshot: SEEDED_RUNTIME_SNAPSHOT,
+    ...params,
+  });
+}
 
 // Seed a learner so every core slug is Mega (stage 4) EXCEPT the
 // `exceptSlug`, which is the slug we intend to be the "first-graduation

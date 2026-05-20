@@ -1,4 +1,3 @@
-import { WORDS as DEFAULT_WORDS, WORD_BY_SLUG as DEFAULT_WORD_BY_SLUG } from '../../src/subjects/spelling/data/word-data.js';
 import { createLegacySpellingEngine } from './legacy-engine.js';
 import {
   SPELLING_MASTERY_MILESTONES,
@@ -69,6 +68,9 @@ import {
   SPELLING_SESSION_TYPES,
 } from '../../src/subjects/spelling/service-contract.js';
 import { extractHeroSummaryContext } from '../hero/launch-context.js';
+
+const DEFAULT_WORDS = Object.freeze([]);
+const DEFAULT_WORD_BY_SLUG = Object.freeze({});
 
 // Re-export `isGuardianEligibleSlug` at the service layer so callers that
 // already import other helpers from `shared/spelling/service.js` do not

@@ -1,5 +1,5 @@
-import { SEEDED_SPELLING_CONTENT_BUNDLE } from '../../../../src/subjects/spelling/data/content-data.js';
 import { resolveRuntimeSnapshot } from '../../../../src/subjects/spelling/content/model.js';
+import { readSeededSpellingContentBundle } from '../../generated-spelling-content-seed.js';
 import { NotFoundError } from '../../errors.js';
 import { combineCommandEvents } from '../../projections/events.js';
 import {
@@ -75,10 +75,11 @@ async function readRuntimeContent(context) {
     return context.repository.readSpellingRuntimeContent(context.session.accountId, 'spelling');
   }
   const contentResult = await context.repository.readSubjectContent(context.session.accountId, 'spelling');
+  const seededBundle = await readSeededSpellingContentBundle();
   return {
     ...contentResult,
     snapshot: resolveRuntimeSnapshot(contentResult.content, {
-      referenceBundle: SEEDED_SPELLING_CONTENT_BUNDLE,
+      referenceBundle: seededBundle,
     }),
   };
 }

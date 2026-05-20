@@ -1,4 +1,3 @@
-import { WORD_BY_SLUG as DEFAULT_WORD_BY_SLUG } from './data/word-data.js';
 import {
   SPELLING_COVERAGE_TIER,
   coverageTierCounts,
@@ -17,6 +16,7 @@ import {
 } from '../../../shared/spelling/service.js';
 import { normaliseBufferedGeminiVoice, normaliseTtsProvider } from './tts-providers.js';
 
+const DEFAULT_WORD_BY_SLUG = Object.freeze({});
 const DAY_MS = 24 * 60 * 60 * 1000;
 // U2: single source of truth lives in service-contract.js. Re-using the
 // canonical export keeps this read-model aligned with the service layer
