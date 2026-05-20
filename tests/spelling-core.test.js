@@ -14,6 +14,8 @@ import { monsterSummaryFromSpellingAnalytics } from '../src/platform/game/monste
 import { getOverallSpellingStats, spellingModule } from '../src/subjects/spelling/module.js';
 import { createLegacySpellingEngine } from '../shared/spelling/legacy-engine.js';
 
+const EXTRA_SPELLING_WORDS = WORDS.filter((word) => word.spellingPool === 'extra').length;
+
 function makeSeededRandom(seed = 1) {
   let value = seed >>> 0;
   return function seededRandom() {
@@ -413,11 +415,11 @@ test('Extra word-family variants are opt-in and share base-word progress', () =>
 
   assert.ok(seenWords.has('division'));
   const stats = service.getStats('learner-family', 'extra');
-  assert.equal(stats.total, 33);
+  assert.equal(stats.total, EXTRA_SPELLING_WORDS);
   assert.equal(stats.secure, 1);
 
   const extraGroup = service.getAnalyticsSnapshot('learner-family').wordGroups.find((group) => group.key === 'extra');
-  assert.equal(extraGroup.words.length, 33);
+  assert.equal(extraGroup.words.length, EXTRA_SPELLING_WORDS);
   assert.equal(extraGroup.words.some((word) => word.slug === 'division' || word.word === 'division'), false);
   const divide = extraGroup.words.find((word) => word.slug === 'divide');
   assert.equal(divide.word, 'divide');

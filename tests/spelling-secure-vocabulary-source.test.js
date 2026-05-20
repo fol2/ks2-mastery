@@ -84,49 +84,89 @@ function auditedSourceFixture() {
       counts: {
         taxonomyTier: {
           'statutory-core': 213,
-          'enrichment-extra': 33,
-          'secure-extension': 1,
+          'enrichment-extra': 52,
+          'secure-extension': 2,
         },
       },
     },
-    words: [{
-      id: 'sv1-test-0001',
-      slug: 'cartographytest',
-      word: 'cartographytest',
-      sourceRecordId: 'sv1-test-0001',
-      taxonomyTier: 'secure-extension',
-      sourceBucket: 'geography_history_secure',
-      yearBand: 'Y5-Y6 or extension after adult review',
-      patternTags: ['base-word'],
-      advisories: [],
-      sourceReviewStatus: 'adult_approved_for_secure_extension_import',
-      sourceReviewStatusBeforeSecureImportApproval: 'candidate_source_supplied_not_adult_approved',
-      secureImportApprovalApplied: true,
-      review: {
-        status: 'approved',
-        decision: DECISION_SECURE_EXTENSION_IMPORT,
-        reviewer: 'James',
-        reviewedAt: '2026-05-17T16:01:23+01:00',
-        sourceJsonlSha256: 'fixture-hash',
-      },
-      safety: {
-        status: 'approved_for_secure_extension_import',
+    words: [
+      {
+        id: 'sv1-test-0001',
+        slug: 'cartographytest',
+        word: 'cartographytest',
+        sourceRecordId: 'sv1-test-0001',
+        taxonomyTier: 'secure-extension',
+        sourceBucket: 'geography_history_secure',
+        yearBand: 'Y5-Y6 or extension after adult review',
+        patternTags: ['base-word'],
         advisories: [],
-        securePromotionAllowed: true,
+        sourceReviewStatus: 'adult_approved_for_secure_extension_import',
+        sourceReviewStatusBeforeSecureImportApproval: 'candidate_source_supplied_not_adult_approved',
+        secureImportApprovalApplied: true,
+        review: {
+          status: 'approved',
+          decision: DECISION_SECURE_EXTENSION_IMPORT,
+          reviewer: 'James',
+          reviewedAt: '2026-05-17T16:01:23+01:00',
+          sourceJsonlSha256: 'fixture-hash',
+        },
+        safety: {
+          status: 'approved_for_secure_extension_import',
+          advisories: [],
+          securePromotionAllowed: true,
+        },
+        releaseReadiness: {
+          acceptedSpellings: ['cartographytest'],
+          rejectedVariants: [],
+          explanation: 'Cartographytest is an owner-approved secure-extension fixture for runtime import tests.',
+          exampleSentences: ['The teacher wrote the word cartographytest for secure vocabulary spelling practice.'],
+          ukSpellingDecision: 'UK spelling approved: cartographytest is the accepted fixture spelling.',
+          familyRoot: 'cartographytest',
+          morphologyTags: ['base-word'],
+          safetyNotes: 'Owner-approved fixture suitable for runtime import tests.',
+          audioStatus: 'tts_required',
+          ttsStatus: 'planned',
+        },
       },
-      releaseReadiness: {
-        acceptedSpellings: ['cartographytest'],
-        rejectedVariants: [],
-        explanation: 'Cartographytest is an owner-approved secure-extension fixture for runtime import tests.',
-        exampleSentences: ['The teacher wrote the word cartographytest for secure vocabulary spelling practice.'],
-        ukSpellingDecision: 'UK spelling approved: cartographytest is the accepted fixture spelling.',
-        familyRoot: 'cartographytest',
-        morphologyTags: ['base-word'],
-        safetyNotes: 'Owner-approved fixture suitable for runtime import tests.',
-        audioStatus: 'tts_required',
-        ttsStatus: 'planned',
+      {
+        id: 'sv1-0036',
+        slug: 'admission',
+        word: 'admission',
+        sourceRecordId: 'sv1-0036',
+        taxonomyTier: 'secure-extension',
+        sourceBucket: 'school_academic_secure',
+        yearBand: 'Y5-Y6 or extension after adult review',
+        patternTags: ['suffix-sion'],
+        advisories: [],
+        sourceReviewStatus: 'adult_approved_for_secure_extension_import',
+        sourceReviewStatusBeforeSecureImportApproval: 'candidate_source_supplied_not_adult_approved',
+        secureImportApprovalApplied: true,
+        review: {
+          status: 'approved',
+          decision: DECISION_SECURE_EXTENSION_IMPORT,
+          reviewer: 'James',
+          reviewedAt: '2026-05-17T16:01:23+01:00',
+          sourceJsonlSha256: 'fixture-hash',
+        },
+        safety: {
+          status: 'approved_for_secure_extension_import',
+          advisories: [],
+          securePromotionAllowed: true,
+        },
+        releaseReadiness: {
+          acceptedSpellings: ['admission'],
+          rejectedVariants: [],
+          explanation: 'Admission is an owner-approved secure-extension fixture that is now deliberately represented as Extra.',
+          exampleSentences: ['The ticket allowed admission to the museum.'],
+          ukSpellingDecision: 'UK spelling approved: admission is the accepted spelling.',
+          familyRoot: 'admission',
+          morphologyTags: ['suffix-sion'],
+          safetyNotes: 'Owner-approved fixture suitable for runtime import tests.',
+          audioStatus: 'tts_required',
+          ttsStatus: 'planned',
+        },
       },
-    }],
+    ],
   };
 }
 
@@ -350,13 +390,68 @@ test('secure vocabulary runtime import publishes approved secure-extension words
   const runtimeWord = imported.bundle.releases.at(-1).snapshot.wordBySlug.cartographytest;
 
   assert.equal(imported.manifest.imported.secureExtensionWordCount, 1);
-  assert.equal(imported.manifest.release.id, 'spelling-r6');
+  assert.equal(imported.manifest.imported.skippedExistingExtraWordCount, 1);
+  assert.deepEqual(imported.manifest.imported.skippedExistingExtraWordSlugs, ['admission']);
+  assert.equal(imported.manifest.release.id, 'spelling-r8');
   assert.equal(report.ok, true);
   assert.equal(report.issueCount, 0);
   assert.equal(report.summary.statutoryCoreCount, 213);
-  assert.equal(report.summary.enrichmentExtraCount, 33);
+  assert.equal(report.summary.enrichmentExtraCount, 52);
   assert.equal(report.summary.secureExtensionCount, 1);
+  assert.deepEqual(report.reclassifiedExistingExtraWords, ['admission']);
   assert.equal(runtimeWord.coverageTier, 'secure-extension');
   assert.equal(runtimeWord.spellingPool, 'core');
   assert.equal(runtimeWord.accepted.includes('cartographytest'), true);
+});
+
+test('secure vocabulary runtime import still blocks non-reclassified slug collisions', () => {
+  const fixture = auditedSourceFixture();
+  const collisionWord = {
+    ...fixture.words[0],
+    id: 'sv1-collision-0001',
+    slug: 'mollusc',
+    word: 'mollusc',
+    sourceRecordId: 'sv1-collision-0001',
+    sourceBucket: 'school_academic_secure',
+    releaseReadiness: {
+      ...fixture.words[0].releaseReadiness,
+      acceptedSpellings: ['mollusc'],
+      explanation: 'Mollusc is an owner-approved secure-extension fixture used to lock collision handling.',
+      exampleSentences: ['The class studied a mollusc in the science lesson.'],
+      ukSpellingDecision: 'UK spelling approved: mollusc is the accepted spelling.',
+      familyRoot: 'mollusc',
+      morphologyTags: ['base-word'],
+    },
+  };
+  const collisionSource = {
+    ...fixture,
+    source: {
+      ...fixture.source,
+      counts: {
+        taxonomyTier: {
+          'statutory-core': 213,
+          'enrichment-extra': 52,
+          'secure-extension': 1,
+        },
+      },
+    },
+    words: [collisionWord],
+  };
+
+  assert.throws(
+    () => buildSecureVocabularyRuntimeImport({
+      auditedSource: collisionSource,
+      contentBundle: SEEDED_SPELLING_CONTENT_BUNDLE,
+      publishedAt: 1779035400000,
+    }),
+    (error) => {
+      assert.match(error.message, /Secure vocabulary import collides with existing runtime word\(s\): mollusc/);
+      assert.deepEqual(error.issues, [{
+        code: 'secure_vocabulary_runtime_slug_collision',
+        path: 'content.draft.words',
+        word: 'mollusc',
+      }]);
+      return true;
+    }
+  );
 });

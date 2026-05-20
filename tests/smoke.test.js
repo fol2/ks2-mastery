@@ -7,6 +7,7 @@ import { exportPlatformSnapshot, importPlatformSnapshot } from '../src/platform/
 import { WORDS } from '../src/subjects/spelling/data/word-data.js';
 
 const TOTAL_SPELLING_WORDS = WORDS.length;
+const EXTRA_SPELLING_WORDS = WORDS.filter((word) => word.spellingPool === 'extra').length;
 
 function typedFormData(value) {
   const formData = new FormData();
@@ -193,7 +194,7 @@ test('spelling word bank opens from setup and exposes searchable progress with e
   html = harness.render();
   assert.match(html, /value="extra"[^>]*>\s*<span>Extra<\/span>/);
   assert.match(html, /data-pref="extraWordFamilies"[\s\S]*Word-family variants/);
-  assert.match(html, /ss-stat-label">Total spellings<\/div>\s*<div class="ss-stat-value"[^>]*>33<\/div>/);
+  assert.match(html, new RegExp(`ss-stat-label">Total spellings</div>\\s*<div class="ss-stat-value"[^>]*>${EXTRA_SPELLING_WORDS}</div>`));
   assert.match(html, /value="trouble"[^>]*disabled[^>]*>[\s\S]*Trouble Drill/);
 
   /* The Codex Journal redesign folds the old Analytics tab into a standalone
@@ -249,12 +250,12 @@ test('spelling word bank opens from setup and exposes searchable progress with e
     Unseen: '104',
   });
   assert.deepEqual(extractWordBankAggregateStats(html, 'Expansion spelling pool'), {
-    Total: '33',
+    Total: String(EXTRA_SPELLING_WORDS),
     Secure: '0',
     'Due now': '0',
     Trouble: '0',
     Learning: '0',
-    Unseen: '33',
+    Unseen: String(EXTRA_SPELLING_WORDS),
   });
   // Word-bank entries render as legacy-style colour pills. The tooltip carries
   // the progress details, while clicking the pill opens the explainer modal.
@@ -349,8 +350,8 @@ test('spelling word bank opens from setup and exposes searchable progress with e
   html = harness.render();
   assert.match(html, />mollusc</);
   assert.doesNotMatch(html, />accident</);
-  assert.match(html, new RegExp(`Extra selected . 33 of ${TOTAL_SPELLING_WORDS} words, 0 secure, 0 due today, 0 weak spots`));
-  assert.match(html, /Showing 33 of 33 Extra spellings/);
+  assert.match(html, new RegExp(`Extra selected . ${EXTRA_SPELLING_WORDS} of ${TOTAL_SPELLING_WORDS} words, 0 secure, 0 due today, 0 weak spots`));
+  assert.match(html, new RegExp(`Showing ${EXTRA_SPELLING_WORDS} of ${EXTRA_SPELLING_WORDS} Extra spellings`));
 
   harness.dispatch('spelling-analytics-year-filter', { value: 'all' });
 

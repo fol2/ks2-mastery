@@ -203,8 +203,8 @@ test('seeded spelling content validates and round-trips through the portable exp
   assert.equal(validation.bundle.modelVersion, SPELLING_CONTENT_MODEL_VERSION);
   assert.equal(SPELLING_CONTENT_MODEL_VERSION, 6, 'Spelling content model keeps the even-version convention.');
   assert.equal(validation.errors.length, 0);
-  assert.equal(validation.bundle.releases.length, 6);
-  assert.equal(validation.bundle.publication.publishedVersion, 6);
+  assert.equal(validation.bundle.releases.length, 7);
+  assert.equal(validation.bundle.publication.publishedVersion, 7);
   assert.ok(validation.bundle.draft.wordLists
     .filter((list) => list.id.startsWith('statutory-'))
     .every((list) => list.spellingPool === 'core'));
@@ -223,8 +223,8 @@ test('seeded spelling content validates and round-trips through the portable exp
   assert.ok(validation.bundle.releases.at(-1).snapshot.words.every((word) => word.explanation));
   const summary = buildSpellingContentSummary(validation.bundle);
   assert.equal(summary.statutoryCoreCount, 213);
-  assert.equal(summary.secureExtensionCount, 1217);
-  assert.equal(summary.enrichmentExtraCount, 33);
+  assert.equal(summary.secureExtensionCount, 1215);
+  assert.equal(summary.enrichmentExtraCount, 52);
 
   // P2 U10: every core word carries a patternIds field AND either at least
   // one registered patternId OR the exception-word / statutory-exception tag.
@@ -244,12 +244,33 @@ test('seeded spelling content validates and round-trips through the portable exp
   const exported = content.exportPortable();
   const roundTripped = extractPortableSpellingContent(exported);
   assert.equal(roundTripped.draft.words.length, validation.bundle.draft.words.length);
-  assert.equal(roundTripped.releases.at(-1).version, 6);
+  assert.equal(roundTripped.releases.at(-1).version, 7);
 });
 
 test('seeded spelling content includes the Extra expansion and current word-family variants', () => {
   const validation = validateSpellingContentBundle(SEEDED_SPELLING_CONTENT_BUNDLE);
   assert.equal(validation.ok, true);
+  const jamesRequestedExtraWords = [
+    'roughest',
+    'leadership',
+    'quietest',
+    'sponsorship',
+    'partnership',
+    'lightest',
+    'brightest',
+    'membership',
+    'ownership',
+    'hardship',
+    'championship',
+    'admission',
+    'aggression',
+    'compassion',
+    'confession',
+    'mission',
+    'permission',
+    'progression',
+    'procession',
+  ];
 
   const extraList = validation.bundle.draft.wordLists.find((list) => list.id === 'extra-science-word-building');
   assert.ok(extraList);
@@ -258,14 +279,37 @@ test('seeded spelling content includes the Extra expansion and current word-fami
   assert.deepEqual(extraList.yearGroups, []);
   assert.equal(extraList.wordSlugs.length, 33);
 
+  const suffixList = validation.bundle.draft.wordLists.find((list) => list.id === 'extra-suffix-word-building-2026-05-20');
+  assert.ok(suffixList);
+  assert.equal(suffixList.spellingPool, 'extra');
+  assert.equal(suffixList.coverageTier, SPELLING_COVERAGE_TIER.ENRICHMENT_EXTRA);
+  assert.deepEqual(suffixList.yearGroups, []);
+  assert.deepEqual(suffixList.wordSlugs, jamesRequestedExtraWords);
+
   const extraWords = validation.bundle.draft.words.filter((word) => word.spellingPool === 'extra');
-  assert.equal(extraWords.length, 33);
+  assert.equal(extraWords.length, 52);
   assert.ok(extraWords.every(isEnrichmentExtraWord));
+  assert.ok(jamesRequestedExtraWords.every((slug) => {
+    const draftWord = validation.bundle.draft.words.find((word) => word.slug === slug);
+    return draftWord?.spellingPool === 'extra'
+      && draftWord?.coverageTier === SPELLING_COVERAGE_TIER.ENRICHMENT_EXTRA
+      && draftWord?.yearGroups.length === 0
+      && draftWord?.accepted.includes(slug)
+      && draftWord?.explanation
+      && draftWord?.sentenceEntryIds.length > 0;
+  }));
 
   const baselineRelease = validation.bundle.releases[0];
   const currentRelease = validation.bundle.releases.at(-1);
   assert.equal(validation.bundle.publication.currentReleaseId, currentRelease.id);
   assert.equal(baselineRelease.snapshot.wordBySlug.mollusc, undefined);
+  assert.ok(jamesRequestedExtraWords.every((slug) => {
+    const runtimeWord = currentRelease.snapshot.wordBySlug[slug];
+    return runtimeWord?.spellingPool === 'extra'
+      && runtimeWord?.coverageTier === SPELLING_COVERAGE_TIER.ENRICHMENT_EXTRA
+      && runtimeWord?.year === 'extra'
+      && runtimeWord?.yearLabel === 'Extra';
+  }));
 
   const runtimeWord = currentRelease.snapshot.wordBySlug.mollusc;
   assert.equal(runtimeWord.word, 'mollusc');
@@ -300,7 +344,7 @@ test('seeded spelling content includes the Extra expansion and current word-fami
   assert.deepEqual(school.familyWords, ['school', 'schooling', 'schoolwork']);
   const currentExtraWords = currentRelease.snapshot.words.filter((word) => word.spellingPool === 'extra');
   const variantCount = currentExtraWords.reduce((total, word) => total + (word.variants?.length || 0), 0);
-  assert.equal(currentRelease.snapshot.words.filter((word) => word.spellingPool === 'extra').length, 33);
+  assert.equal(currentRelease.snapshot.words.filter((word) => word.spellingPool === 'extra').length, 52);
   assert.equal(variantCount, 50);
   assert.ok(currentExtraWords.every((word) => (word.variants || []).every((variant) => variant.explanation && variant.sentence)));
 });
@@ -364,8 +408,8 @@ test('secure-extension content stays separate from statutory-core and publishes 
 
   const summary = buildSpellingContentSummary(published);
   assert.equal(summary.statutoryCoreCount, 213);
-  assert.equal(summary.secureExtensionCount, 1218);
-  assert.equal(summary.enrichmentExtraCount, 33);
+  assert.equal(summary.secureExtensionCount, 1216);
+  assert.equal(summary.enrichmentExtraCount, 52);
 });
 
 test('published word-family variants do not cross coverage tiers', () => {
@@ -503,7 +547,7 @@ test('content service supplements legacy published runtime with seeded release a
   const snapshot = content.getRuntimeSnapshot();
 
   assert.equal(content.readBundle().publication.publishedVersion, 1);
-  assert.equal(snapshot.words.filter((word) => word.spellingPool === 'extra').length, 33);
+  assert.equal(snapshot.words.filter((word) => word.spellingPool === 'extra').length, 52);
   assert.equal(snapshot.wordBySlug.mollusc.spellingPool, 'extra');
 
   stored.releases[0].version = SEEDED_SPELLING_CONTENT_BUNDLE.publication.publishedVersion + 1;
@@ -513,7 +557,7 @@ test('content service supplements legacy published runtime with seeded release a
   const higherLocalVersionSnapshot = content.getRuntimeSnapshot();
 
   assert.equal(content.readBundle().publication.publishedVersion, SEEDED_SPELLING_CONTENT_BUNDLE.publication.publishedVersion + 1);
-  assert.equal(higherLocalVersionSnapshot.words.filter((word) => word.spellingPool === 'extra').length, 33);
+  assert.equal(higherLocalVersionSnapshot.words.filter((word) => word.spellingPool === 'extra').length, 52);
 
   const service = createSpellingService({
     tts: makeTts(),

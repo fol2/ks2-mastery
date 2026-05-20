@@ -26,6 +26,8 @@ export const SECURE_VOCABULARY_GENERATED_MODULE_MISMATCH =
   'secure_vocabulary_generated_module_mismatch';
 
 const SECURE_EXTENSION_READY_STATUS = 'adult_approved_for_secure_extension_import';
+const RECLASSIFIED_FROM_SECURE_EXTENSION_TAG = 'reclassified-from-secure-extension';
+const SECURE_VOCABULARY_SOURCE_ARTIFACT_ID = 'ks2-spelling-secure-vocabulary-source-v1';
 
 function isPlainObject(value) {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
@@ -174,6 +176,107 @@ function compareCount(issues, path, actual, expected) {
   });
 }
 
+function compareAtLeast(issues, path, actual, expectedMinimum) {
+  if (actual >= expectedMinimum) return;
+  reportIssue(issues, {
+    code: SECURE_VOCABULARY_RUNTIME_COUNT_MISMATCH,
+    path,
+    actual,
+    expected: `>= ${expectedMinimum}`,
+  });
+}
+
+function isReclassifiedExtraRuntimeWord(runtimeWord, sourceWord) {
+  if (!runtimeWord) return false;
+  const expected = expectedWordShape(sourceWord);
+  const sourceText = `${normaliseString(runtimeWord?.provenance?.source)} ${normaliseString(runtimeWord?.provenance?.note)} ${normaliseString(runtimeWord?.sourceNote)}`;
+  return runtimeWord.spellingPool === 'extra'
+    && runtimeWord.coverageTier === SPELLING_COVERAGE_TIER.ENRICHMENT_EXTRA
+    && normaliseStringArray(runtimeWord.tags).includes(RECLASSIFIED_FROM_SECURE_EXTENSION_TAG)
+    && sourceText.includes(SECURE_VOCABULARY_SOURCE_ARTIFACT_ID)
+    && (!expected.sourceRecordId || sourceText.includes(expected.sourceRecordId));
+}
+
+function assertReclassifiedExtraRuntimeWord({
+  issues,
+  sourceWord,
+  runtimeWord,
+  path,
+  sentenceById = null,
+}) {
+  const expected = expectedWordShape(sourceWord);
+  if (!runtimeWord) {
+    reportIssue(issues, {
+      code: SECURE_VOCABULARY_RUNTIME_WORD_MISSING,
+      path,
+      wordIdentity: expected.slug,
+    });
+    return;
+  }
+
+  const fieldChecks = [
+    ['word', runtimeWord.word, expected.word],
+    ['spellingPool', runtimeWord.spellingPool, 'extra'],
+    ['coverageTier', runtimeWord.coverageTier, SPELLING_COVERAGE_TIER.ENRICHMENT_EXTRA],
+  ];
+  for (const [field, actual, expectedValue] of fieldChecks) {
+    if (actual === expectedValue) continue;
+    reportIssue(issues, {
+      code: SECURE_VOCABULARY_RUNTIME_WORD_FIELD_MISMATCH,
+      path: `${path}.${field}`,
+      wordIdentity: expected.slug,
+      actual,
+      expected: expectedValue,
+    });
+  }
+
+  if (!normaliseStringArray(runtimeWord.accepted).map((entry) => entry.toLowerCase()).includes(expected.word)) {
+    reportIssue(issues, {
+      code: SECURE_VOCABULARY_RUNTIME_WORD_FIELD_MISMATCH,
+      path: `${path}.accepted`,
+      wordIdentity: expected.slug,
+      actual: runtimeWord.accepted || [],
+      expected: expected.word,
+    });
+  }
+  if (!normaliseString(runtimeWord.explanation)) {
+    reportIssue(issues, {
+      code: SECURE_VOCABULARY_RUNTIME_WORD_FIELD_MISMATCH,
+      path: `${path}.explanation`,
+      wordIdentity: expected.slug,
+      actual: runtimeWord.explanation || '',
+      expected: 'non-empty Extra explanation',
+    });
+  }
+
+  const sentenceTexts = normaliseStringArray(runtimeWord.sentences);
+  if (sentenceTexts.length === 0 && sentenceById) {
+    for (const sentenceId of normaliseStringArray(runtimeWord.sentenceEntryIds)) {
+      const sentence = sentenceById.get(sentenceId);
+      if (sentence?.text) sentenceTexts.push(sentence.text);
+    }
+  }
+  if (sentenceTexts.length === 0) {
+    reportIssue(issues, {
+      code: SECURE_VOCABULARY_RUNTIME_WORD_FIELD_MISMATCH,
+      path: `${path}.sentences`,
+      wordIdentity: expected.slug,
+      actual: sentenceTexts,
+      expected: 'at least one Extra sentence',
+    });
+  }
+
+  if (!isReclassifiedExtraRuntimeWord(runtimeWord, sourceWord)) {
+    reportIssue(issues, {
+      code: SECURE_VOCABULARY_RUNTIME_WORD_FIELD_MISMATCH,
+      path: `${path}.provenance`,
+      wordIdentity: expected.slug,
+      actual: runtimeWord?.provenance || null,
+      expected: `Extra reclassification provenance with record ${expected.sourceRecordId}`,
+    });
+  }
+}
+
 export function verifySecureVocabularyRuntime({
   auditedSource,
   contentBundle,
@@ -193,6 +296,17 @@ export function verifySecureVocabularyRuntime({
   const runtimeBySlug = release?.snapshot?.wordBySlug || {};
   const draftBySlug = Object.fromEntries(bundle.draft.words.map((word) => [word.slug, word]));
   const draftSentenceById = new Map(bundle.draft.sentences.map((sentence) => [sentence.id, sentence]));
+  const reclassifiedApprovedSecureWords = approvedSecureWords.filter((sourceWord) => {
+    const slug = normaliseSlug(sourceWord.slug || sourceWord.word);
+    return isReclassifiedExtraRuntimeWord(draftBySlug[slug], sourceWord)
+      && isReclassifiedExtraRuntimeWord(runtimeBySlug[slug], sourceWord);
+  });
+  const reclassifiedSlugs = new Set(reclassifiedApprovedSecureWords.map((word) => normaliseSlug(word.slug || word.word)));
+  const importedApprovedSecureWords = approvedSecureWords.filter((sourceWord) => {
+    const slug = normaliseSlug(sourceWord.slug || sourceWord.word);
+    return !reclassifiedSlugs.has(slug);
+  });
+  const expectedImportedSecureCount = Math.max(0, expectedSecureCount - reclassifiedApprovedSecureWords.length);
 
   if (!validation.ok) {
     reportIssue(issues, {
@@ -202,12 +316,12 @@ export function verifySecureVocabularyRuntime({
     });
   }
 
-  compareCount(issues, 'summary.secureExtensionCount', summary.secureExtensionCount, expectedSecureCount);
+  compareCount(issues, 'summary.secureExtensionCount', summary.secureExtensionCount, expectedImportedSecureCount);
   compareCount(issues, 'summary.statutoryCoreCount', summary.statutoryCoreCount, expectedStatutoryCoreCount);
-  compareCount(issues, 'summary.enrichmentExtraCount', summary.enrichmentExtraCount, expectedEnrichmentExtraCount);
+  compareAtLeast(issues, 'summary.enrichmentExtraCount', summary.enrichmentExtraCount, expectedEnrichmentExtraCount);
   compareCount(issues, 'approvedSecureWords.length', approvedSecureWords.length, expectedSecureCount);
 
-  approvedSecureWords.forEach((sourceWord, index) => {
+  importedApprovedSecureWords.forEach((sourceWord, index) => {
     const slug = normaliseSlug(sourceWord.slug || sourceWord.word);
     assertRuntimeWordShape({
       issues,
@@ -224,21 +338,47 @@ export function verifySecureVocabularyRuntime({
     });
   });
 
+  reclassifiedApprovedSecureWords.forEach((sourceWord, index) => {
+    const slug = normaliseSlug(sourceWord.slug || sourceWord.word);
+    assertReclassifiedExtraRuntimeWord({
+      issues,
+      sourceWord,
+      runtimeWord: draftBySlug[slug],
+      path: `content.draft.words[${slug || index}]`,
+      sentenceById: draftSentenceById,
+    });
+    assertReclassifiedExtraRuntimeWord({
+      issues,
+      sourceWord,
+      runtimeWord: runtimeBySlug[slug],
+      path: `content.release.snapshot.wordBySlug.${slug || index}`,
+    });
+  });
+
   if (generatedModule) {
     const generatedSummary = generatedModule.SEEDED_SPELLING_CONTENT_SUMMARY || null;
     const generatedSnapshot = generatedModule.SEEDED_SPELLING_PUBLISHED_SNAPSHOT || null;
     const generatedBySlug = generatedSnapshot?.wordBySlug || {};
-    if (!generatedSummary || generatedSummary.secureExtensionCount !== expectedSecureCount) {
+    if (!generatedSummary || generatedSummary.secureExtensionCount !== expectedImportedSecureCount) {
       reportIssue(issues, {
         code: SECURE_VOCABULARY_GENERATED_MODULE_MISMATCH,
         path: 'generatedModule.SEEDED_SPELLING_CONTENT_SUMMARY.secureExtensionCount',
         actual: generatedSummary?.secureExtensionCount ?? null,
-        expected: expectedSecureCount,
+        expected: expectedImportedSecureCount,
       });
     }
-    for (const sourceWord of approvedSecureWords) {
+    for (const sourceWord of importedApprovedSecureWords) {
       const slug = normaliseSlug(sourceWord.slug || sourceWord.word);
       if (generatedBySlug[slug]) continue;
+      reportIssue(issues, {
+        code: SECURE_VOCABULARY_GENERATED_MODULE_MISMATCH,
+        path: `generatedModule.SEEDED_SPELLING_PUBLISHED_SNAPSHOT.wordBySlug.${slug}`,
+        wordIdentity: slug,
+      });
+    }
+    for (const sourceWord of reclassifiedApprovedSecureWords) {
+      const slug = normaliseSlug(sourceWord.slug || sourceWord.word);
+      if (isReclassifiedExtraRuntimeWord(generatedBySlug[slug], sourceWord)) continue;
       reportIssue(issues, {
         code: SECURE_VOCABULARY_GENERATED_MODULE_MISMATCH,
         path: `generatedModule.SEEDED_SPELLING_PUBLISHED_SNAPSHOT.wordBySlug.${slug}`,
@@ -251,8 +391,9 @@ export function verifySecureVocabularyRuntime({
     ok: issues.length === 0,
     issueCount: issues.length,
     issues,
-    checkedSecureExtensionWords: approvedSecureWords.length,
-    expectedSecureExtensionWords: expectedSecureCount,
+    checkedSecureExtensionWords: importedApprovedSecureWords.length,
+    expectedSecureExtensionWords: expectedImportedSecureCount,
+    reclassifiedExistingExtraWords: reclassifiedApprovedSecureWords.map((word) => normaliseSlug(word.slug || word.word)),
     summary,
     release: release
       ? {

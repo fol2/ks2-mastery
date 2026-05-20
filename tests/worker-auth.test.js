@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 
 import { createWorkerRepositoryServer } from './helpers/worker-server.js';
 
+const EXTRA_SPELLING_WORD_COUNT = 52;
+
 function productionServer(env = {}) {
   return createWorkerRepositoryServer({
     env: {
@@ -599,7 +601,7 @@ test('production public bootstrap keeps Codex mastery visible from redacted spel
   assert.equal(publicSpelling.ui.stats.core.secure, 3);
   assert.equal(publicSpelling.ui.stats.y34.secure, 1);
   assert.equal(publicSpelling.ui.stats.y56.secure, 2);
-  assert.equal(publicSpelling.ui.stats.extra.total, 33);
+  assert.equal(publicSpelling.ui.stats.extra.total, EXTRA_SPELLING_WORD_COUNT);
   assert.equal(publicSpelling.ui.stats.extra.secure, 1);
   assert.deepEqual(publicSpelling.ui.analytics.wordGroups, []);
   assert.equal(publicSpelling.ui.analytics.pools.core.secure, 3);

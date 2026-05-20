@@ -30,6 +30,7 @@ export const SECURE_VOCABULARY_DEFAULT_PUBLISHED_AT = '2026-05-17T16:30:00.000Z'
 
 const SECURE_EXTENSION_READY_STATUS = 'adult_approved_for_secure_extension_import';
 const SECURE_IMPORT_TAG = 'secure-extension';
+const RECLASSIFIED_FROM_SECURE_EXTENSION_TAG = 'reclassified-from-secure-extension';
 
 function isPlainObject(value) {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
@@ -81,12 +82,13 @@ function countBy(values, selector) {
   return counts;
 }
 
-function runtimeImportSourceSummary(auditedSource, secureWords) {
+function runtimeImportSourceSummary(auditedSource, secureWords, skippedExistingExtraWords = []) {
   const source = isPlainObject(auditedSource?.source) ? auditedSource.source : {};
   const sourceCountsSummary = isPlainObject(source.counts) ? source.counts : {};
   const words = Array.isArray(auditedSource?.words) ? auditedSource.words : [];
   const secureTierWords = words.filter((word) => word?.taxonomyTier === SPELLING_COVERAGE_TIER.SECURE_EXTENSION);
   const unapprovedSecureCount = secureTierWords.filter((word) => !sourceWordIsApprovedSecureExtension(word)).length;
+  const skippedExistingExtraSlugs = skippedExistingExtraWords.map((word) => normaliseSlug(word.slug || word.word));
   return {
     ...source,
     counts: {
@@ -94,6 +96,9 @@ function runtimeImportSourceSummary(auditedSource, secureWords) {
       reviewStatus: countBy(words, (word) => word?.sourceReviewStatus),
       secureImportApproval: {
         approvedSecureExtensionWords: secureWords.length,
+        importableSecureExtensionWords: secureWords.length - skippedExistingExtraWords.length,
+        skippedExistingExtraWords: skippedExistingExtraWords.length,
+        skippedExistingExtraWordSlugs: skippedExistingExtraSlugs,
         unapprovedSecureExtensionWords: unapprovedSecureCount,
         approvalAppliedWords: secureTierWords.filter((word) => word?.secureImportApprovalApplied === true).length,
         approvalDecision: source.approvalDecision || DECISION_SECURE_EXTENSION_IMPORT,
@@ -311,6 +316,19 @@ function isSecureVocabularyImportedRelease(release) {
     || normaliseString(release.notes).includes(SOURCE_ARTIFACT_ID);
 }
 
+function isExistingSecureVocabularyReclassifiedExtra(entry, sourceWord) {
+  if (!entry || typeof entry !== 'object') return false;
+  const sourceRecordId = normaliseString(sourceWord?.sourceRecordId);
+  const provenanceNote = normaliseString(entry?.provenance?.note);
+  const sourceNote = normaliseString(entry?.sourceNote);
+  const sourceText = `${normaliseString(entry?.provenance?.source)} ${provenanceNote} ${sourceNote}`;
+  return entry.spellingPool === 'extra'
+    && entry.coverageTier === SPELLING_COVERAGE_TIER.ENRICHMENT_EXTRA
+    && normaliseStringArray(entry.tags).includes(RECLASSIFIED_FROM_SECURE_EXTENSION_TAG)
+    && sourceText.includes(SOURCE_ARTIFACT_ID)
+    && (!sourceRecordId || sourceText.includes(sourceRecordId));
+}
+
 function stripPriorSecureVocabularyImport(rawBundle) {
   const bundle = normaliseSpellingContentBundle(rawBundle);
   const importedSlugs = new Set(
@@ -444,10 +462,21 @@ export function buildSecureVocabularyRuntimeImport({
 } = {}) {
   const secureWords = assertAuditedSourceReady(auditedSource);
   const stripped = stripPriorSecureVocabularyImport(contentBundle);
-  const existingSlugs = new Set(stripped.draft.words.map((word) => word.slug));
-  const collisionSlugs = secureWords
-    .map((word) => normaliseSlug(word.slug || word.word))
-    .filter((slug) => existingSlugs.has(slug));
+  const existingWordsBySlug = new Map(stripped.draft.words.map((word) => [word.slug, word]));
+  const importableSecureWords = [];
+  const skippedExistingExtraWords = [];
+  const collisionSlugs = [];
+  for (const word of secureWords) {
+    const slug = normaliseSlug(word.slug || word.word);
+    const existingWord = existingWordsBySlug.get(slug);
+    if (!existingWord) {
+      importableSecureWords.push(word);
+    } else if (isExistingSecureVocabularyReclassifiedExtra(existingWord, word)) {
+      skippedExistingExtraWords.push(word);
+    } else {
+      collisionSlugs.push(slug);
+    }
+  }
   if (collisionSlugs.length > 0) {
     const error = new Error(`Secure vocabulary import collides with existing runtime word(s): ${collisionSlugs.slice(0, 10).join(', ')}`);
     error.issues = collisionSlugs.map((slug) => ({
@@ -458,7 +487,7 @@ export function buildSecureVocabularyRuntimeImport({
     throw error;
   }
 
-  const entries = buildSecureVocabularyEntries({ secureWords, existingBundle: stripped, publishedAt });
+  const entries = buildSecureVocabularyEntries({ secureWords: importableSecureWords, existingBundle: stripped, publishedAt });
   const draft = {
     ...stripped.draft,
     version: Number(stripped.draft.version || 0) + 1,
@@ -487,7 +516,8 @@ export function buildSecureVocabularyRuntimeImport({
 
   const summary = buildSpellingContentSummary(published);
   const release = published.releases.at(-1);
-  const sourceSummary = runtimeImportSourceSummary(auditedSource, secureWords);
+  const sourceSummary = runtimeImportSourceSummary(auditedSource, secureWords, skippedExistingExtraWords);
+  const skippedExistingExtraWordSlugs = skippedExistingExtraWords.map((word) => normaliseSlug(word.slug || word.word));
   const manifest = {
     kind: 'ks2-spelling-secure-vocabulary-runtime-import-manifest',
     version: 1,
@@ -501,13 +531,15 @@ export function buildSecureVocabularyRuntimeImport({
       provenance: release.provenance,
     },
     imported: {
-      secureExtensionWordCount: secureWords.length,
+      secureExtensionWordCount: importableSecureWords.length,
       secureExtensionSentenceCount: entries.sentences.length,
       secureExtensionWordListCount: entries.wordLists.length,
-      wordSlugs: secureWords.map((word) => normaliseSlug(word.slug || word.word)),
+      wordSlugs: importableSecureWords.map((word) => normaliseSlug(word.slug || word.word)),
+      skippedExistingExtraWordCount: skippedExistingExtraWords.length,
+      skippedExistingExtraWordSlugs,
     },
     summary,
-    mappings: secureWords.map((word) => ({
+    mappings: importableSecureWords.map((word) => ({
       sourceRecordId: word.sourceRecordId,
       slug: normaliseSlug(word.slug || word.word),
       word: normaliseString(word.word).toLowerCase(),
@@ -518,6 +550,12 @@ export function buildSecureVocabularyRuntimeImport({
       reviewer: word.review?.reviewer || '',
       reviewedAt: word.review?.reviewedAt || '',
       sourceJsonlSha256: word.review?.sourceJsonlSha256 || '',
+    })),
+    skippedExistingExtraMappings: skippedExistingExtraWords.map((word) => ({
+      sourceRecordId: word.sourceRecordId,
+      slug: normaliseSlug(word.slug || word.word),
+      word: normaliseString(word.word).toLowerCase(),
+      reason: RECLASSIFIED_FROM_SECURE_EXTENSION_TAG,
     })),
   };
 
