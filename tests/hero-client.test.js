@@ -21,6 +21,26 @@ function mockFetch(status, body = {}, { ok = status >= 200 && status < 300 } = {
   return fakeFetch;
 }
 
+/** Build a mock fetch that returns or throws the given responses in sequence. */
+function mockFetchSequence(responses = []) {
+  const calls = [];
+  async function fakeFetch(url, init) {
+    calls.push({ url, init });
+    const next = responses[Math.min(calls.length - 1, responses.length - 1)] || {};
+    if (next.error) throw next.error;
+    const status = next.status ?? 200;
+    const body = next.body ?? {};
+    const ok = next.ok ?? (status >= 200 && status < 300);
+    return {
+      ok,
+      status,
+      json: async () => body,
+    };
+  }
+  fakeFetch.calls = calls;
+  return fakeFetch;
+}
+
 /** Build a mock fetch that throws (simulates network failure). */
 function networkErrorFetch(message = 'Network failure') {
   const calls = [];
@@ -36,6 +56,8 @@ function defaultOpts(overrides = {}) {
   return {
     fetch: mockFetch(200, { ok: true }),
     getLearnerRevision: () => 42,
+    readModelRetryDelayMs: 0,
+    delay: async () => {},
     ...overrides,
   };
 }
@@ -68,6 +90,22 @@ describe('createHeroModeClient — readModel', () => {
     assert.deepStrictEqual(result, expected);
   });
 
+  it('retries a retryable read-model 5xx before returning success', async () => {
+    const expected = { ok: true, hero: { version: 3 } };
+    const fakeFetch = mockFetchSequence([
+      { status: 503, body: { ok: false, code: 'temporary_unavailable' } },
+      { status: 200, body: expected },
+    ]);
+    const client = createHeroModeClient({ ...defaultOpts(), fetch: fakeFetch });
+
+    const result = await client.readModel({ learnerId: 'abc' });
+
+    assert.deepStrictEqual(result, expected);
+    assert.equal(fakeFetch.calls.length, 2);
+    assert.equal(fakeFetch.calls[0].url, '/api/hero/read-model?learnerId=abc');
+    assert.equal(fakeFetch.calls[1].url, '/api/hero/read-model?learnerId=abc');
+  });
+
   it('throws HeroModeClientError with typed code on non-2xx', async () => {
     const fakeFetch = mockFetch(404, { ok: false, code: 'hero_shadow_disabled', message: 'Shadow disabled' });
     const client = createHeroModeClient({ ...defaultOpts(), fetch: fakeFetch });
@@ -77,6 +115,18 @@ describe('createHeroModeClient — readModel', () => {
     assert.ok(err instanceof HeroModeClientError);
     assert.equal(err.code, 'hero_shadow_disabled');
     assert.equal(err.status, 404);
+  });
+
+  it('does not retry read-model errors marked non-retryable by the server', async () => {
+    const fakeFetch = mockFetch(503, { ok: false, code: 'projection_unavailable', retryable: false });
+    const client = createHeroModeClient({ ...defaultOpts(), fetch: fakeFetch });
+
+    const err = await client.readModel({ learnerId: 'abc' }).catch(e => e);
+
+    assert.ok(err instanceof HeroModeClientError);
+    assert.equal(err.code, 'projection_unavailable');
+    assert.equal(err.retryable, false);
+    assert.equal(fakeFetch.calls.length, 1);
   });
 
   it('throws HeroModeClientError with network_error on network failure', async () => {
@@ -89,6 +139,7 @@ describe('createHeroModeClient — readModel', () => {
     assert.equal(err.code, 'network_error');
     assert.equal(err.status, 0);
     assert.equal(err.retryable, true);
+    assert.equal(fakeFetch.calls.length, 3);
   });
 
   it('encodes learnerId in the query string', async () => {
@@ -418,7 +469,7 @@ describe('HeroModeClientError', () => {
   });
 
   it('retryable defaults to true for 5xx', () => {
-    const err = new HeroModeClientError({ code: 'internal', status: 500, retryable: true });
+    const err = new HeroModeClientError({ code: 'internal', status: 500 });
     assert.equal(err.retryable, true);
   });
 

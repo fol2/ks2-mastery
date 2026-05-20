@@ -20,11 +20,12 @@ export class HeroModeClientError extends Error {
    * @param {object}  [opts.payload]   — full server response body
    * @param {string}  [opts.message]   — human-readable message
    */
-  constructor({ code = '', status = 0, retryable = false, payload = null, message = '' } = {}) {
-    super(message || payload?.message || `Hero Mode request failed (${status}).`);
+  constructor({ code = '', status = undefined, retryable = undefined, payload = null, message = '' } = {}) {
+    const numericStatus = Number(status) || 0;
+    super(message || payload?.message || `Hero Mode request failed (${numericStatus}).`);
     this.name = 'HeroModeClientError';
     this.code = code || payload?.code || '';
-    this.status = Number(status) || 0;
+    this.status = numericStatus;
     this.payload = payload;
 
     // Honour explicit `retryable: false` from server payload (e.g.
@@ -33,14 +34,12 @@ export class HeroModeClientError extends Error {
     const explicitRetryable = payload && typeof payload === 'object'
       ? payload.retryable
       : undefined;
-    if (retryable === true) {
+    if (retryable === true || explicitRetryable === true) {
       this.retryable = true;
-    } else if (explicitRetryable === false) {
-      this.retryable = false;
-    } else if (retryable === false && explicitRetryable !== true) {
+    } else if (explicitRetryable === false || retryable === false) {
       this.retryable = false;
     } else {
-      this.retryable = status >= 500 || status === 0;
+      this.retryable = status !== undefined && (numericStatus >= 500 || numericStatus === 0);
     }
   }
 }
@@ -74,6 +73,26 @@ async function parseJson(response) {
   return response.json().catch(() => ({}));
 }
 
+function defaultDelay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function normaliseRetryCount(value, fallback) {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return fallback;
+  return Math.max(0, Math.floor(parsed));
+}
+
+function normaliseRetryDelayMs(value, fallback) {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return fallback;
+  return Math.max(0, parsed);
+}
+
+const DEFAULT_READ_MODEL_RETRY_ATTEMPTS = 2;
+const DEFAULT_READ_MODEL_RETRY_DELAY_MS = 150;
+const DEFAULT_READ_MODEL_RETRY_MAX_DELAY_MS = 600;
+
 // ---------------------------------------------------------------------------
 // Factory
 // ---------------------------------------------------------------------------
@@ -90,26 +109,40 @@ export function createHeroModeClient({
   getLearnerRevision,
   onLaunchApplied,
   onStaleWrite,
+  readModelRetryAttempts = DEFAULT_READ_MODEL_RETRY_ATTEMPTS,
+  readModelRetryDelayMs = DEFAULT_READ_MODEL_RETRY_DELAY_MS,
+  readModelRetryMaxDelayMs = DEFAULT_READ_MODEL_RETRY_MAX_DELAY_MS,
+  delay = defaultDelay,
 } = {}) {
   if (typeof fetchFn !== 'function') {
     throw new TypeError('Hero Mode client requires a fetch implementation.');
+  }
+
+  const maxReadModelAttempts = 1 + normaliseRetryCount(
+    readModelRetryAttempts,
+    DEFAULT_READ_MODEL_RETRY_ATTEMPTS,
+  );
+  const retryDelayMs = normaliseRetryDelayMs(
+    readModelRetryDelayMs,
+    DEFAULT_READ_MODEL_RETRY_DELAY_MS,
+  );
+  const retryMaxDelayMs = normaliseRetryDelayMs(
+    readModelRetryMaxDelayMs,
+    DEFAULT_READ_MODEL_RETRY_MAX_DELAY_MS,
+  );
+
+  async function waitBeforeReadModelRetry(attemptIndex) {
+    if (typeof delay !== 'function' || retryDelayMs <= 0) return;
+    const boundedDelayMs = Math.min(retryMaxDelayMs, retryDelayMs * (2 ** attemptIndex));
+    if (boundedDelayMs <= 0) return;
+    await delay(boundedDelayMs);
   }
 
   // -----------------------------------------------------------------------
   // readModel
   // -----------------------------------------------------------------------
 
-  async function readModel({ learnerId } = {}) {
-    const cleanLearnerId = String(learnerId || '').trim();
-    if (!cleanLearnerId) {
-      throw new HeroModeClientError({
-        code: 'hero_client_invalid',
-        status: 400,
-        retryable: false,
-        message: 'readModel requires a learnerId.',
-      });
-    }
-
+  async function fetchReadModel(cleanLearnerId) {
     let response;
     try {
       response = await fetchFn(
@@ -138,6 +171,34 @@ export function createHeroModeClient({
     }
 
     return payload;
+  }
+
+  async function readModel({ learnerId } = {}) {
+    const cleanLearnerId = String(learnerId || '').trim();
+    if (!cleanLearnerId) {
+      throw new HeroModeClientError({
+        code: 'hero_client_invalid',
+        status: 400,
+        retryable: false,
+        message: 'readModel requires a learnerId.',
+      });
+    }
+
+    let lastError = null;
+    for (let attemptIndex = 0; attemptIndex < maxReadModelAttempts; attemptIndex += 1) {
+      try {
+        return await fetchReadModel(cleanLearnerId);
+      } catch (error) {
+        lastError = error;
+        const canRetry = error instanceof HeroModeClientError
+          && error.retryable
+          && attemptIndex < maxReadModelAttempts - 1;
+        if (!canRetry) throw error;
+        await waitBeforeReadModelRetry(attemptIndex);
+      }
+    }
+
+    throw lastError;
   }
 
   // -----------------------------------------------------------------------
