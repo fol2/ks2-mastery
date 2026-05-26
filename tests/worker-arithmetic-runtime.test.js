@@ -317,6 +317,22 @@ test('arithmetic generators avoid malformed place-value items and repeating-deci
   assert.ok(orderShapeFamilies.every((shapes) => shapes.size >= 2), 'order-of-operations should expose multiple expression structures in every difficulty band');
 });
 
+test('order-of-operations feedback explains same-priority addition and subtraction', () => {
+  const question = generateArithmeticQuestion({ templateId: 'order_of_operations', difficulty: 1, seed: 225073 });
+  const result = evaluateArithmeticQuestion(question, { answer: '54' });
+  const worked = question.solutionLines.join('\n');
+
+  assert.equal(question.stem, '84 − 8 × 2 + 14 =');
+  assert.equal(question.expected.value, 82);
+  assert.equal(result.correct, false);
+  assert.equal(result.answerText, '82');
+  assert.match(result.minimalHint, /work left to right/i);
+  assert.match(worked, /8 × 2 = 16/);
+  assert.match(worked, /84 − 16 \+ 14/);
+  assert.match(worked, /84 − 16 = 68/);
+  assert.match(worked, /68 \+ 14 = 82/);
+});
+
 test('arithmetic practice session keeps question isolated and emits reward unit evidence on clean win', () => {
   const engine = createServerArithmeticEngine({ now: () => 1700000000000 });
   const started = engine.apply({

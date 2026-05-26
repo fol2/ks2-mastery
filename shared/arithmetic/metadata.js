@@ -31,7 +31,7 @@ export const ARITHMETIC_MINIMAL_HINTS = Object.freeze({
   simplification_missed: 'The value is right, but KS2 arithmetic usually expects the simplest fraction form.',
   percentage_method_error: 'Break the percentage into easy parts such as 10%, 5%, 1%, 50% or 25%.',
   remainder_interpretation: 'Check whether the division should be exact and how the remainder should be handled.',
-  order_of_operations_error: 'Do brackets first, then multiplication or division, then addition or subtraction.',
+  order_of_operations_error: 'Do brackets first. Multiplication and division are in the same step; addition and subtraction are in the same step, so work left to right.',
   misread_question: 'Read the final line again and make sure your answer matches what is asked.',
 });
 

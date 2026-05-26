@@ -617,38 +617,89 @@ export const ARITHMETIC_TEMPLATES = Object.freeze([
     const rng = seededRng(seed);
     let expression;
     let answer;
+    let solutionLines;
+    const rule = 'Use order of operations: brackets first, then multiplication or division, then addition or subtraction from left to right.';
     if (difficulty === 0) {
       if (randInt(rng, 0, 1) === 0) {
         const a = randInt(rng, 30, 120); const b = randInt(rng, 3, 12); const c = randInt(rng, 2, 9);
+        const bracketTotal = a + c;
+        const product = b * 2;
         expression = `(${a} + ${c}) − ${b} × 2`;
-        answer = (a + c) - b * 2;
+        answer = bracketTotal - product;
+        solutionLines = [
+          rule,
+          `Work inside the brackets first: ${a} + ${c} = ${formatNumber(bracketTotal)}.`,
+          `Then multiply: ${b} × 2 = ${formatNumber(product)}.`,
+          `Finally subtract: ${formatNumber(bracketTotal)} − ${formatNumber(product)} = ${formatNumber(answer)}.`,
+        ];
       } else {
         const a = randInt(rng, 18, 80); const b = randInt(rng, 2, 9); const c = randInt(rng, 3, 8);
+        const product = b * c;
         expression = `${a} + ${b} × ${c}`;
-        answer = a + b * c;
+        answer = a + product;
+        solutionLines = [
+          rule,
+          `Multiply before adding: ${b} × ${c} = ${formatNumber(product)}.`,
+          `Then add: ${a} + ${formatNumber(product)} = ${formatNumber(answer)}.`,
+        ];
       }
     } else if (difficulty === 1) {
       if (randInt(rng, 0, 1) === 0) {
         const b = randInt(rng, 3, 12); const c = randInt(rng, 2, 9); const d = randInt(rng, 10, 30); const product = b * c; const a = randInt(rng, Math.max(30, product - d + 5), Math.max(120, product + 60));
+        const afterMultiplication = a - product;
         expression = `${a} − ${b} × ${c} + ${d}`;
-        answer = a - product + d;
+        answer = afterMultiplication + d;
+        solutionLines = [
+          rule,
+          `Multiply before adding or subtracting: ${b} × ${c} = ${formatNumber(product)}.`,
+          `Now the expression is ${a} − ${formatNumber(product)} + ${d}.`,
+          `Addition and subtraction are in the same step, so work left to right: ${a} − ${formatNumber(product)} = ${formatNumber(afterMultiplication)}.`,
+          `Then ${formatNumber(afterMultiplication)} + ${d} = ${formatNumber(answer)}.`,
+        ];
       } else {
         const divisor = randInt(rng, 2, 9); const quotient = randInt(rng, 6, 24); const dividend = divisor * quotient; const subtract = randInt(rng, 4, 18); const start = randInt(rng, Math.max(12, subtract + 4), 80);
+        const afterDivision = start + quotient;
         expression = `${start} + ${dividend} ÷ ${divisor} − ${subtract}`;
-        answer = start + quotient - subtract;
+        answer = afterDivision - subtract;
+        solutionLines = [
+          rule,
+          `Divide before adding or subtracting: ${formatNumber(dividend)} ÷ ${divisor} = ${formatNumber(quotient)}.`,
+          `Now the expression is ${start} + ${formatNumber(quotient)} − ${subtract}.`,
+          `Addition and subtraction are in the same step, so work left to right: ${start} + ${formatNumber(quotient)} = ${formatNumber(afterDivision)}.`,
+          `Then ${formatNumber(afterDivision)} − ${subtract} = ${formatNumber(answer)}.`,
+        ];
       }
     } else {
       if (randInt(rng, 0, 1) === 0) {
         const b = randInt(rng, 3, 12); const c = randInt(rng, 2, 9); const quotient = randInt(rng, 5, 24); const d = randInt(rng, 10, 30); const minuend = (b * c) + (quotient * c);
+        const product = b * c;
+        const bracketTotal = minuend - product;
         expression = `(${minuend} − ${b * c}) ÷ ${c} + ${d}`;
         answer = quotient + d;
+        solutionLines = [
+          rule,
+          `Work inside the brackets first: ${formatNumber(minuend)} − ${formatNumber(product)} = ${formatNumber(bracketTotal)}.`,
+          `Then divide: ${formatNumber(bracketTotal)} ÷ ${c} = ${formatNumber(quotient)}.`,
+          `Finally add: ${formatNumber(quotient)} + ${d} = ${formatNumber(answer)}.`,
+        ];
       } else {
         const bracketA = randInt(rng, 8, 35); const bracketB = randInt(rng, 4, 18); const multiplier = randInt(rng, 2, 6); const start = randInt(rng, (bracketA + bracketB) * multiplier + 10, (bracketA + bracketB) * multiplier + 90); const add = randInt(rng, 5, 35);
+        const bracketTotal = bracketA + bracketB;
+        const product = bracketTotal * multiplier;
+        const afterMultiplication = start - product;
         expression = `${start} − (${bracketA} + ${bracketB}) × ${multiplier} + ${add}`;
-        answer = start - (bracketA + bracketB) * multiplier + add;
+        answer = afterMultiplication + add;
+        solutionLines = [
+          rule,
+          `Work inside the brackets first: ${bracketA} + ${bracketB} = ${formatNumber(bracketTotal)}.`,
+          `Then multiply: ${formatNumber(bracketTotal)} × ${multiplier} = ${formatNumber(product)}.`,
+          `Now the expression is ${start} − ${formatNumber(product)} + ${add}.`,
+          `Addition and subtraction are in the same step, so work left to right: ${start} − ${formatNumber(product)} = ${formatNumber(afterMultiplication)}.`,
+          `Then ${formatNumber(afterMultiplication)} + ${add} = ${formatNumber(answer)}.`,
+        ];
       }
     }
-    return makeQuestion(this, seed, difficulty, { stem: `${expression} =`, inputSpec: { type: 'text', label: 'Answer' }, expected: { kind: 'number', value: answer, misconception: 'order_of_operations_error' }, solutionLines: ['Do brackets first, then multiplication or division, then addition or subtraction.', `${expression} = ${formatNumber(answer)}.`] });
+    return makeQuestion(this, seed, difficulty, { stem: `${expression} =`, inputSpec: { type: 'text', label: 'Answer' }, expected: { kind: 'number', value: answer, misconception: 'order_of_operations_error' }, solutionLines });
   } }),
 
   template({ id: 'formal_decimal_missing_digit', label: 'Missing digit in a decimal calculation', domain: 'Decimals', strand: 'decimals_fractions', skillIds: ['decimals_add_sub', 'inverse_missing'], speedFriendly: false, testFriendly: false, generator(seed, difficulty = 1) {
