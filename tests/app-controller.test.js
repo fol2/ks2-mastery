@@ -25,6 +25,9 @@ import { normaliseGrammarReadModel } from '../src/subjects/grammar/metadata.js';
 import { installMemoryStorage } from './helpers/memory-storage.js';
 import { flushMicrotasks } from './helpers/microtasks.js';
 
+const API_CACHE_STORAGE_PREFIX = 'ks2-platform-v2.api-cache-state:account:';
+const AUTH_SESSION_CACHE_KEY = 'ks2-platform-v2.auth-session-cache';
+
 function typedFormData(value) {
   const formData = new FormData();
   formData.set('typed', value);
@@ -56,13 +59,60 @@ function makeBrokenSubject() {
   };
 }
 
-function jsonResponse(ok, payload) {
+function jsonResponse(ok, payload, { status = ok ? 200 : 500, headers = { 'content-type': 'application/json' } } = {}) {
+  const normalisedHeaders = Object.fromEntries(
+    Object.entries(headers).map(([key, value]) => [String(key).toLowerCase(), String(value)]),
+  );
   return {
     ok,
+    status,
+    headers: {
+      get(name) {
+        return normalisedHeaders[String(name).toLowerCase()] || '';
+      },
+    },
     async json() {
       return payload;
     },
+    async text() {
+      return JSON.stringify(payload);
+    },
   };
+}
+
+function writeCachedApiState(storage, accountId, bundleOverrides = {}) {
+  const learnerId = bundleOverrides?.learners?.selectedId || 'learner-cache';
+  storage.setItem(`${API_CACHE_STORAGE_PREFIX}${accountId}`, JSON.stringify({
+    bundle: {
+      meta: {
+        version: 2,
+        migratedAt: 123,
+      },
+      learners: {
+        byId: {
+          [learnerId]: {
+            id: learnerId,
+            name: 'Cached Learner',
+            yearGroup: 'Y5',
+          },
+        },
+        allIds: [learnerId],
+        selectedId: learnerId,
+      },
+      subjectStates: {},
+      practiceSessions: [],
+      gameState: {},
+      eventLog: [],
+      ...bundleOverrides,
+    },
+    pendingOperations: [],
+    syncState: {
+      accountRevision: 0,
+      learnerRevisions: {
+        [learnerId]: 0,
+      },
+    },
+  }));
 }
 
 test('browser bootstrap does not create local repositories for file or local query modes', async () => {
@@ -89,6 +139,7 @@ test('browser bootstrap does not create local repositories for file or local que
 
 test('browser bootstrap builds remote repositories from an authenticated session payload', async () => {
   const calls = [];
+  const storage = installMemoryStorage();
   const credentialFetch = async (input, init) => {
     calls.push({ input, init });
     return jsonResponse(true, {
@@ -109,7 +160,7 @@ test('browser bootstrap builds remote repositories from an authenticated session
 
   const boot = await createRepositoriesForBrowserRuntime({
     location: new URL('https://ks2.example.test/'),
-    storage: installMemoryStorage(),
+    storage,
     credentialFetch,
   });
 
@@ -120,6 +171,83 @@ test('browser bootstrap builds remote repositories from an authenticated session
   assert.equal(boot.session.repoRevision, 7);
   assert.deepEqual(boot.session.heroMode, { shadowEnabled: false });
   assert.equal(Boolean(boot.repositories.persistence), true);
+  const cachedSession = JSON.parse(storage.getItem(AUTH_SESSION_CACHE_KEY));
+  assert.equal(cachedSession.session.accountId, 'adult-remote');
+  assert.equal(cachedSession.session.email, undefined);
+});
+
+test('browser bootstrap uses cached repositories when the auth session endpoint is transiently unavailable', async () => {
+  const storage = installMemoryStorage();
+  writeCachedApiState(storage, 'adult-cache');
+  const calls = [];
+  let authRequired = null;
+  const credentialFetch = async (input) => {
+    calls.push(input);
+    if (input === '/api/auth/session') {
+      return jsonResponse(false, {
+        ok: false,
+        code: 'd1_unavailable',
+        message: 'D1 is unavailable.',
+      }, { status: 503 });
+    }
+    if (input === '/api/bootstrap') {
+      return jsonResponse(false, {
+        ok: false,
+        code: 'exceeded_cpu',
+        message: 'Bootstrap unavailable.',
+      }, { status: 503 });
+    }
+    throw new Error(`Unexpected request: ${input}`);
+  };
+
+  const boot = await createRepositoriesForBrowserRuntime({
+    location: new URL('https://ks2.example.test/'),
+    storage,
+    credentialFetch,
+    waitForAuthRequired: false,
+    onAuthRequired(payload) {
+      authRequired = payload;
+    },
+  });
+
+  assert.equal(authRequired, null);
+  assert.equal(boot.session.mode, 'remote-sync');
+  assert.equal(boot.session.accountId, 'adult-cache');
+  assert.equal(Boolean(boot.repositories), true);
+
+  await boot.repositories.hydrate();
+
+  assert.deepEqual(calls, ['/api/auth/session', '/api/bootstrap']);
+  assert.equal(boot.repositories.learners.read().selectedId, 'learner-cache');
+  const persistence = boot.repositories.persistence.read();
+  assert.equal(persistence.mode, 'degraded');
+  assert.equal(persistence.trustedState, 'local-cache');
+  assert.equal(persistence.lastError.code, 'exceeded_cpu');
+});
+
+test('browser bootstrap does not use cached repositories for explicit unauthenticated responses', async () => {
+  const storage = installMemoryStorage();
+  writeCachedApiState(storage, 'adult-cache');
+  let authRequired = null;
+
+  const boot = await createRepositoriesForBrowserRuntime({
+    location: new URL('https://ks2.example.test/'),
+    storage,
+    credentialFetch: async () => jsonResponse(false, {
+      ok: false,
+      code: 'unauthenticated',
+      message: 'Authenticated adult account required.',
+    }, { status: 401 }),
+    waitForAuthRequired: false,
+    onAuthRequired(payload) {
+      authRequired = payload;
+    },
+  });
+
+  assert.equal(authRequired.code, 'unauthenticated');
+  assert.equal(boot.repositories, null);
+  assert.equal(boot.session.mode, 'auth-required');
+  assert.equal(boot.session.code, 'unauthenticated');
 });
 
 test('browser bootstrap surfaces auth-required state without creating repositories in tests', async () => {

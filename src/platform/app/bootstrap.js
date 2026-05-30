@@ -1,7 +1,10 @@
 import { createApiPlatformRepositories } from '../core/repositories/api.js';
+import { normaliseRepositoryBundle } from '../core/repositories/helpers.js';
 import { normalisePlatformRole } from '../access/roles.js';
 import { normaliseSubjectExposureGates } from '../core/subject-availability.js';
 
+const API_CACHE_STORAGE_PREFIX = 'ks2-platform-v2.api-cache-state:account:';
+const AUTH_SESSION_CACHE_KEY = 'ks2-platform-v2.auth-session-cache';
 const LOCAL_CODEX_REVIEW_LEARNER_ID = 'local-codex-egg-review';
 const LOCAL_CODEX_STAGE_REVIEW_LEARNER_IDS = Object.freeze({
   1: 'local-codex-stage-1-review',
@@ -96,6 +99,202 @@ export function createRemoteSyncSession(sessionPayload = {}) {
   };
 }
 
+function safeStorageGet(storage, key) {
+  try {
+    return storage?.getItem?.(key) || null;
+  } catch {
+    return null;
+  }
+}
+
+function safeStorageSet(storage, key, value) {
+  try {
+    storage?.setItem?.(key, value);
+  } catch {
+    // Best-effort metadata only; the repository cache remains authoritative.
+  }
+}
+
+function safeStorageKey(storage, index) {
+  try {
+    return storage?.key?.(index) || null;
+  } catch {
+    return null;
+  }
+}
+
+function safeStorageLength(storage) {
+  try {
+    const length = Number(storage?.length);
+    return Number.isFinite(length) && length > 0 ? Math.floor(length) : 0;
+  } catch {
+    return 0;
+  }
+}
+
+function safeJsonObject(rawValue) {
+  if (!rawValue || typeof rawValue !== 'string') return null;
+  try {
+    const parsed = JSON.parse(rawValue);
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+function plainObjectOrEmpty(rawValue) {
+  return rawValue && typeof rawValue === 'object' && !Array.isArray(rawValue) ? rawValue : {};
+}
+
+function apiCacheStorageKey(accountId) {
+  return `${API_CACHE_STORAGE_PREFIX}${accountId}`;
+}
+
+function accountIdFromApiCacheKey(key) {
+  return typeof key === 'string' && key.startsWith(API_CACHE_STORAGE_PREFIX)
+    ? key.slice(API_CACHE_STORAGE_PREFIX.length)
+    : '';
+}
+
+function cachedPayloadBundle(payload) {
+  return normaliseRepositoryBundle(payload?.bundle || payload);
+}
+
+function cachedPayloadFreshness(payload) {
+  return cachedPayloadBundle(payload).meta.migratedAt;
+}
+
+function cachedPayloadHasFallback(payload) {
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return false;
+  const bundle = cachedPayloadBundle(payload);
+  const pendingOperations = Array.isArray(payload.pendingOperations) ? payload.pendingOperations : [];
+  return Boolean(
+    bundle.learners.allIds.length
+    || Object.keys(bundle.subjectStates).length
+    || bundle.practiceSessions.length
+    || Object.keys(bundle.gameState).length
+    || bundle.eventLog.length
+    || pendingOperations.length,
+  );
+}
+
+function cachedSessionPayload(rawSession, fallbackAccountId = '') {
+  const raw = plainObjectOrEmpty(rawSession);
+  const rawSessionValue = plainObjectOrEmpty(raw.session);
+  const rawAccount = plainObjectOrEmpty(raw.account);
+  const accountId = typeof rawSessionValue.accountId === 'string' && rawSessionValue.accountId
+    ? rawSessionValue.accountId
+    : fallbackAccountId;
+  if (!accountId) return null;
+
+  const demo = rawSessionValue.demo === true || rawSessionValue.accountType === 'demo' || accountId.startsWith('demo-');
+  const platformRole = rawAccount.platformRole || rawSessionValue.platformRole || 'parent';
+  return {
+    session: {
+      accountId,
+      provider: rawSessionValue.provider || 'cached',
+      demo,
+      accountType: rawSessionValue.accountType || (demo ? 'demo' : 'real'),
+      demoExpiresAt: rawSessionValue.demoExpiresAt || null,
+      platformRole,
+    },
+    account: {
+      platformRole,
+      repoRevision: Number(rawAccount.repoRevision) || 0,
+    },
+    subjectExposureGates: plainObjectOrEmpty(raw.subjectExposureGates),
+    heroMode: plainObjectOrEmpty(raw.heroMode),
+  };
+}
+
+function writeCachedAuthSession(storage, sessionPayload) {
+  const accountId = sessionPayload?.session?.accountId;
+  if (!(typeof accountId === 'string' && accountId)) return;
+
+  const platformRole = sessionPayload?.account?.platformRole || sessionPayload?.session?.platformRole || 'parent';
+  const payload = {
+    session: {
+      accountId,
+      provider: sessionPayload?.session?.provider || 'session',
+      demo: sessionPayload?.session?.demo === true,
+      accountType: sessionPayload?.session?.accountType || (sessionPayload?.session?.demo ? 'demo' : 'real'),
+      demoExpiresAt: sessionPayload?.session?.demoExpiresAt || null,
+      platformRole,
+    },
+    account: {
+      platformRole,
+      repoRevision: Number(sessionPayload?.account?.repoRevision) || 0,
+    },
+    subjectExposureGates: plainObjectOrEmpty(sessionPayload?.subjectExposureGates),
+    heroMode: plainObjectOrEmpty(sessionPayload?.heroMode),
+    cachedAt: Date.now(),
+  };
+  safeStorageSet(storage, AUTH_SESSION_CACHE_KEY, JSON.stringify(payload));
+}
+
+function cachedApiPayloadForAccount(storage, accountId) {
+  if (!(typeof accountId === 'string' && accountId)) return null;
+  return safeJsonObject(safeStorageGet(storage, apiCacheStorageKey(accountId)));
+}
+
+function cachedAuthSessionCandidate(storage) {
+  const cachedSession = safeJsonObject(safeStorageGet(storage, AUTH_SESSION_CACHE_KEY));
+  const sessionPayload = cachedSessionPayload(cachedSession);
+  const accountId = sessionPayload?.session?.accountId || '';
+  const cachedApiPayload = cachedApiPayloadForAccount(storage, accountId);
+  if (!cachedPayloadHasFallback(cachedApiPayload)) return null;
+  return {
+    accountId,
+    sessionPayload,
+    priority: 1,
+    freshness: Math.max(
+      cachedPayloadFreshness(cachedApiPayload),
+      Number(cachedSession?.cachedAt) || 0,
+    ),
+  };
+}
+
+function findCachedSessionFallback(storage) {
+  const candidates = [];
+  const cachedAuthCandidate = cachedAuthSessionCandidate(storage);
+  if (cachedAuthCandidate) candidates.push(cachedAuthCandidate);
+
+  const length = safeStorageLength(storage);
+  for (let index = 0; index < length; index += 1) {
+    const key = safeStorageKey(storage, index);
+    const accountId = accountIdFromApiCacheKey(key);
+    if (!accountId) continue;
+
+    const payload = safeJsonObject(safeStorageGet(storage, key));
+    if (!cachedPayloadHasFallback(payload)) continue;
+    candidates.push({
+      accountId,
+      sessionPayload: cachedSessionPayload(null, accountId),
+      priority: 0,
+      freshness: cachedPayloadFreshness(payload),
+    });
+  }
+
+  candidates.sort((left, right) => (right.priority - left.priority) || (right.freshness - left.freshness));
+  return candidates[0]?.sessionPayload || null;
+}
+
+function isExplicitAuthFailure(sessionResponse, sessionPayload) {
+  const status = Number(sessionResponse?.status);
+  if (status === 401 || status === 403) return true;
+  const code = typeof sessionPayload?.code === 'string' ? sessionPayload.code : '';
+  return ['unauthenticated', 'forbidden', 'demo_session_expired'].includes(code);
+}
+
+function isTransientSessionFailure(sessionResponse, sessionPayload) {
+  if (isExplicitAuthFailure(sessionResponse, sessionPayload)) return false;
+  if (sessionResponse?.error) return true;
+
+  const status = Number(sessionResponse?.status);
+  if (Number.isFinite(status)) return status === 0 || status === 429 || (status >= 500 && status < 600);
+  return Boolean(sessionResponse && sessionResponse.ok === false);
+}
+
 export async function createRepositoriesForBrowserRuntime({
   location = globalThis.location,
   storage = globalThis.localStorage,
@@ -115,6 +314,24 @@ export async function createRepositoriesForBrowserRuntime({
   }
 
   if (!sessionResponse.ok || !sessionPayload?.session?.accountId) {
+    if (isTransientSessionFailure(sessionResponse, sessionPayload)) {
+      const cachedSession = findCachedSessionFallback(storage);
+      if (cachedSession?.session?.accountId) {
+        const session = createRemoteSyncSession(cachedSession);
+        const repositories = createApiPlatformRepositories({
+          baseUrl: '',
+          fetch: credentialFetch,
+          storage,
+          cacheScopeKey: `account:${session.accountId}`,
+          publicReadModels: true,
+        });
+        return {
+          repositories,
+          session,
+        };
+      }
+    }
+
     const error = locationSearchParams(location).get('auth_error') || '';
     // SH2-U3: read `code` from the 401 body once and thread it through
     // `onAuthRequired` so AuthSurface can branch on `demo_session_expired`
@@ -151,10 +368,12 @@ export async function createRepositoriesForBrowserRuntime({
     };
   }
 
+  writeCachedAuthSession(storage, sessionPayload);
   const session = createRemoteSyncSession(sessionPayload);
   const repositories = createApiPlatformRepositories({
     baseUrl: '',
     fetch: credentialFetch,
+    storage,
     cacheScopeKey: `account:${session.accountId}`,
     publicReadModels: true,
   });
