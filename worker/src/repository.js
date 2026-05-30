@@ -527,7 +527,7 @@ async function readSubjectContentRow(db, accountId, subjectId = 'spelling') {
 async function readSeededSpellingRuntimeContentBundle(subjectId = 'spelling') {
   const key = spellingRuntimeContentSeedKey(subjectId);
   return readCachedSpellingRuntimeContent(key)
-    || rememberSpellingRuntimeContent(key, await buildSpellingRuntimeContent(null, subjectId));
+    || rememberSpellingRuntimeContent(key, await buildSeededSpellingRuntimeContent(subjectId));
 }
 
 async function readSpellingRuntimeContentBundle(db, accountId, subjectId = 'spelling', {
@@ -719,16 +719,11 @@ function runtimeContentSummary(content, snapshot) {
 }
 
 async function buildSpellingRuntimeContent(row, subjectId) {
-  const seededBundle = await readSeededSpellingContentBundle();
   if (!row) {
-    return {
-      subjectId,
-      content: seededBundle,
-      snapshot: await readSeededSpellingPublishedSnapshot(),
-      summary: SEEDED_SPELLING_CONTENT_SUMMARY,
-    };
+    return buildSeededSpellingRuntimeContent(subjectId);
   }
 
+  const seededBundle = await readSeededSpellingContentBundle();
   const content = contentRowToBundle(row, seededBundle);
   const snapshot = runtimeSnapshotForBundle(content, seededBundle);
   return {
@@ -736,6 +731,15 @@ async function buildSpellingRuntimeContent(row, subjectId) {
     content,
     snapshot,
     summary: runtimeContentSummary(content, snapshot),
+  };
+}
+
+async function buildSeededSpellingRuntimeContent(subjectId) {
+  return {
+    subjectId,
+    content: null,
+    snapshot: await readSeededSpellingPublishedSnapshot(),
+    summary: SEEDED_SPELLING_CONTENT_SUMMARY,
   };
 }
 
@@ -7522,7 +7526,9 @@ async function readSpellingWordBankBundle(db, accountId, learnerId, filters, now
     });
   }
   const runtimeRecord = await readSubjectRuntimeBundle(db, accountId, learnerId, 'spelling');
-  const { snapshot } = await readSpellingRuntimeContentBundle(db, accountId, 'spelling');
+  const { snapshot } = await readSpellingRuntimeContentBundle(db, accountId, 'spelling', {
+    includeAccountContent: false,
+  });
   return buildSpellingWordBankReadModel({
     learnerId,
     contentSnapshot: snapshot,
@@ -9259,8 +9265,8 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
         },
       };
     },
-    async readSpellingRuntimeContent(accountId, subjectId = 'spelling') {
-      return readSpellingRuntimeContentBundle(db, accountId, subjectId);
+    async readSpellingRuntimeContent(accountId, subjectId = 'spelling', options = {}) {
+      return readSpellingRuntimeContentBundle(db, accountId, subjectId, options);
     },
     async readSpellingWordBank(accountId, learnerId, filters = {}) {
       return readSpellingWordBankBundle(db, accountId, learnerId, filters, nowFactory());

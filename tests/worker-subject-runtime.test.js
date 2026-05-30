@@ -150,9 +150,29 @@ test('repository reuses cached spelling runtime content for hot subject paths', 
     assert.equal(second.content, first.content);
     assert.equal(first.snapshot, await readSeededSpellingPublishedSnapshot());
     assert.equal(first.summary, SEEDED_SPELLING_CONTENT_SUMMARY);
-    assert.equal(first.content, await readSeededSpellingContentBundle());
+    assert.equal(first.content, null);
     assert.deepEqual(first.snapshot, SEEDED_SPELLING_PUBLISHED_SNAPSHOT);
-    assert.equal(second.snapshot.words.length, SEEDED_SPELLING_CONTENT_BUNDLE.releases.at(-1).snapshot.words.length);
+    assert.equal(second.snapshot.words.length, SEEDED_SPELLING_PUBLISHED_SNAPSHOT.words.length);
+  } finally {
+    DB.close();
+  }
+});
+
+test('repository can serve spelling runtime from the bundled snapshot without D1 content reads', async () => {
+  const DB = createMigratedSqliteD1Database();
+  const repository = createWorkerRepository({ env: { DB }, now: () => 1_776_000_000_000 });
+  try {
+    DB.clearQueryLog();
+
+    const runtime = await repository.readSpellingRuntimeContent('adult-a', 'spelling', {
+      includeAccountContent: false,
+    });
+    const contentQueries = accountContentQueries(DB);
+
+    assert.equal(runtime.content, null);
+    assert.equal(runtime.summary, SEEDED_SPELLING_CONTENT_SUMMARY);
+    assert.equal(runtime.snapshot, await readSeededSpellingPublishedSnapshot());
+    assert.equal(contentQueries.length, 0);
   } finally {
     DB.close();
   }
@@ -222,6 +242,7 @@ test('spelling command runtime prefers repository runtime content over raw conte
     referenceBundle: SEEDED_SPELLING_CONTENT_BUNDLE,
   });
   let runtimeContentReads = 0;
+  let runtimeContentOptions = null;
   const runtime = createWorkerSubjectRuntime();
 
   const result = await runtime.dispatch({
@@ -241,8 +262,9 @@ test('spelling command runtime prefers repository runtime content over raw conte
       async readSubjectRuntime() {
         return { subjectRecord: { ui: {}, data: {} }, latestSession: null };
       },
-      async readSpellingRuntimeContent() {
+      async readSpellingRuntimeContent(_accountId, _subjectId, options) {
         runtimeContentReads += 1;
+        runtimeContentOptions = options;
         return {
           subjectId: 'spelling',
           snapshot,
@@ -261,6 +283,7 @@ test('spelling command runtime prefers repository runtime content over raw conte
   });
 
   assert.equal(runtimeContentReads, 1);
+  assert.deepEqual(runtimeContentOptions, { includeAccountContent: false });
   assert.equal(result.changed, false);
   assert.equal(result.wordBankDrill.result, 'correct');
 });

@@ -72,7 +72,9 @@ async function replayContextEvents(context, learnerId) {
 
 async function readRuntimeContent(context) {
   if (typeof context.repository.readSpellingRuntimeContent === 'function') {
-    return context.repository.readSpellingRuntimeContent(context.session.accountId, 'spelling');
+    return context.repository.readSpellingRuntimeContent(context.session.accountId, 'spelling', {
+      includeAccountContent: false,
+    });
   }
   const contentResult = await context.repository.readSubjectContent(context.session.accountId, 'spelling');
   const seededBundle = await readSeededSpellingContentBundle();

@@ -548,6 +548,7 @@ test('spelling session TTS may read content once for a genuine single-sentence c
     sentence,
   ].join('|'));
   let contentReads = 0;
+  let contentReadOptions = null;
   const repository = {
     async readSubjectRuntime() {
       return {
@@ -566,8 +567,9 @@ test('spelling session TTS may read content once for a genuine single-sentence c
         },
       };
     },
-    async readSpellingRuntimeContent() {
+    async readSpellingRuntimeContent(_accountId, _subjectId, options) {
       contentReads += 1;
+      contentReadOptions = options;
       return { snapshot: { wordBySlug: { [word.slug]: word } } };
     },
   };
@@ -580,6 +582,7 @@ test('spelling session TTS may read content once for a genuine single-sentence c
 
   assert.equal(request.sentenceIndex, 0);
   assert.equal(contentReads, 1);
+  assert.deepEqual(contentReadOptions, { includeAccountContent: false });
 });
 
 test('TTS route serves cached audio for lookup-only requests before selected provider fallback', async () => {
@@ -1686,11 +1689,13 @@ test('word-bank vocabulary audio tokens do not require example sentences', async
     word: 'century',
     sentence: '',
   };
+  const contentReadOptions = [];
   const repository = {
     async readSubjectRuntime() {
       return { subjectRecord: { ui: { phase: 'dashboard' } } };
     },
-    async readSpellingRuntimeContent() {
+    async readSpellingRuntimeContent(_accountId, _subjectId, options) {
+      contentReadOptions.push(options);
       return {
         snapshot: {
           wordBySlug: { century: word },
@@ -1735,6 +1740,10 @@ test('word-bank vocabulary audio tokens do not require example sentences', async
 
   assert.equal(wordRequest.transcript, 'century');
   assert.equal(dictationRequest.transcript, 'The word is century. The word is century.');
+  assert.deepEqual(contentReadOptions, [
+    { includeAccountContent: false },
+    { includeAccountContent: false },
+  ]);
 });
 
 test('TTS route reports missing selected provider configuration clearly', async () => {

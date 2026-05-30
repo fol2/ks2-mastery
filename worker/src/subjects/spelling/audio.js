@@ -53,10 +53,13 @@ async function readRuntimeSnapshot({ repository, accountId } = {}) {
   if (!repository) return null;
   try {
     const contentResult = typeof repository.readSpellingRuntimeContent === 'function'
-      ? await repository.readSpellingRuntimeContent(accountId, 'spelling')
+      ? await repository.readSpellingRuntimeContent(accountId, 'spelling', {
+        includeAccountContent: false,
+      })
       : await repository.readSubjectContent(accountId, 'spelling');
+    if (contentResult.snapshot) return contentResult.snapshot;
     const seededBundle = await readSeededSpellingContentBundle();
-    return contentResult.snapshot || resolveRuntimeSnapshot(contentResult.content, {
+    return resolveRuntimeSnapshot(contentResult.content, {
       referenceBundle: seededBundle,
     });
   } catch {
@@ -127,11 +130,12 @@ async function wordBankPromptParts({ repository, accountId, learnerId, slug } = 
   const safeSlug = cleanText(slug).toLowerCase();
   if (!safeSlug) return null;
   const contentResult = typeof repository.readSpellingRuntimeContent === 'function'
-    ? await repository.readSpellingRuntimeContent(accountId, 'spelling')
+    ? await repository.readSpellingRuntimeContent(accountId, 'spelling', {
+      includeAccountContent: false,
+    })
     : await repository.readSubjectContent(accountId, 'spelling');
-  const seededBundle = await readSeededSpellingContentBundle();
   const snapshot = contentResult.snapshot || resolveRuntimeSnapshot(contentResult.content, {
-    referenceBundle: seededBundle,
+    referenceBundle: await readSeededSpellingContentBundle(),
   });
   const word = snapshot?.wordBySlug?.[safeSlug];
   if (!word) return null;
