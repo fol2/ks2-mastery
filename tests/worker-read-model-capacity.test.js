@@ -54,7 +54,8 @@ test('capacity read-model migration creates indexed summary and activity stores'
         'idx_learner_read_models_key_updated',
         'idx_learner_activity_feed_source_event',
         'idx_learner_activity_feed_learner_created',
-        'idx_learner_activity_feed_subject_created'
+        'idx_learner_activity_feed_subject_created',
+        'idx_learner_activity_feed_updated'
       )
     ORDER BY name
   `).all();
@@ -64,6 +65,7 @@ test('capacity read-model migration creates indexed summary and activity stores'
     'idx_learner_activity_feed_learner_created',
     'idx_learner_activity_feed_source_event',
     'idx_learner_activity_feed_subject_created',
+    'idx_learner_activity_feed_updated',
     'idx_learner_read_models_key_updated',
   ]);
 

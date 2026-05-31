@@ -214,6 +214,24 @@ test('sweepLearnerActivityFeed prunes stale duplicate activity rows', async () =
   }
 });
 
+test('sweepLearnerActivityFeed uses the updated_at retention index', async () => {
+  const db = createMigratedSqliteD1Database();
+  try {
+    const plan = db.db.prepare(`
+      EXPLAIN QUERY PLAN
+      SELECT rowid
+      FROM learner_activity_feed
+      WHERE updated_at < ?
+      LIMIT ?
+    `).all(0, 5000);
+    const detail = plan.map((row) => row.detail).join('\n');
+    assert.match(detail, /idx_learner_activity_feed_updated/);
+    assert.doesNotMatch(detail, /SCAN learner_activity_feed\b/);
+  } finally {
+    db.close();
+  }
+});
+
 test('U11 runRetentionSweeps aggregates per-sweep deletion counts', async () => {
   const db = createMigratedSqliteD1Database();
   try {

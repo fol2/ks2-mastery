@@ -113,8 +113,11 @@ describe('Hero P5 — vocabulary boundaries', () => {
 // ── Structural boundary tests ────────────────────────────────────────
 
 describe('Hero P5 — structural boundaries', () => {
-  it('No new D1 migration files were added for P5 camp', () => {
-    // P5 camp must NOT add new migration files — it stores state in existing hero_progress JSON
+  it('No D1 migrations add Hero Camp storage', () => {
+    // P5 camp must NOT add dedicated schema — it stores state in existing
+    // hero_progress JSON. Later unrelated migrations may exist, so this guard
+    // checks the migration content rather than assuming the global migration
+    // number never advances.
     const migrationsDir = join(ROOT, 'worker', 'migrations');
     let files;
     try {
@@ -123,13 +126,19 @@ describe('Hero P5 — structural boundaries', () => {
       // No migrations directory — that is acceptable
       files = [];
     }
-    // The highest known pre-P5 migration is 0015 (Admin Console P7 incidents).
-    // Anything above means Hero Camp specifically added new tables.
-    const p5Migrations = files.filter(f => {
-      const match = f.match(/^(\d+)/);
-      return match && parseInt(match[1], 10) > 15;
-    });
-    assert.equal(p5Migrations.length, 0, `P5 added new migrations: ${p5Migrations.join(', ')}`);
+    const violations = [];
+    for (const file of files) {
+      const sql = readFileSync(join(migrationsDir, file), 'utf8').toLowerCase();
+      if (
+        /\bcreate\s+table\b[\s\S]*\bhero_camp\b/.test(sql)
+        || /\bcreate\s+index\b[\s\S]*\bhero_camp\b/.test(sql)
+        || /\bhero_camp\b/.test(sql)
+        || /\bcamp_state\b/.test(sql)
+      ) {
+        violations.push(file);
+      }
+    }
+    assert.equal(violations.length, 0, `Hero Camp added dedicated D1 schema: ${violations.join(', ')}`);
   });
 
   it('camp.js does not read from event_log table (event mirror is not authority)', () => {
