@@ -108,6 +108,48 @@ test('subject command client retries transient server failures with the same req
   assert.equal(revision, 8);
 });
 
+test('subject command client refreshes repositories for compact replay responses', async () => {
+  const calls = [];
+  const fetch = async (input, init = {}) => {
+    const body = JSON.parse(init.body);
+    calls.push(['fetch', body.requestId]);
+    return new Response(JSON.stringify({
+      ok: true,
+      replayRequiresRefresh: true,
+      mutation: {
+        requestId: body.requestId,
+        expectedRevision: body.expectedLearnerRevision,
+        appliedRevision: body.expectedLearnerRevision + 1,
+        replayed: true,
+      },
+    }), { status: 200, headers: { 'content-type': 'application/json' } });
+  };
+  const commands = createSubjectCommandClient({
+    fetch,
+    getLearnerRevision: () => 3,
+    onReplayRefresh: async ({ learnerId, subjectId, command, requestId }) => {
+      calls.push(['refresh', learnerId, subjectId, command, requestId]);
+    },
+    onCommandApplied: ({ response }) => {
+      calls.push(['applied', response.mutation?.requestId]);
+    },
+  });
+
+  const response = await commands.send({
+    subjectId: 'spelling',
+    learnerId: 'learner-a',
+    command: 'start-session',
+    requestId: 'cmd-compact-replay',
+  });
+
+  assert.equal(response.replayRequiresRefresh, true);
+  assert.deepEqual(calls, [
+    ['fetch', 'cmd-compact-replay'],
+    ['refresh', 'learner-a', 'spelling', 'start-session', 'cmd-compact-replay'],
+    ['applied', 'cmd-compact-replay'],
+  ]);
+});
+
 test('subject command client freezes expected revision across transport retries', async () => {
   let revision = 12;
   const commandBodies = [];

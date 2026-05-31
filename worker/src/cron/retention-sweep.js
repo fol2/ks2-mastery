@@ -25,6 +25,10 @@ export const MUTATION_RECEIPT_MAX_DELETE_BATCH = 5000;
 export const REQUEST_LIMITS_RETENTION_MS = 24 * 60 * 60 * 1000; // 24 hours
 export const REQUEST_LIMITS_MAX_DELETE_BATCH = 5000;
 export const ACCOUNT_SESSIONS_MAX_DELETE_BATCH = 5000;
+export const PRACTICE_SESSION_RETENTION_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
+export const PRACTICE_SESSIONS_MAX_DELETE_BATCH = 5000;
+export const LEARNER_ACTIVITY_FEED_RETENTION_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+export const LEARNER_ACTIVITY_FEED_MAX_DELETE_BATCH = 5000;
 // P3 U4: request denials retention — 14-day rolling window.
 export const REQUEST_DENIALS_RETENTION_MS = 14 * 24 * 60 * 60 * 1000; // 14 days
 export const REQUEST_DENIALS_MAX_DELETE_BATCH = 5000;
@@ -142,6 +146,51 @@ export async function sweepStaleSessions(db, now = Date.now()) {
 }
 
 /**
+ * Prune old completed or abandoned practice sessions while preserving active
+ * sessions for in-progress resume. Parent Hub recent history is intentionally
+ * bounded; the source-of-truth subject state remains in child_subject_state.
+ */
+export async function sweepPracticeSessions(db, now = Date.now()) {
+  const cutoff = Math.max(0, Number(now) || 0) - PRACTICE_SESSION_RETENTION_MS;
+  try {
+    const result = await run(db, `
+      DELETE FROM practice_sessions
+      WHERE rowid IN (
+        SELECT rowid FROM practice_sessions
+        WHERE status IN ('completed', 'abandoned')
+          AND updated_at < ?
+        LIMIT ?
+      )
+    `, [cutoff, PRACTICE_SESSIONS_MAX_DELETE_BATCH]);
+    return { deleted: Math.max(0, Number(result?.meta?.changes) || 0) };
+  } catch (error) {
+    return swallowMissingTable(error, 'practice_sessions');
+  }
+}
+
+/**
+ * Prune the duplicate public activity feed after the command path stops
+ * writing new rows. Old rows remain available briefly during rollout, then
+ * drain without touching source-of-truth progress or error records.
+ */
+export async function sweepLearnerActivityFeed(db, now = Date.now()) {
+  const cutoff = Math.max(0, Number(now) || 0) - LEARNER_ACTIVITY_FEED_RETENTION_MS;
+  try {
+    const result = await run(db, `
+      DELETE FROM learner_activity_feed
+      WHERE rowid IN (
+        SELECT rowid FROM learner_activity_feed
+        WHERE updated_at < ?
+        LIMIT ?
+      )
+    `, [cutoff, LEARNER_ACTIVITY_FEED_MAX_DELETE_BATCH]);
+    return { deleted: Math.max(0, Number(result?.meta?.changes) || 0) };
+  } catch (error) {
+    return swallowMissingTable(error, 'learner_activity_feed');
+  }
+}
+
+/**
  * P3 U4: prune stale request denials. 14-day rolling window, bounded-
  * delete (5000-row cap), `swallowMissingTable` pattern. The table may
  * not exist on instances that have not yet applied migration 0013.
@@ -164,7 +213,7 @@ export async function sweepRequestDenials(db, now = Date.now()) {
 }
 
 /**
- * Run all four sweeps sequentially and return an aggregated summary.
+ * Run all retention sweeps sequentially and return an aggregated summary.
  * A sweep failure aborts the remainder so the failure surfaces in the
  * cron's error telemetry; partial successes are reported via the
  * `completed` array.
@@ -177,6 +226,10 @@ export async function runRetentionSweeps(db, now = Date.now()) {
   completed.push({ sweep: 'request_limits', ...requestLimits });
   const sessions = await sweepStaleSessions(db, now);
   completed.push({ sweep: 'account_sessions', ...sessions });
+  const practiceSessions = await sweepPracticeSessions(db, now);
+  completed.push({ sweep: 'practice_sessions', ...practiceSessions });
+  const activityFeed = await sweepLearnerActivityFeed(db, now);
+  completed.push({ sweep: 'learner_activity_feed', ...activityFeed });
   const denials = await sweepRequestDenials(db, now);
   completed.push({ sweep: 'admin_request_denials', ...denials });
   return {

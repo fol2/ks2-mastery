@@ -54,7 +54,10 @@ async function replayContextEvents(context, learnerId) {
   const replayRequests = await context.repository.readLearnerEventLogEvents(
     context.session.accountId,
     learnerId,
-    { eventTypes: [MONSTER_CELEBRATION_REPLAY_REQUEST_TYPE] },
+    {
+      eventTypes: [MONSTER_CELEBRATION_REPLAY_REQUEST_TYPE],
+      skipAccessCheck: true,
+    },
   );
   const { sourceIds, replayIds } = monsterCelebrationReplayReferenceIds(replayRequests, {
     learnerId,
@@ -65,7 +68,10 @@ async function replayContextEvents(context, learnerId) {
   const referenceEvents = await context.repository.readLearnerEventLogEvents(
     context.session.accountId,
     learnerId,
-    { ids: referenceIds },
+    {
+      ids: referenceIds,
+      skipAccessCheck: true,
+    },
   );
   return [...replayRequests, ...referenceEvents];
 }

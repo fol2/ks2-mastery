@@ -147,14 +147,21 @@ test('spelling command projection applies monster rewards and returns celebratio
 
     assert.ok(secureSubmit, 'the fourth round should emit a secure-word event');
     assert.ok(secureSubmit.body.domainEvents.some((event) => event.type === 'spelling.word-secured'));
-    assert.ok(secureSubmit.body.reactionEvents.some((event) => (
+    const caughtRewardEvent = secureSubmit.body.reactionEvents.find((event) => (
       event.type === 'reward.monster'
       && event.kind === 'caught'
       && event.monsterId === 'inklet'
-    )));
+    ));
+    assert.ok(caughtRewardEvent);
     assert.ok(secureSubmit.body.toastEvents.some((event) => event.monsterId === 'inklet'));
     assert.equal(secureSubmit.body.projections.rewards.systemId, 'monster-codex');
     assert.ok(secureSubmit.body.projections.rewards.state.inklet.mastered.includes('possess'));
+    const rewardCapacity = secureSubmit.body.meta?.capacity;
+    assert.ok(rewardCapacity, 'reward command response must include capacity metadata');
+    assert.ok(
+      rewardCapacity.d1RowsWritten <= 6,
+      `reward command should avoid duplicate history writes; got ${rewardCapacity.d1RowsWritten}`,
+    );
 
     const gameRow = harness.DB.db.prepare(`
       SELECT state_json
@@ -164,12 +171,12 @@ test('spelling command projection applies monster rewards and returns celebratio
     const gameState = JSON.parse(gameRow.state_json);
     assert.ok(gameState.inklet.mastered.includes('possess'));
 
-    const rewardCount = harness.DB.db.prepare(`
+    const rewardHistoryCount = harness.DB.db.prepare(`
       SELECT COUNT(*) AS count
       FROM event_log
       WHERE learner_id = 'learner-a' AND event_type = 'reward.monster'
     `).get().count;
-    assert.equal(rewardCount, 1);
+    assert.equal(rewardHistoryCount, 0);
     const readModelRow = harness.DB.db.prepare(`
       SELECT model_json, source_revision
       FROM learner_read_models
@@ -180,17 +187,18 @@ test('spelling command projection applies monster rewards and returns celebratio
     const readModel = JSON.parse(readModelRow.model_json);
     assert.equal(readModel.rewards.systemId, 'monster-codex');
     assert.ok(readModel.rewards.state.inklet.mastered.includes('possess'));
+    assert.ok(readModel.recentEventTokens.includes(caughtRewardEvent.id));
     assert.ok(readModelRow.source_revision >= secureSubmit.body.mutation.appliedRevision);
 
     const replay = await harness.postRaw(secureSubmit.requestBody);
     assert.equal(replay.response.status, 200);
     assert.equal(replay.body.mutation.replayed, true);
-    const rewardCountAfterReplay = harness.DB.db.prepare(`
+    const rewardHistoryCountAfterReplay = harness.DB.db.prepare(`
       SELECT COUNT(*) AS count
       FROM event_log
       WHERE learner_id = 'learner-a' AND event_type = 'reward.monster'
     `).get().count;
-    assert.equal(rewardCountAfterReplay, rewardCount);
+    assert.equal(rewardHistoryCountAfterReplay, rewardHistoryCount);
   } finally {
     harness.close();
   }
@@ -262,7 +270,19 @@ test('spelling command projection emits requested monster celebration replays on
         AND id LIKE 'reward.monster.replay:%'
       ORDER BY created_at ASC, id ASC
     `).all();
-    assert.deepEqual(replayRows.map((row) => row.id), firstReplayEvents.map((event) => event.id));
+    assert.deepEqual(replayRows.map((row) => row.id), []);
+
+    const readModelRow = harness.DB.db.prepare(`
+      SELECT model_json
+      FROM learner_read_models
+      WHERE learner_id = 'learner-a'
+        AND model_key = 'command.projection.v1'
+    `).get();
+    const readModel = JSON.parse(readModelRow.model_json);
+    assert.deepEqual(
+      firstReplayEvents.map((event) => readModel.recentEventTokens.includes(event.id)),
+      [true, true],
+    );
 
     const secondCompletion = await completePossessRound(harness);
     assert.equal(

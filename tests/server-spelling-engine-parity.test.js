@@ -526,7 +526,7 @@ test('worker spelling command route keeps core practice available while capacity
       FROM event_log
       WHERE learner_id = 'learner-a' AND subject_id = 'spelling'
     `).get().count;
-    assert.ok(eventCount > 0);
+    assert.equal(eventCount, 0);
   } finally {
     server.close();
   }

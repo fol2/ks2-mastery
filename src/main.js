@@ -559,6 +559,9 @@ const subjectCommands = createSubjectCommandClient({
   onCommandApplied: ({ learnerId, subjectId, response }) => {
     repositories.runtime?.applySubjectCommandResult?.({ learnerId, subjectId, response });
   },
+  onReplayRefresh: async () => {
+    await repositories.hydrate({ cacheScope: 'subject-command-replay' });
+  },
 });
 
 // ---------------------------------------------------------------------------

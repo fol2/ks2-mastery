@@ -628,20 +628,65 @@ function storeMutationReceiptStatement(db, {
   `, exists ? guardedExistsParams(params, exists) : guardedParams(params, guard));
 }
 
+function subjectCommandReceiptResponse(response = {}, {
+  learnerId = null,
+  subjectId = null,
+  command = null,
+} = {}) {
+  const mutation = response?.mutation && typeof response.mutation === 'object' && !Array.isArray(response.mutation)
+    ? response.mutation
+    : {};
+  return {
+    receiptVersion: 1,
+    replayRequiresRefresh: true,
+    learnerId: response?.learnerId || learnerId || mutation.scopeId || null,
+    subjectId: response?.subjectId || subjectId || null,
+    command: response?.command || command || null,
+    changed: response?.changed !== false,
+    mutation,
+  };
+}
+
 async function ensureAccount(db, session, nowTs) {
-  const platformRole = normalisePlatformRole(session?.platformRole);
-  // U6 queryCount budget: RETURNING * folds the post-write SELECT into
-  // the UPSERT so per-command ensureAccount runs a single query.
+  const existing = await first(db, 'SELECT * FROM adult_accounts WHERE id = ?', [session.accountId]);
+  const sessionPlatformRole = typeof session?.platformRole === 'string' && session.platformRole
+    ? normalisePlatformRole(session.platformRole)
+    : null;
+  if (!existing) {
+    return first(db, `
+      INSERT INTO adult_accounts (id, email, display_name, platform_role, selected_learner_id, created_at, updated_at)
+      VALUES (?, ?, ?, ?, NULL, ?, ?)
+      RETURNING *
+    `, [
+      session.accountId,
+      session.email || null,
+      session.displayName || null,
+      sessionPlatformRole || 'parent',
+      nowTs,
+      nowTs,
+    ]);
+  }
+
+  const nextEmail = session?.email || existing.email || null;
+  const nextDisplayName = session?.displayName || existing.display_name || null;
+  const nextPlatformRole = sessionPlatformRole || existing.platform_role || 'parent';
+  if (
+    (existing.email || null) === nextEmail
+    && (existing.display_name || null) === nextDisplayName
+    && (existing.platform_role || 'parent') === nextPlatformRole
+  ) {
+    return existing;
+  }
+
   return first(db, `
-    INSERT INTO adult_accounts (id, email, display_name, platform_role, selected_learner_id, created_at, updated_at)
-    VALUES (?, ?, ?, ?, NULL, ?, ?)
-    ON CONFLICT(id) DO UPDATE SET
-      email = COALESCE(excluded.email, adult_accounts.email),
-      display_name = COALESCE(excluded.display_name, adult_accounts.display_name),
-      platform_role = COALESCE(excluded.platform_role, adult_accounts.platform_role),
-      updated_at = excluded.updated_at
+    UPDATE adult_accounts
+    SET email = ?,
+        display_name = ?,
+        platform_role = ?,
+        updated_at = ?
+    WHERE id = ?
     RETURNING *
-  `, [session.accountId, session.email, session.displayName, platformRole, nowTs, nowTs]);
+  `, [nextEmail, nextDisplayName, nextPlatformRole, nowTs, session.accountId]);
 }
 
 // listMembershipRows, getMembership, requireLearnerWriteAccess,
@@ -7724,8 +7769,14 @@ function uniqueStringList(value) {
     .filter((entry) => typeof entry === 'string' && entry))];
 }
 
-async function readLearnerEventLogEvents(db, accountId, learnerId, { ids = [], eventTypes = [] } = {}) {
-  await requireLearnerWriteAccess(db, accountId, learnerId);
+async function readLearnerEventLogEvents(db, accountId, learnerId, {
+  ids = [],
+  eventTypes = [],
+  skipAccessCheck = false,
+} = {}) {
+  if (!skipAccessCheck) {
+    await requireLearnerWriteAccess(db, accountId, learnerId);
+  }
   const safeIds = uniqueStringList(ids);
   const safeEventTypes = uniqueStringList(eventTypes);
   if (!safeIds.length && !safeEventTypes.length) return [];
@@ -7792,6 +7843,8 @@ function guardedWhere(guard) {
 function buildSubjectRuntimePersistencePlan(db, accountId, learnerId, subjectId, runtime, nowTs, {
   guard = null,
   includeCapacityReadModels = true,
+  persistEventLog = true,
+  persistActivityFeed = true,
   // U6: caller passes the projection input it already loaded so the
   // persisted token ring inherits the prior `recentEventTokens` set and
   // any non-v1 fields from a newer writer are preserved rather than
@@ -7932,38 +7985,40 @@ function buildSubjectRuntimePersistencePlan(db, accountId, learnerId, subjectId,
     event.subjectId = event.subjectId || subjectId;
     event.createdAt = createdAt;
     persistedEvents.push(event);
-    const eventParams = [
-      id,
-      event.learnerId,
-      event.subjectId || null,
-      event.systemId || null,
-      eventType,
-      JSON.stringify(event),
-      createdAt,
-      accountId,
-    ];
-    statements.push(bindStatement(db, `
-      INSERT INTO event_log (id, learner_id, subject_id, system_id, event_type, event_json, created_at, actor_account_id)
-      ${guardedValueSource(eventParams.length, guard)}
-      ON CONFLICT(id) DO UPDATE SET
-        learner_id = excluded.learner_id,
-        subject_id = excluded.subject_id,
-        system_id = excluded.system_id,
-        event_type = excluded.event_type,
-        event_json = excluded.event_json,
-        created_at = excluded.created_at,
-        actor_account_id = excluded.actor_account_id
-    `, guardedParams(eventParams, guard)));
-    const activityRow = activityFeedRowFromEventRecord(event, {
-      id,
-      learnerId: event.learnerId,
-      subjectId: event.subjectId || null,
-      systemId: event.systemId || null,
-      eventType,
-      createdAt,
-      now: nowTs,
-    });
-    if (includeCapacityReadModels) {
+    if (persistEventLog) {
+      const eventParams = [
+        id,
+        event.learnerId,
+        event.subjectId || null,
+        event.systemId || null,
+        eventType,
+        JSON.stringify(event),
+        createdAt,
+        accountId,
+      ];
+      statements.push(bindStatement(db, `
+        INSERT INTO event_log (id, learner_id, subject_id, system_id, event_type, event_json, created_at, actor_account_id)
+        ${guardedValueSource(eventParams.length, guard)}
+        ON CONFLICT(id) DO UPDATE SET
+          learner_id = excluded.learner_id,
+          subject_id = excluded.subject_id,
+          system_id = excluded.system_id,
+          event_type = excluded.event_type,
+          event_json = excluded.event_json,
+          created_at = excluded.created_at,
+          actor_account_id = excluded.actor_account_id
+      `, guardedParams(eventParams, guard)));
+    }
+    if (includeCapacityReadModels && persistActivityFeed) {
+      const activityRow = activityFeedRowFromEventRecord(event, {
+        id,
+        learnerId: event.learnerId,
+        subjectId: event.subjectId || null,
+        systemId: event.systemId || null,
+        eventType,
+        createdAt,
+        now: nowTs,
+      });
       const activityStatement = bindLearnerActivityFeedUpsertStatement(db, activityRow, { guard });
       if (activityStatement) statements.push(activityStatement);
     }
@@ -8287,11 +8342,12 @@ async function runSubjectCommandMutation(db, {
         nowTs,
         {
           guard: attemptGuard,
-          // When includeProjection is false we still need capacity read
-          // models for the rest of the persistence plan (subject state,
-          // practice session, event log, activity feed); the plan only
-          // omits the projection read-model write itself.
+          // When includeProjection is false we still persist source-of-truth
+          // state and receipts. Normal event/activity history remains off on
+          // the subject command hot path.
           includeCapacityReadModels,
+          persistEventLog: false,
+          persistActivityFeed: false,
           projectionContext: includeProjection ? freshProjectionContext : null,
           skipProjectionReadModelWrite: !includeProjection,
           currentActiveSessionId: freshRuntimeWrite.previousActiveSessionId || null,
@@ -8306,7 +8362,11 @@ async function runSubjectCommandMutation(db, {
       scopeId: command.learnerId,
       mutationKind: kind,
       requestHash,
-      response: attemptResponse,
+      response: subjectCommandReceiptResponse(attemptResponse, {
+        learnerId: command.learnerId,
+        subjectId: command.subjectId,
+        command: command.command,
+      }),
       correlationId: nextMutation.correlationId,
       appliedAt: nowTs,
     }, { guard: attemptGuard }));
