@@ -236,6 +236,8 @@ const SPELLING_RUNTIME_CONTENT_CACHE_LIMIT = 8;
 // the full editable content row from D1.
 const spellingRuntimeContentCache = new Map();
 const MONSTER_VISUAL_CONFIG_ID = 'global';
+const MONSTER_VISUAL_CONFIG_POINTER_CACHE_TTL_MS = 5_000;
+const monsterVisualConfigPointerCache = new WeakMap();
 const MONSTER_VISUAL_SCOPE_TYPE = 'platform';
 const MONSTER_VISUAL_SCOPE_ID = 'monster-visual-config';
 
@@ -6135,11 +6137,25 @@ async function readBootstrapMonsterVisualRuntimeConfig(db, nowTs) {
   }
 }
 
+function cloneMonsterVisualConfigPointer(value) {
+  return value && typeof value === 'object' ? { ...value } : value;
+}
+
+function monsterVisualConfigPointerCacheKey(db) {
+  return db?.__rawDb || db;
+}
+
+function invalidateMonsterVisualConfigPointerCache(db) {
+  const cacheKey = monsterVisualConfigPointerCacheKey(db);
+  if (!cacheKey || (typeof cacheKey !== 'object' && typeof cacheKey !== 'function')) return;
+  monsterVisualConfigPointerCache.delete(cacheKey);
+}
+
 // U7: compact pointer for the selected-learner-bounded envelope. Omits
 // the ~450 KB bundled config; the client uses `publishedVersion` +
 // `manifestHash` to decide whether its cached config is still current,
 // and fetches the full config via its existing lazy path when not.
-async function readMonsterVisualConfigPointer(db) {
+async function readMonsterVisualConfigPointerFromStorage(db) {
   try {
     const row = await first(db, `
       SELECT published_version, manifest_hash, published_at, schema_version
@@ -6169,6 +6185,51 @@ async function readMonsterVisualConfigPointer(db) {
     }
     throw error;
   }
+}
+
+async function readMonsterVisualConfigPointer(db, nowTs = Date.now()) {
+  const cacheKey = monsterVisualConfigPointerCacheKey(db);
+  const cache = cacheKey && (typeof cacheKey === 'object' || typeof cacheKey === 'function')
+    ? monsterVisualConfigPointerCache.get(cacheKey)
+    : null;
+  if (cache?.value && Number(cache.expiresAt) > Number(nowTs)) {
+    return cloneMonsterVisualConfigPointer(cache.value);
+  }
+  if (cache?.pending) {
+    return cloneMonsterVisualConfigPointer(await cache.pending);
+  }
+
+  const pending = readMonsterVisualConfigPointerFromStorage(db)
+    .then((value) => {
+      if (cacheKey && (typeof cacheKey === 'object' || typeof cacheKey === 'function')) {
+        const current = monsterVisualConfigPointerCache.get(cacheKey);
+        if (current?.pending === pending) {
+          monsterVisualConfigPointerCache.set(cacheKey, {
+            value: cloneMonsterVisualConfigPointer(value),
+            expiresAt: Date.now() + MONSTER_VISUAL_CONFIG_POINTER_CACHE_TTL_MS,
+            pending: null,
+          });
+        }
+      }
+      return value;
+    })
+    .catch((error) => {
+      if (cacheKey && (typeof cacheKey === 'object' || typeof cacheKey === 'function')) {
+        const current = monsterVisualConfigPointerCache.get(cacheKey);
+        if (current?.pending === pending) {
+          monsterVisualConfigPointerCache.delete(cacheKey);
+        }
+      }
+      throw error;
+    });
+  if (cacheKey && (typeof cacheKey === 'object' || typeof cacheKey === 'function')) {
+    monsterVisualConfigPointerCache.set(cacheKey, {
+      value: cache?.value || null,
+      expiresAt: Number(cache?.expiresAt) || 0,
+      pending,
+    });
+  }
+  return cloneMonsterVisualConfigPointer(await pending);
 }
 
 function monsterVisualMutationMeta({ kind, mutation, expectedRevision, appliedRevision }) {
@@ -6374,6 +6435,7 @@ async function saveMonsterVisualConfigDraft(db, actorAccountId, rawDraft, mutati
         kind,
         mutation: nextMutation,
       });
+      invalidateMonsterVisualConfigPointerCache(db);
     },
   });
 }
@@ -6501,6 +6563,7 @@ async function publishMonsterVisualConfig(db, actorAccountId, mutation, nowTs) {
         kind,
         mutation: nextMutation,
       });
+      invalidateMonsterVisualConfigPointerCache(db);
       await run(db, `
         DELETE FROM platform_monster_visual_config_versions
         WHERE version NOT IN (
@@ -6612,6 +6675,7 @@ async function restoreMonsterVisualConfigVersion(db, actorAccountId, version, mu
         kind,
         mutation: nextMutation,
       });
+      invalidateMonsterVisualConfigPointerCache(db);
     },
   });
 }

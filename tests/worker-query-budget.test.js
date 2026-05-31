@@ -58,6 +58,7 @@ const BUDGET_PARENT_RECENT_SESSIONS = 7;
 // Headroom +1.
 const MEASURED_BOOTSTRAP_GET_FULL = 9;
 const BUDGET_BOOTSTRAP_GET_FULL = MEASURED_BOOTSTRAP_GET_FULL + 1;
+const MEASURED_BOOTSTRAP_GET_WITH_CACHED_MONSTER_POINTER = MEASURED_BOOTSTRAP_GET_FULL - 1;
 
 // Measured: 4 queries for Hero read-model GET (ops_status JOIN +
 // ensureAccount upsert + membership learner-access check +
@@ -565,6 +566,38 @@ test('U3 query budget: GET bootstrap full bundle ≤ BUDGET_BOOTSTRAP_GET_FULL',
       .filter((entry) => entry.operation === 'all' && /\bFROM child_subject_state\b/i.test(entry.sql));
     assert.equal(subjectStateReads.length, 1,
       'GET bootstrap should reuse the already-loaded child_subject_state rows for active-session discovery.');
+  } finally {
+    server.close();
+  }
+});
+
+test('U3 query budget: repeated GET bootstrap reuses the monster visual pointer cache', async () => {
+  const server = createServer();
+  try {
+    seed3LearnerFixture(server);
+
+    const warmResponse = await getBootstrap(server);
+    assert.equal(warmResponse.status, 200);
+    await readJsonBody(warmResponse);
+    server.DB.clearQueryLog();
+
+    const response = await getBootstrap(server);
+    assert.equal(response.status, 200);
+    const payload = await readJsonBody(response);
+    assert.equal(payload.ok, true);
+    assert.equal(payload.monsterVisualConfig?.compact, true);
+
+    const capacity = payload.meta?.capacity;
+    assert.ok(capacity, 'GET bootstrap must expose meta.capacity');
+    assert.equal(
+      capacity.queryCount,
+      MEASURED_BOOTSTRAP_GET_WITH_CACHED_MONSTER_POINTER,
+      `cached GET bootstrap queryCount should stay at ${MEASURED_BOOTSTRAP_GET_WITH_CACHED_MONSTER_POINTER}; measured ${capacity.queryCount}`,
+    );
+
+    const pointerReads = server.DB.takeQueryLog()
+      .filter((entry) => /\bFROM platform_monster_visual_config\b/i.test(entry.sql));
+    assert.equal(pointerReads.length, 0, 'cached public bootstrap must not re-read the global monster visual pointer.');
   } finally {
     server.close();
   }

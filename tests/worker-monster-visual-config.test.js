@@ -295,6 +295,14 @@ test('admin saves, publishes, and restores global monster visual config with rec
   const server = createWorkerRepositoryServer();
   try {
     const initial = (await adminHub(server)).adminHub.monsterVisualConfig;
+    const warmPointerResponse = await fetchAdmin(server, '/api/bootstrap', {
+      headers: { 'x-ks2-public-read-models': '1' },
+    });
+    const warmPointerPayload = await json(warmPointerResponse);
+    assert.equal(warmPointerResponse.status, 200);
+    assert.equal(warmPointerPayload.monsterVisualConfig.publishedVersion, 1);
+    assert.equal(warmPointerPayload.monsterVisualConfig.compact, true);
+
     const draft = reviewedConfig(initial.draft);
     draft.assets['vellhorn-b1-3'].baseline.facing = 'right';
 
@@ -331,6 +339,14 @@ test('admin saves, publishes, and restores global monster visual config with rec
     assert.equal(publishPayload.monsterVisualConfig.published.assets['vellhorn-b1-3'].baseline.facing, 'right');
     const publishedVersion = server.DB.db.prepare('SELECT config_json FROM platform_monster_visual_config_versions WHERE version = ?').get(2);
     assert.equal(JSON.parse(publishedVersion.config_json).assets['vellhorn-b1-3'].baseline.facing, 'right');
+
+    const publicBootstrapResponse = await fetchAdmin(server, '/api/bootstrap', {
+      headers: { 'x-ks2-public-read-models': '1' },
+    });
+    const publicBootstrapPayload = await json(publicBootstrapResponse);
+    assert.equal(publicBootstrapResponse.status, 200);
+    assert.equal(publicBootstrapPayload.monsterVisualConfig.publishedVersion, 2);
+    assert.equal(publicBootstrapPayload.monsterVisualConfig.compact, true);
 
     const bootstrapResponse = await fetchAdmin(server, '/api/bootstrap');
     const bootstrapPayload = await json(bootstrapResponse);
