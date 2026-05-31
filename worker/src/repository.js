@@ -7862,6 +7862,7 @@ function buildSubjectRuntimePersistencePlan(db, accountId, learnerId, subjectId,
   // land. A subsequent command will repopulate the projection via
   // `stale-catchup`.
   skipProjectionReadModelWrite = false,
+  skipActivePracticeSessionWrite = false,
 } = {}) {
   const nextState = normaliseSubjectStateRecord({
     ui: runtime?.state || null,
@@ -7892,65 +7893,68 @@ function buildSubjectRuntimePersistencePlan(db, accountId, learnerId, subjectId,
     ? normalisePracticeSessionRecord(runtime.practiceSession)
     : null;
   if (session?.id && session.learnerId === learnerId && session.subjectId === subjectId) {
-    // U6 queryCount budget: skip the no-op "abandon siblings" UPDATE
-    // when the caller confirmed the current active session id is the
-    // same one we are about to upsert. The UPDATE's `id <> ?` filter
-    // means it would match zero rows in that case.
-    const shouldEmitAbandon = session.status === 'active'
-      && (currentActiveSessionId == null || currentActiveSessionId !== session.id);
-    if (shouldEmitAbandon) {
-      statements.push(bindStatement(db, `
-        UPDATE practice_sessions
-        SET status = 'abandoned',
-            updated_at = ?,
-            updated_by_account_id = ?
-        WHERE learner_id = ?
-          AND subject_id = ?
-          AND status = 'active'
-          AND id <> ?
-          ${guardedWhere(guard)}
-      `, guardedParams([nowTs, accountId, learnerId, subjectId, session.id], guard)));
-    }
+    const shouldSkipActivePracticeSessionWrite = skipActivePracticeSessionWrite && session.status === 'active';
+    if (!shouldSkipActivePracticeSessionWrite) {
+      // U6 queryCount budget: skip the no-op "abandon siblings" UPDATE
+      // when the caller confirmed the current active session id is the
+      // same one we are about to upsert. The UPDATE's `id <> ?` filter
+      // means it would match zero rows in that case.
+      const shouldEmitAbandon = session.status === 'active'
+        && (currentActiveSessionId == null || currentActiveSessionId !== session.id);
+      if (shouldEmitAbandon) {
+        statements.push(bindStatement(db, `
+          UPDATE practice_sessions
+          SET status = 'abandoned',
+              updated_at = ?,
+              updated_by_account_id = ?
+          WHERE learner_id = ?
+            AND subject_id = ?
+            AND status = 'active'
+            AND id <> ?
+            ${guardedWhere(guard)}
+        `, guardedParams([nowTs, accountId, learnerId, subjectId, session.id], guard)));
+      }
 
-    const createdAt = asTs(session.createdAt, nowTs);
-    const updatedAt = asTs(session.updatedAt, nowTs);
-    const sessionParams = [
-      session.id,
-      learnerId,
-      subjectId,
-      session.sessionKind,
-      session.status,
-      session.sessionState == null ? null : JSON.stringify(session.sessionState),
-      session.summary == null ? null : JSON.stringify(session.summary),
-      createdAt,
-      updatedAt,
-      accountId,
-    ];
-    statements.push(bindStatement(db, `
-      INSERT INTO practice_sessions (
-        id,
-        learner_id,
-        subject_id,
-        session_kind,
-        status,
-        session_state_json,
-        summary_json,
-        created_at,
-        updated_at,
-        updated_by_account_id
-      )
-      ${guardedValueSource(sessionParams.length, guard)}
-      ON CONFLICT(id) DO UPDATE SET
-        learner_id = excluded.learner_id,
-        subject_id = excluded.subject_id,
-        session_kind = excluded.session_kind,
-        status = excluded.status,
-        session_state_json = excluded.session_state_json,
-        summary_json = excluded.summary_json,
-        created_at = excluded.created_at,
-        updated_at = excluded.updated_at,
-        updated_by_account_id = excluded.updated_by_account_id
-    `, guardedParams(sessionParams, guard)));
+      const createdAt = asTs(session.createdAt, nowTs);
+      const updatedAt = asTs(session.updatedAt, nowTs);
+      const sessionParams = [
+        session.id,
+        learnerId,
+        subjectId,
+        session.sessionKind,
+        session.status,
+        session.sessionState == null ? null : JSON.stringify(session.sessionState),
+        session.summary == null ? null : JSON.stringify(session.summary),
+        createdAt,
+        updatedAt,
+        accountId,
+      ];
+      statements.push(bindStatement(db, `
+        INSERT INTO practice_sessions (
+          id,
+          learner_id,
+          subject_id,
+          session_kind,
+          status,
+          session_state_json,
+          summary_json,
+          created_at,
+          updated_at,
+          updated_by_account_id
+        )
+        ${guardedValueSource(sessionParams.length, guard)}
+        ON CONFLICT(id) DO UPDATE SET
+          learner_id = excluded.learner_id,
+          subject_id = excluded.subject_id,
+          session_kind = excluded.session_kind,
+          status = excluded.status,
+          session_state_json = excluded.session_state_json,
+          summary_json = excluded.summary_json,
+          created_at = excluded.created_at,
+          updated_at = excluded.updated_at,
+          updated_by_account_id = excluded.updated_by_account_id
+      `, guardedParams(sessionParams, guard)));
+    }
   }
 
   const gameState = runtime?.gameState && typeof runtime.gameState === 'object' && !Array.isArray(runtime.gameState)
@@ -8350,6 +8354,9 @@ async function runSubjectCommandMutation(db, {
           persistActivityFeed: false,
           projectionContext: includeProjection ? freshProjectionContext : null,
           skipProjectionReadModelWrite: !includeProjection,
+          // Feedback progress is source-of-truth in child_subject_state.
+          // Keep practice_sessions for start/completion history, not every answer.
+          skipActivePracticeSessionWrite: command.command === 'submit-answer',
           currentActiveSessionId: freshRuntimeWrite.previousActiveSessionId || null,
         },
       );

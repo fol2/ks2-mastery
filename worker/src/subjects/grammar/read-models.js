@@ -1028,7 +1028,7 @@ function compactGrammarCommandReadModel(readModel, command) {
     prefs: readModel.prefs,
     stats: readModel.stats,
     aiEnrichment: readModel.aiEnrichment,
-    projections: readModel.projections,
+    projections: compactGrammarCommandProjections(readModel.projections),
     error: readModel.error,
   };
 
@@ -1037,6 +1037,18 @@ function compactGrammarCommandReadModel(readModel, command) {
   }
 
   return compact;
+}
+
+function compactGrammarCommandProjections(projections) {
+  if (!projections || typeof projections !== 'object' || Array.isArray(projections)) return null;
+  const rewards = projections.rewards;
+  if (!rewards || typeof rewards !== 'object' || Array.isArray(rewards)) return null;
+  return {
+    rewards: {
+      systemId: typeof rewards.systemId === 'string' ? rewards.systemId : '',
+      state: cloneSerialisable(rewards.state) || {},
+    },
+  };
 }
 
 export function buildGrammarCommandReadModel({

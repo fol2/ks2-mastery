@@ -153,7 +153,12 @@ Add any combination of the following to `npm run capacity:classroom`. Each flag 
 - `--max-network-failures <count>` — fail if network-level failures exceed `<count>`.
 - `--max-bootstrap-p95-ms <ms>` — fail if `/api/bootstrap` P95 wall time exceeds `<ms>`.
 - `--max-command-p95-ms <ms>` — fail if subject-command P95 wall time exceeds `<ms>`.
+- `--max-bootstrap-server-p95-ms <ms>` — fail if `/api/bootstrap` server-side P95 wall time exceeds `<ms>`.
+- `--max-command-server-p95-ms <ms>` — fail if subject-command server-side P95 wall time exceeds `<ms>`.
+- `--max-bootstrap-d1-rows-written <count>` — fail if bootstrap writes to D1 above `<count>`; the normal production expectation is `0`.
+- `--max-command-d1-rows-written <count>` — fail if a subject command writes more D1 rows than the configured cap.
 - `--max-response-bytes <bytes>` — fail if any endpoint's maximum response bytes exceed `<bytes>`.
+- `--max-command-response-bytes <bytes>` — fail if subject-command maximum response bytes exceed `<bytes>`.
 - `--require-zero-signals` — fail if any `exceededCpu`, `d1Overloaded`, `d1DailyLimit`, `rateLimited`, `networkFailure`, or `server5xx` signal is observed.
 - `--confirm-high-production-load` — required by operators before running `--production` at classroom or stretch scale (learners ≥ 20 or bootstrap-burst ≥ 20). Enforced by `validateClassroomLoadOptions`: a production run that exceeds the high-load threshold and omits this flag is rejected with a clear error.
 
@@ -169,7 +174,7 @@ The `capacity:classroom:release-gate` package script bakes the recommended defau
 npm run capacity:classroom:release-gate -- --production --origin https://ks2.eugnel.uk --confirm-production-load --confirm-high-production-load --demo-sessions --learners 30 --bootstrap-burst 20 --rounds 1
 ```
 
-The release-gate script is equivalent to `capacity:classroom` with `--max-5xx 0 --max-network-failures 0 --max-bootstrap-p95-ms 1000 --max-command-p95-ms 750 --max-response-bytes 600000 --require-zero-signals` prepended. Any additional arguments you supply on the command line layer on top — but they cannot repeat a threshold already baked in (duplicate-flag rejection), and they cannot choose `--dry-run` (threshold-vs-dry-run rejection).
+The release-gate script is equivalent to `capacity:classroom` with `--max-5xx 0 --max-network-failures 0 --max-bootstrap-p95-ms 1000 --max-command-p95-ms 500 --max-bootstrap-server-p95-ms 250 --max-command-server-p95-ms 250 --max-bootstrap-d1-rows-written 0 --max-command-d1-rows-written 5 --max-response-bytes 600000 --max-command-response-bytes 20000 --require-zero-signals` prepended. Any additional arguments you supply on the command line layer on top — but they cannot repeat a threshold already baked in (duplicate-flag rejection), and they cannot choose `--dry-run` (threshold-vs-dry-run rejection).
 
 ### Probe bootstrap flags
 

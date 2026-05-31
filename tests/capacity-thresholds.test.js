@@ -47,7 +47,12 @@ test('classroom threshold flags parse with defaults disabled (back-compat)', () 
   assert.equal(options.maxNetworkFailures, null);
   assert.equal(options.maxBootstrapP95Ms, null);
   assert.equal(options.maxCommandP95Ms, null);
+  assert.equal(options.maxBootstrapServerP95Ms, null);
+  assert.equal(options.maxCommandServerP95Ms, null);
+  assert.equal(options.maxBootstrapD1RowsWritten, null);
+  assert.equal(options.maxCommandD1RowsWritten, null);
   assert.equal(options.maxResponseBytes, null);
+  assert.equal(options.maxCommandResponseBytes, null);
   assert.equal(options.requireZeroSignals, false);
   assert.equal(options.confirmHighProductionLoad, false);
 });
@@ -59,7 +64,12 @@ test('classroom threshold flags parse numeric and boolean flag values', () => {
     '--max-network-failures', '0',
     '--max-bootstrap-p95-ms', '1000',
     '--max-command-p95-ms', '750',
+    '--max-bootstrap-server-p95-ms', '250',
+    '--max-command-server-p95-ms', '250',
+    '--max-bootstrap-d1-rows-written', '0',
+    '--max-command-d1-rows-written', '5',
     '--max-response-bytes', '600000',
+    '--max-command-response-bytes', '20000',
     '--require-zero-signals',
     '--confirm-high-production-load',
   ]);
@@ -67,7 +77,12 @@ test('classroom threshold flags parse numeric and boolean flag values', () => {
   assert.equal(options.maxNetworkFailures, 0);
   assert.equal(options.maxBootstrapP95Ms, 1000);
   assert.equal(options.maxCommandP95Ms, 750);
+  assert.equal(options.maxBootstrapServerP95Ms, 250);
+  assert.equal(options.maxCommandServerP95Ms, 250);
+  assert.equal(options.maxBootstrapD1RowsWritten, 0);
+  assert.equal(options.maxCommandD1RowsWritten, 5);
   assert.equal(options.maxResponseBytes, 600_000);
+  assert.equal(options.maxCommandResponseBytes, 20_000);
   assert.equal(options.requireZeroSignals, true);
   assert.equal(options.confirmHighProductionLoad, true);
 });
@@ -195,6 +210,51 @@ test('evaluateCapacityThresholds flags max-response-bytes violations', () => {
   assert.equal(violations.length, 1);
   assert.equal(violations[0].threshold, 'max-response-bytes');
   assert.equal(violations[0].observed, 900_000);
+});
+
+test('evaluateCapacityThresholds flags server P95, D1 write, and command-byte violations', () => {
+  const summary = summariseCapacityResults([
+    {
+      scenario: 'cold-bootstrap-burst',
+      method: 'GET',
+      endpoint: '/api/bootstrap',
+      status: 200,
+      ok: true,
+      wallMs: 40,
+      responseBytes: 500,
+      capacity: {
+        serverWallMs: 310,
+        d1RowsWritten: 1,
+      },
+    },
+    {
+      scenario: 'human-paced-grammar-round',
+      method: 'POST',
+      endpoint: '/api/subjects/grammar/command',
+      status: 200,
+      ok: true,
+      wallMs: 50,
+      responseBytes: 25_000,
+      capacity: {
+        serverWallMs: 270,
+        d1RowsWritten: 6,
+      },
+    },
+  ], { expectedRequests: 2 });
+  const violations = evaluateCapacityThresholds(summary, {
+    maxBootstrapServerP95Ms: 250,
+    maxCommandServerP95Ms: 250,
+    maxBootstrapD1RowsWritten: 0,
+    maxCommandD1RowsWritten: 5,
+    maxCommandResponseBytes: 20_000,
+  });
+  assert.deepEqual(violations.map((entry) => entry.threshold).sort(), [
+    'max-bootstrap-d1-rows-written',
+    'max-bootstrap-server-p95-ms',
+    'max-command-d1-rows-written',
+    'max-command-response-bytes',
+    'max-command-server-p95-ms',
+  ]);
 });
 
 test('evaluateCapacityThresholds flags --require-zero-signals with any operational signal', () => {
@@ -642,7 +702,18 @@ test('P95 command gate fails closed when no measurements captured (adv-006)', ()
 });
 
 test('integer parser rejects non-integer values for threshold flags (C-04)', () => {
-  for (const flag of ['--max-5xx', '--max-network-failures', '--max-bootstrap-p95-ms', '--max-command-p95-ms', '--max-response-bytes']) {
+  for (const flag of [
+    '--max-5xx',
+    '--max-network-failures',
+    '--max-bootstrap-p95-ms',
+    '--max-command-p95-ms',
+    '--max-bootstrap-server-p95-ms',
+    '--max-command-server-p95-ms',
+    '--max-bootstrap-d1-rows-written',
+    '--max-command-d1-rows-written',
+    '--max-response-bytes',
+    '--max-command-response-bytes',
+  ]) {
     assert.throws(
       () => parseClassroomLoadArgs(['--dry-run', flag, '1.5']),
       /must be a non-negative integer/,

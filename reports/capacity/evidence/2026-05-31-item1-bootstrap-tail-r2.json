@@ -1,0 +1,1858 @@
+{
+  "ok": true,
+  "dryRun": false,
+  "plan": {
+    "mode": "production",
+    "origin": "https://ks2.eugnel.uk",
+    "virtualLearners": [
+      {
+        "index": 0,
+        "label": "learner-01"
+      },
+      {
+        "index": 1,
+        "label": "learner-02"
+      },
+      {
+        "index": 2,
+        "label": "learner-03"
+      },
+      {
+        "index": 3,
+        "label": "learner-04"
+      },
+      {
+        "index": 4,
+        "label": "learner-05"
+      }
+    ],
+    "scenarios": [
+      {
+        "name": "cold-bootstrap-burst",
+        "requests": 5,
+        "concurrency": 5,
+        "endpoint": "GET /api/bootstrap"
+      },
+      {
+        "name": "human-paced-grammar-round",
+        "learners": 5,
+        "rounds": 1,
+        "pacingMs": 0,
+        "commandsPerRound": 3,
+        "endpoint": "POST /api/subjects/grammar/command"
+      }
+    ],
+    "expectedRequests": 30,
+    "safety": {
+      "productionRequiresConfirmation": true,
+      "productionRequiresAuth": true,
+      "localFixtureRequiresDemoSessions": true
+    }
+  },
+  "summary": {
+    "ok": true,
+    "totalRequests": 30,
+    "expectedRequests": 30,
+    "statusCounts": {
+      "200": 25,
+      "201": 5
+    },
+    "endpointStatus": {
+      "POST /api/demo/session 201": 5,
+      "GET /api/bootstrap 200": 10,
+      "POST /api/subjects/grammar/command 200": 15
+    },
+    "endpoints": {
+      "POST /api/demo/session": {
+        "phase": "setup",
+        "count": 5,
+        "p50WallMs": 196.4,
+        "p95WallMs": 237.6,
+        "maxWallMs": 237.6,
+        "p50ResponseBytes": 155,
+        "p95ResponseBytes": 155,
+        "maxResponseBytes": 155,
+        "topTailSamples": [
+          {
+            "scenario": "demo-session-setup",
+            "virtualLearner": "learner-01",
+            "status": 201,
+            "ok": true,
+            "wallMs": 237.6,
+            "responseBytes": 155,
+            "clientRequestId": "req_357fea8e2da09eed0dc1823c",
+            "serverRequestId": "req_357fea8e2da09eed0dc1823c"
+          },
+          {
+            "scenario": "demo-session-setup",
+            "virtualLearner": "learner-04",
+            "status": 201,
+            "ok": true,
+            "wallMs": 204.4,
+            "responseBytes": 155,
+            "clientRequestId": "req_a3d9b886942cfabd66a35167",
+            "serverRequestId": "req_a3d9b886942cfabd66a35167"
+          },
+          {
+            "scenario": "demo-session-setup",
+            "virtualLearner": "learner-02",
+            "status": 201,
+            "ok": true,
+            "wallMs": 196.4,
+            "responseBytes": 155,
+            "clientRequestId": "req_dc322f8dc1c29c001dce5523",
+            "serverRequestId": "req_dc322f8dc1c29c001dce5523"
+          },
+          {
+            "scenario": "demo-session-setup",
+            "virtualLearner": "learner-03",
+            "status": 201,
+            "ok": true,
+            "wallMs": 159.7,
+            "responseBytes": 155,
+            "clientRequestId": "req_52d3f57ab7baaa523deba9ae",
+            "serverRequestId": "req_52d3f57ab7baaa523deba9ae"
+          },
+          {
+            "scenario": "demo-session-setup",
+            "virtualLearner": "learner-05",
+            "status": 201,
+            "ok": true,
+            "wallMs": 155.7,
+            "responseBytes": 155,
+            "clientRequestId": "req_5f2757eb4807b7f87b8ed583",
+            "serverRequestId": "req_5f2757eb4807b7f87b8ed583"
+          }
+        ]
+      },
+      "GET /api/bootstrap": {
+        "phase": "bootstrap",
+        "count": 10,
+        "p50WallMs": 167.2,
+        "p95WallMs": 221.6,
+        "maxWallMs": 221.6,
+        "p50ResponseBytes": 2447,
+        "p95ResponseBytes": 2448,
+        "maxResponseBytes": 2448,
+        "queryCount": 9,
+        "queryCountP50": 9,
+        "queryCountP95": 9,
+        "queryCountMax": 9,
+        "d1RowsRead": 7,
+        "d1RowsReadP50": 7,
+        "d1RowsReadP95": 7,
+        "d1RowsReadMax": 7,
+        "d1RowsWritten": 0,
+        "d1RowsWrittenP50": 0,
+        "d1RowsWrittenP95": 0,
+        "d1RowsWrittenMax": 0,
+        "serverWallMsP50": 96,
+        "serverWallMsP95": 158,
+        "serverWallMsMax": 158,
+        "serverResponseBytesP50": 1818,
+        "serverResponseBytesP95": 1818,
+        "serverResponseBytesMax": 1818,
+        "bootstrapModes": {
+          "selected-learner-bounded": 10
+        },
+        "bootstrapCapacityModes": {
+          "public-bounded": 10
+        },
+        "bootstrapCapacityVersions": {
+          "4": 10
+        },
+        "subjectStatesBounded": {
+          "false": 10
+        },
+        "topTailSamples": [
+          {
+            "scenario": "cold-bootstrap-burst",
+            "virtualLearner": "learner-05",
+            "status": 200,
+            "ok": true,
+            "wallMs": 221.6,
+            "responseBytes": 2448,
+            "clientRequestId": "req_537401f403303c99be3d292f",
+            "serverRequestId": "req_537401f403303c99be3d292f",
+            "queryCount": 9,
+            "d1RowsRead": 7,
+            "d1RowsWritten": 0,
+            "serverWallMs": 158,
+            "serverResponseBytes": 1818,
+            "bootstrapMode": "selected-learner-bounded",
+            "bootstrapCapacityMode": "public-bounded",
+            "bootstrapCapacityVersion": 4
+          },
+          {
+            "scenario": "cold-bootstrap-burst",
+            "virtualLearner": "learner-04",
+            "status": 200,
+            "ok": true,
+            "wallMs": 220.8,
+            "responseBytes": 2448,
+            "clientRequestId": "req_6821438bd342459ae65e4129",
+            "serverRequestId": "req_6821438bd342459ae65e4129",
+            "queryCount": 9,
+            "d1RowsRead": 7,
+            "d1RowsWritten": 0,
+            "serverWallMs": 155,
+            "serverResponseBytes": 1818,
+            "bootstrapMode": "selected-learner-bounded",
+            "bootstrapCapacityMode": "public-bounded",
+            "bootstrapCapacityVersion": 4
+          },
+          {
+            "scenario": "cold-bootstrap-burst",
+            "virtualLearner": "learner-03",
+            "status": 200,
+            "ok": true,
+            "wallMs": 209.6,
+            "responseBytes": 2448,
+            "clientRequestId": "req_821525eb93f24008b55abb2c",
+            "serverRequestId": "req_821525eb93f24008b55abb2c",
+            "queryCount": 9,
+            "d1RowsRead": 7,
+            "d1RowsWritten": 0,
+            "serverWallMs": 140,
+            "serverResponseBytes": 1818,
+            "bootstrapMode": "selected-learner-bounded",
+            "bootstrapCapacityMode": "public-bounded",
+            "bootstrapCapacityVersion": 4
+          },
+          {
+            "scenario": "cold-bootstrap-burst",
+            "virtualLearner": "learner-01",
+            "status": 200,
+            "ok": true,
+            "wallMs": 186.3,
+            "responseBytes": 2448,
+            "clientRequestId": "req_45e9f05c4796934f5c419138",
+            "serverRequestId": "req_45e9f05c4796934f5c419138",
+            "queryCount": 9,
+            "d1RowsRead": 7,
+            "d1RowsWritten": 0,
+            "serverWallMs": 141,
+            "serverResponseBytes": 1818,
+            "bootstrapMode": "selected-learner-bounded",
+            "bootstrapCapacityMode": "public-bounded",
+            "bootstrapCapacityVersion": 4
+          },
+          {
+            "scenario": "cold-bootstrap-burst",
+            "virtualLearner": "learner-02",
+            "status": 200,
+            "ok": true,
+            "wallMs": 185.9,
+            "responseBytes": 2448,
+            "clientRequestId": "req_fdded2546d3ae251a6c71744",
+            "serverRequestId": "req_fdded2546d3ae251a6c71744",
+            "queryCount": 9,
+            "d1RowsRead": 7,
+            "d1RowsWritten": 0,
+            "serverWallMs": 144,
+            "serverResponseBytes": 1818,
+            "bootstrapMode": "selected-learner-bounded",
+            "bootstrapCapacityMode": "public-bounded",
+            "bootstrapCapacityVersion": 4
+          },
+          {
+            "scenario": "initial-bootstrap",
+            "virtualLearner": "learner-01",
+            "status": 200,
+            "ok": true,
+            "wallMs": 167.2,
+            "responseBytes": 2447,
+            "clientRequestId": "req_e8043801b4b4838464cea425",
+            "serverRequestId": "req_e8043801b4b4838464cea425",
+            "queryCount": 9,
+            "d1RowsRead": 7,
+            "d1RowsWritten": 0,
+            "serverWallMs": 96,
+            "serverResponseBytes": 1818,
+            "bootstrapMode": "selected-learner-bounded",
+            "bootstrapCapacityMode": "public-bounded",
+            "bootstrapCapacityVersion": 4
+          },
+          {
+            "scenario": "initial-bootstrap",
+            "virtualLearner": "learner-02",
+            "status": 200,
+            "ok": true,
+            "wallMs": 145.9,
+            "responseBytes": 2447,
+            "clientRequestId": "req_690f7d4d1f15ef87696108db",
+            "serverRequestId": "req_690f7d4d1f15ef87696108db",
+            "queryCount": 9,
+            "d1RowsRead": 7,
+            "d1RowsWritten": 0,
+            "serverWallMs": 84,
+            "serverResponseBytes": 1818,
+            "bootstrapMode": "selected-learner-bounded",
+            "bootstrapCapacityMode": "public-bounded",
+            "bootstrapCapacityVersion": 4
+          },
+          {
+            "scenario": "initial-bootstrap",
+            "virtualLearner": "learner-04",
+            "status": 200,
+            "ok": true,
+            "wallMs": 123.5,
+            "responseBytes": 2447,
+            "clientRequestId": "req_01fdcb1621ba3ab0547397eb",
+            "serverRequestId": "req_01fdcb1621ba3ab0547397eb",
+            "queryCount": 9,
+            "d1RowsRead": 7,
+            "d1RowsWritten": 0,
+            "serverWallMs": 80,
+            "serverResponseBytes": 1818,
+            "bootstrapMode": "selected-learner-bounded",
+            "bootstrapCapacityMode": "public-bounded",
+            "bootstrapCapacityVersion": 4
+          },
+          {
+            "scenario": "initial-bootstrap",
+            "virtualLearner": "learner-03",
+            "status": 200,
+            "ok": true,
+            "wallMs": 122.4,
+            "responseBytes": 2447,
+            "clientRequestId": "req_d8f73753870d701b2172eff8",
+            "serverRequestId": "req_d8f73753870d701b2172eff8",
+            "queryCount": 9,
+            "d1RowsRead": 7,
+            "d1RowsWritten": 0,
+            "serverWallMs": 79,
+            "serverResponseBytes": 1818,
+            "bootstrapMode": "selected-learner-bounded",
+            "bootstrapCapacityMode": "public-bounded",
+            "bootstrapCapacityVersion": 4
+          },
+          {
+            "scenario": "initial-bootstrap",
+            "virtualLearner": "learner-05",
+            "status": 200,
+            "ok": true,
+            "wallMs": 115.4,
+            "responseBytes": 2447,
+            "clientRequestId": "req_f88f428368997c648865c9a3",
+            "serverRequestId": "req_f88f428368997c648865c9a3",
+            "queryCount": 9,
+            "d1RowsRead": 7,
+            "d1RowsWritten": 0,
+            "serverWallMs": 69,
+            "serverResponseBytes": 1818,
+            "bootstrapMode": "selected-learner-bounded",
+            "bootstrapCapacityMode": "public-bounded",
+            "bootstrapCapacityVersion": 4
+          }
+        ]
+      },
+      "POST /api/subjects/grammar/command": {
+        "phase": "command",
+        "count": 15,
+        "p50WallMs": 170,
+        "p95WallMs": 226.1,
+        "maxWallMs": 226.1,
+        "p50ResponseBytes": 5035,
+        "p95ResponseBytes": 17230,
+        "maxResponseBytes": 17230,
+        "queryCount": 19,
+        "queryCountP50": 16,
+        "queryCountP95": 19,
+        "queryCountMax": 19,
+        "d1RowsRead": 142,
+        "d1RowsReadP50": 18,
+        "d1RowsReadP95": 142,
+        "d1RowsReadMax": 142,
+        "d1RowsWritten": 16,
+        "d1RowsWrittenP50": 15,
+        "d1RowsWrittenP95": 16,
+        "d1RowsWrittenMax": 16,
+        "serverWallMsP50": 120,
+        "serverWallMsP95": 165,
+        "serverWallMsMax": 165,
+        "serverResponseBytesP50": 4829,
+        "serverResponseBytesP95": 17023,
+        "serverResponseBytesMax": 17023,
+        "topTailSamples": [
+          {
+            "scenario": "human-paced-grammar-round",
+            "virtualLearner": "learner-04",
+            "status": 200,
+            "ok": true,
+            "wallMs": 226.1,
+            "responseBytes": 4102,
+            "clientRequestId": "req_a22398ab15456e432b75d026",
+            "serverRequestId": "req_a22398ab15456e432b75d026",
+            "queryCount": 18,
+            "d1RowsRead": 13,
+            "d1RowsWritten": 16,
+            "serverWallMs": 165,
+            "serverResponseBytes": 3884
+          },
+          {
+            "scenario": "human-paced-grammar-round",
+            "virtualLearner": "learner-01",
+            "status": 200,
+            "ok": true,
+            "wallMs": 197.6,
+            "responseBytes": 4102,
+            "clientRequestId": "req_2dd86b16347a1a8011c45fdb",
+            "serverRequestId": "req_2dd86b16347a1a8011c45fdb",
+            "queryCount": 19,
+            "d1RowsRead": 142,
+            "d1RowsWritten": 16,
+            "serverWallMs": 130,
+            "serverResponseBytes": 3883
+          },
+          {
+            "scenario": "human-paced-grammar-round",
+            "virtualLearner": "learner-01",
+            "status": 200,
+            "ok": true,
+            "wallMs": 187,
+            "responseBytes": 5035,
+            "clientRequestId": "req_3448de8950793045268f37f6",
+            "serverRequestId": "req_3448de8950793045268f37f6",
+            "queryCount": 15,
+            "d1RowsRead": 18,
+            "d1RowsWritten": 13,
+            "serverWallMs": 135,
+            "serverResponseBytes": 4829
+          },
+          {
+            "scenario": "human-paced-grammar-round",
+            "virtualLearner": "learner-02",
+            "status": 200,
+            "ok": true,
+            "wallMs": 180.5,
+            "responseBytes": 4101,
+            "clientRequestId": "req_1421249493819396b9008bb8",
+            "serverRequestId": "req_1421249493819396b9008bb8",
+            "queryCount": 18,
+            "d1RowsRead": 13,
+            "d1RowsWritten": 16,
+            "serverWallMs": 122,
+            "serverResponseBytes": 3883
+          },
+          {
+            "scenario": "human-paced-grammar-round",
+            "virtualLearner": "learner-05",
+            "status": 200,
+            "ok": true,
+            "wallMs": 180.1,
+            "responseBytes": 4102,
+            "clientRequestId": "req_d6253c6d5bae08ddbd08acc1",
+            "serverRequestId": "req_d6253c6d5bae08ddbd08acc1",
+            "queryCount": 18,
+            "d1RowsRead": 13,
+            "d1RowsWritten": 16,
+            "serverWallMs": 132,
+            "serverResponseBytes": 3884
+          },
+          {
+            "scenario": "human-paced-grammar-round",
+            "virtualLearner": "learner-03",
+            "status": 200,
+            "ok": true,
+            "wallMs": 176.7,
+            "responseBytes": 17225,
+            "clientRequestId": "req_59fd080b8daf1d4c4a4b6a34",
+            "serverRequestId": "req_59fd080b8daf1d4c4a4b6a34",
+            "queryCount": 16,
+            "d1RowsRead": 19,
+            "d1RowsWritten": 15,
+            "serverWallMs": 122,
+            "serverResponseBytes": 17018
+          },
+          {
+            "scenario": "human-paced-grammar-round",
+            "virtualLearner": "learner-03",
+            "status": 200,
+            "ok": true,
+            "wallMs": 171.9,
+            "responseBytes": 4101,
+            "clientRequestId": "req_80e624ff294ad08b731e49ef",
+            "serverRequestId": "req_80e624ff294ad08b731e49ef",
+            "queryCount": 18,
+            "d1RowsRead": 13,
+            "d1RowsWritten": 16,
+            "serverWallMs": 120,
+            "serverResponseBytes": 3883
+          },
+          {
+            "scenario": "human-paced-grammar-round",
+            "virtualLearner": "learner-04",
+            "status": 200,
+            "ok": true,
+            "wallMs": 170,
+            "responseBytes": 17230,
+            "clientRequestId": "req_bbf0c5259257cf115b76d607",
+            "serverRequestId": "req_bbf0c5259257cf115b76d607",
+            "queryCount": 16,
+            "d1RowsRead": 19,
+            "d1RowsWritten": 15,
+            "serverWallMs": 120,
+            "serverResponseBytes": 17023
+          },
+          {
+            "scenario": "human-paced-grammar-round",
+            "virtualLearner": "learner-02",
+            "status": 200,
+            "ok": true,
+            "wallMs": 169.7,
+            "responseBytes": 5035,
+            "clientRequestId": "req_47d8c3b5d63d8854a6056fa5",
+            "serverRequestId": "req_47d8c3b5d63d8854a6056fa5",
+            "queryCount": 15,
+            "d1RowsRead": 18,
+            "d1RowsWritten": 13,
+            "serverWallMs": 114,
+            "serverResponseBytes": 4829
+          },
+          {
+            "scenario": "human-paced-grammar-round",
+            "virtualLearner": "learner-05",
+            "status": 200,
+            "ok": true,
+            "wallMs": 162.5,
+            "responseBytes": 5035,
+            "clientRequestId": "req_9c0910f20fbe41e4256ef0fc",
+            "serverRequestId": "req_9c0910f20fbe41e4256ef0fc",
+            "queryCount": 15,
+            "d1RowsRead": 18,
+            "d1RowsWritten": 13,
+            "serverWallMs": 105,
+            "serverResponseBytes": 4829
+          }
+        ]
+      }
+    },
+    "phases": {
+      "setup": {
+        "phase": "setup",
+        "count": 5,
+        "p50WallMs": 196.4,
+        "p95WallMs": 237.6,
+        "maxWallMs": 237.6,
+        "p50ResponseBytes": 155,
+        "p95ResponseBytes": 155,
+        "maxResponseBytes": 155
+      },
+      "bootstrap": {
+        "phase": "bootstrap",
+        "count": 10,
+        "p50WallMs": 167.2,
+        "p95WallMs": 221.6,
+        "maxWallMs": 221.6,
+        "p50ResponseBytes": 2447,
+        "p95ResponseBytes": 2448,
+        "maxResponseBytes": 2448,
+        "queryCount": 9,
+        "queryCountP50": 9,
+        "queryCountP95": 9,
+        "queryCountMax": 9,
+        "d1RowsRead": 7,
+        "d1RowsReadP50": 7,
+        "d1RowsReadP95": 7,
+        "d1RowsReadMax": 7,
+        "d1RowsWritten": 0,
+        "d1RowsWrittenP50": 0,
+        "d1RowsWrittenP95": 0,
+        "d1RowsWrittenMax": 0,
+        "serverWallMsP50": 96,
+        "serverWallMsP95": 158,
+        "serverWallMsMax": 158,
+        "serverResponseBytesP50": 1818,
+        "serverResponseBytesP95": 1818,
+        "serverResponseBytesMax": 1818,
+        "bootstrapModes": {
+          "selected-learner-bounded": 10
+        },
+        "bootstrapCapacityModes": {
+          "public-bounded": 10
+        },
+        "bootstrapCapacityVersions": {
+          "4": 10
+        },
+        "subjectStatesBounded": {
+          "false": 10
+        }
+      },
+      "command": {
+        "phase": "command",
+        "count": 15,
+        "p50WallMs": 170,
+        "p95WallMs": 226.1,
+        "maxWallMs": 226.1,
+        "p50ResponseBytes": 5035,
+        "p95ResponseBytes": 17230,
+        "maxResponseBytes": 17230,
+        "queryCount": 19,
+        "queryCountP50": 16,
+        "queryCountP95": 19,
+        "queryCountMax": 19,
+        "d1RowsRead": 142,
+        "d1RowsReadP50": 18,
+        "d1RowsReadP95": 142,
+        "d1RowsReadMax": 142,
+        "d1RowsWritten": 16,
+        "d1RowsWrittenP50": 15,
+        "d1RowsWrittenP95": 16,
+        "d1RowsWrittenMax": 16,
+        "serverWallMsP50": 120,
+        "serverWallMsP95": 165,
+        "serverWallMsMax": 165,
+        "serverResponseBytesP50": 4829,
+        "serverResponseBytesP95": 17023,
+        "serverResponseBytesMax": 17023
+      }
+    },
+    "scenarios": {
+      "demo-session-setup": {
+        "phase": "setup",
+        "count": 5,
+        "p50WallMs": 196.4,
+        "p95WallMs": 237.6,
+        "maxWallMs": 237.6,
+        "p50ResponseBytes": 155,
+        "p95ResponseBytes": 155,
+        "maxResponseBytes": 155
+      },
+      "initial-bootstrap": {
+        "phase": "bootstrap",
+        "count": 5,
+        "p50WallMs": 123.5,
+        "p95WallMs": 167.2,
+        "maxWallMs": 167.2,
+        "p50ResponseBytes": 2447,
+        "p95ResponseBytes": 2447,
+        "maxResponseBytes": 2447,
+        "queryCount": 9,
+        "queryCountP50": 9,
+        "queryCountP95": 9,
+        "queryCountMax": 9,
+        "d1RowsRead": 7,
+        "d1RowsReadP50": 7,
+        "d1RowsReadP95": 7,
+        "d1RowsReadMax": 7,
+        "d1RowsWritten": 0,
+        "d1RowsWrittenP50": 0,
+        "d1RowsWrittenP95": 0,
+        "d1RowsWrittenMax": 0,
+        "serverWallMsP50": 80,
+        "serverWallMsP95": 96,
+        "serverWallMsMax": 96,
+        "serverResponseBytesP50": 1818,
+        "serverResponseBytesP95": 1818,
+        "serverResponseBytesMax": 1818,
+        "bootstrapModes": {
+          "selected-learner-bounded": 5
+        },
+        "bootstrapCapacityModes": {
+          "public-bounded": 5
+        },
+        "bootstrapCapacityVersions": {
+          "4": 5
+        },
+        "subjectStatesBounded": {
+          "false": 5
+        }
+      },
+      "cold-bootstrap-burst": {
+        "phase": "bootstrap",
+        "count": 5,
+        "p50WallMs": 209.6,
+        "p95WallMs": 221.6,
+        "maxWallMs": 221.6,
+        "p50ResponseBytes": 2448,
+        "p95ResponseBytes": 2448,
+        "maxResponseBytes": 2448,
+        "queryCount": 9,
+        "queryCountP50": 9,
+        "queryCountP95": 9,
+        "queryCountMax": 9,
+        "d1RowsRead": 7,
+        "d1RowsReadP50": 7,
+        "d1RowsReadP95": 7,
+        "d1RowsReadMax": 7,
+        "d1RowsWritten": 0,
+        "d1RowsWrittenP50": 0,
+        "d1RowsWrittenP95": 0,
+        "d1RowsWrittenMax": 0,
+        "serverWallMsP50": 144,
+        "serverWallMsP95": 158,
+        "serverWallMsMax": 158,
+        "serverResponseBytesP50": 1818,
+        "serverResponseBytesP95": 1818,
+        "serverResponseBytesMax": 1818,
+        "bootstrapModes": {
+          "selected-learner-bounded": 5
+        },
+        "bootstrapCapacityModes": {
+          "public-bounded": 5
+        },
+        "bootstrapCapacityVersions": {
+          "4": 5
+        },
+        "subjectStatesBounded": {
+          "false": 5
+        }
+      },
+      "human-paced-grammar-round": {
+        "phase": "command",
+        "count": 15,
+        "p50WallMs": 170,
+        "p95WallMs": 226.1,
+        "maxWallMs": 226.1,
+        "p50ResponseBytes": 5035,
+        "p95ResponseBytes": 17230,
+        "maxResponseBytes": 17230,
+        "queryCount": 19,
+        "queryCountP50": 16,
+        "queryCountP95": 19,
+        "queryCountMax": 19,
+        "d1RowsRead": 142,
+        "d1RowsReadP50": 18,
+        "d1RowsReadP95": 142,
+        "d1RowsReadMax": 142,
+        "d1RowsWritten": 16,
+        "d1RowsWrittenP50": 15,
+        "d1RowsWrittenP95": 16,
+        "d1RowsWrittenMax": 16,
+        "serverWallMsP50": 120,
+        "serverWallMsP95": 165,
+        "serverWallMsMax": 165,
+        "serverResponseBytesP50": 4829,
+        "serverResponseBytesP95": 17023,
+        "serverResponseBytesMax": 17023
+      }
+    },
+    "signals": {},
+    "failures": []
+  },
+  "measurements": [
+    {
+      "scenario": "demo-session-setup",
+      "virtualLearner": "learner-01",
+      "method": "POST",
+      "endpoint": "/api/demo/session",
+      "status": 201,
+      "ok": true,
+      "wallMs": 237.6,
+      "responseBytes": 155,
+      "code": null,
+      "message": "",
+      "requestId": null,
+      "clientRequestId": "req_357fea8e2da09eed0dc1823c",
+      "serverRequestId": "req_357fea8e2da09eed0dc1823c",
+      "capacity": null
+    },
+    {
+      "scenario": "demo-session-setup",
+      "virtualLearner": "learner-02",
+      "method": "POST",
+      "endpoint": "/api/demo/session",
+      "status": 201,
+      "ok": true,
+      "wallMs": 196.4,
+      "responseBytes": 155,
+      "code": null,
+      "message": "",
+      "requestId": null,
+      "clientRequestId": "req_dc322f8dc1c29c001dce5523",
+      "serverRequestId": "req_dc322f8dc1c29c001dce5523",
+      "capacity": null
+    },
+    {
+      "scenario": "demo-session-setup",
+      "virtualLearner": "learner-03",
+      "method": "POST",
+      "endpoint": "/api/demo/session",
+      "status": 201,
+      "ok": true,
+      "wallMs": 159.7,
+      "responseBytes": 155,
+      "code": null,
+      "message": "",
+      "requestId": null,
+      "clientRequestId": "req_52d3f57ab7baaa523deba9ae",
+      "serverRequestId": "req_52d3f57ab7baaa523deba9ae",
+      "capacity": null
+    },
+    {
+      "scenario": "demo-session-setup",
+      "virtualLearner": "learner-04",
+      "method": "POST",
+      "endpoint": "/api/demo/session",
+      "status": 201,
+      "ok": true,
+      "wallMs": 204.4,
+      "responseBytes": 155,
+      "code": null,
+      "message": "",
+      "requestId": null,
+      "clientRequestId": "req_a3d9b886942cfabd66a35167",
+      "serverRequestId": "req_a3d9b886942cfabd66a35167",
+      "capacity": null
+    },
+    {
+      "scenario": "demo-session-setup",
+      "virtualLearner": "learner-05",
+      "method": "POST",
+      "endpoint": "/api/demo/session",
+      "status": 201,
+      "ok": true,
+      "wallMs": 155.7,
+      "responseBytes": 155,
+      "code": null,
+      "message": "",
+      "requestId": null,
+      "clientRequestId": "req_5f2757eb4807b7f87b8ed583",
+      "serverRequestId": "req_5f2757eb4807b7f87b8ed583",
+      "capacity": null
+    },
+    {
+      "scenario": "initial-bootstrap",
+      "virtualLearner": "learner-01",
+      "method": "GET",
+      "endpoint": "/api/bootstrap",
+      "status": 200,
+      "ok": true,
+      "wallMs": 167.2,
+      "responseBytes": 2447,
+      "code": null,
+      "message": "",
+      "requestId": null,
+      "clientRequestId": "req_e8043801b4b4838464cea425",
+      "serverRequestId": "req_e8043801b4b4838464cea425",
+      "capacity": {
+        "requestId": "req_e8043801b4b4838464cea425",
+        "queryCount": 9,
+        "d1RowsRead": 7,
+        "d1RowsWritten": 0,
+        "serverWallMs": 96,
+        "responseBytes": 1818,
+        "signals": [],
+        "bootstrapMode": "selected-learner-bounded",
+        "bootstrapCapacity": {
+          "version": 4,
+          "mode": "public-bounded",
+          "limits": {
+            "activeSessionsPerLearner": 1,
+            "recentSessionsPerLearner": 5,
+            "recentEventsPerLearner": 50
+          },
+          "learners": {
+            "returned": 1
+          },
+          "practiceSessions": {
+            "returned": 0,
+            "bounded": true,
+            "atOrAboveRecentLimit": false,
+            "atOrAboveMaximumLimit": false
+          },
+          "eventLog": {
+            "returned": 0,
+            "bounded": true,
+            "atOrAboveRecentLimit": false
+          },
+          "subjectStatesBounded": false
+        },
+        "projectionFallback": null
+      }
+    },
+    {
+      "scenario": "initial-bootstrap",
+      "virtualLearner": "learner-02",
+      "method": "GET",
+      "endpoint": "/api/bootstrap",
+      "status": 200,
+      "ok": true,
+      "wallMs": 145.9,
+      "responseBytes": 2447,
+      "code": null,
+      "message": "",
+      "requestId": null,
+      "clientRequestId": "req_690f7d4d1f15ef87696108db",
+      "serverRequestId": "req_690f7d4d1f15ef87696108db",
+      "capacity": {
+        "requestId": "req_690f7d4d1f15ef87696108db",
+        "queryCount": 9,
+        "d1RowsRead": 7,
+        "d1RowsWritten": 0,
+        "serverWallMs": 84,
+        "responseBytes": 1818,
+        "signals": [],
+        "bootstrapMode": "selected-learner-bounded",
+        "bootstrapCapacity": {
+          "version": 4,
+          "mode": "public-bounded",
+          "limits": {
+            "activeSessionsPerLearner": 1,
+            "recentSessionsPerLearner": 5,
+            "recentEventsPerLearner": 50
+          },
+          "learners": {
+            "returned": 1
+          },
+          "practiceSessions": {
+            "returned": 0,
+            "bounded": true,
+            "atOrAboveRecentLimit": false,
+            "atOrAboveMaximumLimit": false
+          },
+          "eventLog": {
+            "returned": 0,
+            "bounded": true,
+            "atOrAboveRecentLimit": false
+          },
+          "subjectStatesBounded": false
+        },
+        "projectionFallback": null
+      }
+    },
+    {
+      "scenario": "initial-bootstrap",
+      "virtualLearner": "learner-03",
+      "method": "GET",
+      "endpoint": "/api/bootstrap",
+      "status": 200,
+      "ok": true,
+      "wallMs": 122.4,
+      "responseBytes": 2447,
+      "code": null,
+      "message": "",
+      "requestId": null,
+      "clientRequestId": "req_d8f73753870d701b2172eff8",
+      "serverRequestId": "req_d8f73753870d701b2172eff8",
+      "capacity": {
+        "requestId": "req_d8f73753870d701b2172eff8",
+        "queryCount": 9,
+        "d1RowsRead": 7,
+        "d1RowsWritten": 0,
+        "serverWallMs": 79,
+        "responseBytes": 1818,
+        "signals": [],
+        "bootstrapMode": "selected-learner-bounded",
+        "bootstrapCapacity": {
+          "version": 4,
+          "mode": "public-bounded",
+          "limits": {
+            "activeSessionsPerLearner": 1,
+            "recentSessionsPerLearner": 5,
+            "recentEventsPerLearner": 50
+          },
+          "learners": {
+            "returned": 1
+          },
+          "practiceSessions": {
+            "returned": 0,
+            "bounded": true,
+            "atOrAboveRecentLimit": false,
+            "atOrAboveMaximumLimit": false
+          },
+          "eventLog": {
+            "returned": 0,
+            "bounded": true,
+            "atOrAboveRecentLimit": false
+          },
+          "subjectStatesBounded": false
+        },
+        "projectionFallback": null
+      }
+    },
+    {
+      "scenario": "initial-bootstrap",
+      "virtualLearner": "learner-04",
+      "method": "GET",
+      "endpoint": "/api/bootstrap",
+      "status": 200,
+      "ok": true,
+      "wallMs": 123.5,
+      "responseBytes": 2447,
+      "code": null,
+      "message": "",
+      "requestId": null,
+      "clientRequestId": "req_01fdcb1621ba3ab0547397eb",
+      "serverRequestId": "req_01fdcb1621ba3ab0547397eb",
+      "capacity": {
+        "requestId": "req_01fdcb1621ba3ab0547397eb",
+        "queryCount": 9,
+        "d1RowsRead": 7,
+        "d1RowsWritten": 0,
+        "serverWallMs": 80,
+        "responseBytes": 1818,
+        "signals": [],
+        "bootstrapMode": "selected-learner-bounded",
+        "bootstrapCapacity": {
+          "version": 4,
+          "mode": "public-bounded",
+          "limits": {
+            "activeSessionsPerLearner": 1,
+            "recentSessionsPerLearner": 5,
+            "recentEventsPerLearner": 50
+          },
+          "learners": {
+            "returned": 1
+          },
+          "practiceSessions": {
+            "returned": 0,
+            "bounded": true,
+            "atOrAboveRecentLimit": false,
+            "atOrAboveMaximumLimit": false
+          },
+          "eventLog": {
+            "returned": 0,
+            "bounded": true,
+            "atOrAboveRecentLimit": false
+          },
+          "subjectStatesBounded": false
+        },
+        "projectionFallback": null
+      }
+    },
+    {
+      "scenario": "initial-bootstrap",
+      "virtualLearner": "learner-05",
+      "method": "GET",
+      "endpoint": "/api/bootstrap",
+      "status": 200,
+      "ok": true,
+      "wallMs": 115.4,
+      "responseBytes": 2447,
+      "code": null,
+      "message": "",
+      "requestId": null,
+      "clientRequestId": "req_f88f428368997c648865c9a3",
+      "serverRequestId": "req_f88f428368997c648865c9a3",
+      "capacity": {
+        "requestId": "req_f88f428368997c648865c9a3",
+        "queryCount": 9,
+        "d1RowsRead": 7,
+        "d1RowsWritten": 0,
+        "serverWallMs": 69,
+        "responseBytes": 1818,
+        "signals": [],
+        "bootstrapMode": "selected-learner-bounded",
+        "bootstrapCapacity": {
+          "version": 4,
+          "mode": "public-bounded",
+          "limits": {
+            "activeSessionsPerLearner": 1,
+            "recentSessionsPerLearner": 5,
+            "recentEventsPerLearner": 50
+          },
+          "learners": {
+            "returned": 1
+          },
+          "practiceSessions": {
+            "returned": 0,
+            "bounded": true,
+            "atOrAboveRecentLimit": false,
+            "atOrAboveMaximumLimit": false
+          },
+          "eventLog": {
+            "returned": 0,
+            "bounded": true,
+            "atOrAboveRecentLimit": false
+          },
+          "subjectStatesBounded": false
+        },
+        "projectionFallback": null
+      }
+    },
+    {
+      "scenario": "cold-bootstrap-burst",
+      "virtualLearner": "learner-01",
+      "method": "GET",
+      "endpoint": "/api/bootstrap",
+      "status": 200,
+      "ok": true,
+      "wallMs": 186.3,
+      "responseBytes": 2448,
+      "code": null,
+      "message": "",
+      "requestId": null,
+      "clientRequestId": "req_45e9f05c4796934f5c419138",
+      "serverRequestId": "req_45e9f05c4796934f5c419138",
+      "capacity": {
+        "requestId": "req_45e9f05c4796934f5c419138",
+        "queryCount": 9,
+        "d1RowsRead": 7,
+        "d1RowsWritten": 0,
+        "serverWallMs": 141,
+        "responseBytes": 1818,
+        "signals": [],
+        "bootstrapMode": "selected-learner-bounded",
+        "bootstrapCapacity": {
+          "version": 4,
+          "mode": "public-bounded",
+          "limits": {
+            "activeSessionsPerLearner": 1,
+            "recentSessionsPerLearner": 5,
+            "recentEventsPerLearner": 50
+          },
+          "learners": {
+            "returned": 1
+          },
+          "practiceSessions": {
+            "returned": 0,
+            "bounded": true,
+            "atOrAboveRecentLimit": false,
+            "atOrAboveMaximumLimit": false
+          },
+          "eventLog": {
+            "returned": 0,
+            "bounded": true,
+            "atOrAboveRecentLimit": false
+          },
+          "subjectStatesBounded": false
+        },
+        "projectionFallback": null
+      }
+    },
+    {
+      "scenario": "cold-bootstrap-burst",
+      "virtualLearner": "learner-02",
+      "method": "GET",
+      "endpoint": "/api/bootstrap",
+      "status": 200,
+      "ok": true,
+      "wallMs": 185.9,
+      "responseBytes": 2448,
+      "code": null,
+      "message": "",
+      "requestId": null,
+      "clientRequestId": "req_fdded2546d3ae251a6c71744",
+      "serverRequestId": "req_fdded2546d3ae251a6c71744",
+      "capacity": {
+        "requestId": "req_fdded2546d3ae251a6c71744",
+        "queryCount": 9,
+        "d1RowsRead": 7,
+        "d1RowsWritten": 0,
+        "serverWallMs": 144,
+        "responseBytes": 1818,
+        "signals": [],
+        "bootstrapMode": "selected-learner-bounded",
+        "bootstrapCapacity": {
+          "version": 4,
+          "mode": "public-bounded",
+          "limits": {
+            "activeSessionsPerLearner": 1,
+            "recentSessionsPerLearner": 5,
+            "recentEventsPerLearner": 50
+          },
+          "learners": {
+            "returned": 1
+          },
+          "practiceSessions": {
+            "returned": 0,
+            "bounded": true,
+            "atOrAboveRecentLimit": false,
+            "atOrAboveMaximumLimit": false
+          },
+          "eventLog": {
+            "returned": 0,
+            "bounded": true,
+            "atOrAboveRecentLimit": false
+          },
+          "subjectStatesBounded": false
+        },
+        "projectionFallback": null
+      }
+    },
+    {
+      "scenario": "cold-bootstrap-burst",
+      "virtualLearner": "learner-03",
+      "method": "GET",
+      "endpoint": "/api/bootstrap",
+      "status": 200,
+      "ok": true,
+      "wallMs": 209.6,
+      "responseBytes": 2448,
+      "code": null,
+      "message": "",
+      "requestId": null,
+      "clientRequestId": "req_821525eb93f24008b55abb2c",
+      "serverRequestId": "req_821525eb93f24008b55abb2c",
+      "capacity": {
+        "requestId": "req_821525eb93f24008b55abb2c",
+        "queryCount": 9,
+        "d1RowsRead": 7,
+        "d1RowsWritten": 0,
+        "serverWallMs": 140,
+        "responseBytes": 1818,
+        "signals": [],
+        "bootstrapMode": "selected-learner-bounded",
+        "bootstrapCapacity": {
+          "version": 4,
+          "mode": "public-bounded",
+          "limits": {
+            "activeSessionsPerLearner": 1,
+            "recentSessionsPerLearner": 5,
+            "recentEventsPerLearner": 50
+          },
+          "learners": {
+            "returned": 1
+          },
+          "practiceSessions": {
+            "returned": 0,
+            "bounded": true,
+            "atOrAboveRecentLimit": false,
+            "atOrAboveMaximumLimit": false
+          },
+          "eventLog": {
+            "returned": 0,
+            "bounded": true,
+            "atOrAboveRecentLimit": false
+          },
+          "subjectStatesBounded": false
+        },
+        "projectionFallback": null
+      }
+    },
+    {
+      "scenario": "cold-bootstrap-burst",
+      "virtualLearner": "learner-04",
+      "method": "GET",
+      "endpoint": "/api/bootstrap",
+      "status": 200,
+      "ok": true,
+      "wallMs": 220.8,
+      "responseBytes": 2448,
+      "code": null,
+      "message": "",
+      "requestId": null,
+      "clientRequestId": "req_6821438bd342459ae65e4129",
+      "serverRequestId": "req_6821438bd342459ae65e4129",
+      "capacity": {
+        "requestId": "req_6821438bd342459ae65e4129",
+        "queryCount": 9,
+        "d1RowsRead": 7,
+        "d1RowsWritten": 0,
+        "serverWallMs": 155,
+        "responseBytes": 1818,
+        "signals": [],
+        "bootstrapMode": "selected-learner-bounded",
+        "bootstrapCapacity": {
+          "version": 4,
+          "mode": "public-bounded",
+          "limits": {
+            "activeSessionsPerLearner": 1,
+            "recentSessionsPerLearner": 5,
+            "recentEventsPerLearner": 50
+          },
+          "learners": {
+            "returned": 1
+          },
+          "practiceSessions": {
+            "returned": 0,
+            "bounded": true,
+            "atOrAboveRecentLimit": false,
+            "atOrAboveMaximumLimit": false
+          },
+          "eventLog": {
+            "returned": 0,
+            "bounded": true,
+            "atOrAboveRecentLimit": false
+          },
+          "subjectStatesBounded": false
+        },
+        "projectionFallback": null
+      }
+    },
+    {
+      "scenario": "cold-bootstrap-burst",
+      "virtualLearner": "learner-05",
+      "method": "GET",
+      "endpoint": "/api/bootstrap",
+      "status": 200,
+      "ok": true,
+      "wallMs": 221.6,
+      "responseBytes": 2448,
+      "code": null,
+      "message": "",
+      "requestId": null,
+      "clientRequestId": "req_537401f403303c99be3d292f",
+      "serverRequestId": "req_537401f403303c99be3d292f",
+      "capacity": {
+        "requestId": "req_537401f403303c99be3d292f",
+        "queryCount": 9,
+        "d1RowsRead": 7,
+        "d1RowsWritten": 0,
+        "serverWallMs": 158,
+        "responseBytes": 1818,
+        "signals": [],
+        "bootstrapMode": "selected-learner-bounded",
+        "bootstrapCapacity": {
+          "version": 4,
+          "mode": "public-bounded",
+          "limits": {
+            "activeSessionsPerLearner": 1,
+            "recentSessionsPerLearner": 5,
+            "recentEventsPerLearner": 50
+          },
+          "learners": {
+            "returned": 1
+          },
+          "practiceSessions": {
+            "returned": 0,
+            "bounded": true,
+            "atOrAboveRecentLimit": false,
+            "atOrAboveMaximumLimit": false
+          },
+          "eventLog": {
+            "returned": 0,
+            "bounded": true,
+            "atOrAboveRecentLimit": false
+          },
+          "subjectStatesBounded": false
+        },
+        "projectionFallback": null
+      }
+    },
+    {
+      "scenario": "human-paced-grammar-round",
+      "virtualLearner": "learner-01",
+      "method": "POST",
+      "endpoint": "/api/subjects/grammar/command",
+      "status": 200,
+      "ok": true,
+      "wallMs": 197.6,
+      "responseBytes": 4102,
+      "code": null,
+      "message": "",
+      "requestId": "req_5820ee4e9db86920635f30b7",
+      "clientRequestId": "req_2dd86b16347a1a8011c45fdb",
+      "serverRequestId": "req_2dd86b16347a1a8011c45fdb",
+      "capacity": {
+        "requestId": "req_2dd86b16347a1a8011c45fdb",
+        "queryCount": 19,
+        "d1RowsRead": 142,
+        "d1RowsWritten": 16,
+        "serverWallMs": 130,
+        "responseBytes": 3883,
+        "signals": [],
+        "bootstrapMode": null,
+        "bootstrapCapacity": null,
+        "projectionFallback": "miss-rehydrated"
+      }
+    },
+    {
+      "scenario": "human-paced-grammar-round",
+      "virtualLearner": "learner-01",
+      "method": "POST",
+      "endpoint": "/api/subjects/grammar/command",
+      "status": 200,
+      "ok": true,
+      "wallMs": 160.4,
+      "responseBytes": 17225,
+      "code": null,
+      "message": "",
+      "requestId": "req_63723ea2bb095f6e83c466d7",
+      "clientRequestId": "req_298f4e9da8f1b4262feb549f",
+      "serverRequestId": "req_298f4e9da8f1b4262feb549f",
+      "capacity": {
+        "requestId": "req_298f4e9da8f1b4262feb549f",
+        "queryCount": 16,
+        "d1RowsRead": 19,
+        "d1RowsWritten": 15,
+        "serverWallMs": 102,
+        "responseBytes": 17018,
+        "signals": [],
+        "bootstrapMode": null,
+        "bootstrapCapacity": null,
+        "projectionFallback": "hit"
+      }
+    },
+    {
+      "scenario": "human-paced-grammar-round",
+      "virtualLearner": "learner-01",
+      "method": "POST",
+      "endpoint": "/api/subjects/grammar/command",
+      "status": 200,
+      "ok": true,
+      "wallMs": 187,
+      "responseBytes": 5035,
+      "code": null,
+      "message": "",
+      "requestId": "req_e3fd65d422782aa5cde7bb18",
+      "clientRequestId": "req_3448de8950793045268f37f6",
+      "serverRequestId": "req_3448de8950793045268f37f6",
+      "capacity": {
+        "requestId": "req_3448de8950793045268f37f6",
+        "queryCount": 15,
+        "d1RowsRead": 18,
+        "d1RowsWritten": 13,
+        "serverWallMs": 135,
+        "responseBytes": 4829,
+        "signals": [],
+        "bootstrapMode": null,
+        "bootstrapCapacity": null,
+        "projectionFallback": "hit"
+      }
+    },
+    {
+      "scenario": "human-paced-grammar-round",
+      "virtualLearner": "learner-02",
+      "method": "POST",
+      "endpoint": "/api/subjects/grammar/command",
+      "status": 200,
+      "ok": true,
+      "wallMs": 180.5,
+      "responseBytes": 4101,
+      "code": null,
+      "message": "",
+      "requestId": "req_199c3f750532ee1a0dc9203d",
+      "clientRequestId": "req_1421249493819396b9008bb8",
+      "serverRequestId": "req_1421249493819396b9008bb8",
+      "capacity": {
+        "requestId": "req_1421249493819396b9008bb8",
+        "queryCount": 18,
+        "d1RowsRead": 13,
+        "d1RowsWritten": 16,
+        "serverWallMs": 122,
+        "responseBytes": 3883,
+        "signals": [],
+        "bootstrapMode": null,
+        "bootstrapCapacity": null,
+        "projectionFallback": "miss-rehydrated"
+      }
+    },
+    {
+      "scenario": "human-paced-grammar-round",
+      "virtualLearner": "learner-02",
+      "method": "POST",
+      "endpoint": "/api/subjects/grammar/command",
+      "status": 200,
+      "ok": true,
+      "wallMs": 158,
+      "responseBytes": 17225,
+      "code": null,
+      "message": "",
+      "requestId": "req_4c39f06755532239e02799bf",
+      "clientRequestId": "req_7d339a351c0723f5d3f635b8",
+      "serverRequestId": "req_7d339a351c0723f5d3f635b8",
+      "capacity": {
+        "requestId": "req_7d339a351c0723f5d3f635b8",
+        "queryCount": 16,
+        "d1RowsRead": 19,
+        "d1RowsWritten": 15,
+        "serverWallMs": 107,
+        "responseBytes": 17018,
+        "signals": [],
+        "bootstrapMode": null,
+        "bootstrapCapacity": null,
+        "projectionFallback": "hit"
+      }
+    },
+    {
+      "scenario": "human-paced-grammar-round",
+      "virtualLearner": "learner-02",
+      "method": "POST",
+      "endpoint": "/api/subjects/grammar/command",
+      "status": 200,
+      "ok": true,
+      "wallMs": 169.7,
+      "responseBytes": 5035,
+      "code": null,
+      "message": "",
+      "requestId": "req_dbe561b02dcceb681fc034fd",
+      "clientRequestId": "req_47d8c3b5d63d8854a6056fa5",
+      "serverRequestId": "req_47d8c3b5d63d8854a6056fa5",
+      "capacity": {
+        "requestId": "req_47d8c3b5d63d8854a6056fa5",
+        "queryCount": 15,
+        "d1RowsRead": 18,
+        "d1RowsWritten": 13,
+        "serverWallMs": 114,
+        "responseBytes": 4829,
+        "signals": [],
+        "bootstrapMode": null,
+        "bootstrapCapacity": null,
+        "projectionFallback": "hit"
+      }
+    },
+    {
+      "scenario": "human-paced-grammar-round",
+      "virtualLearner": "learner-03",
+      "method": "POST",
+      "endpoint": "/api/subjects/grammar/command",
+      "status": 200,
+      "ok": true,
+      "wallMs": 171.9,
+      "responseBytes": 4101,
+      "code": null,
+      "message": "",
+      "requestId": "req_556cdf3535f8a9990c148460",
+      "clientRequestId": "req_80e624ff294ad08b731e49ef",
+      "serverRequestId": "req_80e624ff294ad08b731e49ef",
+      "capacity": {
+        "requestId": "req_80e624ff294ad08b731e49ef",
+        "queryCount": 18,
+        "d1RowsRead": 13,
+        "d1RowsWritten": 16,
+        "serverWallMs": 120,
+        "responseBytes": 3883,
+        "signals": [],
+        "bootstrapMode": null,
+        "bootstrapCapacity": null,
+        "projectionFallback": "miss-rehydrated"
+      }
+    },
+    {
+      "scenario": "human-paced-grammar-round",
+      "virtualLearner": "learner-03",
+      "method": "POST",
+      "endpoint": "/api/subjects/grammar/command",
+      "status": 200,
+      "ok": true,
+      "wallMs": 176.7,
+      "responseBytes": 17225,
+      "code": null,
+      "message": "",
+      "requestId": "req_6a41b1546521ef031d8ec584",
+      "clientRequestId": "req_59fd080b8daf1d4c4a4b6a34",
+      "serverRequestId": "req_59fd080b8daf1d4c4a4b6a34",
+      "capacity": {
+        "requestId": "req_59fd080b8daf1d4c4a4b6a34",
+        "queryCount": 16,
+        "d1RowsRead": 19,
+        "d1RowsWritten": 15,
+        "serverWallMs": 122,
+        "responseBytes": 17018,
+        "signals": [],
+        "bootstrapMode": null,
+        "bootstrapCapacity": null,
+        "projectionFallback": "hit"
+      }
+    },
+    {
+      "scenario": "human-paced-grammar-round",
+      "virtualLearner": "learner-03",
+      "method": "POST",
+      "endpoint": "/api/subjects/grammar/command",
+      "status": 200,
+      "ok": true,
+      "wallMs": 159.4,
+      "responseBytes": 5035,
+      "code": null,
+      "message": "",
+      "requestId": "req_0f6d5599d91687f938da3ba8",
+      "clientRequestId": "req_af752703c24f301d52dde98b",
+      "serverRequestId": "req_af752703c24f301d52dde98b",
+      "capacity": {
+        "requestId": "req_af752703c24f301d52dde98b",
+        "queryCount": 15,
+        "d1RowsRead": 18,
+        "d1RowsWritten": 13,
+        "serverWallMs": 113,
+        "responseBytes": 4829,
+        "signals": [],
+        "bootstrapMode": null,
+        "bootstrapCapacity": null,
+        "projectionFallback": "hit"
+      }
+    },
+    {
+      "scenario": "human-paced-grammar-round",
+      "virtualLearner": "learner-04",
+      "method": "POST",
+      "endpoint": "/api/subjects/grammar/command",
+      "status": 200,
+      "ok": true,
+      "wallMs": 226.1,
+      "responseBytes": 4102,
+      "code": null,
+      "message": "",
+      "requestId": "req_f6747e7018ad3653ebac81a0",
+      "clientRequestId": "req_a22398ab15456e432b75d026",
+      "serverRequestId": "req_a22398ab15456e432b75d026",
+      "capacity": {
+        "requestId": "req_a22398ab15456e432b75d026",
+        "queryCount": 18,
+        "d1RowsRead": 13,
+        "d1RowsWritten": 16,
+        "serverWallMs": 165,
+        "responseBytes": 3884,
+        "signals": [],
+        "bootstrapMode": null,
+        "bootstrapCapacity": null,
+        "projectionFallback": "miss-rehydrated"
+      }
+    },
+    {
+      "scenario": "human-paced-grammar-round",
+      "virtualLearner": "learner-04",
+      "method": "POST",
+      "endpoint": "/api/subjects/grammar/command",
+      "status": 200,
+      "ok": true,
+      "wallMs": 170,
+      "responseBytes": 17230,
+      "code": null,
+      "message": "",
+      "requestId": "req_8230ba80877f08e88922722c",
+      "clientRequestId": "req_bbf0c5259257cf115b76d607",
+      "serverRequestId": "req_bbf0c5259257cf115b76d607",
+      "capacity": {
+        "requestId": "req_bbf0c5259257cf115b76d607",
+        "queryCount": 16,
+        "d1RowsRead": 19,
+        "d1RowsWritten": 15,
+        "serverWallMs": 120,
+        "responseBytes": 17023,
+        "signals": [],
+        "bootstrapMode": null,
+        "bootstrapCapacity": null,
+        "projectionFallback": "hit"
+      }
+    },
+    {
+      "scenario": "human-paced-grammar-round",
+      "virtualLearner": "learner-04",
+      "method": "POST",
+      "endpoint": "/api/subjects/grammar/command",
+      "status": 200,
+      "ok": true,
+      "wallMs": 156,
+      "responseBytes": 5035,
+      "code": null,
+      "message": "",
+      "requestId": "req_d308e98f046378c0e2fdc19f",
+      "clientRequestId": "req_c6e44c1f7f428deb7cdbf74a",
+      "serverRequestId": "req_c6e44c1f7f428deb7cdbf74a",
+      "capacity": {
+        "requestId": "req_c6e44c1f7f428deb7cdbf74a",
+        "queryCount": 15,
+        "d1RowsRead": 18,
+        "d1RowsWritten": 13,
+        "serverWallMs": 109,
+        "responseBytes": 4829,
+        "signals": [],
+        "bootstrapMode": null,
+        "bootstrapCapacity": null,
+        "projectionFallback": "hit"
+      }
+    },
+    {
+      "scenario": "human-paced-grammar-round",
+      "virtualLearner": "learner-05",
+      "method": "POST",
+      "endpoint": "/api/subjects/grammar/command",
+      "status": 200,
+      "ok": true,
+      "wallMs": 180.1,
+      "responseBytes": 4102,
+      "code": null,
+      "message": "",
+      "requestId": "req_d23c8f66abd00d2fc9e78f9f",
+      "clientRequestId": "req_d6253c6d5bae08ddbd08acc1",
+      "serverRequestId": "req_d6253c6d5bae08ddbd08acc1",
+      "capacity": {
+        "requestId": "req_d6253c6d5bae08ddbd08acc1",
+        "queryCount": 18,
+        "d1RowsRead": 13,
+        "d1RowsWritten": 16,
+        "serverWallMs": 132,
+        "responseBytes": 3884,
+        "signals": [],
+        "bootstrapMode": null,
+        "bootstrapCapacity": null,
+        "projectionFallback": "miss-rehydrated"
+      }
+    },
+    {
+      "scenario": "human-paced-grammar-round",
+      "virtualLearner": "learner-05",
+      "method": "POST",
+      "endpoint": "/api/subjects/grammar/command",
+      "status": 200,
+      "ok": true,
+      "wallMs": 157.6,
+      "responseBytes": 17230,
+      "code": null,
+      "message": "",
+      "requestId": "req_f689941601ec0a53ad78c9d1",
+      "clientRequestId": "req_10b7b43f890fe86b31076de5",
+      "serverRequestId": "req_10b7b43f890fe86b31076de5",
+      "capacity": {
+        "requestId": "req_10b7b43f890fe86b31076de5",
+        "queryCount": 16,
+        "d1RowsRead": 19,
+        "d1RowsWritten": 15,
+        "serverWallMs": 104,
+        "responseBytes": 17023,
+        "signals": [],
+        "bootstrapMode": null,
+        "bootstrapCapacity": null,
+        "projectionFallback": "hit"
+      }
+    },
+    {
+      "scenario": "human-paced-grammar-round",
+      "virtualLearner": "learner-05",
+      "method": "POST",
+      "endpoint": "/api/subjects/grammar/command",
+      "status": 200,
+      "ok": true,
+      "wallMs": 162.5,
+      "responseBytes": 5035,
+      "code": null,
+      "message": "",
+      "requestId": "req_bd47b60f6f59ee36aa6498ad",
+      "clientRequestId": "req_9c0910f20fbe41e4256ef0fc",
+      "serverRequestId": "req_9c0910f20fbe41e4256ef0fc",
+      "capacity": {
+        "requestId": "req_9c0910f20fbe41e4256ef0fc",
+        "queryCount": 15,
+        "d1RowsRead": 18,
+        "d1RowsWritten": 13,
+        "serverWallMs": 105,
+        "responseBytes": 4829,
+        "signals": [],
+        "bootstrapMode": null,
+        "bootstrapCapacity": null,
+        "projectionFallback": "hit"
+      }
+    }
+  ],
+  "startedAt": "2026-05-31T11:55:54.047Z",
+  "finishedAt": "2026-05-31T11:55:58.520Z",
+  "sessionSourceMode": "demo-sessions",
+  "thresholds": {
+    "max5xx": {
+      "configured": 0,
+      "observed": 0,
+      "passed": true
+    },
+    "maxNetworkFailures": {
+      "configured": 0,
+      "observed": 0,
+      "passed": true
+    },
+    "maxResponseBytes": {
+      "configured": 600000,
+      "observed": 17230,
+      "passed": true
+    },
+    "requireZeroSignals": {
+      "configured": true,
+      "observed": 0,
+      "passed": true
+    },
+    "configured": true,
+    "violations": [],
+    "limits": {
+      "max5xx": 0,
+      "maxNetworkFailures": 0,
+      "maxBootstrapP95Ms": null,
+      "maxCommandP95Ms": null,
+      "maxResponseBytes": 600000,
+      "requireZeroSignals": true,
+      "requireBootstrapCapacity": false
+    }
+  },
+  "failures": [],
+  "safety": {
+    "mode": "production",
+    "origin": "https://ks2.eugnel.uk",
+    "learners": 5,
+    "bootstrapBurst": 5,
+    "demoSessions": true,
+    "authMode": "demo-sessions",
+    "confirmedVia": [
+      "production-load"
+    ]
+  },
+  "diagnostics": {
+    "classification": {
+      "kind": "diagnostic",
+      "certificationEligible": false,
+      "reasons": [
+        "non-p6-30-learner-gate-shape",
+        "missing-pinned-threshold-config"
+      ],
+      "targetTier": null,
+      "runShape": {
+        "mode": "production",
+        "origin": "https://ks2.eugnel.uk",
+        "originClass": "production",
+        "learners": 5,
+        "bootstrapBurst": 5,
+        "rounds": 1,
+        "sessionSourceMode": "demo-sessions",
+        "releaseGateShape": false
+      },
+      "shapeEligible": false,
+      "thresholdEligible": true,
+      "evidenceComplete": true
+    },
+    "evidenceLane": {
+      "matrix": "p1-evidence-attribution",
+      "lane": "diagnostic-alternate-run-shape",
+      "diagnosticOnly": true,
+      "certificationCandidate": false,
+      "requiresUniqueOutputPath": true,
+      "reasons": [
+        "non-p6-30-learner-gate-shape",
+        "missing-pinned-threshold-config"
+      ]
+    },
+    "runShape": {
+      "mode": "production",
+      "origin": "https://ks2.eugnel.uk",
+      "originClass": "production",
+      "learners": 5,
+      "bootstrapBurst": 5,
+      "rounds": 1,
+      "sessionSourceMode": "demo-sessions",
+      "releaseGateShape": false
+    },
+    "endpointInventory": {
+      "hasBootstrapMetrics": true,
+      "hasCommandMetrics": true,
+      "bootstrapEndpointKeys": [
+        "GET /api/bootstrap"
+      ],
+      "commandEndpointKeys": [
+        "POST /api/subjects/grammar/command"
+      ]
+    },
+    "thresholdConfig": {
+      "configPath": null,
+      "tier": null,
+      "minEvidenceSchemaVersion": null,
+      "hash": "none"
+    },
+    "thresholdViolations": []
+  },
+  "reportMeta": {
+    "commit": "eb9cb8f7558d1384e9f5a28674ac213c42b4194b",
+    "environment": "production",
+    "origin": "https://ks2.eugnel.uk",
+    "authMode": "demo-sessions",
+    "learners": 5,
+    "bootstrapBurst": 5,
+    "rounds": 1,
+    "startedAt": "2026-05-31T11:55:54.047Z",
+    "finishedAt": "2026-05-31T11:55:58.520Z",
+    "evidenceSchemaVersion": 3,
+    "provenance": {
+      "workflowRunUrl": "unknown",
+      "workflowName": "unknown",
+      "gitSha": "eb9cb8f7558d1384e9f5a28674ac213c42b4194b",
+      "dirtyTreeFlag": true,
+      "thresholdConfigHash": "none",
+      "loadDriverVersion": "0.1.0",
+      "operator": "fol2h",
+      "rawLogArtifactPath": "none"
+    }
+  },
+  "redaction": {
+    "version": "capacity-diagnostics-redaction-v1",
+    "requestIds": "sha256:24",
+    "rawRequestIdsPersisted": false
+  }
+}

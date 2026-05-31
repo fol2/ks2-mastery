@@ -202,6 +202,13 @@ test('Grammar command route persists subject state, practice session, and respon
   assert.equal(start.body.subjectReadModel.content.templateCount, GRAMMAR_TEMPLATE_METADATA.length);
   assert.equal(start.body.mutation.kind, 'subject_command.grammar.start-session');
   assert.equal(start.body.mutation.appliedRevision, 1);
+  const startedSession = DB.db.prepare(`
+    SELECT status, session_state_json, summary_json
+    FROM practice_sessions
+    WHERE learner_id = 'learner-a' AND subject_id = 'grammar'
+  `).get();
+  assert.equal(startedSession.status, 'active');
+  assert.equal(startedSession.summary_json, null);
 
   const submit = await postCommand(app, DB, {
     command: 'submit-answer',
@@ -215,6 +222,27 @@ test('Grammar command route persists subject state, practice session, and respon
   assert.equal(submit.body.subjectReadModel.feedback.result.correct, true);
   assert.equal(submit.body.mutation.appliedRevision, 2);
   assert.equal(submit.body.domainEvents.some((event) => event.type === 'grammar.answer-submitted'), true);
+  assert.ok(
+    submit.body.meta.capacity.d1RowsWritten <= 5,
+    `submit-answer should avoid rewriting active practice_sessions; wrote ${submit.body.meta.capacity.d1RowsWritten} rows`,
+  );
+  assert.ok(
+    Buffer.byteLength(JSON.stringify(submit.body), 'utf8') < 15_000,
+    'submit-answer should not duplicate full reward projection events inside the subject read model',
+  );
+  assert.equal(Array.isArray(submit.body.projections?.rewards?.events), true);
+  assert.deepEqual(
+    submit.body.subjectReadModel.projections?.rewards?.state,
+    submit.body.projections?.rewards?.state,
+  );
+  assert.equal(
+    Object.prototype.hasOwnProperty.call(submit.body.subjectReadModel.projections?.rewards || {}, 'events'),
+    false,
+  );
+  assert.equal(
+    Object.prototype.hasOwnProperty.call(submit.body.subjectReadModel.projections?.rewards || {}, 'toastEvents'),
+    false,
+  );
   const answerEvent = submit.body.domainEvents.find((event) => event.type === 'grammar.answer-submitted');
   assert.equal(answerEvent.contentReleaseId, GRAMMAR_CONTENT_RELEASE_ID);
   for (const event of submit.body.domainEvents.filter((row) => row.type === 'grammar.star-evidence-updated')) {
@@ -232,6 +260,14 @@ test('Grammar command route persists subject state, practice session, and respon
   assert.equal(data.mastery.concepts.sentence_functions.attempts, 1);
   assert.equal(data.mastery.concepts.speech_punctuation.attempts, 1);
   assert.equal(DB.db.prepare("SELECT COUNT(*) AS count FROM practice_sessions WHERE subject_id = 'grammar'").get().count, 1);
+  const sessionAfterSubmit = DB.db.prepare(`
+    SELECT status, session_state_json, summary_json
+    FROM practice_sessions
+    WHERE learner_id = 'learner-a' AND subject_id = 'grammar'
+  `).get();
+  assert.equal(sessionAfterSubmit.status, 'active');
+  assert.equal(sessionAfterSubmit.session_state_json, startedSession.session_state_json);
+  assert.equal(sessionAfterSubmit.summary_json, null);
   assert.equal(DB.db.prepare("SELECT COUNT(*) AS count FROM event_log WHERE subject_id = 'grammar' AND event_type = 'grammar.answer-submitted'").get().count, 0);
 
   const summary = await postCommand(app, DB, {
@@ -246,6 +282,14 @@ test('Grammar command route persists subject state, practice session, and respon
   assert.equal(summary.body.subjectReadModel.summary.answered, 1);
   assert.equal(Object.prototype.hasOwnProperty.call(summary.body.subjectReadModel.summary, 'sessionId'), false);
   assert.equal(summary.body.domainEvents.some((event) => event.type === 'grammar.session-completed'), true);
+  const completedSession = DB.db.prepare(`
+    SELECT status, session_state_json, summary_json
+    FROM practice_sessions
+    WHERE learner_id = 'learner-a' AND subject_id = 'grammar'
+  `).get();
+  assert.equal(completedSession.status, 'completed');
+  const persistedSummary = JSON.parse(completedSession.summary_json);
+  assert.equal(persistedSummary.answered, 1);
 
   DB.close();
 });

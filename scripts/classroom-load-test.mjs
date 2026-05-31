@@ -323,7 +323,12 @@ export function parseClassroomLoadArgs(argv = process.argv.slice(2)) {
     maxNetworkFailures: null,
     maxBootstrapP95Ms: null,
     maxCommandP95Ms: null,
+    maxBootstrapServerP95Ms: null,
+    maxCommandServerP95Ms: null,
+    maxBootstrapD1RowsWritten: null,
+    maxCommandD1RowsWritten: null,
     maxResponseBytes: null,
+    maxCommandResponseBytes: null,
     requireZeroSignals: false,
   };
 
@@ -431,10 +436,35 @@ export function parseClassroomLoadArgs(argv = process.argv.slice(2)) {
       options.thresholds.maxCommandP95Ms = positiveInteger(readOptionValue(argv, index, arg), arg);
       options.maxCommandP95Ms = options.thresholds.maxCommandP95Ms;
       index += 1;
+    } else if (arg === '--max-bootstrap-server-p95-ms') {
+      assignOnce(arg);
+      options.thresholds.maxBootstrapServerP95Ms = positiveInteger(readOptionValue(argv, index, arg), arg);
+      options.maxBootstrapServerP95Ms = options.thresholds.maxBootstrapServerP95Ms;
+      index += 1;
+    } else if (arg === '--max-command-server-p95-ms') {
+      assignOnce(arg);
+      options.thresholds.maxCommandServerP95Ms = positiveInteger(readOptionValue(argv, index, arg), arg);
+      options.maxCommandServerP95Ms = options.thresholds.maxCommandServerP95Ms;
+      index += 1;
+    } else if (arg === '--max-bootstrap-d1-rows-written') {
+      assignOnce(arg);
+      options.thresholds.maxBootstrapD1RowsWritten = nonNegativeInteger(readOptionValue(argv, index, arg), arg);
+      options.maxBootstrapD1RowsWritten = options.thresholds.maxBootstrapD1RowsWritten;
+      index += 1;
+    } else if (arg === '--max-command-d1-rows-written') {
+      assignOnce(arg);
+      options.thresholds.maxCommandD1RowsWritten = nonNegativeInteger(readOptionValue(argv, index, arg), arg);
+      options.maxCommandD1RowsWritten = options.thresholds.maxCommandD1RowsWritten;
+      index += 1;
     } else if (arg === '--max-response-bytes') {
       assignOnce(arg);
       options.thresholds.maxResponseBytes = positiveInteger(readOptionValue(argv, index, arg), arg);
       options.maxResponseBytes = options.thresholds.maxResponseBytes;
+      index += 1;
+    } else if (arg === '--max-command-response-bytes') {
+      assignOnce(arg);
+      options.thresholds.maxCommandResponseBytes = positiveInteger(readOptionValue(argv, index, arg), arg);
+      options.maxCommandResponseBytes = options.thresholds.maxCommandResponseBytes;
       index += 1;
     } else if (arg === '--require-zero-signals') {
       options.thresholds.requireZeroSignals = true;
@@ -752,6 +782,20 @@ function highestP95(summary, endpointList) {
   return peak;
 }
 
+function highestEndpointMetric(summary, endpointList, metricName) {
+  let hasMetric = false;
+  let peak = 0;
+  for (const key of endpointList) {
+    const metrics = summary.endpoints?.[key];
+    if (!metrics || Number(metrics.count) <= 0) continue;
+    const observed = Number(metrics[metricName]);
+    if (!Number.isFinite(observed)) continue;
+    hasMetric = true;
+    if (observed > peak) peak = observed;
+  }
+  return hasMetric ? peak : null;
+}
+
 function gatedEndpointsHaveMeasurements(summary, endpointList) {
   for (const key of endpointList) {
     const metrics = summary.endpoints?.[key];
@@ -766,6 +810,32 @@ function maxResponseBytesAcross(summary) {
     if (metrics && Number(metrics.maxResponseBytes) > peak) peak = Number(metrics.maxResponseBytes);
   }
   return peak;
+}
+
+function pushUpperBoundViolation(violations, {
+  threshold,
+  limit,
+  observed,
+  gatedEndpoints,
+  missingMessage,
+  exceedMessage,
+}) {
+  if (observed == null) {
+    violations.push({
+      threshold,
+      limit,
+      observed: null,
+      gatedEndpoints,
+      message: missingMessage,
+    });
+  } else if (observed > limit) {
+    violations.push({
+      threshold,
+      limit,
+      observed,
+      message: exceedMessage(observed, limit),
+    });
+  }
 }
 
 /**
@@ -783,7 +853,12 @@ function normaliseThresholdView(options = {}) {
     'maxNetworkFailures',
     'maxBootstrapP95Ms',
     'maxCommandP95Ms',
+    'maxBootstrapServerP95Ms',
+    'maxCommandServerP95Ms',
+    'maxBootstrapD1RowsWritten',
+    'maxCommandD1RowsWritten',
     'maxResponseBytes',
+    'maxCommandResponseBytes',
   ];
   const view = { ...nested };
   for (const key of numericFlatKeys) {
@@ -872,6 +947,54 @@ export function evaluateCapacityThresholds(summary = {}, options = {}) {
     }
   }
 
+  if (thresholds.maxBootstrapServerP95Ms != null) {
+    const observed = highestEndpointMetric(summary, BOOTSTRAP_P95_ENDPOINTS, 'serverWallMsP95');
+    pushUpperBoundViolation(violations, {
+      threshold: 'max-bootstrap-server-p95-ms',
+      limit: thresholds.maxBootstrapServerP95Ms,
+      observed,
+      gatedEndpoints: [...BOOTSTRAP_P95_ENDPOINTS],
+      missingMessage: `No server-wall P95 measurements captured for bootstrap gated endpoints (${BOOTSTRAP_P95_ENDPOINTS.join(', ')}); threshold cannot be evaluated safely.`,
+      exceedMessage: (value, limit) => `Bootstrap server P95 ${value} ms exceeds ${limit} ms.`,
+    });
+  }
+
+  if (thresholds.maxCommandServerP95Ms != null) {
+    const observed = highestEndpointMetric(summary, COMMAND_P95_ENDPOINTS, 'serverWallMsP95');
+    pushUpperBoundViolation(violations, {
+      threshold: 'max-command-server-p95-ms',
+      limit: thresholds.maxCommandServerP95Ms,
+      observed,
+      gatedEndpoints: [...COMMAND_P95_ENDPOINTS],
+      missingMessage: `No server-wall P95 measurements captured for command gated endpoints (${COMMAND_P95_ENDPOINTS.join(', ')}); threshold cannot be evaluated safely.`,
+      exceedMessage: (value, limit) => `Command server P95 ${value} ms exceeds ${limit} ms.`,
+    });
+  }
+
+  if (thresholds.maxBootstrapD1RowsWritten != null) {
+    const observed = highestEndpointMetric(summary, BOOTSTRAP_P95_ENDPOINTS, 'd1RowsWritten');
+    pushUpperBoundViolation(violations, {
+      threshold: 'max-bootstrap-d1-rows-written',
+      limit: thresholds.maxBootstrapD1RowsWritten,
+      observed,
+      gatedEndpoints: [...BOOTSTRAP_P95_ENDPOINTS],
+      missingMessage: `No D1 rows-written measurements captured for bootstrap gated endpoints (${BOOTSTRAP_P95_ENDPOINTS.join(', ')}); threshold cannot be evaluated safely.`,
+      exceedMessage: (value, limit) => `Bootstrap D1 rows written ${value} exceeds ${limit}.`,
+    });
+  }
+
+  if (thresholds.maxCommandD1RowsWritten != null) {
+    const observed = highestEndpointMetric(summary, COMMAND_P95_ENDPOINTS, 'd1RowsWritten');
+    pushUpperBoundViolation(violations, {
+      threshold: 'max-command-d1-rows-written',
+      limit: thresholds.maxCommandD1RowsWritten,
+      observed,
+      gatedEndpoints: [...COMMAND_P95_ENDPOINTS],
+      missingMessage: `No D1 rows-written measurements captured for command gated endpoints (${COMMAND_P95_ENDPOINTS.join(', ')}); threshold cannot be evaluated safely.`,
+      exceedMessage: (value, limit) => `Command D1 rows written ${value} exceeds ${limit}.`,
+    });
+  }
+
   if (thresholds.maxResponseBytes != null) {
     const observed = maxResponseBytesAcross(summary);
     if (observed > thresholds.maxResponseBytes) {
@@ -882,6 +1005,18 @@ export function evaluateCapacityThresholds(summary = {}, options = {}) {
         message: `Response bytes ${observed} exceeded cap ${thresholds.maxResponseBytes}.`,
       });
     }
+  }
+
+  if (thresholds.maxCommandResponseBytes != null) {
+    const observed = highestEndpointMetric(summary, COMMAND_P95_ENDPOINTS, 'maxResponseBytes');
+    pushUpperBoundViolation(violations, {
+      threshold: 'max-command-response-bytes',
+      limit: thresholds.maxCommandResponseBytes,
+      observed,
+      gatedEndpoints: [...COMMAND_P95_ENDPOINTS],
+      missingMessage: `No command response-byte measurements captured for command gated endpoints (${COMMAND_P95_ENDPOINTS.join(', ')}); threshold cannot be evaluated safely.`,
+      exceedMessage: (value, limit) => `Command response bytes ${value} exceeded cap ${limit}.`,
+    });
   }
 
   if (thresholds.requireZeroSignals) {
@@ -907,7 +1042,12 @@ export function hasThresholdFlags(options = {}) {
     || thresholds.maxNetworkFailures != null
     || thresholds.maxBootstrapP95Ms != null
     || thresholds.maxCommandP95Ms != null
+    || thresholds.maxBootstrapServerP95Ms != null
+    || thresholds.maxCommandServerP95Ms != null
+    || thresholds.maxBootstrapD1RowsWritten != null
+    || thresholds.maxCommandD1RowsWritten != null
     || thresholds.maxResponseBytes != null
+    || thresholds.maxCommandResponseBytes != null
     || thresholds.requireZeroSignals === true
     || thresholds.requireBootstrapCapacity === true
   );
@@ -1254,7 +1394,12 @@ function buildThresholdsBlock(options, summary) {
       maxNetworkFailures: thresholds.maxNetworkFailures ?? null,
       maxBootstrapP95Ms: thresholds.maxBootstrapP95Ms ?? null,
       maxCommandP95Ms: thresholds.maxCommandP95Ms ?? null,
+      maxBootstrapServerP95Ms: thresholds.maxBootstrapServerP95Ms ?? null,
+      maxCommandServerP95Ms: thresholds.maxCommandServerP95Ms ?? null,
+      maxBootstrapD1RowsWritten: thresholds.maxBootstrapD1RowsWritten ?? null,
+      maxCommandD1RowsWritten: thresholds.maxCommandD1RowsWritten ?? null,
       maxResponseBytes: thresholds.maxResponseBytes ?? null,
+      maxCommandResponseBytes: thresholds.maxCommandResponseBytes ?? null,
       requireZeroSignals: thresholds.requireZeroSignals === true,
       requireBootstrapCapacity: thresholds.requireBootstrapCapacity === true,
     },
@@ -1501,7 +1646,12 @@ export function usage() {
     '  --max-network-failures <count>    Maximum tolerated network failures',
     '  --max-bootstrap-p95-ms <ms>       Maximum tolerated /api/bootstrap P95 wall time',
     '  --max-command-p95-ms <ms>         Maximum tolerated subject-command P95 wall time',
+    '  --max-bootstrap-server-p95-ms <ms> Maximum tolerated bootstrap server-side P95 wall time',
+    '  --max-command-server-p95-ms <ms>   Maximum tolerated command server-side P95 wall time',
+    '  --max-bootstrap-d1-rows-written <count> Maximum D1 rows written by bootstrap',
+    '  --max-command-d1-rows-written <count>   Maximum D1 rows written by a subject command',
     '  --max-response-bytes <bytes>      Maximum tolerated response bytes across endpoints',
+    '  --max-command-response-bytes <bytes> Maximum tolerated command response bytes',
     '  --require-zero-signals            Fail on any exceededCpu / d1Overloaded / d1DailyLimit /',
     '                                    rateLimited / networkFailure / server5xx signal',
     '  --require-bootstrap-capacity      Assert meta.capacity.bootstrapCapacity is present (U3)',

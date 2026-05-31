@@ -346,6 +346,30 @@ function createCommandHarness({ subjectId = 'spelling', accountId = 'adult-cmd' 
   };
 }
 
+test('U3 query budget: latest subject session lookup stays subject-scoped for old learners', () => {
+  const DB = createMigratedSqliteD1Database();
+  try {
+    const columns = DB.db
+      .prepare('PRAGMA index_info(idx_practice_sessions_learner_subject)')
+      .all()
+      .map((row) => row.name);
+    assert.deepEqual(columns, ['learner_id', 'subject_id', 'updated_at', 'id']);
+
+    const plan = DB.db.prepare(`
+      EXPLAIN QUERY PLAN
+      SELECT id, learner_id, subject_id, session_kind, status, session_state_json, summary_json, created_at, updated_at
+      FROM practice_sessions
+      WHERE learner_id = ? AND subject_id = ?
+      ORDER BY updated_at DESC, id DESC
+      LIMIT 1
+    `).all('learner-old', 'grammar').map((row) => row.detail).join('\n');
+    assert.match(plan, /idx_practice_sessions_learner_subject/);
+    assert.doesNotMatch(plan, /USE TEMP B-TREE/i);
+  } finally {
+    DB.close();
+  }
+});
+
 // ---------------------------------------------------------------------------
 // Scenario 1 — Bootstrap POST (selected-learner-bounded, 3-learner fixture)
 // ---------------------------------------------------------------------------
