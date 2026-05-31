@@ -393,10 +393,13 @@ test('P7 public demo bootstrap reuses authenticated account snapshot and ratchet
     assert.equal(payload.bootstrapCapacity.mode, 'public-bounded');
 
     const queryLog = server.DB.takeQueryLog();
+    const adultAccountReads = queryLog.filter((entry) => (
+      entry.operation === 'first' && /^\s*SELECT \* FROM adult_accounts WHERE id = \?/i.test(entry.sql)
+    ));
     assert.equal(
-      queryLog.some((entry) => entry.operation === 'first' && /^\s*SELECT \* FROM adult_accounts WHERE id = \?/i.test(entry.sql)),
-      false,
-      'bootstrap should reuse ensureAccount() row instead of re-reading the adult account',
+      adultAccountReads.length,
+      1,
+      'bootstrap should perform only the ensureAccount() idempotence read for the adult account',
     );
     assert.equal(
       queryLog.some((entry) => entry.operation === 'first' && /SELECT id, account_type, demo_expires_at\s+FROM adult_accounts\s+WHERE id = \?/i.test(entry.sql)),

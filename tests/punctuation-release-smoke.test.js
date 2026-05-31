@@ -436,11 +436,11 @@ test('Punctuation release smoke completes a gated demo action through Worker com
       FROM practice_sessions
       WHERE learner_id = ? AND subject_id = 'punctuation' AND status = 'completed'
     `).get(demo.learnerId).count, 1);
-    assert.ok(server.DB.db.prepare(`
+    assert.equal(server.DB.db.prepare(`
       SELECT COUNT(*) AS count
       FROM event_log
       WHERE learner_id = ? AND subject_id = 'punctuation'
-    `).get(demo.learnerId).count >= 1);
+    `).get(demo.learnerId).count, 0);
 
     const beforeReplayCounts = punctuationMutationCounts(server, {
       ...demo,

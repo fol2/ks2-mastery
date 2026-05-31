@@ -10,7 +10,11 @@ import { createMigratedSqliteD1Database } from './helpers/sqlite-d1.js';
 import {
   MUTATION_RECEIPT_RETENTION_MS,
   REQUEST_LIMITS_RETENTION_MS,
+  PRACTICE_SESSION_RETENTION_MS,
+  LEARNER_ACTIVITY_FEED_RETENTION_MS,
   sweepMutationReceipts,
+  sweepPracticeSessions,
+  sweepLearnerActivityFeed,
   sweepRequestLimits,
   sweepStaleSessions,
   runRetentionSweeps,
@@ -82,6 +86,35 @@ function seedRequestLimit(db, { limiterKey, windowStartedAt }) {
   `).run(limiterKey, windowStartedAt, windowStartedAt);
 }
 
+function seedLearner(db, { id = 'learner-a', now = 1 } = {}) {
+  db.db.prepare(`
+    INSERT OR IGNORE INTO learner_profiles (
+      id, name, year_group, avatar_color, goal, daily_minutes, created_at, updated_at, state_revision
+    )
+    VALUES (?, 'Learner A', 'Y5', '#3E6FA8', 'sats', 15, ?, ?, 0)
+  `).run(id, now, now);
+}
+
+function seedPracticeSession(db, { id, learnerId = 'learner-a', status, updatedAt }) {
+  db.db.prepare(`
+    INSERT INTO practice_sessions (
+      id, learner_id, subject_id, session_kind, status,
+      session_state_json, summary_json, created_at, updated_at, updated_by_account_id
+    )
+    VALUES (?, ?, 'spelling', 'smart', ?, '{}', '{}', ?, ?, NULL)
+  `).run(id, learnerId, status, updatedAt, updatedAt);
+}
+
+function seedActivityFeed(db, { id, learnerId = 'learner-a', updatedAt }) {
+  db.db.prepare(`
+    INSERT INTO learner_activity_feed (
+      id, learner_id, subject_id, activity_type, activity_json,
+      source_event_id, created_at, updated_at
+    )
+    VALUES (?, ?, 'spelling', 'reward', '{}', NULL, ?, ?)
+  `).run(id, learnerId, updatedAt, updatedAt);
+}
+
 function rowCount(db, sql, params = []) {
   return Number(db.db.prepare(sql).get(...params)?.count || 0);
 }
@@ -145,23 +178,82 @@ test('U11 sweepStaleSessions removes expired sessions whose revision is below cu
   }
 });
 
+test('sweepPracticeSessions prunes old completed and abandoned sessions but keeps active resume state', async () => {
+  const db = createMigratedSqliteD1Database();
+  try {
+    const now = 1_700_000_000_000;
+    seedLearner(db, { now });
+    seedPracticeSession(db, { id: 'old-completed', status: 'completed', updatedAt: now - PRACTICE_SESSION_RETENTION_MS - 1 });
+    seedPracticeSession(db, { id: 'old-abandoned', status: 'abandoned', updatedAt: now - PRACTICE_SESSION_RETENTION_MS - 2 });
+    seedPracticeSession(db, { id: 'old-active', status: 'active', updatedAt: now - PRACTICE_SESSION_RETENTION_MS - 3 });
+    seedPracticeSession(db, { id: 'fresh-completed', status: 'completed', updatedAt: now - 1000 });
+
+    const result = await sweepPracticeSessions(db, now);
+    assert.equal(result.deleted, 2);
+    const remaining = db.db.prepare('SELECT id FROM practice_sessions ORDER BY id').all().map((row) => row.id);
+    assert.deepEqual(remaining, ['fresh-completed', 'old-active']);
+  } finally {
+    db.close();
+  }
+});
+
+test('sweepLearnerActivityFeed prunes stale duplicate activity rows', async () => {
+  const db = createMigratedSqliteD1Database();
+  try {
+    const now = 1_700_000_000_000;
+    seedLearner(db, { now });
+    seedActivityFeed(db, { id: 'old-activity', updatedAt: now - LEARNER_ACTIVITY_FEED_RETENTION_MS - 1 });
+    seedActivityFeed(db, { id: 'fresh-activity', updatedAt: now - 1000 });
+
+    const result = await sweepLearnerActivityFeed(db, now);
+    assert.equal(result.deleted, 1);
+    const remaining = db.db.prepare('SELECT id FROM learner_activity_feed ORDER BY id').all().map((row) => row.id);
+    assert.deepEqual(remaining, ['fresh-activity']);
+  } finally {
+    db.close();
+  }
+});
+
+test('sweepLearnerActivityFeed uses the updated_at retention index', async () => {
+  const db = createMigratedSqliteD1Database();
+  try {
+    const plan = db.db.prepare(`
+      EXPLAIN QUERY PLAN
+      SELECT rowid
+      FROM learner_activity_feed
+      WHERE updated_at < ?
+      LIMIT ?
+    `).all(0, 5000);
+    const detail = plan.map((row) => row.detail).join('\n');
+    assert.match(detail, /idx_learner_activity_feed_updated/);
+    assert.doesNotMatch(detail, /SCAN learner_activity_feed\b/);
+  } finally {
+    db.close();
+  }
+});
+
 test('U11 runRetentionSweeps aggregates per-sweep deletion counts', async () => {
   const db = createMigratedSqliteD1Database();
   try {
     const now = 1_700_000_000_000;
     seedAdultAccount(db, { id: 'adult-a', now });
     seedOpsMetadata(db, { accountId: 'adult-a', now, statusRevision: 3 });
+    seedLearner(db, { now });
     seedMutationReceipt(db, { requestId: 'req-old', appliedAt: now - MUTATION_RECEIPT_RETENTION_MS - 1 });
     seedRequestLimit(db, { limiterKey: 'old', windowStartedAt: now - REQUEST_LIMITS_RETENTION_MS - 1 });
     seedSession(db, { id: 'sess-stale', accountId: 'adult-a', expiresAt: now - 1, revisionAtIssue: 0 });
+    seedPracticeSession(db, { id: 'practice-old', status: 'completed', updatedAt: now - PRACTICE_SESSION_RETENTION_MS - 1 });
+    seedActivityFeed(db, { id: 'activity-old', updatedAt: now - LEARNER_ACTIVITY_FEED_RETENTION_MS - 1 });
 
     const result = await runRetentionSweeps(db, now);
-    assert.equal(result.totalDeleted, 3);
+    assert.equal(result.totalDeleted, 5);
     const byName = Object.create(null);
     for (const entry of result.completed) byName[entry.sweep] = entry.deleted;
     assert.equal(byName.mutation_receipts, 1);
     assert.equal(byName.request_limits, 1);
     assert.equal(byName.account_sessions, 1);
+    assert.equal(byName.practice_sessions, 1);
+    assert.equal(byName.learner_activity_feed, 1);
   } finally {
     db.close();
   }

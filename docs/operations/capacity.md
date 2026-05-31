@@ -20,6 +20,23 @@ These artefacts can explain which Phase 2 path to take, but they cannot promote 
 | 60-learner stretch | Not certified — latest 60-learner preflight reached app load but failed bootstrap P95 (854.0 ms vs 750 ms ceiling). | Same evidence as classroom beta, with passing P95 wall time and zero 5xx across repeated runs. |
 | 100+ school-ready target | Not certified | Requires repeated 100+ learner runs, D1 row metrics, operational tail evidence, and a rollback/degrade drill. |
 
+## D1 Runtime Persistence Contract
+
+Normal subject commands persist source-of-truth state, not unbounded normal-operation history. A changed command may still write the learner's current subject state, the active or recent practice session, monster/reward game state, the command projection read model, the compact mutation receipt, and the learner revision. That is the persistence required for progress, reload, cross-device sync, stale-write protection, and reward correctness.
+
+The command path must not store full subject read-model payloads in `mutation_receipts.response_json`, and it must not append normal gameplay events into both `event_log` and `learner_activity_feed`. Subject command receipts use a compact replay contract: duplicate request IDs return `replayRequiresRefresh: true` plus mutation metadata, and the browser hydrates before applying the replay marker. Immediate command responses still include the full read model for the active UI update.
+
+`event_log` remains available for explicit admin or ops flows that intentionally append audit events, and the public ops error tables remain the home for real error reporting. `learner_activity_feed` is a rollout-drain table only for this path: old rows may still be read during the transition, but normal subject commands should not create new rows.
+
+Retention keeps the database bounded:
+
+- Non-admin `mutation_receipts`: 24 hours; `admin.*` receipts: 365 days.
+- `practice_sessions`: completed and abandoned sessions older than 30 days are pruned in 5000-row batches; active sessions are preserved for resume.
+- `learner_activity_feed`: rows older than 7 days are pruned in 5000-row batches.
+- `request_limits`, stale sessions, and admin request denials keep their existing bounded sweeps.
+
+Production cleanup must be code-first and backup-first: deploy code that stops future writes, smoke the live command path, take a remote D1 backup, then run bounded cleanup and record D1 `size_after` evidence. Do not drop `event_log` or `learner_activity_feed` while any deployed read path still references them.
+
 ## Standard Commands
 
 Local dry-run, no network:

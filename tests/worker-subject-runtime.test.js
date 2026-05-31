@@ -386,6 +386,16 @@ test('worker subject command route validates auth, same-origin, and handler avai
   const replayPayload = await replay.json();
   assert.equal(replay.status, 200);
   assert.equal(replayPayload.mutation.replayed, true);
+  assert.equal(replayPayload.replayRequiresRefresh, true);
+  assert.equal(replayPayload.subjectReadModel, undefined);
+  const storedReceipt = DB.db.prepare('SELECT response_json FROM mutation_receipts WHERE request_id = ?').get('cmd-2');
+  assert.ok(storedReceipt, 'subject command receipt must be stored');
+  assert.ok(storedReceipt.response_json.length < 512, `receipt response should be compact, saw ${storedReceipt.response_json.length} bytes`);
+  const storedReplay = JSON.parse(storedReceipt.response_json);
+  assert.equal(storedReplay.replayRequiresRefresh, true);
+  assert.equal(storedReplay.subjectId, 'spelling');
+  assert.equal(storedReplay.command, 'start-session');
+  assert.equal(storedReplay.subjectReadModel, undefined);
 
   const missing = await app.fetch(new Request('https://repo.test/api/subjects/spelling/command', {
     method: 'POST',
@@ -479,7 +489,7 @@ test('subject command replay requires current learner write access', async () =>
   DB.close();
 });
 
-test('subject command writes roll back as one D1 batch without a transaction feature flag', async () => {
+test('subject command keeps runtime events in projection memory without appending event_log rows', async () => {
   const DB = createMigratedSqliteD1Database();
   delete DB.supportsSqlTransactions;
   const runtime = createSubjectRuntime({
@@ -535,10 +545,12 @@ test('subject command writes roll back as one D1 batch without a transaction fea
     }),
   }), env, {});
 
-  assert.equal(response.status, 500);
-  assert.equal(DB.db.prepare('SELECT state_revision FROM learner_profiles WHERE id = ?').get('learner-a').state_revision, 0);
-  assert.equal(DB.db.prepare('SELECT COUNT(*) AS count FROM child_subject_state WHERE learner_id = ?').get('learner-a').count, 0);
-  assert.equal(DB.db.prepare('SELECT COUNT(*) AS count FROM mutation_receipts WHERE request_id = ?').get('cmd-atomic-failure').count, 0);
+  assert.equal(response.status, 200, await response.text());
+  assert.equal(DB.db.prepare('SELECT state_revision FROM learner_profiles WHERE id = ?').get('learner-a').state_revision, 1);
+  assert.equal(DB.db.prepare('SELECT COUNT(*) AS count FROM child_subject_state WHERE learner_id = ?').get('learner-a').count, 1);
+  assert.equal(DB.db.prepare('SELECT COUNT(*) AS count FROM event_log WHERE id = ?').get('bad-event').count, 0);
+  assert.equal(DB.db.prepare('SELECT COUNT(*) AS count FROM learner_activity_feed').get().count, 0);
+  assert.equal(DB.db.prepare('SELECT COUNT(*) AS count FROM mutation_receipts WHERE request_id = ?').get('cmd-atomic-failure').count, 1);
 
   DB.close();
 });

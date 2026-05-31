@@ -118,6 +118,7 @@ export function createSubjectCommandClient({
   fetch: fetchFn = (input, init) => globalThis.fetch(input, init),
   getLearnerRevision = () => 0,
   onCommandApplied = () => {},
+  onReplayRefresh = null,
   onStaleWrite = null,
   retryAttempts = 2,
   retryDelayMs = 250,
@@ -261,6 +262,21 @@ export function createSubjectCommandClient({
 
         throw error;
       }
+    }
+
+    if (
+      responsePayload?.replayRequiresRefresh === true
+      && responsePayload?.mutation?.replayed === true
+      && typeof onReplayRefresh === 'function'
+    ) {
+      await onReplayRefresh({
+        learnerId: cleanLearnerId,
+        subjectId: cleanSubjectId,
+        command: cleanCommand,
+        payload: snapshotCommandPayload(payloadSnapshot),
+        requestId,
+        response: responsePayload,
+      });
     }
 
     onCommandApplied({

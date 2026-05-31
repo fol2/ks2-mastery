@@ -132,14 +132,14 @@ function demoSessionIdentifier(session = {}) {
   return cleanText(session.sessionId || session.sessionHash || session.accountId) || 'unknown-demo-session';
 }
 
-export async function protectDemoSubjectCommand({ env, request, session, command, now = Date.now(), capacity = null } = {}) {
+export async function protectDemoSubjectCommand({ env, request, session, now = Date.now(), capacity = null } = {}) {
   if (!session?.demo) return;
   // U3 round 1 (P1 #03): wrap the D1 handle when a capacity collector
   // is supplied so every rate-limit query and the demo-active guard are
   // counted. Previously 5+ queries per command bypassed the proxy.
   const db = requireDatabaseWithCapacity(env, capacity);
   await requireActiveDemoAccount(db, session.accountId, now);
-  const commandType = cleanText(`${command?.subjectId || 'subject'}:${command?.command || 'unknown'}`);
+  const accountSession = `${session.accountId}:${demoSessionIdentifier(session)}`;
   await enforceDemoRateLimit(db, [
     {
       bucket: 'demo-command-ip',
@@ -147,19 +147,9 @@ export async function protectDemoSubjectCommand({ env, request, session, command
       limit: DEMO_LIMITS.commandIp,
     },
     {
-      bucket: 'demo-command-account',
-      identifier: session.accountId,
-      limit: DEMO_LIMITS.commandAccount,
-    },
-    {
-      bucket: 'demo-command-session',
-      identifier: demoSessionIdentifier(session),
+      bucket: 'demo-command-account-session',
+      identifier: accountSession,
       limit: DEMO_LIMITS.commandSession,
-    },
-    {
-      bucket: 'demo-command-type',
-      identifier: `${session.accountId}:${commandType}`,
-      limit: DEMO_LIMITS.commandType,
     },
   ], now, 'Too many demo practice requests. Please wait a few minutes and try again.');
 }

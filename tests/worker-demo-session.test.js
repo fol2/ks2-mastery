@@ -397,7 +397,7 @@ test('demo commands and Parent Hub reads are rate limited by session', async () 
   const sessionId = server.DB.db.prepare('SELECT id FROM account_sessions WHERE account_id = ?').get(accountId)?.id;
   assert.ok(sessionId);
 
-  await seedRateLimit(server, 'demo-command-session', sessionId, 120);
+  await seedRateLimit(server, 'demo-command-account-session', `${accountId}:${sessionId}`, 120);
   const commandResponse = await postJson(server, '/api/subjects/spelling/command', {
     command: 'check-word-bank-drill',
     learnerId,

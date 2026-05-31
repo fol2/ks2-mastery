@@ -187,7 +187,7 @@ test('worker subject runtime starts Grammar trouble drills against weak concepts
   assert.ok(result.subjectReadModel.session.currentItem.skillIds.includes('adverbials'));
 });
 
-test('Grammar command route persists subject state, practice session, and events', async () => {
+test('Grammar command route persists subject state, practice session, and response events', async () => {
   const DB = createMigratedSqliteD1Database();
   const app = createWorkerApp({ now: () => 1_777_000_000_000 });
   const sample = readGrammarLegacyOracle().templates.find((template) => template.id === 'question_mark_select');
@@ -243,7 +243,7 @@ test('Grammar command route persists subject state, practice session, and events
   assert.equal(data.mastery.concepts.sentence_functions.attempts, 1);
   assert.equal(data.mastery.concepts.speech_punctuation.attempts, 1);
   assert.equal(DB.db.prepare("SELECT COUNT(*) AS count FROM practice_sessions WHERE subject_id = 'grammar'").get().count, 1);
-  assert.equal(DB.db.prepare("SELECT COUNT(*) AS count FROM event_log WHERE subject_id = 'grammar' AND event_type = 'grammar.answer-submitted'").get().count, 1);
+  assert.equal(DB.db.prepare("SELECT COUNT(*) AS count FROM event_log WHERE subject_id = 'grammar' AND event_type = 'grammar.answer-submitted'").get().count, 0);
 
   const summary = await postCommand(app, DB, {
     command: 'continue-session',
@@ -309,7 +309,7 @@ test('Grammar command route saves manual-review-only responses without scored ev
   assert.equal(data.mastery.concepts.noun_phrases?.attempts || 0, 0);
   assert.equal(data.retryQueue.length, 0);
   assert.equal(DB.db.prepare("SELECT COUNT(*) AS count FROM event_log WHERE subject_id = 'grammar' AND event_type = 'grammar.answer-submitted'").get().count, 0);
-  assert.equal(DB.db.prepare("SELECT COUNT(*) AS count FROM event_log WHERE subject_id = 'grammar' AND event_type = 'grammar.manual-review-saved'").get().count, 1);
+  assert.equal(DB.db.prepare("SELECT COUNT(*) AS count FROM event_log WHERE subject_id = 'grammar' AND event_type = 'grammar.manual-review-saved'").get().count, 0);
 
   DB.close();
 });
