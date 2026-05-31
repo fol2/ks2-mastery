@@ -174,7 +174,7 @@ The `capacity:classroom:release-gate` package script bakes the recommended defau
 npm run capacity:classroom:release-gate -- --production --origin https://ks2.eugnel.uk --confirm-production-load --confirm-high-production-load --demo-sessions --learners 30 --bootstrap-burst 20 --rounds 1
 ```
 
-The release-gate script is equivalent to `capacity:classroom` with `--max-5xx 0 --max-network-failures 0 --max-bootstrap-p95-ms 1000 --max-command-p95-ms 500 --max-bootstrap-server-p95-ms 250 --max-command-server-p95-ms 250 --max-bootstrap-d1-rows-written 0 --max-command-d1-rows-written 5 --max-response-bytes 600000 --max-command-response-bytes 20000 --require-zero-signals` prepended. Any additional arguments you supply on the command line layer on top — but they cannot repeat a threshold already baked in (duplicate-flag rejection), and they cannot choose `--dry-run` (threshold-vs-dry-run rejection).
+The release-gate script is equivalent to `capacity:classroom` with `--max-5xx 0 --max-network-failures 0 --max-bootstrap-p95-ms 1000 --max-command-p95-ms 500 --max-bootstrap-server-p95-ms 250 --max-command-server-p95-ms 250 --max-bootstrap-d1-rows-written 0 --max-command-d1-rows-written 12 --max-response-bytes 600000 --max-command-response-bytes 20000 --require-zero-signals` prepended. Any additional arguments you supply on the command line layer on top — but they cannot repeat a threshold already baked in (duplicate-flag rejection), and they cannot choose `--dry-run` (threshold-vs-dry-run rejection).
 
 ### Probe bootstrap flags
 
@@ -411,7 +411,7 @@ Do not claim classroom or school readiness from Free-tier limits alone.
 
 ### Admin ops console KPI endpoint
 
-`GET /api/admin/ops/kpi` runs 7 live `COUNT(*)` queries against `adult_accounts`, `learner_profiles`, `practice_sessions`, `event_log`, `mutation_receipts` plus 1 read against `admin_kpi_metrics`. Cost is bounded by the 3 new indexes added in migration `0010` (`idx_event_log_created`, `idx_practice_sessions_updated`, `idx_mutation_receipts_applied`); `EXPLAIN QUERY PLAN` verifies index usage.
+`GET /api/admin/ops/kpi` runs 7 live `COUNT(*)` queries against `adult_accounts`, `learner_profiles`, `practice_sessions`, `event_log`, `mutation_receipts` plus 1 read against `admin_kpi_metrics`. Event and mutation counts remain bounded by the retained migration `0010` indexes (`idx_event_log_created`, `idx_mutation_receipts_applied`). Migration `0019` removes the global `practice_sessions(updated_at)` index because it amplified every player session write; practice-session engagement remains a manual admin diagnostic rather than a player hot-path dependency.
 
 The endpoint is manual-refresh only (no polling). Current KS2 scale keeps per-refresh cost well under the D1 Free-tier 10ms CPU budget. Re-evaluate if `event_log` exceeds ~500K rows — at that point consider a pre-aggregated `admin_kpi_metrics`-style counter for the windowed totals in place of live COUNTs.
 

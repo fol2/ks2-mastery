@@ -31,7 +31,7 @@ This meant a release could pass the capacity gate while still increasing server 
 - bootstrap server P95 <= 250 ms
 - command server P95 <= 250 ms
 - bootstrap D1 writes = 0
-- command D1 writes <= 5
+- command D1 rows-written <= 12
 - response bytes <= 600,000
 - command response bytes <= 20,000
 - 5xx = 0
@@ -56,3 +56,4 @@ Behaviour review:
 - Duplicate CLI threshold flags still fail validation.
 - Dry-run output only reports configured release thresholds.
 - Configured server and D1 thresholds fail closed when the evidence payload is missing the required metric family.
+- The command D1 rows-written ceiling is set against Cloudflare's billed `rows_written` semantics, which include secondary-index writes as documented by Cloudflare D1. The follow-up cleanup removes unused write-amplifying indexes before using this threshold, including the global practice-session admin KPI index that was charging every player session write.
