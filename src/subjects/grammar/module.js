@@ -127,6 +127,39 @@ function setGrammarError(context, message, { learnerId = selectedLearnerId(conte
   }));
 }
 
+function mergeGrammarReadModelPatch(current, incoming, learnerId) {
+  if (!incoming || typeof incoming !== 'object' || Array.isArray(incoming)) {
+    return normaliseGrammarReadModel(current, learnerId);
+  }
+  if (incoming.readModelPatch !== true) {
+    return normaliseGrammarReadModel(incoming, learnerId);
+  }
+
+  const base = normaliseGrammarReadModel(current, learnerId);
+  const merged = {
+    ...base,
+    ...incoming,
+    content: {
+      ...base.content,
+      ...(incoming.content && typeof incoming.content === 'object' && !Array.isArray(incoming.content)
+        ? incoming.content
+        : {}),
+    },
+    analytics: Object.prototype.hasOwnProperty.call(incoming, 'analytics')
+      ? incoming.analytics
+      : base.analytics,
+    capabilities: Object.prototype.hasOwnProperty.call(incoming, 'capabilities')
+      ? incoming.capabilities
+      : base.capabilities,
+    transferLane: Object.prototype.hasOwnProperty.call(incoming, 'transferLane')
+      ? incoming.transferLane
+      : base.transferLane,
+    bank: Object.prototype.hasOwnProperty.call(incoming, 'bank') ? incoming.bank : base.bank,
+    ui: Object.prototype.hasOwnProperty.call(incoming, 'ui') ? incoming.ui : base.ui,
+  };
+  return normaliseGrammarReadModel(merged, learnerId);
+}
+
 function applyRemoteReadModel(context, response, { learnerId } = {}) {
   if (!learnerId) return;
   const responseLearnerId = String(response?.subjectReadModel?.learnerId || learnerId);
@@ -137,11 +170,11 @@ function applyRemoteReadModel(context, response, { learnerId } = {}) {
     context.store.pushToasts(response.projections.rewards.toastEvents);
   }
   if (response?.subjectReadModel) {
-    updateGrammarUiForLearner(context, learnerId, {
-      ...normaliseGrammarReadModel(response.subjectReadModel, learnerId),
+    updateGrammarUiForLearner(context, learnerId, (current) => ({
+      ...mergeGrammarReadModelPatch(current, response.subjectReadModel, learnerId),
       pendingCommand: '',
       error: '',
-    });
+    }));
   } else if (isSelectedLearner) {
     context.store.reloadFromRepositories?.({ preserveRoute: true });
   }
