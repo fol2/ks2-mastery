@@ -1,6 +1,8 @@
 import {
+  canUseCachedRepositoryStartup,
   createCredentialFetch,
   createRepositoriesForBrowserRuntime,
+  refreshCachedRepositoryStartup,
 } from './platform/app/bootstrap.js';
 import { createAppController } from './platform/app/create-app-controller.js';
 import { createRoot } from 'react-dom/client';
@@ -272,7 +274,10 @@ if (!boot.repositories) {
 const repositories = boot.repositories;
 globalThis.KS2_AUTH_SESSION = boot.session;
 const subjectExposureGates = normaliseSubjectExposureGates(boot.session.subjectExposureGates);
-await repositories.hydrate();
+const canStartFromCachedRepositories = canUseCachedRepositoryStartup(repositories);
+if (!canStartFromCachedRepositories) {
+  await repositories.hydrate();
+}
 
 const services = {
   arithmetic: null,
@@ -1509,6 +1514,14 @@ const controller = createAppController({
   },
 });
 store = controller.store;
+if (canStartFromCachedRepositories) {
+  const scheduleCachedRefresh = typeof globalThis.setTimeout === 'function'
+    ? globalThis.setTimeout.bind(globalThis)
+    : (fn) => queueMicrotask(fn);
+  scheduleCachedRefresh(() => {
+    refreshCachedRepositoryStartup({ repositories, store });
+  }, 0);
+}
 const buildUpdateDetector = createBuildUpdateDetector({
   loadedBuildId: resolveClientBuildId(),
   fetchFn: credentialFetch,
