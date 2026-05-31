@@ -101,21 +101,10 @@ test('worker subject runtime registers Grammar command handlers', async () => {
   assert.equal(result.subjectReadModel.session.currentItem.templateId, 'fronted_adverbial_choose');
   assert.equal(result.subjectReadModel.session.currentItem.evaluate, undefined);
   assert.equal(result.subjectReadModel.session.currentItem.promptText.includes('<'), false);
-  assert.deepEqual(result.subjectReadModel.capabilities.enabledModes.map((mode) => mode.id), [
-    'learn',
-    'smart',
-    'satsset',
-    'trouble',
-    'surgery',
-    'builder',
-    'worked',
-    'faded',
-  ]);
-  assert.equal(result.subjectReadModel.capabilities.lockedModes.some((mode) => mode.id === 'trouble'), false);
-  assert.equal(result.subjectReadModel.capabilities.lockedModes.some((mode) => mode.id === 'surgery'), false);
-  assert.equal(result.subjectReadModel.capabilities.lockedModes.some((mode) => mode.id === 'builder'), false);
-  assert.equal(result.subjectReadModel.capabilities.lockedModes.some((mode) => mode.id === 'worked'), false);
-  assert.equal(result.subjectReadModel.capabilities.lockedModes.some((mode) => mode.id === 'faded'), false);
+  assert.equal(result.subjectReadModel.readModelPatch, true);
+  assert.equal(result.subjectReadModel.capabilities, undefined);
+  assert.equal(result.subjectReadModel.analytics, undefined);
+  assert.equal(result.subjectReadModel.transferLane, undefined);
 });
 
 test('worker subject runtime starts Grammar trouble drills against weak concepts', async () => {
@@ -441,7 +430,8 @@ test('Grammar command route accepts trouble drill mode', async () => {
   assert.equal(start.body.subjectReadModel.phase, 'session');
   assert.equal(start.body.subjectReadModel.session.mode, 'trouble');
   assert.equal(start.body.subjectReadModel.session.type, 'trouble-drill');
-  assert.equal(start.body.subjectReadModel.capabilities.lockedModes.some((mode) => mode.id === 'trouble'), false);
+  assert.equal(start.body.subjectReadModel.readModelPatch, true);
+  assert.equal(start.body.subjectReadModel.capabilities, undefined);
 
   DB.close();
 });
@@ -674,7 +664,8 @@ test('Grammar command route accepts sentence surgery mode', async () => {
   assert.equal(start.body.subjectReadModel.session.mode, 'surgery');
   assert.equal(start.body.subjectReadModel.session.type, 'sentence-surgery');
   assert.match(start.body.subjectReadModel.session.currentItem.questionType, /^(fix|rewrite)$/);
-  assert.equal(start.body.subjectReadModel.capabilities.lockedModes.some((mode) => mode.id === 'surgery'), false);
+  assert.equal(start.body.subjectReadModel.readModelPatch, true);
+  assert.equal(start.body.subjectReadModel.capabilities, undefined);
 
   DB.close();
 });
@@ -823,7 +814,8 @@ test('Grammar command route accepts sentence builder mode', async () => {
   assert.equal(start.body.subjectReadModel.session.type, 'sentence-builder');
   assert.equal(start.body.subjectReadModel.session.focusConceptId, '');
   assert.match(start.body.subjectReadModel.session.currentItem.questionType, /^(build|rewrite)$/);
-  assert.equal(start.body.subjectReadModel.capabilities.lockedModes.some((mode) => mode.id === 'builder'), false);
+  assert.equal(start.body.subjectReadModel.readModelPatch, true);
+  assert.equal(start.body.subjectReadModel.capabilities, undefined);
 
   DB.close();
 });
@@ -852,7 +844,8 @@ test('Grammar command route accepts worked example mode with concept guidance', 
   assert.equal(start.body.subjectReadModel.session.supportLevel, 2);
   assert.equal(start.body.subjectReadModel.session.supportGuidance.kind, 'worked');
   assert.ok(start.body.subjectReadModel.session.supportGuidance.workedExample.exampleResponse);
-  assert.equal(start.body.subjectReadModel.capabilities.lockedModes.some((mode) => mode.id === 'worked'), false);
+  assert.equal(start.body.subjectReadModel.readModelPatch, true);
+  assert.equal(start.body.subjectReadModel.capabilities, undefined);
 
   DB.close();
 });
@@ -881,7 +874,8 @@ test('Grammar command route accepts faded guidance mode without current-answer l
   assert.equal(start.body.subjectReadModel.session.supportGuidance.kind, 'faded');
   assert.equal(start.body.subjectReadModel.session.currentItem.solutionLines, undefined);
   assert.equal(start.body.subjectReadModel.session.supportGuidance.workedExample, undefined);
-  assert.equal(start.body.subjectReadModel.capabilities.lockedModes.some((mode) => mode.id === 'faded'), false);
+  assert.equal(start.body.subjectReadModel.readModelPatch, true);
+  assert.equal(start.body.subjectReadModel.capabilities, undefined);
 
   DB.close();
 });
@@ -1004,11 +998,24 @@ test('Grammar read model exposes evidence analytics for misconceptions and quest
   });
 
   assert.equal(submit.response.status, 200, JSON.stringify(submit.body));
-  assert.equal(submit.body.subjectReadModel.analytics.progressSnapshot.trackedConcepts, 1);
-  assert.equal(submit.body.subjectReadModel.analytics.misconceptionPatterns[0].id, 'fronted_adverbial_confusion');
-  assert.equal(submit.body.subjectReadModel.analytics.questionTypeSummary[0].id, 'choose');
-  assert.equal(submit.body.subjectReadModel.analytics.questionTypeSummary[0].wrong, 1);
-  assert.equal(submit.body.subjectReadModel.analytics.recentActivity[0].misconception, 'fronted_adverbial_confusion');
+  assert.equal(submit.body.subjectReadModel.readModelPatch, true);
+  assert.equal(submit.body.subjectReadModel.analytics, undefined);
+
+  const end = await postCommand(app, DB, {
+    command: 'end-session',
+    learnerId: 'learner-a',
+    requestId: 'grammar-evidence-end',
+    expectedLearnerRevision: 2,
+    payload: {},
+  });
+
+  assert.equal(end.response.status, 200, JSON.stringify(end.body));
+  assert.equal(end.body.subjectReadModel.readModelPatch, undefined);
+  assert.equal(end.body.subjectReadModel.analytics.progressSnapshot.trackedConcepts, 1);
+  assert.equal(end.body.subjectReadModel.analytics.misconceptionPatterns[0].id, 'fronted_adverbial_confusion');
+  assert.equal(end.body.subjectReadModel.analytics.questionTypeSummary[0].id, 'choose');
+  assert.equal(end.body.subjectReadModel.analytics.questionTypeSummary[0].wrong, 1);
+  assert.equal(end.body.subjectReadModel.analytics.recentActivity[0].misconception, 'fronted_adverbial_confusion');
 
   DB.close();
 });

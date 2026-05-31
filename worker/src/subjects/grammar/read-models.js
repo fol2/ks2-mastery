@@ -994,6 +994,71 @@ export function buildGrammarReadModel({
   };
 }
 
+const GRAMMAR_FULL_COMMAND_READ_MODEL_COMMANDS = new Set([
+  'end-session',
+  'finish-mini-test',
+  'reset-learner',
+]);
+
+const GRAMMAR_TRANSFER_COMMAND_READ_MODEL_COMMANDS = new Set([
+  'save-transfer-evidence',
+  'reset-learner',
+]);
+
+function compactGrammarCommandReadModel(readModel, command) {
+  if (!readModel || typeof readModel !== 'object' || Array.isArray(readModel)) return readModel;
+  if (GRAMMAR_FULL_COMMAND_READ_MODEL_COMMANDS.has(command)) return readModel;
+
+  const compact = {
+    readModelPatch: true,
+    subjectId: readModel.subjectId,
+    learnerId: readModel.learnerId,
+    version: readModel.version,
+    authority: readModel.authority,
+    content: {
+      releaseId: readModel.content?.releaseId || '',
+      conceptCount: readModel.content?.conceptCount || 0,
+      templateCount: readModel.content?.templateCount || 0,
+    },
+    phase: readModel.phase,
+    awaitingAdvance: readModel.awaitingAdvance,
+    session: readModel.session,
+    feedback: readModel.feedback,
+    summary: readModel.summary,
+    prefs: readModel.prefs,
+    stats: readModel.stats,
+    aiEnrichment: readModel.aiEnrichment,
+    projections: readModel.projections,
+    error: readModel.error,
+  };
+
+  if (GRAMMAR_TRANSFER_COMMAND_READ_MODEL_COMMANDS.has(command)) {
+    compact.transferLane = readModel.transferLane;
+  }
+
+  return compact;
+}
+
+export function buildGrammarCommandReadModel({
+  command,
+  learnerId,
+  state,
+  projections = null,
+  now = Date.now(),
+  aiEnrichment = null,
+} = {}) {
+  return compactGrammarCommandReadModel(
+    buildGrammarReadModel({
+      learnerId,
+      state,
+      projections,
+      now,
+      aiEnrichment,
+    }),
+    command,
+  );
+}
+
 // U7 non-scored transfer writing lane read-model projection. The prompt
 // catalogue is delivered from the Worker via this read model so the React
 // surface does not import worker/src/subjects/grammar/transfer-prompts.js

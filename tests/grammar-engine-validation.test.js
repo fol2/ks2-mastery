@@ -19,7 +19,10 @@ import {
   grammarTemplateGeneratorFamilyId,
   serialiseGrammarQuestion,
 } from '../worker/src/subjects/grammar/content.js';
-import { buildGrammarReadModel } from '../worker/src/subjects/grammar/read-models.js';
+import {
+  buildGrammarCommandReadModel,
+  buildGrammarReadModel,
+} from '../worker/src/subjects/grammar/read-models.js';
 import {
   readGrammarLegacyOracle,
   readGrammarQuestionGeneratorBaseline,
@@ -163,6 +166,58 @@ test('Grammar attempt history stores generated variant metadata but keeps read m
   assert.equal(readModel.analytics.recentAttempts[0].response, undefined);
   assert.equal(readModel.analytics.recentAttempts[0].result.answerText, undefined);
   assertNoForbiddenGrammarReadModelKeys(readModel, 'grammar.variantMetadataReadModel');
+});
+
+test('Grammar command read models omit heavy stable fields until the user opens summary surfaces', () => {
+  const state = createInitialGrammarState();
+  state.phase = 'session';
+  state.prefs = { mode: 'smart', roundLength: 5 };
+  state.transferEvidence = {
+    'storm-scene': {
+      latest: {
+        writing: 'A short piece of saved writing.',
+        selfAssessment: [{ key: 'sentence-variety', checked: true }],
+        savedAt: 1_777_000_000_000,
+      },
+      history: [],
+      updatedAt: 1_777_000_000_000,
+    },
+  };
+
+  const full = buildGrammarReadModel({ learnerId: 'learner-a', state, now: 1_777_000_000_000 });
+  const compact = buildGrammarCommandReadModel({
+    command: 'start-session',
+    learnerId: 'learner-a',
+    state,
+    now: 1_777_000_000_000,
+  });
+
+  assert.equal(compact.readModelPatch, true);
+  assert.equal(compact.analytics, undefined);
+  assert.equal(compact.capabilities, undefined);
+  assert.equal(compact.transferLane, undefined);
+  assert.ok(JSON.stringify(compact).length < JSON.stringify(full).length / 2);
+
+  const transferPatch = buildGrammarCommandReadModel({
+    command: 'save-transfer-evidence',
+    learnerId: 'learner-a',
+    state,
+    now: 1_777_000_000_000,
+  });
+  assert.equal(transferPatch.readModelPatch, true);
+  assert.ok(transferPatch.transferLane?.evidence?.length >= 1);
+  assert.equal(transferPatch.analytics, undefined);
+
+  const summaryModel = buildGrammarCommandReadModel({
+    command: 'end-session',
+    learnerId: 'learner-a',
+    state,
+    now: 1_777_000_000_000,
+  });
+  assert.equal(summaryModel.readModelPatch, undefined);
+  assert.ok(Array.isArray(summaryModel.analytics?.concepts));
+  assert.ok(summaryModel.capabilities?.enabledModes?.length > 0);
+  assert.ok(summaryModel.transferLane);
 });
 
 test('Grammar engine rejects empty answers before mastery is mutated', () => {

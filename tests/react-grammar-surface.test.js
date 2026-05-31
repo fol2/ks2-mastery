@@ -1439,6 +1439,93 @@ test('Grammar command responses are pinned to the learner that sent them', async
   assert.equal(celebrations.length, 0);
 });
 
+test('Grammar compact command responses patch active session fields without dropping stable dashboard data', async () => {
+  const context = {
+    appState: {
+      learners: { selectedId: 'learner-a' },
+      subjectUi: {
+        grammar: normaliseGrammarReadModel({
+          learnerId: 'learner-a',
+          analytics: {
+            concepts: [{ id: 'clauses', status: 'due', attempts: 7, correct: 5 }],
+          },
+          capabilities: {
+            aiEnrichment: { enabled: false, nonScored: true, kinds: ['explanation'] },
+          },
+          transferLane: {
+            mode: 'non-scored',
+            limits: { maxPrompts: 4, historyPerPrompt: 2, writingCapChars: 2000 },
+            prompts: [{ id: 'storm-scene', title: 'Storm scene', brief: 'Write a scene.' }],
+            evidence: [{
+              promptId: 'storm-scene',
+              latest: {
+                writing: 'Saved writing.',
+                selfAssessment: [{ key: 'sentence-variety', checked: true }],
+                savedAt: 1_777_000_000_000,
+                source: 'transfer-lane',
+              },
+              history: [],
+              updatedAt: 1_777_000_000_000,
+            }],
+          },
+        }, 'learner-a'),
+      },
+    },
+    runtimeReadOnly: false,
+    subjectCommands: {
+      async send() {
+        return {
+          subjectReadModel: {
+            readModelPatch: true,
+            learnerId: 'learner-a',
+            subjectId: 'grammar',
+            version: 1,
+            authority: 'server',
+            phase: 'session',
+            awaitingAdvance: false,
+            session: { id: 'compact-session', mode: 'smart', currentItem: null },
+            feedback: null,
+            summary: null,
+            prefs: { mode: 'smart', roundLength: 5 },
+            stats: { concepts: { total: 30, due: 1, weak: 0, secured: 0 } },
+            aiEnrichment: { status: 'idle' },
+            projections: null,
+            error: '',
+          },
+        };
+      },
+    },
+    store: {
+      getState() { return context.appState; },
+      updateSubjectUi(subjectId, updater) {
+        const previous = context.appState.subjectUi[subjectId] || {};
+        const next = typeof updater === 'function' ? updater(previous) : { ...previous, ...updater };
+        context.appState = {
+          ...context.appState,
+          subjectUi: {
+            ...context.appState.subjectUi,
+            [subjectId]: next,
+          },
+        };
+      },
+    },
+  };
+
+  grammarModule.handleAction('grammar-start', context);
+  await Promise.resolve();
+  await Promise.resolve();
+
+  const grammar = context.appState.subjectUi.grammar;
+  const clauses = grammar.analytics.concepts.find((concept) => concept.id === 'clauses');
+  assert.equal(grammar.pendingCommand, '');
+  assert.equal(grammar.phase, 'session');
+  assert.equal(grammar.session.id, 'compact-session');
+  assert.equal(clauses.status, 'due');
+  assert.equal(clauses.attempts, 7);
+  assert.equal(grammar.capabilities.aiEnrichment.enabled, false);
+  assert.equal(grammar.transferLane.evidence[0].latest.writing, 'Saved writing.');
+});
+
 test('Grammar remote command defers monster celebrations until session end', async () => {
   const calls = [];
   const context = {

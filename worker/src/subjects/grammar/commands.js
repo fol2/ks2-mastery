@@ -3,7 +3,7 @@ import { combineCommandEvents } from '../../projections/events.js';
 import { buildCommandProjectionReadModel } from '../../projections/read-models.js';
 import { projectGrammarRewards } from '../../projections/rewards.js';
 import { createServerGrammarEngine } from './engine.js';
-import { buildGrammarReadModel } from './read-models.js';
+import { buildGrammarCommandReadModel } from './read-models.js';
 import { GRAMMAR_CONTENT_RELEASE_ID } from './content.js';
 import { resolveProjectionInput } from '../projection-input.js';
 import {
@@ -226,7 +226,8 @@ export function createGrammarCommandHandlers({ now, random } = {}) {
     return {
       learnerId: command.learnerId,
       changed: result.changed,
-      subjectReadModel: buildGrammarReadModel({
+      subjectReadModel: buildGrammarCommandReadModel({
+        command: command.command,
         learnerId: command.learnerId,
         state: result.state,
         projections,

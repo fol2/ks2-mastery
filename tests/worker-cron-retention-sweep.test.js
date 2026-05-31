@@ -12,9 +12,13 @@ import {
   REQUEST_LIMITS_RETENTION_MS,
   PRACTICE_SESSION_RETENTION_MS,
   LEARNER_ACTIVITY_FEED_RETENTION_MS,
+  EVENT_LOG_RECENT_EVENTS_PER_LEARNER,
+  EVENT_LOG_MAX_DELETE_BATCH,
+  EVENT_LOG_CANDIDATE_EVENT_SCAN_LIMIT,
   sweepMutationReceipts,
   sweepPracticeSessions,
   sweepLearnerActivityFeed,
+  sweepEventLog,
   sweepRequestLimits,
   sweepStaleSessions,
   runRetentionSweeps,
@@ -113,6 +117,20 @@ function seedActivityFeed(db, { id, learnerId = 'learner-a', updatedAt }) {
     )
     VALUES (?, ?, 'spelling', 'reward', '{}', NULL, ?, ?)
   `).run(id, learnerId, updatedAt, updatedAt);
+}
+
+function seedEventLog(db, {
+  id,
+  learnerId = 'learner-a',
+  createdAt,
+  eventType = 'grammar.answer-submitted',
+} = {}) {
+  db.db.prepare(`
+    INSERT INTO event_log (
+      id, learner_id, subject_id, system_id, event_type, event_json, created_at, actor_account_id
+    )
+    VALUES (?, ?, 'grammar', NULL, ?, '{}', ?, NULL)
+  `).run(id, learnerId, eventType, createdAt);
 }
 
 function rowCount(db, sql, params = []) {
@@ -232,6 +250,85 @@ test('sweepLearnerActivityFeed uses the updated_at retention index', async () =>
   }
 });
 
+test('sweepEventLog prunes old high-history rows while preserving each learner latest 200 events', async () => {
+  const db = createMigratedSqliteD1Database();
+  try {
+    const now = 1_700_000_000_000;
+    seedLearner(db, { id: 'learner-a', now });
+    seedLearner(db, { id: 'learner-b', now });
+    for (let index = 0; index < EVENT_LOG_RECENT_EVENTS_PER_LEARNER + 5; index += 1) {
+      seedEventLog(db, {
+        id: `event-a-${String(index).padStart(3, '0')}`,
+        learnerId: 'learner-a',
+        createdAt: now + index,
+      });
+    }
+    for (let index = 0; index < 3; index += 1) {
+      seedEventLog(db, {
+        id: `event-b-${index}`,
+        learnerId: 'learner-b',
+        createdAt: now + index,
+      });
+    }
+
+    const result = await sweepEventLog(db, now);
+    assert.equal(result.deleted, 5);
+    assert.equal(rowCount(db, "SELECT COUNT(*) AS count FROM event_log WHERE learner_id='learner-a'"), EVENT_LOG_RECENT_EVENTS_PER_LEARNER);
+    assert.equal(rowCount(db, "SELECT COUNT(*) AS count FROM event_log WHERE learner_id='learner-b'"), 3);
+    const oldestKept = db.db.prepare(`
+      SELECT id FROM event_log
+      WHERE learner_id = 'learner-a'
+      ORDER BY created_at ASC, id ASC
+      LIMIT 1
+    `).get();
+    assert.equal(oldestKept.id, 'event-a-005');
+  } finally {
+    db.close();
+  }
+});
+
+test('sweepEventLog uses the learner/created index for bounded deletes', async () => {
+  const db = createMigratedSqliteD1Database();
+  try {
+    const plan = db.db.prepare(`
+      EXPLAIN QUERY PLAN
+      SELECT rowid
+      FROM event_log
+      WHERE learner_id = ?
+        AND created_at < ?
+      LIMIT ?
+    `).all('learner-a', 0, EVENT_LOG_MAX_DELETE_BATCH);
+    const detail = plan.map((row) => row.detail).join('\n');
+    assert.match(detail, /idx_event_log_learner_created/);
+    assert.doesNotMatch(detail, /SCAN event_log\b/);
+  } finally {
+    db.close();
+  }
+});
+
+test('sweepEventLog candidate scan stays bounded on the created_at index', async () => {
+  const db = createMigratedSqliteD1Database();
+  try {
+    const plan = db.db.prepare(`
+      EXPLAIN QUERY PLAN
+      SELECT learner_id
+      FROM (
+        SELECT learner_id
+        FROM event_log
+        WHERE learner_id IS NOT NULL
+        ORDER BY created_at ASC
+        LIMIT ?
+      )
+      GROUP BY learner_id
+      LIMIT ?
+    `).all(EVENT_LOG_CANDIDATE_EVENT_SCAN_LIMIT, 50);
+    const detail = plan.map((row) => row.detail).join('\n');
+    assert.match(detail, /idx_event_log_created/);
+  } finally {
+    db.close();
+  }
+});
+
 test('U11 runRetentionSweeps aggregates per-sweep deletion counts', async () => {
   const db = createMigratedSqliteD1Database();
   try {
@@ -244,9 +341,15 @@ test('U11 runRetentionSweeps aggregates per-sweep deletion counts', async () => 
     seedSession(db, { id: 'sess-stale', accountId: 'adult-a', expiresAt: now - 1, revisionAtIssue: 0 });
     seedPracticeSession(db, { id: 'practice-old', status: 'completed', updatedAt: now - PRACTICE_SESSION_RETENTION_MS - 1 });
     seedActivityFeed(db, { id: 'activity-old', updatedAt: now - LEARNER_ACTIVITY_FEED_RETENTION_MS - 1 });
+    for (let index = 0; index < EVENT_LOG_RECENT_EVENTS_PER_LEARNER + 1; index += 1) {
+      seedEventLog(db, {
+        id: `event-old-${index}`,
+        createdAt: now + index,
+      });
+    }
 
     const result = await runRetentionSweeps(db, now);
-    assert.equal(result.totalDeleted, 5);
+    assert.equal(result.totalDeleted, 6);
     const byName = Object.create(null);
     for (const entry of result.completed) byName[entry.sweep] = entry.deleted;
     assert.equal(byName.mutation_receipts, 1);
@@ -254,6 +357,7 @@ test('U11 runRetentionSweeps aggregates per-sweep deletion counts', async () => 
     assert.equal(byName.account_sessions, 1);
     assert.equal(byName.practice_sessions, 1);
     assert.equal(byName.learner_activity_feed, 1);
+    assert.equal(byName.event_log, 1);
   } finally {
     db.close();
   }

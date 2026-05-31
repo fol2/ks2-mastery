@@ -29,6 +29,12 @@ export const PRACTICE_SESSION_RETENTION_MS = 30 * 24 * 60 * 60 * 1000; // 30 day
 export const PRACTICE_SESSIONS_MAX_DELETE_BATCH = 5000;
 export const LEARNER_ACTIVITY_FEED_RETENTION_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 export const LEARNER_ACTIVITY_FEED_MAX_DELETE_BATCH = 5000;
+// Keep the bounded history needed by bootstrap and projection fallback without
+// letting long-play learners turn event_log into an unbounded archive.
+export const EVENT_LOG_RECENT_EVENTS_PER_LEARNER = 200;
+export const EVENT_LOG_MAX_DELETE_BATCH = 5000;
+export const EVENT_LOG_LEARNER_SCAN_LIMIT = 50;
+export const EVENT_LOG_CANDIDATE_EVENT_SCAN_LIMIT = 500;
 // P3 U4: request denials retention — 14-day rolling window.
 export const REQUEST_DENIALS_RETENTION_MS = 14 * 24 * 60 * 60 * 1000; // 14 days
 export const REQUEST_DENIALS_MAX_DELETE_BATCH = 5000;
@@ -191,6 +197,73 @@ export async function sweepLearnerActivityFeed(db, now = Date.now()) {
 }
 
 /**
+ * Prune old normal gameplay events by count, not by wall-clock age. The
+ * product reads only a bounded recent window from event_log: public bootstrap
+ * returns recent public events, and projection fallback reads the latest 200
+ * learner events. Source-of-truth progress/reward state lives in state tables.
+ *
+ * The implementation intentionally avoids a correlated "count newer rows"
+ * predicate. That shape explodes into millions of row comparisons for heavy
+ * learners. Instead it:
+ *   1. picks a small batch of learners with the oldest event rows;
+ *   2. uses the learner/created index to find each learner's 200th newest row;
+ *   3. deletes only older rows, capped across the sweep.
+ */
+export async function sweepEventLog(db, now = Date.now()) {
+  try {
+    const candidates = await db.prepare(`
+      SELECT learner_id
+      FROM (
+        SELECT learner_id
+        FROM event_log
+        WHERE learner_id IS NOT NULL
+        ORDER BY created_at ASC
+        LIMIT ?
+      )
+      GROUP BY learner_id
+      LIMIT ?
+    `).bind(EVENT_LOG_CANDIDATE_EVENT_SCAN_LIMIT, EVENT_LOG_LEARNER_SCAN_LIMIT).all();
+    const learnerRows = Array.isArray(candidates?.results) ? candidates.results : [];
+    let remaining = EVENT_LOG_MAX_DELETE_BATCH;
+    let deleted = 0;
+
+    for (const row of learnerRows) {
+      if (remaining <= 0) break;
+      const learnerId = String(row?.learner_id || '').trim();
+      if (!learnerId) continue;
+
+      const cutoff = await db.prepare(`
+        SELECT created_at
+        FROM event_log
+        WHERE learner_id = ?
+        ORDER BY created_at DESC, id DESC
+        LIMIT 1 OFFSET ?
+      `).bind(learnerId, EVENT_LOG_RECENT_EVENTS_PER_LEARNER - 1).first();
+      const cutoffCreatedAt = Number(cutoff?.created_at);
+      if (!Number.isFinite(cutoffCreatedAt)) continue;
+
+      const result = await run(db, `
+        DELETE FROM event_log
+        WHERE rowid IN (
+          SELECT rowid
+          FROM event_log
+          WHERE learner_id = ?
+            AND created_at < ?
+          LIMIT ?
+        )
+      `, [learnerId, cutoffCreatedAt, remaining]);
+      const changed = Math.max(0, Number(result?.meta?.changes) || 0);
+      deleted += changed;
+      remaining -= changed;
+    }
+
+    return { deleted };
+  } catch (error) {
+    return swallowMissingTable(error, 'event_log');
+  }
+}
+
+/**
  * P3 U4: prune stale request denials. 14-day rolling window, bounded-
  * delete (5000-row cap), `swallowMissingTable` pattern. The table may
  * not exist on instances that have not yet applied migration 0013.
@@ -230,6 +303,8 @@ export async function runRetentionSweeps(db, now = Date.now()) {
   completed.push({ sweep: 'practice_sessions', ...practiceSessions });
   const activityFeed = await sweepLearnerActivityFeed(db, now);
   completed.push({ sweep: 'learner_activity_feed', ...activityFeed });
+  const eventLog = await sweepEventLog(db, now);
+  completed.push({ sweep: 'event_log', ...eventLog });
   const denials = await sweepRequestDenials(db, now);
   completed.push({ sweep: 'admin_request_denials', ...denials });
   return {
