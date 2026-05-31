@@ -111,22 +111,12 @@ export async function sweepRequestLimits(db, now = Date.now()) {
 }
 
 /**
- * Prune sessions orphaned by a `status_revision` bump. A session rendered
- * stale by revision-bump becomes unreachable in Phase D's require-session
- * compare, but unexpired rows linger until this sweep removes them. The
- * cron runs it as defence-in-depth for the U15 immediate-sweep path.
+ * Prune expired account sessions. Stale-session invalidation remains enforced
+ * at the auth boundary and by the immediate status-change sweep; this cron
+ * path removes any session row that can no longer authenticate a request.
  *
- * Sessions are only deleted when BOTH conditions hold:
- *   - the session's `status_revision_at_issue` is below the account's
- *     current `status_revision` (so the session is server-invalidated);
- *   - `expires_at` is in the past (so pruning cannot race an in-flight
- *     request from that session).
- *
- * I4 (Phase C reviewer): the per-row correlated subquery was rewritten
- * as a bounded JOIN with a LIMIT 5000 inside the rowid selection so the
- * planner can use the `account_sessions(account_id)` index and so a
- * large backlog drains across multiple cron cycles instead of choking
- * the D1 request in a single unbounded DELETE.
+ * The bounded delete uses the `account_sessions(expires_at)` index so ordinary
+ * login churn does not leave a permanent D1 tail.
  */
 export async function sweepStaleSessions(db, now = Date.now()) {
   const nowTs = Math.max(0, Number(now) || 0);
@@ -134,19 +124,15 @@ export async function sweepStaleSessions(db, now = Date.now()) {
     const result = await run(db, `
       DELETE FROM account_sessions
       WHERE rowid IN (
-        SELECT s.rowid FROM account_sessions s
-        JOIN account_ops_metadata aom ON aom.account_id = s.account_id
-        WHERE s.expires_at < ?
-          AND s.status_revision_at_issue < aom.status_revision
+        SELECT rowid FROM account_sessions
+        WHERE expires_at < ?
+        ORDER BY expires_at ASC
         LIMIT ?
       )
     `, [nowTs, ACCOUNT_SESSIONS_MAX_DELETE_BATCH]);
     return { deleted: Math.max(0, Number(result?.meta?.changes) || 0) };
   } catch (error) {
-    // Either `account_sessions` or `account_ops_metadata` may be missing
-    // on a partial deploy — soft-fail so the cron keeps the remainder.
     if (isMissingTableError(error, 'account_sessions')) return { deleted: 0 };
-    if (isMissingTableError(error, 'account_ops_metadata')) return { deleted: 0 };
     throw error;
   }
 }

@@ -532,7 +532,12 @@ test('parseClassroomLoadArgs collects threshold flags into options.thresholds', 
     '--max-network-failures', '0',
     '--max-bootstrap-p95-ms', '1000',
     '--max-command-p95-ms', '750',
+    '--max-bootstrap-server-p95-ms', '250',
+    '--max-command-server-p95-ms', '250',
+    '--max-bootstrap-d1-rows-written', '0',
+    '--max-command-d1-rows-written', '5',
     '--max-response-bytes', '600000',
+    '--max-command-response-bytes', '20000',
     '--require-zero-signals',
     '--require-bootstrap-capacity',
     '--output', 'tmp/evidence.json',
@@ -542,7 +547,12 @@ test('parseClassroomLoadArgs collects threshold flags into options.thresholds', 
   assert.equal(options.thresholds.maxNetworkFailures, 0);
   assert.equal(options.thresholds.maxBootstrapP95Ms, 1000);
   assert.equal(options.thresholds.maxCommandP95Ms, 750);
+  assert.equal(options.thresholds.maxBootstrapServerP95Ms, 250);
+  assert.equal(options.thresholds.maxCommandServerP95Ms, 250);
+  assert.equal(options.thresholds.maxBootstrapD1RowsWritten, 0);
+  assert.equal(options.thresholds.maxCommandD1RowsWritten, 5);
   assert.equal(options.thresholds.maxResponseBytes, 600000);
+  assert.equal(options.thresholds.maxCommandResponseBytes, 20000);
   assert.equal(options.thresholds.requireZeroSignals, true);
   assert.equal(options.thresholds.requireBootstrapCapacity, true);
   assert.equal(options.output, 'tmp/evidence.json');

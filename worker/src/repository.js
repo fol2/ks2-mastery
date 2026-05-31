@@ -236,6 +236,8 @@ const SPELLING_RUNTIME_CONTENT_CACHE_LIMIT = 8;
 // the full editable content row from D1.
 const spellingRuntimeContentCache = new Map();
 const MONSTER_VISUAL_CONFIG_ID = 'global';
+const MONSTER_VISUAL_CONFIG_POINTER_CACHE_TTL_MS = 5_000;
+const monsterVisualConfigPointerCache = new WeakMap();
 const MONSTER_VISUAL_SCOPE_TYPE = 'platform';
 const MONSTER_VISUAL_SCOPE_ID = 'monster-visual-config';
 
@@ -6135,11 +6137,25 @@ async function readBootstrapMonsterVisualRuntimeConfig(db, nowTs) {
   }
 }
 
+function cloneMonsterVisualConfigPointer(value) {
+  return value && typeof value === 'object' ? { ...value } : value;
+}
+
+function monsterVisualConfigPointerCacheKey(db) {
+  return db?.__rawDb || db;
+}
+
+function invalidateMonsterVisualConfigPointerCache(db) {
+  const cacheKey = monsterVisualConfigPointerCacheKey(db);
+  if (!cacheKey || (typeof cacheKey !== 'object' && typeof cacheKey !== 'function')) return;
+  monsterVisualConfigPointerCache.delete(cacheKey);
+}
+
 // U7: compact pointer for the selected-learner-bounded envelope. Omits
 // the ~450 KB bundled config; the client uses `publishedVersion` +
 // `manifestHash` to decide whether its cached config is still current,
 // and fetches the full config via its existing lazy path when not.
-async function readMonsterVisualConfigPointer(db) {
+async function readMonsterVisualConfigPointerFromStorage(db) {
   try {
     const row = await first(db, `
       SELECT published_version, manifest_hash, published_at, schema_version
@@ -6169,6 +6185,51 @@ async function readMonsterVisualConfigPointer(db) {
     }
     throw error;
   }
+}
+
+async function readMonsterVisualConfigPointer(db, nowTs = Date.now()) {
+  const cacheKey = monsterVisualConfigPointerCacheKey(db);
+  const cache = cacheKey && (typeof cacheKey === 'object' || typeof cacheKey === 'function')
+    ? monsterVisualConfigPointerCache.get(cacheKey)
+    : null;
+  if (cache?.value && Number(cache.expiresAt) > Number(nowTs)) {
+    return cloneMonsterVisualConfigPointer(cache.value);
+  }
+  if (cache?.pending) {
+    return cloneMonsterVisualConfigPointer(await cache.pending);
+  }
+
+  const pending = readMonsterVisualConfigPointerFromStorage(db)
+    .then((value) => {
+      if (cacheKey && (typeof cacheKey === 'object' || typeof cacheKey === 'function')) {
+        const current = monsterVisualConfigPointerCache.get(cacheKey);
+        if (current?.pending === pending) {
+          monsterVisualConfigPointerCache.set(cacheKey, {
+            value: cloneMonsterVisualConfigPointer(value),
+            expiresAt: Date.now() + MONSTER_VISUAL_CONFIG_POINTER_CACHE_TTL_MS,
+            pending: null,
+          });
+        }
+      }
+      return value;
+    })
+    .catch((error) => {
+      if (cacheKey && (typeof cacheKey === 'object' || typeof cacheKey === 'function')) {
+        const current = monsterVisualConfigPointerCache.get(cacheKey);
+        if (current?.pending === pending) {
+          monsterVisualConfigPointerCache.delete(cacheKey);
+        }
+      }
+      throw error;
+    });
+  if (cacheKey && (typeof cacheKey === 'object' || typeof cacheKey === 'function')) {
+    monsterVisualConfigPointerCache.set(cacheKey, {
+      value: cache?.value || null,
+      expiresAt: Number(cache?.expiresAt) || 0,
+      pending,
+    });
+  }
+  return cloneMonsterVisualConfigPointer(await pending);
 }
 
 function monsterVisualMutationMeta({ kind, mutation, expectedRevision, appliedRevision }) {
@@ -6374,6 +6435,7 @@ async function saveMonsterVisualConfigDraft(db, actorAccountId, rawDraft, mutati
         kind,
         mutation: nextMutation,
       });
+      invalidateMonsterVisualConfigPointerCache(db);
     },
   });
 }
@@ -6501,6 +6563,7 @@ async function publishMonsterVisualConfig(db, actorAccountId, mutation, nowTs) {
         kind,
         mutation: nextMutation,
       });
+      invalidateMonsterVisualConfigPointerCache(db);
       await run(db, `
         DELETE FROM platform_monster_visual_config_versions
         WHERE version NOT IN (
@@ -6612,6 +6675,7 @@ async function restoreMonsterVisualConfigVersion(db, actorAccountId, version, mu
         kind,
         mutation: nextMutation,
       });
+      invalidateMonsterVisualConfigPointerCache(db);
     },
   });
 }
@@ -7862,6 +7926,7 @@ function buildSubjectRuntimePersistencePlan(db, accountId, learnerId, subjectId,
   // land. A subsequent command will repopulate the projection via
   // `stale-catchup`.
   skipProjectionReadModelWrite = false,
+  skipActivePracticeSessionWrite = false,
 } = {}) {
   const nextState = normaliseSubjectStateRecord({
     ui: runtime?.state || null,
@@ -7892,65 +7957,68 @@ function buildSubjectRuntimePersistencePlan(db, accountId, learnerId, subjectId,
     ? normalisePracticeSessionRecord(runtime.practiceSession)
     : null;
   if (session?.id && session.learnerId === learnerId && session.subjectId === subjectId) {
-    // U6 queryCount budget: skip the no-op "abandon siblings" UPDATE
-    // when the caller confirmed the current active session id is the
-    // same one we are about to upsert. The UPDATE's `id <> ?` filter
-    // means it would match zero rows in that case.
-    const shouldEmitAbandon = session.status === 'active'
-      && (currentActiveSessionId == null || currentActiveSessionId !== session.id);
-    if (shouldEmitAbandon) {
-      statements.push(bindStatement(db, `
-        UPDATE practice_sessions
-        SET status = 'abandoned',
-            updated_at = ?,
-            updated_by_account_id = ?
-        WHERE learner_id = ?
-          AND subject_id = ?
-          AND status = 'active'
-          AND id <> ?
-          ${guardedWhere(guard)}
-      `, guardedParams([nowTs, accountId, learnerId, subjectId, session.id], guard)));
-    }
+    const shouldSkipActivePracticeSessionWrite = skipActivePracticeSessionWrite && session.status === 'active';
+    if (!shouldSkipActivePracticeSessionWrite) {
+      // U6 queryCount budget: skip the no-op "abandon siblings" UPDATE
+      // when the caller confirmed the current active session id is the
+      // same one we are about to upsert. The UPDATE's `id <> ?` filter
+      // means it would match zero rows in that case.
+      const shouldEmitAbandon = session.status === 'active'
+        && (currentActiveSessionId == null || currentActiveSessionId !== session.id);
+      if (shouldEmitAbandon) {
+        statements.push(bindStatement(db, `
+          UPDATE practice_sessions
+          SET status = 'abandoned',
+              updated_at = ?,
+              updated_by_account_id = ?
+          WHERE learner_id = ?
+            AND subject_id = ?
+            AND status = 'active'
+            AND id <> ?
+            ${guardedWhere(guard)}
+        `, guardedParams([nowTs, accountId, learnerId, subjectId, session.id], guard)));
+      }
 
-    const createdAt = asTs(session.createdAt, nowTs);
-    const updatedAt = asTs(session.updatedAt, nowTs);
-    const sessionParams = [
-      session.id,
-      learnerId,
-      subjectId,
-      session.sessionKind,
-      session.status,
-      session.sessionState == null ? null : JSON.stringify(session.sessionState),
-      session.summary == null ? null : JSON.stringify(session.summary),
-      createdAt,
-      updatedAt,
-      accountId,
-    ];
-    statements.push(bindStatement(db, `
-      INSERT INTO practice_sessions (
-        id,
-        learner_id,
-        subject_id,
-        session_kind,
-        status,
-        session_state_json,
-        summary_json,
-        created_at,
-        updated_at,
-        updated_by_account_id
-      )
-      ${guardedValueSource(sessionParams.length, guard)}
-      ON CONFLICT(id) DO UPDATE SET
-        learner_id = excluded.learner_id,
-        subject_id = excluded.subject_id,
-        session_kind = excluded.session_kind,
-        status = excluded.status,
-        session_state_json = excluded.session_state_json,
-        summary_json = excluded.summary_json,
-        created_at = excluded.created_at,
-        updated_at = excluded.updated_at,
-        updated_by_account_id = excluded.updated_by_account_id
-    `, guardedParams(sessionParams, guard)));
+      const createdAt = asTs(session.createdAt, nowTs);
+      const updatedAt = asTs(session.updatedAt, nowTs);
+      const sessionParams = [
+        session.id,
+        learnerId,
+        subjectId,
+        session.sessionKind,
+        session.status,
+        session.sessionState == null ? null : JSON.stringify(session.sessionState),
+        session.summary == null ? null : JSON.stringify(session.summary),
+        createdAt,
+        updatedAt,
+        accountId,
+      ];
+      statements.push(bindStatement(db, `
+        INSERT INTO practice_sessions (
+          id,
+          learner_id,
+          subject_id,
+          session_kind,
+          status,
+          session_state_json,
+          summary_json,
+          created_at,
+          updated_at,
+          updated_by_account_id
+        )
+        ${guardedValueSource(sessionParams.length, guard)}
+        ON CONFLICT(id) DO UPDATE SET
+          learner_id = excluded.learner_id,
+          subject_id = excluded.subject_id,
+          session_kind = excluded.session_kind,
+          status = excluded.status,
+          session_state_json = excluded.session_state_json,
+          summary_json = excluded.summary_json,
+          created_at = excluded.created_at,
+          updated_at = excluded.updated_at,
+          updated_by_account_id = excluded.updated_by_account_id
+      `, guardedParams(sessionParams, guard)));
+    }
   }
 
   const gameState = runtime?.gameState && typeof runtime.gameState === 'object' && !Array.isArray(runtime.gameState)
@@ -8350,6 +8418,9 @@ async function runSubjectCommandMutation(db, {
           persistActivityFeed: false,
           projectionContext: includeProjection ? freshProjectionContext : null,
           skipProjectionReadModelWrite: !includeProjection,
+          // Feedback progress is source-of-truth in child_subject_state.
+          // Keep practice_sessions for start/completion history, not every answer.
+          skipActivePracticeSessionWrite: command.command === 'submit-answer',
           currentActiveSessionId: freshRuntimeWrite.previousActiveSessionId || null,
         },
       );

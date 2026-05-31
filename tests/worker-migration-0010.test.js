@@ -236,7 +236,6 @@ test('migration 0010 registers all required new indexes', () => {
       'idx_ops_error_events_status_last_seen',
       'idx_ops_error_events_last_seen',
       'idx_ops_error_events_tuple',
-      'idx_practice_sessions_updated',
       'idx_event_log_created',
       'idx_mutation_receipts_applied',
     ]) {
@@ -271,12 +270,6 @@ test('windowed KPI COUNT queries use the new DESC indexes (not full table scan)'
     assert.match(eventDetail, /SEARCH .*event_log/i);
     assert.match(eventDetail, /idx_event_log_created/);
     assert.doesNotMatch(eventDetail, /SCAN TABLE event_log/i);
-
-    const sessionsPlan = db.db.prepare('EXPLAIN QUERY PLAN SELECT COUNT(*) FROM practice_sessions WHERE updated_at > ?').all();
-    const sessionsDetail = sessionsPlan.map((row) => row.detail).join(' | ');
-    assert.match(sessionsDetail, /SEARCH .*practice_sessions/i);
-    assert.match(sessionsDetail, /idx_practice_sessions_updated/);
-    assert.doesNotMatch(sessionsDetail, /SCAN TABLE practice_sessions/i);
 
     const receiptsPlan = db.db.prepare('EXPLAIN QUERY PLAN SELECT COUNT(*) FROM mutation_receipts WHERE applied_at > ?').all();
     const receiptsDetail = receiptsPlan.map((row) => row.detail).join(' | ');

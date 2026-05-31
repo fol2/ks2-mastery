@@ -173,24 +173,43 @@ test('U11 sweepRequestLimits deletes buckets older than 24h and obeys the batch 
   }
 });
 
-test('U11 sweepStaleSessions removes expired sessions whose revision is below current', async () => {
+test('U11 sweepStaleSessions removes expired sessions and keeps live sessions', async () => {
   const db = createMigratedSqliteD1Database();
   try {
     const now = 1_700_000_000_000;
     seedAdultAccount(db, { id: 'adult-a', now });
     seedOpsMetadata(db, { accountId: 'adult-a', now, statusRevision: 5 });
-    // Stale: revisionAtIssue=2 < current=5, and expiresAt is in the past.
+    // Expired rows can no longer authenticate, regardless of revision.
     seedSession(db, { id: 'sess-stale', accountId: 'adult-a', expiresAt: now - 1000, revisionAtIssue: 2 });
-    // Stale but NOT expired — protected so we do not race an in-flight
-    // request whose session revision was bumped server-side.
+    seedSession(db, { id: 'sess-expired-current', accountId: 'adult-a', expiresAt: now - 500, revisionAtIssue: 5 });
+    // Live rows stay. Stale live sessions are rejected by the auth boundary
+    // and by the immediate status-change sweep, not by the daily expiry sweep.
     seedSession(db, { id: 'sess-stale-live', accountId: 'adult-a', expiresAt: now + 1_000_000, revisionAtIssue: 2 });
-    // Current revision — stays.
     seedSession(db, { id: 'sess-fresh', accountId: 'adult-a', expiresAt: now + 1_000_000, revisionAtIssue: 5 });
 
     const result = await sweepStaleSessions(db, now);
-    assert.equal(result.deleted, 1);
+    assert.equal(result.deleted, 2);
     const remaining = db.db.prepare('SELECT id FROM account_sessions ORDER BY id ASC').all().map((row) => row.id);
     assert.deepEqual(remaining.sort(), ['sess-fresh', 'sess-stale-live']);
+  } finally {
+    db.close();
+  }
+});
+
+test('sweepStaleSessions uses the expires_at retention index', async () => {
+  const db = createMigratedSqliteD1Database();
+  try {
+    const plan = db.db.prepare(`
+      EXPLAIN QUERY PLAN
+      SELECT rowid
+      FROM account_sessions
+      WHERE expires_at < ?
+      ORDER BY expires_at ASC
+      LIMIT ?
+    `).all(0, 5000);
+    const detail = plan.map((row) => row.detail).join('\n');
+    assert.match(detail, /idx_account_sessions_expires/);
+    assert.doesNotMatch(detail, /SCAN account_sessions\b/);
   } finally {
     db.close();
   }

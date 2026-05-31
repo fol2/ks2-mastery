@@ -45,7 +45,12 @@ const KNOWN_THRESHOLD_KEYS = new Set([
   'maxNetworkFailures',
   'maxBootstrapP95Ms',
   'maxCommandP95Ms',
+  'maxBootstrapServerP95Ms',
+  'maxCommandServerP95Ms',
+  'maxBootstrapD1RowsWritten',
+  'maxCommandD1RowsWritten',
   'maxResponseBytes',
+  'maxCommandResponseBytes',
   'requireZeroSignals',
   'requireBootstrapCapacity',
 ]);
@@ -618,6 +623,34 @@ export function evaluateThresholds(summary = {}, thresholds = {}, { dryRun = fal
       dryRun,
     );
   }
+  if (thresholds.maxBootstrapServerP95Ms !== undefined && thresholds.maxBootstrapServerP95Ms !== null) {
+    evaluated.maxBootstrapServerP95Ms = gateLatency(
+      thresholds.maxBootstrapServerP95Ms,
+      bootstrapMetrics ? bootstrapMetrics.serverWallMsP95 : null,
+      dryRun,
+    );
+  }
+  if (thresholds.maxCommandServerP95Ms !== undefined && thresholds.maxCommandServerP95Ms !== null) {
+    evaluated.maxCommandServerP95Ms = gateLatency(
+      thresholds.maxCommandServerP95Ms,
+      commandMetrics ? commandMetrics.serverWallMsP95 : null,
+      dryRun,
+    );
+  }
+  if (thresholds.maxBootstrapD1RowsWritten !== undefined && thresholds.maxBootstrapD1RowsWritten !== null) {
+    evaluated.maxBootstrapD1RowsWritten = gateCount(
+      thresholds.maxBootstrapD1RowsWritten,
+      bootstrapMetrics ? bootstrapMetrics.d1RowsWritten : null,
+      dryRun,
+    );
+  }
+  if (thresholds.maxCommandD1RowsWritten !== undefined && thresholds.maxCommandD1RowsWritten !== null) {
+    evaluated.maxCommandD1RowsWritten = gateCount(
+      thresholds.maxCommandD1RowsWritten,
+      commandMetrics ? commandMetrics.d1RowsWritten : null,
+      dryRun,
+    );
+  }
   if (thresholds.maxResponseBytes !== undefined && thresholds.maxResponseBytes !== null) {
     const maxObserved = Math.max(
       0,
@@ -626,6 +659,13 @@ export function evaluateThresholds(summary = {}, thresholds = {}, { dryRun = fal
     evaluated.maxResponseBytes = gateCount(
       thresholds.maxResponseBytes,
       Object.keys(endpoints).length ? maxObserved : null,
+      dryRun,
+    );
+  }
+  if (thresholds.maxCommandResponseBytes !== undefined && thresholds.maxCommandResponseBytes !== null) {
+    evaluated.maxCommandResponseBytes = gateCount(
+      thresholds.maxCommandResponseBytes,
+      commandMetrics ? commandMetrics.maxResponseBytes : null,
       dryRun,
     );
   }

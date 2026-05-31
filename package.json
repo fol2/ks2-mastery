@@ -27,7 +27,7 @@
     "check": "node ./scripts/wrangler-oauth.mjs deploy --dry-run",
     "check:oauth": "npm run check",
     "capacity:classroom": "node ./scripts/classroom-load-test.mjs",
-    "capacity:classroom:release-gate": "node ./scripts/classroom-load-test.mjs --max-5xx 0 --max-network-failures 0 --max-bootstrap-p95-ms 1000 --max-command-p95-ms 750 --max-response-bytes 600000 --require-zero-signals",
+    "capacity:classroom:release-gate": "node ./scripts/classroom-load-test.mjs --max-5xx 0 --max-network-failures 0 --max-bootstrap-p95-ms 1000 --max-command-p95-ms 500 --max-bootstrap-server-p95-ms 250 --max-command-server-p95-ms 250 --max-bootstrap-d1-rows-written 0 --max-command-d1-rows-written 12 --max-response-bytes 600000 --max-command-response-bytes 20000 --require-zero-signals",
     "capacity:local-worker": "node ./scripts/capacity-local-worker.mjs",
     "capacity:plan-60-diagnostic": "node ./scripts/plan-60-learner-diagnostic.mjs",
     "capacity:plan-route-costs": "node ./scripts/plan-route-cost-diagnostic.mjs",

@@ -58,6 +58,7 @@ const BUDGET_PARENT_RECENT_SESSIONS = 7;
 // Headroom +1.
 const MEASURED_BOOTSTRAP_GET_FULL = 9;
 const BUDGET_BOOTSTRAP_GET_FULL = MEASURED_BOOTSTRAP_GET_FULL + 1;
+const MEASURED_BOOTSTRAP_GET_WITH_CACHED_MONSTER_POINTER = MEASURED_BOOTSTRAP_GET_FULL - 1;
 
 // Measured: 4 queries for Hero read-model GET (ops_status JOIN +
 // ensureAccount upsert + membership learner-access check +
@@ -346,6 +347,30 @@ function createCommandHarness({ subjectId = 'spelling', accountId = 'adult-cmd' 
   };
 }
 
+test('U3 query budget: latest subject session lookup stays subject-scoped for old learners', () => {
+  const DB = createMigratedSqliteD1Database();
+  try {
+    const columns = DB.db
+      .prepare('PRAGMA index_info(idx_practice_sessions_learner_subject)')
+      .all()
+      .map((row) => row.name);
+    assert.deepEqual(columns, ['learner_id', 'subject_id', 'updated_at', 'id']);
+
+    const plan = DB.db.prepare(`
+      EXPLAIN QUERY PLAN
+      SELECT id, learner_id, subject_id, session_kind, status, session_state_json, summary_json, created_at, updated_at
+      FROM practice_sessions
+      WHERE learner_id = ? AND subject_id = ?
+      ORDER BY updated_at DESC, id DESC
+      LIMIT 1
+    `).all('learner-old', 'grammar').map((row) => row.detail).join('\n');
+    assert.match(plan, /idx_practice_sessions_learner_subject/);
+    assert.doesNotMatch(plan, /USE TEMP B-TREE/i);
+  } finally {
+    DB.close();
+  }
+});
+
 // ---------------------------------------------------------------------------
 // Scenario 1 — Bootstrap POST (selected-learner-bounded, 3-learner fixture)
 // ---------------------------------------------------------------------------
@@ -541,6 +566,38 @@ test('U3 query budget: GET bootstrap full bundle ≤ BUDGET_BOOTSTRAP_GET_FULL',
       .filter((entry) => entry.operation === 'all' && /\bFROM child_subject_state\b/i.test(entry.sql));
     assert.equal(subjectStateReads.length, 1,
       'GET bootstrap should reuse the already-loaded child_subject_state rows for active-session discovery.');
+  } finally {
+    server.close();
+  }
+});
+
+test('U3 query budget: repeated GET bootstrap reuses the monster visual pointer cache', async () => {
+  const server = createServer();
+  try {
+    seed3LearnerFixture(server);
+
+    const warmResponse = await getBootstrap(server);
+    assert.equal(warmResponse.status, 200);
+    await readJsonBody(warmResponse);
+    server.DB.clearQueryLog();
+
+    const response = await getBootstrap(server);
+    assert.equal(response.status, 200);
+    const payload = await readJsonBody(response);
+    assert.equal(payload.ok, true);
+    assert.equal(payload.monsterVisualConfig?.compact, true);
+
+    const capacity = payload.meta?.capacity;
+    assert.ok(capacity, 'GET bootstrap must expose meta.capacity');
+    assert.equal(
+      capacity.queryCount,
+      MEASURED_BOOTSTRAP_GET_WITH_CACHED_MONSTER_POINTER,
+      `cached GET bootstrap queryCount should stay at ${MEASURED_BOOTSTRAP_GET_WITH_CACHED_MONSTER_POINTER}; measured ${capacity.queryCount}`,
+    );
+
+    const pointerReads = server.DB.takeQueryLog()
+      .filter((entry) => /\bFROM platform_monster_visual_config\b/i.test(entry.sql));
+    assert.equal(pointerReads.length, 0, 'cached public bootstrap must not re-read the global monster visual pointer.');
   } finally {
     server.close();
   }

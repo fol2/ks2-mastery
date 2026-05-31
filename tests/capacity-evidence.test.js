@@ -36,12 +36,16 @@ function makeSummary(overrides = {}) {
         count: 10,
         p50WallMs: 120,
         p95WallMs: 320,
+        serverWallMsP95: 140,
+        d1RowsWritten: 0,
         maxResponseBytes: 80_000,
       },
       'POST /api/subjects/grammar/command': {
         count: 30,
         p50WallMs: 80,
         p95WallMs: 180,
+        serverWallMsP95: 110,
+        d1RowsWritten: 5,
         maxResponseBytes: 5_000,
       },
     },
@@ -84,7 +88,12 @@ test('evaluateThresholds returns {configured, observed, passed} per configured t
     maxNetworkFailures: 0,
     maxBootstrapP95Ms: 1000,
     maxCommandP95Ms: 750,
+    maxBootstrapServerP95Ms: 250,
+    maxCommandServerP95Ms: 250,
+    maxBootstrapD1RowsWritten: 0,
+    maxCommandD1RowsWritten: 5,
     maxResponseBytes: 600_000,
+    maxCommandResponseBytes: 20_000,
   });
   assert.deepEqual(result.failures, []);
   assert.equal(result.thresholds.max5xx.configured, 0);
@@ -93,6 +102,9 @@ test('evaluateThresholds returns {configured, observed, passed} per configured t
   assert.equal(result.thresholds.maxBootstrapP95Ms.configured, 1000);
   assert.equal(result.thresholds.maxBootstrapP95Ms.observed, 320);
   assert.equal(result.thresholds.maxBootstrapP95Ms.passed, true);
+  assert.equal(result.thresholds.maxBootstrapServerP95Ms.observed, 140);
+  assert.equal(result.thresholds.maxCommandD1RowsWritten.observed, 5);
+  assert.equal(result.thresholds.maxCommandResponseBytes.observed, 5_000);
 });
 
 test('evaluateThresholds reports failures with per-threshold details', () => {
@@ -115,6 +127,46 @@ test('evaluateThresholds reports failures with per-threshold details', () => {
   assert.ok(result.failures.includes('max5xx'));
   assert.ok(result.failures.includes('maxBootstrapP95Ms'));
   assert.ok(result.failures.includes('maxResponseBytes'));
+});
+
+test('evaluateThresholds reports server, D1 write, and command byte threshold failures', () => {
+  const summary = makeSummary({
+    endpoints: {
+      'GET /api/bootstrap': {
+        count: 10,
+        p95WallMs: 200,
+        serverWallMsP95: 310,
+        d1RowsWritten: 1,
+        maxResponseBytes: 1000,
+      },
+      'POST /api/subjects/grammar/command': {
+        count: 3,
+        p95WallMs: 220,
+        serverWallMsP95: 270,
+        d1RowsWritten: 6,
+        maxResponseBytes: 25_000,
+      },
+    },
+  });
+  const result = evaluateThresholds(summary, {
+    maxBootstrapServerP95Ms: 250,
+    maxCommandServerP95Ms: 250,
+    maxBootstrapD1RowsWritten: 0,
+    maxCommandD1RowsWritten: 5,
+    maxCommandResponseBytes: 20_000,
+  });
+  assert.equal(result.thresholds.maxBootstrapServerP95Ms.passed, false);
+  assert.equal(result.thresholds.maxCommandServerP95Ms.passed, false);
+  assert.equal(result.thresholds.maxBootstrapD1RowsWritten.passed, false);
+  assert.equal(result.thresholds.maxCommandD1RowsWritten.passed, false);
+  assert.equal(result.thresholds.maxCommandResponseBytes.passed, false);
+  assert.deepEqual(new Set(result.failures), new Set([
+    'maxBootstrapServerP95Ms',
+    'maxCommandServerP95Ms',
+    'maxBootstrapD1RowsWritten',
+    'maxCommandD1RowsWritten',
+    'maxCommandResponseBytes',
+  ]));
 });
 
 test('evaluateThresholds distinguishes threshold 0 (strict) from undefined (not gated)', () => {
@@ -592,7 +644,12 @@ test('validateThresholdConfigKeys accepts all known keys', () => {
     maxNetworkFailures: 0,
     maxBootstrapP95Ms: 1000,
     maxCommandP95Ms: 750,
+    maxBootstrapServerP95Ms: 250,
+    maxCommandServerP95Ms: 250,
+    maxBootstrapD1RowsWritten: 0,
+    maxCommandD1RowsWritten: 5,
     maxResponseBytes: 600000,
+    maxCommandResponseBytes: 20000,
     requireZeroSignals: true,
     requireBootstrapCapacity: true,
   });

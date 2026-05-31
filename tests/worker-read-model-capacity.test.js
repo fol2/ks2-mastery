@@ -37,7 +37,7 @@ function seedParentAccess(server, {
   runSql(server, 'UPDATE adult_accounts SET selected_learner_id = ? WHERE id = ?', [learnerId, accountId]);
 }
 
-test('capacity read-model migration creates indexed summary and activity stores', () => {
+test('capacity read-model migration creates summary and indexed activity stores', () => {
   const server = createWorkerRepositoryServer();
   const tableRows = server.DB.db.prepare(`
     SELECT name
@@ -51,7 +51,6 @@ test('capacity read-model migration creates indexed summary and activity stores'
     FROM sqlite_master
     WHERE type = 'index'
       AND name IN (
-        'idx_learner_read_models_key_updated',
         'idx_learner_activity_feed_source_event',
         'idx_learner_activity_feed_learner_created',
         'idx_learner_activity_feed_subject_created',
@@ -66,7 +65,6 @@ test('capacity read-model migration creates indexed summary and activity stores'
     'idx_learner_activity_feed_source_event',
     'idx_learner_activity_feed_subject_created',
     'idx_learner_activity_feed_updated',
-    'idx_learner_read_models_key_updated',
   ]);
 
   server.close();
