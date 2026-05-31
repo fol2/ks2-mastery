@@ -3,9 +3,11 @@ import assert from 'node:assert/strict';
 import React from 'react';
 
 import {
+  canUseCachedRepositoryStartup,
   createCredentialFetch,
   createRepositoriesForBrowserRuntime,
   localCodexReviewLearnerIdFromUrl,
+  refreshCachedRepositoryStartup,
   reviewLearnerIdFromMode,
   shouldOpenLocalCodexReview,
 } from '../src/platform/app/bootstrap.js';
@@ -223,6 +225,110 @@ test('browser bootstrap uses cached repositories when the auth session endpoint 
   assert.equal(persistence.mode, 'degraded');
   assert.equal(persistence.trustedState, 'local-cache');
   assert.equal(persistence.lastError.code, 'exceeded_cpu');
+});
+
+test('browser startup can render cached repositories before remote bootstrap refresh', async () => {
+  const storage = installMemoryStorage();
+  writeCachedApiState(storage, 'adult-cache');
+  const calls = [];
+  const credentialFetch = async (input) => {
+    calls.push(input);
+    if (input === '/api/auth/session') {
+      return jsonResponse(true, {
+        session: {
+          accountId: 'adult-cache',
+          provider: 'password',
+        },
+        account: {
+          platformRole: 'parent',
+          repoRevision: 9,
+        },
+      });
+    }
+    if (input === '/api/bootstrap') {
+      return jsonResponse(true, {
+        ok: true,
+        learners: {
+          byId: {
+            'learner-remote': {
+              id: 'learner-remote',
+              name: 'Remote Learner',
+              yearGroup: 'Y5',
+            },
+          },
+          allIds: ['learner-remote'],
+          selectedId: 'learner-remote',
+        },
+        subjectStates: {},
+        practiceSessions: [],
+        gameState: {},
+        eventLog: [],
+        monsterVisualConfig: null,
+      });
+    }
+    throw new Error(`Unexpected request: ${input}`);
+  };
+
+  const boot = await createRepositoriesForBrowserRuntime({
+    location: new URL('https://ks2.example.test/'),
+    storage,
+    credentialFetch,
+  });
+
+  assert.deepEqual(calls, ['/api/auth/session']);
+  assert.equal(canUseCachedRepositoryStartup(boot.repositories), true);
+
+  const controller = createAppController({
+    repositories: boot.repositories,
+    session: boot.session,
+  });
+  assert.equal(controller.store.getState().learners.selectedId, 'learner-cache');
+
+  const reloadCalls = [];
+  const reloadFromRepositories = controller.store.reloadFromRepositories.bind(controller.store);
+  controller.store.reloadFromRepositories = (options) => {
+    reloadCalls.push(options);
+    return reloadFromRepositories(options);
+  };
+
+  const refreshed = await refreshCachedRepositoryStartup({
+    repositories: boot.repositories,
+    store: controller.store,
+    log: { warn() {} },
+  });
+
+  assert.equal(refreshed, true);
+  assert.deepEqual(calls, ['/api/auth/session', '/api/bootstrap']);
+  assert.deepEqual(reloadCalls, [{ preserveRoute: true }]);
+  assert.equal(controller.store.getState().learners.selectedId, 'learner-remote');
+});
+
+test('cached repository startup refresh degrades silently when bootstrap is unavailable', async () => {
+  const warnings = [];
+  let reloadCount = 0;
+  const refreshed = await refreshCachedRepositoryStartup({
+    repositories: {
+      kind: 'api',
+      async hydrate() {
+        throw new Error('bootstrap unavailable');
+      },
+    },
+    store: {
+      reloadFromRepositories() {
+        reloadCount += 1;
+      },
+    },
+    log: {
+      warn(message, error) {
+        warnings.push({ message, error });
+      },
+    },
+  });
+
+  assert.equal(refreshed, false);
+  assert.equal(reloadCount, 0);
+  assert.equal(warnings.length, 1);
+  assert.equal(warnings[0].message, 'Remote bootstrap refresh failed after cached startup.');
 });
 
 test('browser bootstrap does not use cached repositories for explicit unauthenticated responses', async () => {

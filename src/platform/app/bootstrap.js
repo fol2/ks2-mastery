@@ -55,6 +55,30 @@ export function createCredentialFetch(fetchFn = (input, init) => globalThis.fetc
   };
 }
 
+export function canUseCachedRepositoryStartup(repositories) {
+  return Boolean(
+    repositories?.kind === 'api'
+    && typeof repositories.hasCachedRemoteState === 'function'
+    && repositories.hasCachedRemoteState(),
+  );
+}
+
+export async function refreshCachedRepositoryStartup({
+  repositories,
+  store,
+  log = globalThis.console,
+} = {}) {
+  if (!repositories || typeof repositories.hydrate !== 'function') return false;
+  try {
+    await repositories.hydrate({ cacheScope: 'startup-cache-refresh' });
+    store?.reloadFromRepositories?.({ preserveRoute: true });
+    return true;
+  } catch (error) {
+    log?.warn?.('Remote bootstrap refresh failed after cached startup.', error);
+    return false;
+  }
+}
+
 export function createLocalOnlySession() {
   return createAuthRequiredSession({ error: 'auth-required' });
 }

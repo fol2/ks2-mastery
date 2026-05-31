@@ -2452,6 +2452,9 @@ export function createApiPlatformRepositories({
       await hydrateRemoteState(options);
       return undefined;
     },
+    hasCachedRemoteState() {
+      return hasCacheFallback(cache, pendingOperations);
+    },
     async flush() {
       await processPendingQueue();
       const snapshot = persistenceChannel.read();
