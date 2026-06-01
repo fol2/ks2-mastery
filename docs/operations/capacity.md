@@ -63,6 +63,20 @@ Production bootstrap probe for a logged-in session:
 npm run smoke:production:bootstrap -- --url https://ks2.eugnel.uk --cookie "ks2_session=..." --max-bytes 600000 --max-sessions 12 --max-events 100
 ```
 
+Read-only production health snapshot for routine checks:
+
+```sh
+npm run ops:health:production
+```
+
+Use this before reaching for a load test when the question is simply whether
+production is healthy. The default snapshot does not create demo sessions,
+submit answers, mutate D1, or run table-wide row counts. It samples
+`/api/health` and `/api/version`, then checks remote D1 metadata, required
+tables/indexes, and removed legacy/write-amplifying objects through
+`sqlite_master`. Run the direct Node command with `--include-row-counts` only
+for a deliberate diagnostic where the extra read cost is acceptable.
+
 Dense-history Spelling Smart Review smoke (U11) for a high-history demo or learner session:
 
 ```sh

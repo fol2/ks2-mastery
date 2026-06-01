@@ -50,6 +50,7 @@
     "deploy": "node ./scripts/wrangler-oauth.mjs deploy && npm run audit:production -- --skip-local --retries 30 --retry-delay-ms 5000",
     "deploy:oauth": "npm run deploy",
     "deploy:ci": "npm run deploy",
+    "ops:health:production": "node ./scripts/production-health-snapshot.mjs",
     "ops:tail": "node ./scripts/wrangler-oauth.mjs tail ks2-mastery --format pretty",
     "ops:tail:json": "node ./scripts/wrangler-oauth.mjs tail ks2-mastery --format json",
     "read-models:backfill": "node ./scripts/backfill-learner-read-models.mjs",
