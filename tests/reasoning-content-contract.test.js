@@ -73,6 +73,22 @@ test('reasoning safe input placeholders do not reveal generated answers before m
   assert.deepEqual(failures, []);
 });
 
+test('reasoning FDP percentage answers accept a trailing percent sign', () => {
+  const question = generateReasoningQuestion('fdp_fraction_to_decimal_percent', 2);
+  assert.match(question.stemHtml, /3\/10/);
+
+  const explicitPercent = evaluateReasoningQuestion(question, {
+    decimal: '0.3',
+    percent: '30%',
+  });
+
+  assert.equal(explicitPercent.correct, true);
+  assert.equal(explicitPercent.score, 2);
+  assert.equal(explicitPercent.feedbackShort, 'Correct.');
+  assert.equal(evaluateReasoningQuestion(question, { decimal: '0.3', percent: '%30' }).correct, false);
+  assert.equal(evaluateReasoningQuestion(question, { decimal: '0.3', percent: '30%%' }).correct, false);
+});
+
 test('reasoning templates generate, mark and serialise cleanly across smoke seeds', () => {
   const failures = [];
   for (const template of REASONING_TEMPLATES) {
