@@ -1,0 +1,1829 @@
+[
+  {
+    "index": 407,
+    "slug": "symmetrical",
+    "word": "symmetrical",
+    "finalSentence": "Grace drew a symmetrical butterfly with matching wings on each side.",
+    "meaning": "Symmetrical means having matching parts on each side of a line or centre.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 408,
+    "slug": "quadrant",
+    "word": "quadrant",
+    "finalSentence": "A quadrant is one of four equal sections on a grid.",
+    "meaning": "Quadrant means one of four equal sections made by two crossing lines.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 409,
+    "slug": "axis",
+    "word": "axis",
+    "finalSentence": "Finn labelled the horizontal axis before plotting the graph.",
+    "meaning": "Axis means a reference line on a graph used for measuring positions.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 410,
+    "slug": "axes",
+    "word": "axes",
+    "finalSentence": "Maya labelled both axes before plotting the temperature graph.",
+    "meaning": "Axes are the two reference lines on a graph, usually horizontal and vertical.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 411,
+    "slug": "graph",
+    "word": "graph",
+    "finalSentence": "The class drew a graph to compare rainfall across four cities.",
+    "meaning": "Graph means a diagram that shows information, patterns or comparisons clearly.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 412,
+    "slug": "scale",
+    "word": "scale",
+    "finalSentence": "The map scale showed one centimetre represented ten kilometres.",
+    "meaning": "Scale means the relationship between a real measurement and its smaller representation.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 413,
+    "slug": "interval",
+    "word": "interval",
+    "finalSentence": "Each interval on the line graph represented five minutes.",
+    "meaning": "Interval means the space or amount between two marks, numbers or times.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 414,
+    "slug": "approximation",
+    "word": "approximation",
+    "finalSentence": "Ravi used an approximation to estimate the crowd at assembly.",
+    "meaning": "Approximation means a sensible estimate that is close to the exact answer.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 415,
+    "slug": "total",
+    "word": "total",
+    "finalSentence": "The total number of stickers reached one hundred and twenty.",
+    "meaning": "Total means the whole amount found after adding parts together.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 416,
+    "slug": "sum",
+    "word": "sum",
+    "finalSentence": "Aisha wrote the sum in columns before solving it.",
+    "meaning": "Sum means a calculation, often using addition, or the answer to it.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 417,
+    "slug": "value",
+    "word": "value",
+    "finalSentence": "The value of the digit changed when it moved columns.",
+    "meaning": "Value means what a digit is worth because of its place.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 418,
+    "slug": "digit",
+    "word": "digit",
+    "finalSentence": "Each digit in 4,582 has its own place value.",
+    "meaning": "Digit means a single numeral from zero to nine in a number.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 419,
+    "slug": "integer",
+    "word": "integer",
+    "finalSentence": "Zero is an integer because it is a whole number.",
+    "meaning": "Integer means a whole number, including zero and numbers below zero.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 420,
+    "slug": "negative",
+    "word": "negative",
+    "finalSentence": "The lift displayed a negative number below ground level.",
+    "meaning": "Negative means less than zero, often shown with a minus sign.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 421,
+    "slug": "positive",
+    "word": "positive",
+    "finalSentence": "A positive number lies to the right of zero.",
+    "meaning": "Positive means greater than zero, often shown on the right of a number line.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 422,
+    "slug": "partition",
+    "word": "partition",
+    "finalSentence": "We partition the number 346 into hundreds, tens and ones.",
+    "meaning": "Partition means to split a number into useful parts, such as hundreds and tens.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 423,
+    "slug": "round",
+    "word": "round",
+    "finalSentence": "Please round 4,728 to the nearest hundred before comparing.",
+    "meaning": "Round means to change a number to a nearby simpler value.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 424,
+    "slug": "rounding",
+    "word": "rounding",
+    "finalSentence": "We used rounding to estimate the total cost.",
+    "meaning": "Rounding means changing a number to a nearby simpler value for estimating.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 425,
+    "slug": "unit",
+    "word": "unit",
+    "finalSentence": "Choose the correct unit before measuring the playground fence.",
+    "meaning": "Unit means a standard amount used for measuring something, such as metres or grams.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 426,
+    "slug": "convert",
+    "word": "convert",
+    "finalSentence": "We convert metres to centimetres by multiplying by one hundred.",
+    "meaning": "Convert means to change a measurement into an equivalent measurement in another unit.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 427,
+    "slug": "conversion",
+    "word": "conversion",
+    "finalSentence": "The conversion from litres to millilitres made the recipe clearer.",
+    "meaning": "Conversion means changing a measurement from one unit into an equivalent one.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 428,
+    "slug": "metric",
+    "word": "metric",
+    "finalSentence": "The metric system uses metres, grams and litres for measuring.",
+    "meaning": "Metric means using a measurement system based on metres, grams and litres.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 429,
+    "slug": "imperial",
+    "word": "imperial",
+    "finalSentence": "Miles and inches are imperial units still used on some signs.",
+    "meaning": "Imperial means using older measurement units such as inches, feet, yards and miles.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 430,
+    "slug": "centimetre",
+    "word": "centimetre",
+    "finalSentence": "One centimetre is about the width of a small fingernail.",
+    "meaning": "Centimetre means a metric unit of length equal to one hundredth of a metre.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 431,
+    "slug": "millimetre",
+    "word": "millimetre",
+    "finalSentence": "A millimetre is useful for measuring very tiny lengths.",
+    "meaning": "Millimetre means a very small metric unit equal to one thousandth of a metre.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 432,
+    "slug": "kilometre",
+    "word": "kilometre",
+    "finalSentence": "The school walk covered one kilometre around the park.",
+    "meaning": "Kilometre means a metric unit of length equal to one thousand metres.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 433,
+    "slug": "metre",
+    "word": "metre",
+    "finalSentence": "Each metre stick helped the group measure the corridor.",
+    "meaning": "Metre means the main metric unit used for measuring length.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 434,
+    "slug": "gram",
+    "word": "gram",
+    "finalSentence": "One gram is a very small measure of mass.",
+    "meaning": "Gram means a small metric unit used for measuring mass.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 435,
+    "slug": "kilogram",
+    "word": "kilogram",
+    "finalSentence": "A bag of flour can weigh one kilogram.",
+    "meaning": "Kilogram means a metric unit of mass equal to one thousand grams.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 436,
+    "slug": "litre",
+    "word": "litre",
+    "finalSentence": "The jug held one litre of water for the experiment.",
+    "meaning": "Litre means a metric unit used for measuring liquid volume.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 437,
+    "slug": "millilitre",
+    "word": "millilitre",
+    "finalSentence": "A medicine spoon can measure one millilitre carefully.",
+    "meaning": "Millilitre means a very small metric unit equal to one thousandth of a litre.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 438,
+    "slug": "time",
+    "word": "time",
+    "finalSentence": "The race time was recorded to the nearest second.",
+    "meaning": "Time means a measured moment or length of time, such as seconds or minutes.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 439,
+    "slug": "duration",
+    "word": "duration",
+    "finalSentence": "The duration of the film was ninety minutes.",
+    "meaning": "Duration means how long something lasts from start to finish.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 440,
+    "slug": "timetable",
+    "word": "timetable",
+    "finalSentence": "The bus timetable helped Maya plan her journey home.",
+    "meaning": "Timetable means a plan showing when journeys, lessons or events happen.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 441,
+    "slug": "anticlockwise",
+    "word": "anticlockwise",
+    "finalSentence": "The arrow turned anticlockwise around the compass rose.",
+    "meaning": "Anticlockwise means moving in the opposite direction to the hands of a clock.",
+    "changed": false,
+    "reviewNote": "Already clear, natural and semantically suitable."
+  },
+  {
+    "index": 442,
+    "slug": "rotation",
+    "word": "rotation",
+    "finalSentence": "A quarter rotation turned the triangle to face north.",
+    "meaning": "Rotation means a turn around a fixed point or centre.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 443,
+    "slug": "translation",
+    "word": "translation",
+    "finalSentence": "The translation moved the square three spaces right.",
+    "meaning": "Translation means moving a shape without turning, resizing or flipping it.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 444,
+    "slug": "reflection",
+    "word": "reflection",
+    "finalSentence": "The reflection matched the shape across the mirror line.",
+    "meaning": "Reflection means a mirror image of a shape across a line.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 445,
+    "slug": "vertex",
+    "word": "vertex",
+    "finalSentence": "Each vertex of the triangle marked a sharp corner.",
+    "meaning": "Vertex means a corner point where edges or sides meet.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 446,
+    "slug": "vertices",
+    "word": "vertices",
+    "finalSentence": "The cube has eight vertices where three edges meet.",
+    "meaning": "Vertices means more than one corner point where edges or sides meet.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 447,
+    "slug": "edge",
+    "word": "edge",
+    "finalSentence": "Each edge of the cube joined two vertices.",
+    "meaning": "Edge means a line where two faces or sides meet.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 448,
+    "slug": "face",
+    "word": "face",
+    "finalSentence": "One square face of the cube was painted red.",
+    "meaning": "Face means a flat surface on a three-dimensional shape.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 449,
+    "slug": "prism",
+    "word": "prism",
+    "finalSentence": "A triangular prism has two matching triangular ends.",
+    "meaning": "Prism means a solid shape with two matching end faces joined by rectangles.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 450,
+    "slug": "pyramid",
+    "word": "pyramid",
+    "finalSentence": "The square-based pyramid had five faces in the model.",
+    "meaning": "Pyramid means a solid shape with a base and triangular faces meeting at a point.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 451,
+    "slug": "cube",
+    "word": "cube",
+    "finalSentence": "Each cube in the tower had six equal faces.",
+    "meaning": "Cube means a solid shape with six equal square faces.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 452,
+    "slug": "cuboid",
+    "word": "cuboid",
+    "finalSentence": "The shoebox was a cuboid with six rectangular faces.",
+    "meaning": "Cuboid means a solid shape with six rectangular faces.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 453,
+    "slug": "cylinder",
+    "word": "cylinder",
+    "finalSentence": "A cylinder has two circular faces and one curved surface.",
+    "meaning": "Cylinder means a solid shape with two circular ends and one curved surface.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 454,
+    "slug": "cone",
+    "word": "cone",
+    "finalSentence": "The cone rolled in a circle during the shape test.",
+    "meaning": "Cone means a solid shape with a circular base and one pointed tip.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 455,
+    "slug": "sphere",
+    "word": "sphere",
+    "finalSentence": "A sphere has no edges, vertices or flat faces.",
+    "meaning": "Sphere means a perfectly round three-dimensional shape, like a ball.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 456,
+    "slug": "polygon",
+    "word": "polygon",
+    "finalSentence": "A polygon is a closed shape with straight sides.",
+    "meaning": "Polygon means a closed flat shape made from straight sides.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 457,
+    "slug": "triangle",
+    "word": "triangle",
+    "finalSentence": "The triangle had one right angle and three sides.",
+    "meaning": "Triangle means a flat shape with three sides and three angles.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 458,
+    "slug": "quadrilateral",
+    "word": "quadrilateral",
+    "finalSentence": "Every quadrilateral has four sides and four vertices.",
+    "meaning": "Quadrilateral means any flat shape with four sides.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 459,
+    "slug": "pentagon",
+    "word": "pentagon",
+    "finalSentence": "The badge was a pentagon with five equal sides.",
+    "meaning": "Pentagon means a flat shape with five straight sides.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 460,
+    "slug": "hexagon",
+    "word": "hexagon",
+    "finalSentence": "A honeycomb cell is shaped like a hexagon.",
+    "meaning": "Hexagon means a flat shape with six straight sides.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 461,
+    "slug": "octagon",
+    "word": "octagon",
+    "finalSentence": "The stop sign was an octagon with eight sides.",
+    "meaning": "Octagon means a flat shape with eight straight sides.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 462,
+    "slug": "rectangle",
+    "word": "rectangle",
+    "finalSentence": "The rectangle had two long sides and two short sides.",
+    "meaning": "Rectangle means a four-sided shape with opposite sides equal and four right angles.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 463,
+    "slug": "square",
+    "word": "square",
+    "finalSentence": "A square has four equal sides and four right angles.",
+    "meaning": "Square means a four-sided shape with equal sides and four right angles.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 464,
+    "slug": "rhombus",
+    "word": "rhombus",
+    "finalSentence": "A rhombus has four equal sides but slanted angles.",
+    "meaning": "Rhombus means a four-sided shape with equal sides, often with slanted angles.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 465,
+    "slug": "trapezium",
+    "word": "trapezium",
+    "finalSentence": "A trapezium has one pair of parallel sides.",
+    "meaning": "Trapezium means a four-sided shape with one pair of parallel sides.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 466,
+    "slug": "parallelogram",
+    "word": "parallelogram",
+    "finalSentence": "A parallelogram has two pairs of parallel sides.",
+    "meaning": "Parallelogram means a four-sided shape with two pairs of parallel sides.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 467,
+    "slug": "probability",
+    "word": "probability",
+    "finalSentence": "We use probability to describe how likely an event is.",
+    "meaning": "Probability means how likely something is to happen.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 468,
+    "slug": "chance",
+    "word": "chance",
+    "finalSentence": "There is a small chance of choosing the red counter.",
+    "meaning": "Chance means the possibility that something will happen.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 469,
+    "slug": "likely",
+    "word": "likely",
+    "finalSentence": "The result seemed likely after three groups found the same pattern.",
+    "meaning": "Likely means something has a good chance of happening or being true.",
+    "changed": false,
+    "reviewNote": "Already clear, natural and semantically suitable."
+  },
+  {
+    "index": 470,
+    "slug": "unlikely",
+    "word": "unlikely",
+    "finalSentence": "The prediction seemed unlikely after the first test failed.",
+    "meaning": "Unlikely means something has a small chance of happening or being true.",
+    "changed": false,
+    "reviewNote": "Already clear, natural and semantically suitable."
+  },
+  {
+    "index": 471,
+    "slug": "data",
+    "word": "data",
+    "finalSentence": "The data showed most pupils walked to school.",
+    "meaning": "Data means information collected so it can be studied, compared or used.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 472,
+    "slug": "table",
+    "word": "table",
+    "finalSentence": "The table organised the results into clear rows and columns.",
+    "meaning": "Table means an organised display of information in rows and columns.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 473,
+    "slug": "pictogram",
+    "word": "pictogram",
+    "finalSentence": "The pictogram used one symbol to represent five votes.",
+    "meaning": "Pictogram means a chart that uses pictures or symbols to show data.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 474,
+    "slug": "tally",
+    "word": "tally",
+    "finalSentence": "The team kept a tally of every vote during the survey.",
+    "meaning": "Tally means a count recorded using simple marks.",
+    "changed": false,
+    "reviewNote": "Already clear, natural and semantically suitable."
+  },
+  {
+    "index": 475,
+    "slug": "mean",
+    "word": "mean",
+    "finalSentence": "We found the mean by adding scores and dividing by five.",
+    "meaning": "Mean means the average found by adding values and dividing by how many there are.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 476,
+    "slug": "mode",
+    "word": "mode",
+    "finalSentence": "The mode was the score that appeared most often.",
+    "meaning": "Mode means the value that appears most often in a set of data.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 477,
+    "slug": "median",
+    "word": "median",
+    "finalSentence": "The median sat in the middle after we ordered the scores.",
+    "meaning": "Median means the middle value when numbers are put in order.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 478,
+    "slug": "range",
+    "word": "range",
+    "finalSentence": "The range was the difference between the highest and lowest scores.",
+    "meaning": "Range means the difference between the highest and lowest values.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 479,
+    "slug": "adaptation",
+    "word": "adaptation",
+    "finalSentence": "A thick waxy leaf is an adaptation for dry weather.",
+    "meaning": "Adaptation means a feature that helps a living thing survive in its environment.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 480,
+    "slug": "animal",
+    "word": "animal",
+    "finalSentence": "The habitat poster showed how each animal depends on its environment.",
+    "meaning": "Animal means a living thing that can usually move and needs food.",
+    "changed": false,
+    "reviewNote": "Already clear, natural and semantically suitable."
+  },
+  {
+    "index": 481,
+    "slug": "amphibian",
+    "word": "amphibian",
+    "finalSentence": "A frog is an amphibian because it lives on land and water.",
+    "meaning": "Amphibian means an animal that can live both in water and on land.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 482,
+    "slug": "artery",
+    "word": "artery",
+    "finalSentence": "An artery carries blood away from the heart.",
+    "meaning": "Artery means a blood vessel that carries blood away from the heart.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 483,
+    "slug": "atmosphere",
+    "word": "atmosphere",
+    "finalSentence": "Earth's atmosphere protects living things from harmful rays.",
+    "meaning": "Atmosphere means the layer of gases surrounding Earth or another planet.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 484,
+    "slug": "atom",
+    "word": "atom",
+    "finalSentence": "An atom is a tiny particle that makes up matter.",
+    "meaning": "Atom means a tiny particle that makes up matter.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 485,
+    "slug": "attract",
+    "word": "attract",
+    "finalSentence": "Opposite poles of a magnet attract each other.",
+    "meaning": "Attract means to pull something closer, such as magnets pulling together.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 486,
+    "slug": "battery",
+    "word": "battery",
+    "finalSentence": "The battery powered the bulb in the simple circuit.",
+    "meaning": "Battery means a device that stores energy to power electrical items.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 487,
+    "slug": "beaker",
+    "word": "beaker",
+    "finalSentence": "The beaker held warm water for the dissolving test.",
+    "meaning": "Beaker means a science container used for holding, mixing or heating liquids.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 488,
+    "slug": "breathing",
+    "word": "breathing",
+    "finalSentence": "Careful breathing helped Amir record his pulse accurately.",
+    "meaning": "Breathing means taking air into the lungs and letting it out again.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 489,
+    "slug": "carnivore",
+    "word": "carnivore",
+    "finalSentence": "A lion is a carnivore because it eats other animals.",
+    "meaning": "Carnivore means an animal that eats other animals rather than plants.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 490,
+    "slug": "cell",
+    "word": "cell",
+    "finalSentence": "A plant cell has a wall, membrane and nucleus.",
+    "meaning": "Cell means the tiny basic unit that living things are made from.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 491,
+    "slug": "circuit",
+    "word": "circuit",
+    "finalSentence": "The bulb lit when the circuit was complete.",
+    "meaning": "Circuit means a complete path that electricity can flow around.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 492,
+    "slug": "condensation",
+    "word": "condensation",
+    "finalSentence": "We saw condensation when warm vapour touched the cold window.",
+    "meaning": "Condensation means gas cooling and changing into liquid droplets.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 493,
+    "slug": "conductor",
+    "word": "conductor",
+    "finalSentence": "Copper is a conductor because electricity passes through it easily.",
+    "meaning": "Conductor means a material that lets heat or electricity pass through easily.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 494,
+    "slug": "consumer",
+    "word": "consumer",
+    "finalSentence": "A rabbit is a consumer because it eats plants.",
+    "meaning": "Consumer means a living thing that gets energy by eating plants or animals.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 495,
+    "slug": "contact",
+    "word": "contact",
+    "finalSentence": "The toy car stopped when contact with the ramp ended.",
+    "meaning": "Contact means touching or meeting another object or surface.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 496,
+    "slug": "contract",
+    "word": "contract",
+    "finalSentence": "Muscles contract to pull bones and help the arm bend.",
+    "meaning": "Contract means to become shorter or tighter, as muscles do when they move bones.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 497,
+    "slug": "control",
+    "word": "control",
+    "finalSentence": "We kept one plant as the control for comparison.",
+    "meaning": "Control means the part of a fair test kept unchanged for comparison.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 498,
+    "slug": "crystallise",
+    "word": "crystallise",
+    "finalSentence": "Salt crystals began to crystallise as the water evaporated.",
+    "meaning": "Crystallise means to form crystals as a liquid cools or evaporates.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 499,
+    "slug": "decay",
+    "word": "decay",
+    "finalSentence": "Leaves decay slowly and add nutrients to the soil.",
+    "meaning": "Decay means to rot or break down naturally over time.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 500,
+    "slug": "dissolve",
+    "word": "dissolve",
+    "finalSentence": "Sugar will dissolve faster in warm water than cold water.",
+    "meaning": "Dissolve means to mix into a liquid until it seems to disappear.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 501,
+    "slug": "evaporation",
+    "word": "evaporation",
+    "finalSentence": "We observed evaporation as liquid water became vapour on warm days.",
+    "meaning": "Evaporation means liquid changing into gas, usually when it is warmed.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 502,
+    "slug": "evaporate",
+    "word": "evaporate",
+    "finalSentence": "The puddle will evaporate quickly in the sunshine.",
+    "meaning": "Evaporate means to change from liquid into gas.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 503,
+    "slug": "filter",
+    "word": "filter",
+    "finalSentence": "We used a filter to separate sand from water.",
+    "meaning": "Filter means a tool or material used to separate solids from liquids.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 504,
+    "slug": "filtration",
+    "word": "filtration",
+    "finalSentence": "The filtration process removed tiny solids from the muddy water sample.",
+    "meaning": "Filtration means separating solids from liquids by passing the mixture through a filter.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 505,
+    "slug": "force",
+    "word": "force",
+    "finalSentence": "A stronger force pushed the trolley further along the floor.",
+    "meaning": "Force means a push or pull that can change how something moves.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 506,
+    "slug": "fossil",
+    "word": "fossil",
+    "finalSentence": "The fossil showed the shape of an ancient shell.",
+    "meaning": "Fossil means the preserved remains or mark of an ancient living thing.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 507,
+    "slug": "gas",
+    "word": "gas",
+    "finalSentence": "The gas filled the balloon during the reaction.",
+    "meaning": "Gas means matter that spreads out to fill the space around it.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 508,
+    "slug": "herbivore",
+    "word": "herbivore",
+    "finalSentence": "A cow is a herbivore because it eats plants.",
+    "meaning": "Herbivore means an animal that eats plants rather than other animals.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 509,
+    "slug": "insulator",
+    "word": "insulator",
+    "finalSentence": "Plastic is an insulator because electricity does not pass through easily.",
+    "meaning": "Insulator means a material that does not let heat or electricity pass through easily.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 510,
+    "slug": "irreversible",
+    "word": "irreversible",
+    "finalSentence": "Burning toast is an irreversible change because ash cannot become bread.",
+    "meaning": "Irreversible means a change cannot easily be undone to get the original material back.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 511,
+    "slug": "joint",
+    "word": "joint",
+    "finalSentence": "The elbow joint lets the arm bend and straighten.",
+    "meaning": "Joint means a place where bones meet and can move.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 512,
+    "slug": "liquid",
+    "word": "liquid",
+    "finalSentence": "The liquid took the shape of its container.",
+    "meaning": "Liquid means matter that flows and takes the shape of its container.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 513,
+    "slug": "magnet",
+    "word": "magnet",
+    "finalSentence": "The magnet pulled the paper clip across the table.",
+    "meaning": "Magnet means an object that can pull some metals towards it.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 514,
+    "slug": "magnetic",
+    "word": "magnetic",
+    "finalSentence": "The steel ruler was magnetic and stuck to the magnet.",
+    "meaning": "Magnetic means able to be attracted by a magnet or act like one.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 515,
+    "slug": "mammal",
+    "word": "mammal",
+    "finalSentence": "A whale is a mammal because it feeds milk to young.",
+    "meaning": "Mammal means an animal that feeds milk to its young.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 516,
+    "slug": "measure",
+    "word": "measure",
+    "finalSentence": "We measure the plant each week to track its growth.",
+    "meaning": "Measure means to find the size, amount or distance of something.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 517,
+    "slug": "microscope",
+    "word": "microscope",
+    "finalSentence": "The microscope made the onion cells look much larger.",
+    "meaning": "Microscope means a tool that makes tiny things look much larger.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 518,
+    "slug": "molecule",
+    "word": "molecule",
+    "finalSentence": "A water molecule is made from hydrogen and oxygen atoms.",
+    "meaning": "Molecule means a group of atoms joined together.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 519,
+    "slug": "nutrient",
+    "word": "nutrient",
+    "finalSentence": "Each nutrient helps the plant grow strong roots or leaves.",
+    "meaning": "Nutrient means a substance living things need to grow and stay healthy.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 520,
+    "slug": "observe",
+    "word": "observe",
+    "finalSentence": "We observe the snails quietly and record their movement.",
+    "meaning": "Observe means to watch or study something carefully to learn about it.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 521,
+    "slug": "observation",
+    "word": "observation",
+    "finalSentence": "One careful observation showed the seed had started to sprout.",
+    "meaning": "Observation means something noticed carefully during a study or investigation.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 522,
+    "slug": "opaque",
+    "word": "opaque",
+    "finalSentence": "The opaque card blocked all light from the torch.",
+    "meaning": "Opaque means not allowing light to pass through it.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 523,
+    "slug": "organ",
+    "word": "organ",
+    "finalSentence": "The heart is an organ that pumps blood around the body.",
+    "meaning": "Organ means a body part with a special job, such as the heart.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 524,
+    "slug": "organism",
+    "word": "organism",
+    "finalSentence": "Every organism needs food, water or energy to survive.",
+    "meaning": "Organism means any living thing, such as a plant, animal or microbe.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 525,
+    "slug": "particle",
+    "word": "particle",
+    "finalSentence": "Each particle moved faster when the material was heated.",
+    "meaning": "Particle means a tiny piece of matter too small to see easily.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 526,
+    "slug": "photosynthesis",
+    "word": "photosynthesis",
+    "finalSentence": "Plants use photosynthesis to make food from light.",
+    "meaning": "Photosynthesis means the process plants use to make food from light.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 527,
+    "slug": "planet",
+    "word": "planet",
+    "finalSentence": "Mars is a planet that travels around the Sun.",
+    "meaning": "Planet means a large round object that travels around a star.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 528,
+    "slug": "predator",
+    "word": "predator",
+    "finalSentence": "The owl is a predator that hunts small mammals at night.",
+    "meaning": "Predator means an animal that hunts other animals for food.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 529,
+    "slug": "prey",
+    "word": "prey",
+    "finalSentence": "The mouse became prey when the owl swooped down.",
+    "meaning": "Prey means an animal hunted or eaten by another animal.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 530,
+    "slug": "property",
+    "word": "property",
+    "finalSentence": "Hardness is a property scientists can test and compare.",
+    "meaning": "Property means a feature of a material that can be observed or tested.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 531,
+    "slug": "reproduce",
+    "word": "reproduce",
+    "finalSentence": "Healthy flowering plants can reproduce by making seeds.",
+    "meaning": "Reproduce means to make new living things of the same kind.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 532,
+    "slug": "reversible",
+    "word": "reversible",
+    "finalSentence": "Melting chocolate is reversible if it cools and hardens again.",
+    "meaning": "Reversible means able to change back to an earlier form or state.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 533,
+    "slug": "seedling",
+    "word": "seedling",
+    "finalSentence": "The seedling grew two small leaves after a week.",
+    "meaning": "Seedling means a young plant that has started growing from a seed.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 534,
+    "slug": "solar",
+    "word": "solar",
+    "finalSentence": "The solar panel changed sunlight into electrical energy.",
+    "meaning": "Solar means related to the Sun or using energy from sunlight.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 535,
+    "slug": "solution",
+    "word": "solution",
+    "finalSentence": "The salt solution looked clear after the solid dissolved.",
+    "meaning": "Solution means a mixture where one substance has dissolved evenly in a liquid.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 536,
+    "slug": "sound",
+    "word": "sound",
+    "finalSentence": "We noticed sound travelling as vibrations through air and water.",
+    "meaning": "Sound means vibrations that travel through air, water or solids and can be heard.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 537,
+    "slug": "source",
+    "word": "source",
+    "finalSentence": "The lamp was the source of light in the investigation.",
+    "meaning": "Source means the place where something comes from or begins.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 538,
+    "slug": "species",
+    "word": "species",
+    "finalSentence": "Each species in the woodland has its own habitat.",
+    "meaning": "Species means a group of living things that are alike and can reproduce together.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 539,
+    "slug": "substance",
+    "word": "substance",
+    "finalSentence": "The unknown substance fizzed when vinegar was added.",
+    "meaning": "Substance means a kind of matter or material that can be studied.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 540,
+    "slug": "thermometer",
+    "word": "thermometer",
+    "finalSentence": "The thermometer showed the water temperature was thirty degrees.",
+    "meaning": "Thermometer means a tool used to measure temperature accurately.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 541,
+    "slug": "transparent",
+    "word": "transparent",
+    "finalSentence": "A transparent sheet let us see the picture underneath.",
+    "meaning": "Transparent means letting light through so you can see what is behind.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 542,
+    "slug": "variable",
+    "word": "variable",
+    "finalSentence": "We changed one variable to make the test fair.",
+    "meaning": "Variable means something that can change in an investigation or calculation.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 543,
+    "slug": "vein",
+    "word": "vein",
+    "finalSentence": "A vein carries blood back towards the heart.",
+    "meaning": "Vein means a blood vessel that carries blood back towards the heart.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 544,
+    "slug": "vibrate",
+    "word": "vibrate",
+    "finalSentence": "The ruler began to vibrate when Finn flicked its end.",
+    "meaning": "Vibrate means to move quickly backwards and forwards.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 545,
+    "slug": "vibration",
+    "word": "vibration",
+    "finalSentence": "A vibration travelled through the string to make a sound.",
+    "meaning": "Vibration means a quick backwards-and-forwards movement that can make sound.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 546,
+    "slug": "voltage",
+    "word": "voltage",
+    "finalSentence": "Higher voltage made the bulb shine more brightly.",
+    "meaning": "Voltage means the electrical push that helps current move around a circuit.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 547,
+    "slug": "waterproof",
+    "word": "waterproof",
+    "finalSentence": "The waterproof fabric kept the notebook dry in rain.",
+    "meaning": "Waterproof means not letting water pass through easily.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 548,
+    "slug": "weathering",
+    "word": "weathering",
+    "finalSentence": "The cliffs showed weathering after many years of wind and rain.",
+    "meaning": "Weathering means rocks being broken down by weather, water or living things.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 549,
+    "slug": "atlas",
+    "word": "atlas",
+    "finalSentence": "The atlas showed maps of countries, oceans and mountain ranges.",
+    "meaning": "Atlas means a book or collection of maps.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 550,
+    "slug": "border",
+    "word": "border",
+    "finalSentence": "The river formed a natural border between the two countries.",
+    "meaning": "Border means a line or edge that separates two places.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 551,
+    "slug": "capital",
+    "word": "capital",
+    "finalSentence": "Cardiff is the capital city of Wales in the atlas.",
+    "meaning": "Capital means the main city where a country or region's government is based.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 552,
+    "slug": "cardinal",
+    "word": "cardinal",
+    "finalSentence": "North, south, east and west are cardinal directions.",
+    "meaning": "Cardinal means one of the main compass directions: north, south, east or west.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 553,
+    "slug": "cartographer",
+    "word": "cartographer",
+    "finalSentence": "A cartographer creates maps that help people understand places.",
+    "meaning": "Cartographer means a person who makes maps for other people to use.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 554,
+    "slug": "continent",
+    "word": "continent",
+    "finalSentence": "Africa is a continent with many countries and landscapes.",
+    "meaning": "Continent means one of Earth's large land areas, such as Africa or Europe.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 555,
+    "slug": "country",
+    "word": "country",
+    "finalSentence": "Japan is an island country in eastern Asia.",
+    "meaning": "Country means an area of land with its own government and borders.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 556,
+    "slug": "county",
+    "word": "county",
+    "finalSentence": "Kent is a county in the south-east of England.",
+    "meaning": "County means a smaller area within a country, often used for local government.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 557,
+    "slug": "culture",
+    "word": "culture",
+    "finalSentence": "Music, language and food can show a community's culture.",
+    "meaning": "Culture means the ideas, customs, language, food and arts shared by a group.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 558,
+    "slug": "desert",
+    "word": "desert",
+    "finalSentence": "A desert receives very little rain during the year.",
+    "meaning": "Desert means a very dry place that receives little rain.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 559,
+    "slug": "earthquake",
+    "word": "earthquake",
+    "finalSentence": "The earthquake shook buildings and cracked the road.",
+    "meaning": "Earthquake means a sudden shaking of the ground caused by movement below.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 560,
+    "slug": "economy",
+    "word": "economy",
+    "finalSentence": "Tourism can support the economy of a coastal town.",
+    "meaning": "Economy means how money, jobs, goods and services work in a place.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 561,
+    "slug": "erosion",
+    "word": "erosion",
+    "finalSentence": "Coastal erosion wore away the cliff after many storms.",
+    "meaning": "Erosion means land or rock being worn away by water, wind or ice.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 562,
+    "slug": "export",
+    "word": "export",
+    "finalSentence": "The company will export wool to another country.",
+    "meaning": "Export means to send goods to another country to sell or use.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 563,
+    "slug": "glacier",
+    "word": "glacier",
+    "finalSentence": "A glacier moves slowly down a mountain valley.",
+    "meaning": "Glacier means a huge mass of ice that moves slowly over land.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 564,
+    "slug": "hemisphere",
+    "word": "hemisphere",
+    "finalSentence": "Britain is in the northern hemisphere above the Equator.",
+    "meaning": "Hemisphere means one half of Earth, usually northern, southern, eastern or western.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 565,
+    "slug": "import",
+    "word": "import",
+    "finalSentence": "The shop will import cocoa beans from Ghana.",
+    "meaning": "Import means to bring goods into a country from another country.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 566,
+    "slug": "industrial",
+    "word": "industrial",
+    "finalSentence": "The industrial town grew around factories and railways.",
+    "meaning": "Industrial means connected with factories, machines or making goods.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 567,
+    "slug": "industry",
+    "word": "industry",
+    "finalSentence": "Fishing is an important industry in some harbour towns.",
+    "meaning": "Industry means a type of work or business that makes goods or provides services.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 568,
+    "slug": "landscape",
+    "word": "landscape",
+    "finalSentence": "The mountain landscape changed as we climbed higher.",
+    "meaning": "Landscape means the visible features of an area of land.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 569,
+    "slug": "latitude",
+    "word": "latitude",
+    "finalSentence": "Lines of latitude show how far north or south a place is.",
+    "meaning": "Latitude means distance north or south of the Equator, shown by imaginary lines.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 570,
+    "slug": "longitude",
+    "word": "longitude",
+    "finalSentence": "Lines of longitude show how far east or west a place is.",
+    "meaning": "Longitude means distance east or west of a line through Greenwich, shown by imaginary lines.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 571,
+    "slug": "migration",
+    "word": "migration",
+    "finalSentence": "Seasonal migration took workers from farms to growing cities.",
+    "meaning": "Migration means movement of people or animals from one place to another.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 572,
+    "slug": "mountain",
+    "word": "mountain",
+    "finalSentence": "The mountain blocked cold winds from the valley.",
+    "meaning": "Mountain means a very high area of land rising above the land around it.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 573,
+    "slug": "ocean",
+    "word": "ocean",
+    "finalSentence": "An ocean is a huge body of salt water.",
+    "meaning": "Ocean means a very large body of salt water covering part of Earth.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 574,
+    "slug": "ordinance",
+    "word": "ordinance",
+    "finalSentence": "The council passed an ordinance to protect the old harbour.",
+    "meaning": "Ordinance means an official rule or law made by a local authority.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 575,
+    "slug": "settlement",
+    "word": "settlement",
+    "finalSentence": "The settlement grew beside the river because water was nearby.",
+    "meaning": "Settlement means a place where people live and build homes.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 576,
+    "slug": "trade",
+    "word": "trade",
+    "finalSentence": "Sea trade brought spices, cloth and ideas to the port.",
+    "meaning": "Trade means buying, selling or exchanging goods and services.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 577,
+    "slug": "transport",
+    "word": "transport",
+    "finalSentence": "Better transport helped people travel between towns more quickly.",
+    "meaning": "Transport means ways of moving people or goods from one place to another.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 578,
+    "slug": "valley",
+    "word": "valley",
+    "finalSentence": "A river flowed through the valley below the hills.",
+    "meaning": "Valley means low land between hills or mountains, often with a river.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 579,
+    "slug": "volcano",
+    "word": "volcano",
+    "finalSentence": "The volcano erupted and sent ash into the sky.",
+    "meaning": "Volcano means a mountain or opening where melted rock, ash or gas can erupt.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 580,
+    "slug": "map",
+    "word": "map",
+    "finalSentence": "The map showed the safest route across the moor.",
+    "meaning": "Map means a drawing or diagram showing places and routes.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 581,
+    "slug": "route",
+    "word": "route",
+    "finalSentence": "Our route followed the river before crossing the bridge.",
+    "meaning": "Route means the way taken to get from one place to another.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 582,
+    "slug": "region",
+    "word": "region",
+    "finalSentence": "The Lake District is a mountainous region in England.",
+    "meaning": "Region means a large area with shared features or boundaries.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 583,
+    "slug": "population",
+    "word": "population",
+    "finalSentence": "The population of the town grew after the railway opened.",
+    "meaning": "Population means all the people or living things in a particular place or group.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 584,
+    "slug": "renewable",
+    "word": "renewable",
+    "finalSentence": "Wind is a renewable source of energy for the island.",
+    "meaning": "Renewable means naturally replaced or able to be used again without running out.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 585,
+    "slug": "invasion",
+    "word": "invasion",
+    "finalSentence": "The invasion changed who controlled the castle and nearby villages.",
+    "meaning": "Invasion means entering a place by force to take control.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 586,
+    "slug": "empire",
+    "word": "empire",
+    "finalSentence": "An empire is a group of lands ruled by one power.",
+    "meaning": "Empire means a group of lands or countries ruled by one power.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 587,
+    "slug": "emperor",
+    "word": "emperor",
+    "finalSentence": "The emperor ruled the empire from a distant capital city.",
+    "meaning": "Emperor means a ruler who controls an empire or large group of lands.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 588,
+    "slug": "monarchy",
+    "word": "monarchy",
+    "finalSentence": "A monarchy has a king, queen or other royal ruler.",
+    "meaning": "Monarchy means a system where a king, queen or other royal ruler leads.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 589,
+    "slug": "monarch",
+    "word": "monarch",
+    "finalSentence": "The monarch opened Parliament during the formal ceremony.",
+    "meaning": "Monarch means a king, queen or other royal ruler.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 590,
+    "slug": "democracy",
+    "word": "democracy",
+    "finalSentence": "In a democracy, citizens can vote for their leaders.",
+    "meaning": "Democracy means a system where people can vote to choose leaders or decisions.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 591,
+    "slug": "primary",
+    "word": "primary",
+    "finalSentence": "The primary sector collects raw materials such as crops or timber.",
+    "meaning": "Primary means first in order, or linked to collecting raw materials in geography.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 592,
+    "slug": "secondary",
+    "word": "secondary",
+    "finalSentence": "The secondary sector turns raw materials into useful products.",
+    "meaning": "Secondary means second in order, or linked to making products from raw materials.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 593,
+    "slug": "tertiary",
+    "word": "tertiary",
+    "finalSentence": "The tertiary sector provides services such as shops and transport.",
+    "meaning": "Tertiary means third in order, or linked to providing services in geography.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 594,
+    "slug": "agriculture",
+    "word": "agriculture",
+    "finalSentence": "Modern agriculture includes growing crops and raising animals for food.",
+    "meaning": "Agriculture means farming, including growing crops and raising animals.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 595,
+    "slug": "harbour",
+    "word": "harbour",
+    "finalSentence": "The fishing boats returned to the harbour before sunset.",
+    "meaning": "Harbour means a sheltered place where boats can stop safely.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 596,
+    "slug": "coast",
+    "word": "coast",
+    "finalSentence": "The coast was shaped by waves and strong winds.",
+    "meaning": "Coast means the land beside the sea, where waves and tides meet it.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 597,
+    "slug": "coastline",
+    "word": "coastline",
+    "finalSentence": "The coastline curved around bays, cliffs and sandy beaches.",
+    "meaning": "Coastline means the shape or edge where land meets the sea.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 598,
+    "slug": "deposition",
+    "word": "deposition",
+    "finalSentence": "River deposition built up sand where the water slowed down.",
+    "meaning": "Deposition means material being dropped by water, wind or ice after being carried.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 599,
+    "slug": "tributary",
+    "word": "tributary",
+    "finalSentence": "A tributary joined the main river near the village.",
+    "meaning": "Tributary means a smaller river or stream that joins a larger river.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 600,
+    "slug": "delta",
+    "word": "delta",
+    "finalSentence": "A delta formed where the river met the sea.",
+    "meaning": "Delta means land built from river sediment where a river reaches the sea.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 601,
+    "slug": "estuary",
+    "word": "estuary",
+    "finalSentence": "An estuary is where river water meets the sea.",
+    "meaning": "Estuary means the wide part of a river where it meets the sea.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 602,
+    "slug": "waterfall",
+    "word": "waterfall",
+    "finalSentence": "The waterfall dropped over hard rock into a pool.",
+    "meaning": "Waterfall means a place where water drops from a higher level to a lower one.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 603,
+    "slug": "meander",
+    "word": "meander",
+    "finalSentence": "A wide meander curved across the flat river plain.",
+    "meaning": "Meander means a bend or curve in a river.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 604,
+    "slug": "plain",
+    "word": "plain",
+    "finalSentence": "The plain stretched for miles with hardly any hills.",
+    "meaning": "Plain means a large area of flat or gently rolling land.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 605,
+    "slug": "plateau",
+    "word": "plateau",
+    "finalSentence": "The plateau had a flat top and steep sides.",
+    "meaning": "Plateau means a high area of land with a flat top.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 606,
+    "slug": "rainforest",
+    "word": "rainforest",
+    "finalSentence": "The rainforest was warm, wet and full of tall trees.",
+    "meaning": "Rainforest means a warm, wet forest with many tall trees and living things.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 607,
+    "slug": "savannah",
+    "word": "savannah",
+    "finalSentence": "The savannah had tall grass with scattered trees.",
+    "meaning": "Savannah means a grassy plain with scattered trees, usually in a warm region.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 608,
+    "slug": "tundra",
+    "word": "tundra",
+    "finalSentence": "The tundra stayed cold, with few trees growing there.",
+    "meaning": "Tundra means a very cold, treeless region where only small plants can grow.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  },
+  {
+    "index": 609,
+    "slug": "sea",
+    "word": "sea",
+    "finalSentence": "The sea covered the rocks as the tide rose.",
+    "meaning": "Sea means a large area of salt water, smaller than an ocean.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 meaning and correct word sense."
+  }
+]

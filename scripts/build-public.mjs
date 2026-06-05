@@ -27,6 +27,7 @@ const lockDir = path.join(distDir, 'public-build.lock');
 const generatedCspHashPath = path.join(rootDir, 'worker', 'src', 'generated-csp-hash.js');
 const publicHeadersPath = path.join(outputDir, '_headers');
 const appBundleScriptSrc = './src/bundles/app.bundle.js';
+const appStylesheetHref = './styles/app.css';
 
 function shortContentHash(buffer) {
   return createHash('sha256').update(buffer).digest('hex').slice(0, 12);
@@ -146,21 +147,29 @@ try {
     { force: true },
   );
 
-  // `app.bundle.js` has a stable filename because index.html is the only
-  // entry point. Stamp the public HTML with the bundle content hash so a
-  // no-store HTML refresh never reuses a browser-cached stale entry bundle
-  // that points at retired lazy chunks.
+  // `app.bundle.js` and `styles/app.css` have stable filenames because
+  // index.html is the only app entry point. Stamp the public HTML with
+  // content hashes so a no-store HTML refresh never reuses browser-cached
+  // stale app assets.
   const appBundlePath = path.join(tmpDir, 'src', 'bundles', 'app.bundle.js');
   const appBundleBytes = await readFile(appBundlePath);
   const appBundleVersion = shortContentHash(appBundleBytes);
+  const appStylesheetPath = path.join(tmpDir, 'styles', 'app.css');
+  const appStylesheetBytes = await readFile(appStylesheetPath);
+  const appStylesheetVersion = shortContentHash(appStylesheetBytes);
   const tmpIndexPath = path.join(tmpDir, 'index.html');
   const tmpIndexHtml = await readFile(tmpIndexPath, 'utf8');
   if (!tmpIndexHtml.includes(appBundleScriptSrc)) {
     throw new Error(`index.html must reference ${appBundleScriptSrc} before build-public can version it.`);
   }
+  if (!tmpIndexHtml.includes(appStylesheetHref)) {
+    throw new Error(`index.html must reference ${appStylesheetHref} before build-public can version it.`);
+  }
   await writeFile(
     tmpIndexPath,
-    tmpIndexHtml.replaceAll(appBundleScriptSrc, `${appBundleScriptSrc}?v=${appBundleVersion}`),
+    tmpIndexHtml
+      .replaceAll(appBundleScriptSrc, `${appBundleScriptSrc}?v=${appBundleVersion}`)
+      .replaceAll(appStylesheetHref, `${appStylesheetHref}?v=${appStylesheetVersion}`),
     'utf8',
   );
 

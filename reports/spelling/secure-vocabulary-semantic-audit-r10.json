@@ -1,0 +1,189 @@
+{
+  "ok": true,
+  "generatedAt": "2026-06-05T21:30:00.000Z",
+  "rowCount": 1215,
+  "expectedSecureVocabularyCount": 1215,
+  "changedCount": 1210,
+  "issueCount": 0,
+  "sourcePath": "content\\spelling-secure-vocabulary-semantic-sentences.json",
+  "reportPath": "reports\\spelling\\secure-vocabulary-semantic-audit-r10.json",
+  "issues": [],
+  "sourceSlices": [
+    {
+      "slice": 1,
+      "inputPath": "tmp\\secure-vocabulary-semantic-audit\\slice-1.jsonl",
+      "outputPath": "content\\spelling-secure-vocabulary-semantic-slices\\slice-1.final.json",
+      "inputSha256": "23c97b8757e62a4947ad2e90da9b50cc5593f888221855171e62f59db5c61d69",
+      "outputSha256": "c834ae09e84e00fc6af8e0246822bb07cbf1e2a82b3b883ee65957eb1ebb5ac4",
+      "inputRows": 203,
+      "outputRows": 203
+    },
+    {
+      "slice": 2,
+      "inputPath": "tmp\\secure-vocabulary-semantic-audit\\slice-2.jsonl",
+      "outputPath": "content\\spelling-secure-vocabulary-semantic-slices\\slice-2.final.json",
+      "inputSha256": "a6a70910f886b8a949ad0005a1cf94beacafcd51938e719db29d465957eeea51",
+      "outputSha256": "11b5ed840fcbec1bed11f62f74309649949f97e9ddcfbdf60babdfadd24e740f",
+      "inputRows": 203,
+      "outputRows": 203
+    },
+    {
+      "slice": 3,
+      "inputPath": "tmp\\secure-vocabulary-semantic-audit\\slice-3.jsonl",
+      "outputPath": "content\\spelling-secure-vocabulary-semantic-slices\\slice-3.final.json",
+      "inputSha256": "000e2fed2d62f7089ccced98a367db174e5542a39bc2e185eefc2543d79b5b3c",
+      "outputSha256": "f0ca25f5706504fb2cfcc9cde12c64256ba11a7953c0dfdf3b875b1dfba62a94",
+      "inputRows": 203,
+      "outputRows": 203
+    },
+    {
+      "slice": 4,
+      "inputPath": "tmp\\secure-vocabulary-semantic-audit\\slice-4.jsonl",
+      "outputPath": "content\\spelling-secure-vocabulary-semantic-slices\\slice-4.final.json",
+      "inputSha256": "a68552af9ea6bd285c14e916c73b78109b84879f48ae490a4d6a428d2b110995",
+      "outputSha256": "daab7223f9051012eabda8f82a05b0e36dae42c08d98b36f1bef7496e6ecbc8b",
+      "inputRows": 203,
+      "outputRows": 203
+    },
+    {
+      "slice": 5,
+      "inputPath": "tmp\\secure-vocabulary-semantic-audit\\slice-5.jsonl",
+      "outputPath": "content\\spelling-secure-vocabulary-semantic-slices\\slice-5.final.json",
+      "inputSha256": "21f792d5891d9589a26fde35fc9b9b950eab104b6b1848549ad1ec56d6e9635d",
+      "outputSha256": "88e51da0edee648e192e23081f29e71fa3cfff06fb6c4eead8863415409a4b5f",
+      "inputRows": 203,
+      "outputRows": 203
+    },
+    {
+      "slice": 6,
+      "inputPath": "tmp\\secure-vocabulary-semantic-audit\\slice-6.jsonl",
+      "outputPath": "content\\spelling-secure-vocabulary-semantic-slices\\slice-6.final.json",
+      "inputSha256": "99e10369150e6978aacf212a6a18ef380b35b2bfce92ad97012869023a80be4f",
+      "outputSha256": "04e77a4c6e48fb0486b7e482d80c51804868d9d1f06fba97f15ef48a29be8219",
+      "inputRows": 200,
+      "outputRows": 200
+    }
+  ],
+  "changedPreview": [
+    {
+      "index": 1,
+      "slug": "ability",
+      "previousSentence": "Maya showed her ability by explaining the hardest step clearly.",
+      "sentence": "Maya used her ability to explain the puzzle clearly."
+    },
+    {
+      "index": 2,
+      "slug": "able",
+      "previousSentence": "Noah was able to solve the final question after checking each clue.",
+      "sentence": "Noah was able to finish the challenge before lunch."
+    },
+    {
+      "index": 3,
+      "slug": "absence",
+      "previousSentence": "The register recorded Sam's absence when he was away from school.",
+      "sentence": "The teacher noticed Grace's absence during morning register."
+    },
+    {
+      "index": 4,
+      "slug": "absent",
+      "previousSentence": "The evidence was absent from the report, so Cara checked the source again.",
+      "sentence": "One key fact was absent from the science report."
+    },
+    {
+      "index": 5,
+      "slug": "absorb",
+      "previousSentence": "Ben needed to absorb water in the sponge during the research summary for the ember garden project.",
+      "sentence": "The sponge can absorb water from the tray quickly."
+    },
+    {
+      "index": 6,
+      "slug": "absorbed",
+      "previousSentence": "Leo used the form absorbed in the story plan during the research summary for the frost garden project.",
+      "sentence": "The towel absorbed the spill before it reached the books."
+    },
+    {
+      "index": 7,
+      "slug": "absorbing",
+      "previousSentence": "The source card felt absorbing when Victor shared the conclusion.",
+      "sentence": "The mystery story was absorbing from the very first page."
+    },
+    {
+      "index": 8,
+      "slug": "abstract",
+      "previousSentence": "Lina added an abstract to the calculation during the research summary for the hazel garden project.",
+      "sentence": "The abstract painting used colour instead of clear shapes."
+    },
+    {
+      "index": 9,
+      "slug": "access",
+      "previousSentence": "The library card gave Ben access to the research books.",
+      "sentence": "The library card gave pupils access to extra research books."
+    },
+    {
+      "index": 10,
+      "slug": "accessory",
+      "previousSentence": "Sofia added an accessory to the sketch during the learning journal for the lantern garden project.",
+      "sentence": "Sofia chose a red scarf as an accessory for the costume."
+    },
+    {
+      "index": 11,
+      "slug": "account",
+      "previousSentence": "Caleb added an account to the report during the class debate for the mosaic garden project.",
+      "sentence": "Caleb wrote an account of the trip in his diary."
+    },
+    {
+      "index": 12,
+      "slug": "accuracy",
+      "previousSentence": "The notebook explained accuracy when Amir shared the conclusion during the class debate for the orchard garden project.",
+      "sentence": "The class checked the accuracy of each measurement twice."
+    },
+    {
+      "index": 13,
+      "slug": "accurate",
+      "previousSentence": "The scale drawing was accurate because every measurement matched the plan.",
+      "sentence": "The map was accurate because every road matched the town."
+    },
+    {
+      "index": 14,
+      "slug": "accuse",
+      "previousSentence": "Hugo needed to accuse the character in the debate during the research summary for the tidal garden project.",
+      "sentence": "Hugo did not accuse anyone until he had evidence."
+    },
+    {
+      "index": 15,
+      "slug": "accused",
+      "previousSentence": "Sofia used the form accused in the caption during the research summary for the voyage garden project.",
+      "sentence": "The character was accused of hiding the missing key."
+    },
+    {
+      "index": 16,
+      "slug": "acid",
+      "previousSentence": "The science test showed acid reacting with the metal strip.",
+      "sentence": "The science test showed acid reacting with the metal."
+    },
+    {
+      "index": 17,
+      "slug": "acquire",
+      "previousSentence": "Aisha needed to acquire a new research skill during the peer feedback session for the birch harbour map project.",
+      "sentence": "Aisha hoped to acquire new skills during the project."
+    },
+    {
+      "index": 18,
+      "slug": "acquired",
+      "previousSentence": "Ethan used the form acquired in the script during the class debate for the cedar harbour map project.",
+      "sentence": "Ethan acquired a useful habit by checking his work."
+    },
+    {
+      "index": 19,
+      "slug": "activity",
+      "previousSentence": "The lunchtime activity helped pupils practise teamwork in the hall.",
+      "sentence": "The playground activity helped pupils practise teamwork safely."
+    },
+    {
+      "index": 20,
+      "slug": "adapt",
+      "previousSentence": "Maya needed to adapt the plan during the class debate for the elm harbour map project.",
+      "sentence": "Maya had to adapt her plan after the rain started."
+    }
+  ]
+}

@@ -544,6 +544,7 @@ export function createServerSpellingEngine({
           core: service.getStats(learnerId, 'core'),
           y34: service.getStats(learnerId, 'y3-4'),
           y56: service.getStats(learnerId, 'y5-6'),
+          secureExtension: service.getStats(learnerId, 'secure-extension'),
           extra: service.getStats(learnerId, 'extra'),
         },
         analytics: service.getAnalyticsSnapshot(learnerId),

@@ -1,6 +1,10 @@
 import { createHash } from 'node:crypto';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
+import {
+  secureVocabularySemanticMeaningOverrideFor,
+  secureVocabularySentenceFor,
+} from './spelling-secure-vocabulary-sentence-generator.mjs';
 
 export const SOURCE_ARTIFACT_ID = 'ks2-spelling-secure-vocabulary-source-v1';
 export const AUDITED_SOURCE_PROVENANCE = 'ks2-spelling-secure-vocabulary-source-v1';
@@ -74,6 +78,23 @@ function capitaliseWord(word) {
   return word ? `${word.slice(0, 1).toUpperCase()}${word.slice(1)}` : 'This word';
 }
 
+function generatedExampleSentenceFor(record, morphologyTags) {
+  const word = normaliseString(record.word);
+  const sourceBucket = normaliseString(record.sourceBucket).replace(/_/g, '-');
+  return secureVocabularySentenceFor({
+    slug: word,
+    word,
+    accepted: [word],
+    coverageTier: 'secure-extension',
+    listId: `secure-extension-${sourceBucket || 'school-academic-secure'}`,
+    tags: [
+      'secure-extension',
+      sourceBucket || 'school-academic-secure',
+      ...morphologyTags,
+    ],
+  }, 0);
+}
+
 function releaseQualityPolicyAllowsGeneratedFallback(approval) {
   const releaseQualityFields = isPlainObject(approval?.releaseQualityFields)
     ? approval.releaseQualityFields
@@ -125,12 +146,13 @@ function generatedReleaseReadinessFields(record) {
   const advisoryNote = advisories.length > 0
     ? ` Advisory flags retained for adult review context: ${advisories.join(', ')}.`
     : '';
+  const semanticMeaning = secureVocabularySemanticMeaningOverrideFor({ slug: word, word });
 
   return {
     acceptedSpellings: [word],
     rejectedVariants: [],
-    explanation: `${displayWord} is an owner-approved generated KS2 secure-extension spelling-practice entry. Pupils should read it clearly, spell each letter in order, and keep the accepted UK form unchanged.`,
-    exampleSentences: [`The teacher wrote the word ${word} on the board for secure vocabulary spelling practice.`],
+    explanation: semanticMeaning || `${displayWord} is an owner-approved generated KS2 secure-extension spelling-practice entry. Pupils should read it clearly, spell each letter in order, and keep the accepted UK form unchanged.`,
+    exampleSentences: [generatedExampleSentenceFor(record, morphologyTags)],
     ukSpellingDecision: `UK spelling approved: ${word} is the accepted spelling for this secure-extension entry.`,
     familyRoot,
     morphologyTags,

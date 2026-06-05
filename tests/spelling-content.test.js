@@ -21,9 +21,15 @@ import {
   isStatutoryCoreWord,
   normaliseCoverageTier,
 } from '../src/subjects/spelling/content/taxonomy.js';
+import {
+  collectSecureVocabularyMeaningIssues,
+  collectSecureVocabularySentenceIssues,
+} from '../scripts/spelling-secure-vocabulary-sentence-generator.mjs';
 import { SEEDED_SPELLING_CONTENT_BUNDLE } from '../src/subjects/spelling/data/content-data.js';
 import { coreOnlyVersionOneContent } from './helpers/spelling-content.js';
 import { installMemoryStorage } from './helpers/memory-storage.js';
+
+const SECURE_VOCABULARY_BOARD_PRACTICE_FRAGMENT = 'on the board for secure vocabulary spelling practice';
 
 function makeTts() {
   return {
@@ -203,8 +209,8 @@ test('seeded spelling content validates and round-trips through the portable exp
   assert.equal(validation.bundle.modelVersion, SPELLING_CONTENT_MODEL_VERSION);
   assert.equal(SPELLING_CONTENT_MODEL_VERSION, 6, 'Spelling content model keeps the even-version convention.');
   assert.equal(validation.errors.length, 0);
-  assert.equal(validation.bundle.releases.length, 7);
-  assert.equal(validation.bundle.publication.publishedVersion, 7);
+  assert.equal(validation.bundle.releases.length, 11);
+  assert.equal(validation.bundle.publication.publishedVersion, 11);
   assert.ok(validation.bundle.draft.wordLists
     .filter((list) => list.id.startsWith('statutory-'))
     .every((list) => list.spellingPool === 'core'));
@@ -244,7 +250,54 @@ test('seeded spelling content validates and round-trips through the portable exp
   const exported = content.exportPortable();
   const roundTripped = extractPortableSpellingContent(exported);
   assert.equal(roundTripped.draft.words.length, validation.bundle.draft.words.length);
-  assert.equal(roundTripped.releases.at(-1).version, 7);
+  assert.equal(roundTripped.releases.at(-1).version, 11);
+});
+
+test('secure vocabulary sentences do not use the repeated board-practice placeholder', () => {
+  const validation = validateSpellingContentBundle(SEEDED_SPELLING_CONTENT_BUNDLE);
+  assert.equal(validation.ok, true);
+
+  const badReleaseSentences = validation.bundle.releases.flatMap((release) => (
+    release.snapshot.words.flatMap((word) => (
+      [word.sentence, ...(word.sentences || [])]
+        .filter((sentence) => String(sentence).includes(SECURE_VOCABULARY_BOARD_PRACTICE_FRAGMENT))
+        .map((sentence) => ({ releaseId: release.id, slug: word.slug, sentence }))
+    ))
+  ));
+  assert.deepEqual(badReleaseSentences, []);
+
+  const secureWords = validation.bundle.releases.at(-1).snapshot.words.filter((word) => (
+    word.coverageTier === SPELLING_COVERAGE_TIER.SECURE_EXTENSION
+      && Array.isArray(word.tags)
+      && word.tags.includes('secure-extension')
+  ));
+  assert.equal(secureWords.length, 1215);
+  const sentenceIssues = collectSecureVocabularySentenceIssues(secureWords.map((word) => ({
+    slug: word.slug,
+    word: word.word,
+    accepted: word.accepted,
+    sentence: word.sentence,
+  })));
+  assert.deepEqual(sentenceIssues, []);
+  const meaningIssues = collectSecureVocabularyMeaningIssues(secureWords.map((word) => ({
+    slug: word.slug,
+    word: word.word,
+    meaning: word.explanation,
+  })));
+  assert.deepEqual(meaningIssues, []);
+  assert.equal(
+    secureWords.find((word) => word.slug === 'absence')?.explanation,
+    'Absence means being away from a place where someone is expected.'
+  );
+
+  for (const word of secureWords) {
+    const sentences = [word.sentence, ...(word.sentences || [])].filter(Boolean);
+    assert.ok(sentences.length > 0, `${word.slug} should keep at least one sentence`);
+    const accepted = Array.isArray(word.accepted) && word.accepted.length ? word.accepted : [word.word];
+    assert.ok(sentences.some((sentence) => accepted.some((spelling) => (
+      String(sentence).toLowerCase().includes(String(spelling).toLowerCase())
+    ))), `${word.slug} should use its accepted spelling in a sentence`);
+  }
 });
 
 test('seeded spelling content includes the Extra expansion and current word-family variants', () => {

@@ -280,6 +280,57 @@ test('remote spelling setup preference changes are coalesced before saving', asy
   });
 });
 
+test('remote spelling preferences accept secure vocabulary as a setup pool', async () => {
+  const { getState, store } = createStoreHarness({
+    subjectUi: {
+      spelling: {
+        phase: 'dashboard',
+        prefs: {
+          mode: 'smart',
+          roundLength: '20',
+          yearFilter: 'core',
+          autoSpeak: true,
+          showCloze: true,
+        },
+        analytics: null,
+        error: '',
+      },
+    },
+  });
+  const sent = [];
+  const handler = createRemoteSpellingActionHandler({
+    store,
+    services: {
+      spelling: {
+        getPrefs() {
+          return getState().subjectUi.spelling.prefs;
+        },
+      },
+    },
+    tts: createTtsHarness(),
+    readModels: { readJson: async () => ({}) },
+    subjectCommands: {
+      send(request) {
+        sent.push(request);
+        return Promise.resolve({ subjectReadModel: { phase: 'dashboard' } });
+      },
+    },
+    preferenceSaveDebounceMs: 0,
+  });
+
+  assert.equal(handler.handle('spelling-set-pref', { pref: 'yearFilter', value: 'secure-extension' }), true);
+  assert.equal(getState().subjectUi.spelling.prefs.yearFilter, 'secure-extension');
+
+  await flushTimers();
+  await flushPromises();
+
+  assert.equal(sent.length, 1);
+  assert.equal(sent[0].command, 'save-prefs');
+  assert.deepEqual(sent[0].payload, {
+    prefs: { yearFilter: 'secure-extension' },
+  });
+});
+
 test('remote spelling start flushes pending setup preferences first', async () => {
   const { getState, store } = createStoreHarness({
     subjectUi: {
@@ -1096,6 +1147,168 @@ test('remote spelling word bank open loads analytics and detail into the store',
   assert.equal(getState().transientUi.spellingWordBankStatus, 'loaded');
   assert.deepEqual(getState().subjectUi.spelling.analytics.wordGroups[0].words, [{ slug: 'early' }]);
   assert.equal(getState().transientUi.spellingWordDetail.slug, 'early');
+});
+
+test('remote spelling word bank category filter reloads the server-filtered rows', async () => {
+  const { getState, store } = createStoreHarness({
+    subjectUi: {
+      spelling: {
+        phase: 'word-bank',
+        analytics: {
+          wordGroups: [{ key: 'extra', words: Array.from({ length: 37 }, (_, index) => ({ slug: `extra-${index}` })) }],
+          wordBank: { page: 1, hasNextPage: true, returnedRows: 250 },
+        },
+        error: '',
+      },
+    },
+  });
+  const urls = [];
+  const handler = createRemoteSpellingActionHandler({
+    store,
+    services: { spelling: {} },
+    tts: createTtsHarness(),
+    subjectCommands: { send: async () => ({}) },
+    readModels: {
+      async readJson(url) {
+        urls.push(url);
+        return {
+          wordBank: {
+            analytics: {
+              wordGroups: [{ key: 'extra', words: Array.from({ length: 52 }, (_, index) => ({ slug: `extra-${index}` })) }],
+              wordBank: {
+                page: 1,
+                hasNextPage: false,
+                returnedRows: 52,
+                filteredRows: 52,
+                totalRows: 265,
+                facets: {
+                  categories: {
+                    all: 265,
+                    core: 213,
+                    'y3-4': 109,
+                    'y5-6': 104,
+                    'secure-extension': 0,
+                    extra: 52,
+                  },
+                  status: {
+                    all: 52,
+                    total: 52,
+                    secure: 35,
+                    due: 0,
+                    trouble: 0,
+                    weak: 0,
+                    learning: 6,
+                    unseen: 11,
+                    guardianDue: 0,
+                    wobbling: 0,
+                    renewedRecently: 0,
+                    neverRenewed: 0,
+                  },
+                  categoryStatus: {
+                    extra: {
+                      all: 52,
+                      total: 52,
+                      secure: 35,
+                      due: 0,
+                      trouble: 0,
+                      weak: 0,
+                      learning: 6,
+                      unseen: 11,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        };
+      },
+    },
+  });
+
+  assert.equal(handler.handle('spelling-analytics-year-filter', { value: 'extra' }), true);
+
+  await flushPromises();
+  const request = new URL(`https://repo.test${urls[0]}`);
+  assert.equal(request.searchParams.get('learnerId'), 'learner-a');
+  assert.equal(request.searchParams.get('year'), 'extra');
+  assert.equal(request.searchParams.get('page'), '1');
+  assert.equal(request.searchParams.get('pageSize'), '5000');
+  assert.equal(getState().transientUi.spellingAnalyticsYearFilter, 'extra');
+  assert.equal(getState().subjectUi.spelling.analytics.wordGroups[0].words.length, 52);
+  assert.equal(getState().subjectUi.spelling.analytics.wordBank.filteredRows, 52);
+  assert.equal(getState().subjectUi.spelling.analytics.wordBank.facets.categories.extra, 52);
+  assert.equal(getState().subjectUi.spelling.analytics.wordBank.facets.categories['y3-4'], 109);
+  assert.equal(getState().subjectUi.spelling.analytics.wordBank.facets.status.total, 52);
+});
+
+test('remote spelling word bank category filter preserves secure vocabulary UI state', async () => {
+  const { getState, store } = createStoreHarness({
+    subjectUi: {
+      spelling: {
+        phase: 'word-bank',
+        analytics: {
+          wordGroups: [],
+          wordBank: { page: 1, hasNextPage: true, returnedRows: 250 },
+        },
+        error: '',
+      },
+    },
+  });
+  const urls = [];
+  const handler = createRemoteSpellingActionHandler({
+    store,
+    services: { spelling: {} },
+    tts: createTtsHarness(),
+    subjectCommands: { send: async () => ({}) },
+    readModels: {
+      async readJson(url) {
+        urls.push(url);
+        return {
+          wordBank: {
+            analytics: {
+              wordGroups: [
+                { key: 'secure-extension', title: 'Secure vocabulary', words: Array.from({ length: 1215 }, (_, index) => ({ slug: `secure-${index}` })) },
+              ],
+              wordBank: {
+                page: 1,
+                hasNextPage: false,
+                returnedRows: 1215,
+                filteredRows: 1215,
+                totalRows: 1480,
+                facets: {
+                  categories: {
+                    all: 1480,
+                    'y3-4': 109,
+                    'y5-6': 104,
+                    'secure-extension': 1215,
+                    extra: 52,
+                  },
+                  status: {
+                    all: 1215,
+                    total: 1215,
+                    secure: 0,
+                    due: 0,
+                    trouble: 0,
+                    weak: 0,
+                    learning: 0,
+                    unseen: 1215,
+                  },
+                },
+              },
+            },
+          },
+        };
+      },
+    },
+  });
+
+  assert.equal(handler.handle('spelling-analytics-year-filter', { value: 'secure-extension' }), true);
+
+  await flushPromises();
+  const request = new URL(`https://repo.test${urls[0]}`);
+  assert.equal(request.searchParams.get('year'), 'secure-extension');
+  assert.equal(getState().transientUi.spellingAnalyticsYearFilter, 'secure-extension');
+  assert.equal(getState().subjectUi.spelling.analytics.wordBank.facets.status.total, 1215);
 });
 
 test('remote spelling word-bank drill submit is blocked while read-only', () => {

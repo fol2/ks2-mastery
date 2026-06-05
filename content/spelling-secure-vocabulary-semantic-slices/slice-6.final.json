@@ -1,0 +1,1802 @@
+[
+  {
+    "index": 1016,
+    "slug": "classifying",
+    "word": "classifying",
+    "finalSentence": "Mia sorted the fossils by size before classifying them by shape.",
+    "meaning": "Classifying means sorting things into groups by looking at shared features or qualities.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1017,
+    "slug": "collecting",
+    "word": "collecting",
+    "finalSentence": "Sam spent the afternoon collecting shells along the beach.",
+    "meaning": "Collecting means gathering things together, often because you want to keep or study them.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1018,
+    "slug": "collections",
+    "word": "collections",
+    "finalSentence": "The museum keeps separate collections for coins, fossils, and stamps.",
+    "meaning": "Collections are groups of things kept together because they are similar or interesting.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1019,
+    "slug": "collisions",
+    "word": "collisions",
+    "finalSentence": "Scientists study collisions to understand how cars can be safer.",
+    "meaning": "Collisions are crashes or bumps between moving objects or people.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1020,
+    "slug": "commanding",
+    "word": "commanding",
+    "finalSentence": "The captain used a commanding voice during the drill.",
+    "meaning": "Commanding means sounding confident and in control, so others are likely to listen.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1021,
+    "slug": "communicates",
+    "word": "communicates",
+    "finalSentence": "A clear diagram communicates the water cycle better than a paragraph.",
+    "meaning": "Communicates means shares information, ideas, or feelings clearly with someone else.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1022,
+    "slug": "communicated",
+    "word": "communicated",
+    "finalSentence": "Ravi communicated his idea clearly during the group discussion.",
+    "meaning": "Communicated means shared information, ideas, or feelings with someone else.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1023,
+    "slug": "communities",
+    "word": "communities",
+    "finalSentence": "Local communities worked together to clean the park.",
+    "meaning": "Communities are groups of people who live, work, or share something together.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1024,
+    "slug": "comparisons",
+    "word": "comparisons",
+    "finalSentence": "The class made comparisons between two versions of the story.",
+    "meaning": "Comparisons are ways of looking at similarities and differences between things.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1025,
+    "slug": "competitors",
+    "word": "competitors",
+    "finalSentence": "The competitors shook hands before the race began.",
+    "meaning": "Competitors are people or teams taking part against others in a contest.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1026,
+    "slug": "completing",
+    "word": "completing",
+    "finalSentence": "Lena felt proud after completing the difficult puzzle.",
+    "meaning": "Completing means finishing a task, activity, or piece of work.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1027,
+    "slug": "complicated",
+    "word": "complicated",
+    "finalSentence": "The map looked complicated until we found the key.",
+    "meaning": "Complicated means having many parts, so something is hard to understand or use.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1028,
+    "slug": "complications",
+    "word": "complications",
+    "finalSentence": "The missing instructions caused complications for the science team.",
+    "meaning": "Complications are extra problems that make a task or situation more difficult.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1029,
+    "slug": "concentrates",
+    "word": "concentrates",
+    "finalSentence": "Aisha concentrates best when the room is quiet.",
+    "meaning": "Concentrates means gives full attention to one thing.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1030,
+    "slug": "conditions",
+    "word": "conditions",
+    "finalSentence": "Plants grow well in warm, damp greenhouse conditions.",
+    "meaning": "Conditions are the circumstances or surroundings that affect how something happens.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1031,
+    "slug": "connections",
+    "word": "connections",
+    "finalSentence": "The teacher showed connections between fractions and division.",
+    "meaning": "Connections are links or relationships between people, ideas, facts, or things.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1032,
+    "slug": "consequences",
+    "word": "consequences",
+    "finalSentence": "The story showed the consequences of telling a lie.",
+    "meaning": "Consequences are results that happen because of an action or choice.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1033,
+    "slug": "considered",
+    "word": "considered",
+    "finalSentence": "Ethan considered several titles before choosing one for his poem.",
+    "meaning": "Considered means thought carefully about something before making a choice.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1034,
+    "slug": "considering",
+    "word": "considering",
+    "finalSentence": "We are considering a safer route to school.",
+    "meaning": "Considering means thinking carefully about something before deciding what to do.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1035,
+    "slug": "containing",
+    "word": "containing",
+    "finalSentence": "The box containing the paints was under the table.",
+    "meaning": "Containing means holding something inside or including it as part of something.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1036,
+    "slug": "continuing",
+    "word": "continuing",
+    "finalSentence": "Maya was continuing the story after the cliffhanger.",
+    "meaning": "Continuing means carrying on with something instead of stopping.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1037,
+    "slug": "contributors",
+    "word": "contributors",
+    "finalSentence": "All contributors signed the class magazine before it was printed.",
+    "meaning": "Contributors are people who give ideas, work, money, or help to something.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1038,
+    "slug": "conveniently",
+    "word": "conveniently",
+    "finalSentence": "The bus stop is conveniently close to the school gate.",
+    "meaning": "Conveniently means in a way that is easy, useful, or well placed.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1039,
+    "slug": "cooperates",
+    "word": "cooperates",
+    "finalSentence": "Nina cooperates with her partner during science investigations.",
+    "meaning": "Cooperates means works helpfully with others to reach a shared goal.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1040,
+    "slug": "cooperating",
+    "word": "cooperating",
+    "finalSentence": "The group solved the problem by cooperating calmly.",
+    "meaning": "Cooperating means working helpfully with others to reach a shared goal.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1041,
+    "slug": "creatively",
+    "word": "creatively",
+    "finalSentence": "Ben solved the design problem creatively with recycled card.",
+    "meaning": "Creatively means using imagination and original ideas to make or solve something.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1042,
+    "slug": "creativity",
+    "word": "creativity",
+    "finalSentence": "The art club values creativity in every project.",
+    "meaning": "Creativity is the ability to use imagination and original ideas.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1043,
+    "slug": "dangerously",
+    "word": "dangerously",
+    "finalSentence": "The cyclist rode dangerously close to the busy road.",
+    "meaning": "Dangerously means in a way that could cause harm or an accident.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1044,
+    "slug": "decisively",
+    "word": "decisively",
+    "finalSentence": "The goalkeeper moved decisively to block the shot.",
+    "meaning": "Decisively means quickly and confidently, without too much doubt.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1045,
+    "slug": "decorations",
+    "word": "decorations",
+    "finalSentence": "Paper decorations brightened the hall for the winter fair.",
+    "meaning": "Decorations are things added to make a place or object look special.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1046,
+    "slug": "delivering",
+    "word": "delivering",
+    "finalSentence": "The courier was delivering books to the library.",
+    "meaning": "Delivering means taking something to the place or person it is meant for.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1047,
+    "slug": "demonstrates",
+    "word": "demonstrates",
+    "finalSentence": "The model demonstrates how shadows change during the day.",
+    "meaning": "Demonstrates means shows clearly how something works or proves that it is true.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1048,
+    "slug": "demonstrations",
+    "word": "demonstrations",
+    "finalSentence": "The science fair included demonstrations of magnets and circuits.",
+    "meaning": "Demonstrations are shows or explanations that help people understand how something works.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1049,
+    "slug": "describing",
+    "word": "describing",
+    "finalSentence": "Sofia practised describing the setting with careful adjectives.",
+    "meaning": "Describing means saying or writing what someone or something is like.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1050,
+    "slug": "destroying",
+    "word": "destroying",
+    "finalSentence": "Floodwater was destroying the path beside the river.",
+    "meaning": "Destroying means damaging something so badly that it cannot be used normally.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1051,
+    "slug": "developing",
+    "word": "developing",
+    "finalSentence": "The seedlings are developing new leaves in the sunshine.",
+    "meaning": "Developing means growing, changing, or becoming more complete over time.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1052,
+    "slug": "developments",
+    "word": "developments",
+    "finalSentence": "Recent developments made the playground safer for everyone.",
+    "meaning": "Developments are changes or improvements that happen as something grows or moves forward.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1053,
+    "slug": "dictionaries",
+    "word": "dictionaries",
+    "finalSentence": "We used dictionaries to check the spelling of tricky words.",
+    "meaning": "Dictionaries are books or online lists that explain words and their spellings.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1054,
+    "slug": "difficulties",
+    "word": "difficulties",
+    "finalSentence": "The team overcame difficulties while building the bridge model.",
+    "meaning": "Difficulties are problems or challenges that make something harder to do.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1055,
+    "slug": "discovering",
+    "word": "discovering",
+    "finalSentence": "Omar enjoyed discovering beetles under the old log.",
+    "meaning": "Discovering means finding out about something for the first time.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1056,
+    "slug": "discoveries",
+    "word": "discoveries",
+    "finalSentence": "The class shared discoveries from their pond survey.",
+    "meaning": "Discoveries are things people find or learn for the first time.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1057,
+    "slug": "emergencies",
+    "word": "emergencies",
+    "finalSentence": "The school practises calmly for fire emergencies each term.",
+    "meaning": "Emergencies are serious situations that need quick action to keep people safe.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1058,
+    "slug": "energetically",
+    "word": "energetically",
+    "finalSentence": "The dancers moved energetically across the bright school stage.",
+    "meaning": "Energetically means with lots of movement, effort, or excitement.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1059,
+    "slug": "environmentally",
+    "word": "environmentally",
+    "finalSentence": "The club chose environmentally friendly packaging for the fair.",
+    "meaning": "Environmentally means in a way that relates to the natural world around us.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1060,
+    "slug": "evaluating",
+    "word": "evaluating",
+    "finalSentence": "Grace was evaluating the evidence before choosing an answer.",
+    "meaning": "Evaluating means judging information carefully before making a decision.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1061,
+    "slug": "evaluations",
+    "word": "evaluations",
+    "finalSentence": "The teacher's evaluations helped pupils improve their projects.",
+    "meaning": "Evaluations are careful judgements about how good or useful something is.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1062,
+    "slug": "explanations",
+    "word": "explanations",
+    "finalSentence": "Clear explanations helped everyone understand the tricky experiment.",
+    "meaning": "Explanations are reasons or details that help someone understand something.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1063,
+    "slug": "expressive",
+    "word": "expressive",
+    "finalSentence": "The actor used an expressive face to show surprise.",
+    "meaning": "Expressive means clearly showing feelings or ideas through face, voice, or movement.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1064,
+    "slug": "familiarly",
+    "word": "familiarly",
+    "finalSentence": "Grandad waved familiarly when he saw us at the gate.",
+    "meaning": "Familiarly means in a friendly way that shows you know someone well.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1065,
+    "slug": "flexibility",
+    "word": "flexibility",
+    "finalSentence": "The gymnast showed flexibility during a safe warm-up.",
+    "meaning": "Flexibility is the ability to bend, change, or adapt easily.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1066,
+    "slug": "frictional",
+    "word": "frictional",
+    "finalSentence": "The toy car slowed because of frictional force on the carpet.",
+    "meaning": "Frictional means caused by friction, the rubbing force between surfaces.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1067,
+    "slug": "guaranteed",
+    "word": "guaranteed",
+    "finalSentence": "The shop guaranteed that the repaired bike would work.",
+    "meaning": "Guaranteed means promised for certain or made sure to happen.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1068,
+    "slug": "guarantees",
+    "word": "guarantees",
+    "finalSentence": "The certificate guarantees that the helmet meets safety rules.",
+    "meaning": "Guarantees means promises that something is certain or will work as expected.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1069,
+    "slug": "harmlessly",
+    "word": "harmlessly",
+    "finalSentence": "The bubble burst harmlessly on the kitchen window.",
+    "meaning": "Harmlessly means without causing injury, damage, or danger.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1070,
+    "slug": "healthiest",
+    "word": "healthiest",
+    "finalSentence": "Fruit and water made the healthiest snack choice.",
+    "meaning": "Healthiest means best for keeping your body well and strong.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1071,
+    "slug": "historians",
+    "word": "historians",
+    "finalSentence": "The museum invited historians to explain the ancient coins.",
+    "meaning": "Historians are people who study and explain the past.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1072,
+    "slug": "identities",
+    "word": "identities",
+    "finalSentence": "The badges protected the pupils' identities during the survey.",
+    "meaning": "Identities are the facts that show who people are.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1073,
+    "slug": "identifying",
+    "word": "identifying",
+    "finalSentence": "Grace practised identifying birds by listening to their songs.",
+    "meaning": "Identifying means recognising or naming someone or something correctly.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1074,
+    "slug": "impossibility",
+    "word": "impossibility",
+    "finalSentence": "Finishing the maze without a pencil seemed an impossibility.",
+    "meaning": "Impossibility is something that cannot happen or cannot be done.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1075,
+    "slug": "impossibly",
+    "word": "impossibly",
+    "finalSentence": "The mountain looked impossibly high from the valley.",
+    "meaning": "Impossibly means in a way that seems unable to happen or be done.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1076,
+    "slug": "increasing",
+    "word": "increasing",
+    "finalSentence": "The increasing light helped the plant grow faster.",
+    "meaning": "Increasing means becoming larger, greater, or more in amount.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1077,
+    "slug": "increasingly",
+    "word": "increasingly",
+    "finalSentence": "The classroom became increasingly quiet during the test.",
+    "meaning": "Increasingly means more and more as time passes.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1078,
+    "slug": "informational",
+    "word": "informational",
+    "finalSentence": "The librarian found an informational book about the moon.",
+    "meaning": "Informational means giving facts or useful knowledge about a subject.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1079,
+    "slug": "instructing",
+    "word": "instructing",
+    "finalSentence": "The coach was instructing players how to pass accurately.",
+    "meaning": "Instructing means teaching or telling someone how to do something.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1080,
+    "slug": "instrumental",
+    "word": "instrumental",
+    "finalSentence": "Her careful plan was instrumental in finishing the display.",
+    "meaning": "Instrumental means very important in helping something happen or succeed.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1081,
+    "slug": "investigates",
+    "word": "investigates",
+    "finalSentence": "The story investigates why the village lost its bridge.",
+    "meaning": "Investigates means looks carefully into something to find out the truth.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1082,
+    "slug": "investigating",
+    "word": "investigating",
+    "finalSentence": "The class is investigating which soil holds most water.",
+    "meaning": "Investigating means looking carefully into something to find out the truth.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1083,
+    "slug": "lengthened",
+    "word": "lengthened",
+    "finalSentence": "The shadow lengthened as the sun went down.",
+    "meaning": "Lengthened means became longer or was made longer.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1084,
+    "slug": "lengthening",
+    "word": "lengthening",
+    "finalSentence": "Orla tried lengthening the string so the kite flew higher.",
+    "meaning": "Lengthening means making something longer or becoming longer.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1085,
+    "slug": "librarians",
+    "word": "librarians",
+    "finalSentence": "The librarians helped us find books about volcanoes.",
+    "meaning": "Librarians are people who help organise libraries and find information or books.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1086,
+    "slug": "modernised",
+    "word": "modernised",
+    "finalSentence": "The council modernised the playground with safer equipment.",
+    "meaning": "Modernised means updated something so it is newer, safer, or more useful.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1087,
+    "slug": "modernising",
+    "word": "modernising",
+    "finalSentence": "The council is modernising the library to make it brighter.",
+    "meaning": "Modernising means updating something so it becomes newer, safer, or more useful.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1088,
+    "slug": "naturalist",
+    "word": "naturalist",
+    "finalSentence": "The naturalist watched butterflies without disturbing their fragile wings.",
+    "meaning": "Naturalist is a person who studies plants, animals, and the natural world.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1089,
+    "slug": "necessities",
+    "word": "necessities",
+    "finalSentence": "Water and warm clothing are necessities on a winter hike.",
+    "meaning": "Necessities are things people really need, such as food, water, or shelter.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1090,
+    "slug": "necessarily",
+    "word": "necessarily",
+    "finalSentence": "A longer answer does not necessarily make it clearer.",
+    "meaning": "Necessarily means in a way that must be true or must happen.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1091,
+    "slug": "ordinarily",
+    "word": "ordinarily",
+    "finalSentence": "Our class ordinarily reads quietly after lunch each day.",
+    "meaning": "Ordinarily means usually or in the normal way.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1092,
+    "slug": "organising",
+    "word": "organising",
+    "finalSentence": "Leo finished organising the art supplies before the lesson.",
+    "meaning": "Organising means arranging things clearly so they are easier to use or understand.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1093,
+    "slug": "paragraphs",
+    "word": "paragraphs",
+    "finalSentence": "Each story plan had three clear, linked paragraphs.",
+    "meaning": "Paragraphs are sections of writing that group related sentences together.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1094,
+    "slug": "particularly",
+    "word": "particularly",
+    "finalSentence": "Amir was particularly proud of his neat handwriting.",
+    "meaning": "Particularly means especially or more than usual in a clear way.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1095,
+    "slug": "positioned",
+    "word": "positioned",
+    "finalSentence": "The camera was positioned near the bird table.",
+    "meaning": "Positioned means placed in a particular place or direction.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1096,
+    "slug": "positioning",
+    "word": "positioning",
+    "finalSentence": "Careful positioning helped everyone see the screen clearly.",
+    "meaning": "Positioning means placing something carefully in a particular place or direction.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1097,
+    "slug": "possessions",
+    "word": "possessions",
+    "finalSentence": "Maya kept her possessions tidy inside her tray.",
+    "meaning": "Possessions are things that belong to someone and can be kept or used.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1098,
+    "slug": "questioning",
+    "word": "questioning",
+    "finalSentence": "Zara began questioning the witness during the class mystery.",
+    "meaning": "Questioning means asking questions to find out more or check information.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1099,
+    "slug": "remembering",
+    "word": "remembering",
+    "finalSentence": "Grace found remembering the rule easier with a rhyme.",
+    "meaning": "Remembering means keeping something in your mind or bringing it back to mind.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1100,
+    "slug": "responsive",
+    "word": "responsive",
+    "finalSentence": "The robot was responsive to each button press.",
+    "meaning": "Responsive means reacting quickly and sensibly to something that happens.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1101,
+    "slug": "responsibly",
+    "word": "responsibly",
+    "finalSentence": "The pupils used the tablets responsibly during research.",
+    "meaning": "Responsibly means in a careful way that shows good judgement.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1102,
+    "slug": "scientists",
+    "word": "scientists",
+    "finalSentence": "The water was tested by scientists before results were shared.",
+    "meaning": "Scientists are people who study the world by observing, testing, and explaining.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1103,
+    "slug": "separately",
+    "word": "separately",
+    "finalSentence": "The twins packed their lunches separately to avoid mistakes.",
+    "meaning": "Separately means apart from others or not together.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1104,
+    "slug": "sequencing",
+    "word": "sequencing",
+    "finalSentence": "Ben practised sequencing the events before retelling the story.",
+    "meaning": "Sequencing means putting events or ideas into a clear order.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1105,
+    "slug": "strengthening",
+    "word": "strengthening",
+    "finalSentence": "The team tried strengthening the bridge with extra straws.",
+    "meaning": "Strengthening means making something stronger or more able to last.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1106,
+    "slug": "strengthened",
+    "word": "strengthened",
+    "finalSentence": "Extra tape strengthened the corners of the model.",
+    "meaning": "Strengthened means made stronger or more able to last.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1107,
+    "slug": "symbolised",
+    "word": "symbolised",
+    "finalSentence": "The red poppy symbolised remembrance in the assembly.",
+    "meaning": "Symbolised means represented an idea, feeling, or event.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1108,
+    "slug": "temperatures",
+    "word": "temperatures",
+    "finalSentence": "The temperatures dropped quickly after the clouds arrived.",
+    "meaning": "Temperatures are measurements of how hot or cold something is.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1109,
+    "slug": "volunteers",
+    "word": "volunteers",
+    "finalSentence": "The volunteers planted flowers around the school entrance.",
+    "meaning": "Volunteers are people who choose to help without being forced or paid.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1110,
+    "slug": "actively",
+    "word": "actively",
+    "finalSentence": "Everyone actively joined the discussion about recycling waste.",
+    "meaning": "Actively means doing something with energy, attention, or effort.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1111,
+    "slug": "adaptable",
+    "word": "adaptable",
+    "finalSentence": "An adaptable design can work in different classrooms.",
+    "meaning": "Adaptable means able to change or be used in different situations.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1112,
+    "slug": "adapting",
+    "word": "adapting",
+    "finalSentence": "Ethan was adapting the recipe for the whole class.",
+    "meaning": "Adapting means changing something so it suits a new purpose or situation.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1113,
+    "slug": "adjusted",
+    "word": "adjusted",
+    "finalSentence": "Mum adjusted the bike seat before the ride.",
+    "meaning": "Adjusted means changed something slightly to make it fit or work better.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1114,
+    "slug": "adjusting",
+    "word": "adjusting",
+    "finalSentence": "Willow was adjusting the microscope to see the cells.",
+    "meaning": "Adjusting means changing something slightly to make it fit or work better.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1115,
+    "slug": "alighted",
+    "word": "alighted",
+    "finalSentence": "The butterfly alighted gently on a purple flower.",
+    "meaning": "Alighted means landed gently after flying or moving down.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1116,
+    "slug": "anxiously",
+    "word": "anxiously",
+    "finalSentence": "Finn waited anxiously for the final competition results.",
+    "meaning": "Anxiously means with worry, nervousness, or fear about what might happen.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1117,
+    "slug": "approvals",
+    "word": "approvals",
+    "finalSentence": "The project needed approvals from the headteacher and caretaker.",
+    "meaning": "Approvals are permissions from people in charge saying something can go ahead.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1118,
+    "slug": "balanced",
+    "word": "balanced",
+    "finalSentence": "The gymnast balanced carefully on the low beam.",
+    "meaning": "Balanced means stayed steady without tipping or falling.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1119,
+    "slug": "balancing",
+    "word": "balancing",
+    "finalSentence": "The pupils practised balancing the scales to compare masses.",
+    "meaning": "Balancing means keeping things steady or equal without tipping.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1120,
+    "slug": "beliefs",
+    "word": "beliefs",
+    "finalSentence": "Different cultures may have different beliefs about festivals.",
+    "meaning": "Beliefs are ideas people think are true or important.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1121,
+    "slug": "budgeted",
+    "word": "budgeted",
+    "finalSentence": "The class budgeted carefully for the charity stall.",
+    "meaning": "Budgeted means planned how much money could be spent.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1122,
+    "slug": "budgeting",
+    "word": "budgeting",
+    "finalSentence": "Ravi found budgeting useful when planning the charity stall.",
+    "meaning": "Budgeting means planning how to spend or save money carefully.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1123,
+    "slug": "captured",
+    "word": "captured",
+    "finalSentence": "The photo captured the fox crossing the garden.",
+    "meaning": "Captured means caught, recorded, or kept something in a lasting way.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1124,
+    "slug": "capturing",
+    "word": "capturing",
+    "finalSentence": "Keira enjoyed capturing the final goal on video.",
+    "meaning": "Capturing means catching, recording, or keeping something in a lasting way.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1125,
+    "slug": "causing",
+    "word": "causing",
+    "finalSentence": "Loose stones were causing trips on the playground path.",
+    "meaning": "Causing means making something happen or bringing about a result.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1126,
+    "slug": "chemical",
+    "word": "chemical",
+    "finalSentence": "A chemical change created bubbles in the mixture.",
+    "meaning": "Chemical means relating to substances and how they change or react.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1127,
+    "slug": "chemicals",
+    "word": "chemicals",
+    "finalSentence": "The cleaner stored chemicals safely in a locked cupboard.",
+    "meaning": "Chemicals are substances that can change, mix, or react with other substances.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1128,
+    "slug": "citizens",
+    "word": "citizens",
+    "finalSentence": "Good citizens help keep their neighbourhood tidy every day.",
+    "meaning": "Citizens are people who belong to a country, town, or community.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1129,
+    "slug": "climates",
+    "word": "climates",
+    "finalSentence": "Deserts and rainforests have very different climates and wildlife.",
+    "meaning": "Climates are the usual weather patterns of places over a long time.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1130,
+    "slug": "combined",
+    "word": "combined",
+    "finalSentence": "The teams combined their ideas for the final poster.",
+    "meaning": "Combined means joined or mixed things together to make one thing.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1131,
+    "slug": "combining",
+    "word": "combining",
+    "finalSentence": "Amir tried combining blue and yellow paint to make green.",
+    "meaning": "Combining means joining or mixing things together to make one thing.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1132,
+    "slug": "commanded",
+    "word": "commanded",
+    "finalSentence": "The captain commanded the crew during the storm.",
+    "meaning": "Commanded means gave orders or controlled people in a confident way.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1133,
+    "slug": "completed",
+    "word": "completed",
+    "finalSentence": "Ella completed her reading diary before breakfast on Monday.",
+    "meaning": "Completed means finished a task, activity, or piece of work.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1134,
+    "slug": "contained",
+    "word": "contained",
+    "finalSentence": "The jar contained clear water from the stream.",
+    "meaning": "Contained means held something inside or included it as part of something.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1135,
+    "slug": "curious",
+    "word": "curious",
+    "finalSentence": "The curious puppy sniffed the new school bag.",
+    "meaning": "Curious means wanting to learn, explore, or find out more.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1136,
+    "slug": "damaged",
+    "word": "damaged",
+    "finalSentence": "The storm damaged the fence beside the playground.",
+    "meaning": "Damaged means harmed or broken so something is less useful or safe.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1137,
+    "slug": "damages",
+    "word": "damages",
+    "finalSentence": "Flooding damages wooden floors if it is not stopped.",
+    "meaning": "Damages means harms or breaks something so it is less useful or safe.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1138,
+    "slug": "decorated",
+    "word": "decorated",
+    "finalSentence": "The children decorated biscuits with colourful icing and sprinkles.",
+    "meaning": "Decorated means added things to make something look attractive or special.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1139,
+    "slug": "defended",
+    "word": "defended",
+    "finalSentence": "Priya defended her answer with clear evidence from the text.",
+    "meaning": "Defended means protected something or supported an idea with reasons.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1140,
+    "slug": "defending",
+    "word": "defending",
+    "finalSentence": "Caleb kept defending the goal throughout the match.",
+    "meaning": "Defending means protecting something or supporting an idea with reasons.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1141,
+    "slug": "delayed",
+    "word": "delayed",
+    "finalSentence": "Heavy rain delayed the start of sports day.",
+    "meaning": "Delayed means made something happen later than planned.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1142,
+    "slug": "delays",
+    "word": "delays",
+    "finalSentence": "Traffic delays made the school coach arrive late.",
+    "meaning": "Delays are times when something happens later than planned.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1143,
+    "slug": "delivered",
+    "word": "delivered",
+    "finalSentence": "The speaker delivered her lines clearly on stage.",
+    "meaning": "Delivered means took something to a place or said something clearly.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1144,
+    "slug": "demanded",
+    "word": "demanded",
+    "finalSentence": "The tricky puzzle demanded patience and careful thinking.",
+    "meaning": "Demanded means needed a lot of effort or attention.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1145,
+    "slug": "demanding",
+    "word": "demanding",
+    "finalSentence": "The hike was demanding, but the view was worth it.",
+    "meaning": "Demanding means needing a lot of effort, skill, or attention.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1146,
+    "slug": "depended",
+    "word": "depended",
+    "finalSentence": "The result depended on how much water we added.",
+    "meaning": "Depended means was affected by something else or needed it to happen.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1147,
+    "slug": "depending",
+    "word": "depending",
+    "finalSentence": "The route changes depending on the weather forecast.",
+    "meaning": "Depending means changing because of something else or relying on it.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1148,
+    "slug": "describes",
+    "word": "describes",
+    "finalSentence": "The first paragraph describes the haunted house clearly.",
+    "meaning": "Describes means tells or writes what someone or something is like.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1149,
+    "slug": "designing",
+    "word": "designing",
+    "finalSentence": "Jonah was designing a poster for the garden project.",
+    "meaning": "Designing means planning how something will look, work, or be made.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1150,
+    "slug": "designs",
+    "word": "designs",
+    "finalSentence": "The class compared designs for the new garden.",
+    "meaning": "Designs are plans or drawings showing how something will look or work.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1151,
+    "slug": "diagrams",
+    "word": "diagrams",
+    "finalSentence": "The diagrams helped us understand the life cycle.",
+    "meaning": "Diagrams are labelled drawings that explain information clearly.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1152,
+    "slug": "differed",
+    "word": "differed",
+    "finalSentence": "Our answers differed because we used different evidence.",
+    "meaning": "Differed means were not the same as something else.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1153,
+    "slug": "differing",
+    "word": "differing",
+    "finalSentence": "The group listened to differing opinions during the debate.",
+    "meaning": "Differing means not being the same as each other.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1154,
+    "slug": "dividing",
+    "word": "dividing",
+    "finalSentence": "Ben practised dividing the cake equally between friends.",
+    "meaning": "Dividing means sharing, splitting, or separating something into parts.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1155,
+    "slug": "engineers",
+    "word": "engineers",
+    "finalSentence": "The bridge was tested by engineers before people used it.",
+    "meaning": "Engineers are people who design, build, or test structures, machines, or systems.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1156,
+    "slug": "estimates",
+    "word": "estimates",
+    "finalSentence": "The chart estimates how many pupils walk to school.",
+    "meaning": "Estimates means makes careful guesses using information that is available.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1157,
+    "slug": "evidenced",
+    "word": "evidenced",
+    "finalSentence": "The photographs evidenced the progress of the project.",
+    "meaning": "Evidenced means showed that something was true or had happened.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1158,
+    "slug": "examples",
+    "word": "examples",
+    "finalSentence": "The teacher gave examples of powerful verbs in stories.",
+    "meaning": "Examples are things that show what a group, idea, or rule means.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1159,
+    "slug": "exceeded",
+    "word": "exceeded",
+    "finalSentence": "The runner exceeded her target by two minutes.",
+    "meaning": "Exceeded means went beyond a limit, target, or expectation.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1160,
+    "slug": "exceeding",
+    "word": "exceeding",
+    "finalSentence": "The driver was exceeding the speed limit near school.",
+    "meaning": "Exceeding means going beyond a limit, target, or rule.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1161,
+    "slug": "excited",
+    "word": "excited",
+    "finalSentence": "The excited crowd cheered when the curtain opened.",
+    "meaning": "Excited means feeling very happy, eager, or full of interest.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1162,
+    "slug": "exciting",
+    "word": "exciting",
+    "finalSentence": "The treasure map made the adventure feel exciting.",
+    "meaning": "Exciting means making people feel eager, happy, or interested.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1163,
+    "slug": "fashioned",
+    "word": "fashioned",
+    "finalSentence": "The group fashioned a shelter from sticks and leaves.",
+    "meaning": "Fashioned means made or shaped something, often by hand.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1164,
+    "slug": "followed",
+    "word": "followed",
+    "finalSentence": "The ducklings followed their mother across the path.",
+    "meaning": "Followed means went after someone or something, or did what was expected.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1165,
+    "slug": "followers",
+    "word": "followers",
+    "finalSentence": "The club gained followers after sharing its video.",
+    "meaning": "Followers are people who watch, support, or copy someone or something.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1166,
+    "slug": "formulae",
+    "word": "formulae",
+    "finalSentence": "The worksheet showed two formulae for finding area.",
+    "meaning": "Formulae are mathematical rules or expressions used to work something out.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1167,
+    "slug": "fractions",
+    "word": "fractions",
+    "finalSentence": "We used fractions to share the pizza equally.",
+    "meaning": "Fractions are numbers that show parts of a whole.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1168,
+    "slug": "guiding",
+    "word": "guiding",
+    "finalSentence": "The torch was guiding us along the dark path.",
+    "meaning": "Guiding means showing the way or helping someone make good choices.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1169,
+    "slug": "habitats",
+    "word": "habitats",
+    "finalSentence": "Woodlands and ponds are habitats for many animals.",
+    "meaning": "Habitats are natural homes where plants and animals live.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1170,
+    "slug": "habitual",
+    "word": "habitual",
+    "finalSentence": "Mia built a habitual reading routine after school.",
+    "meaning": "Habitual means done regularly until it becomes a usual habit.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1171,
+    "slug": "healthier",
+    "word": "healthier",
+    "finalSentence": "Walking to school can be healthier than driving.",
+    "meaning": "Healthier means better for your body or mind than something else.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1172,
+    "slug": "humanly",
+    "word": "humanly",
+    "finalSentence": "Maya ran as fast as humanly possible for help.",
+    "meaning": "Humanly means as much as a person can possibly do.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1173,
+    "slug": "immediacy",
+    "word": "immediacy",
+    "finalSentence": "The short sentences gave the chase scene immediacy.",
+    "meaning": "Immediacy means a feeling that something is happening right now.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1174,
+    "slug": "improves",
+    "word": "improves",
+    "finalSentence": "Regular practice improves your handwriting and writing confidence.",
+    "meaning": "Improves means makes something better or becomes better.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1175,
+    "slug": "improving",
+    "word": "improving",
+    "finalSentence": "Iris kept improving the opening sentence of her story.",
+    "meaning": "Improving means making something better or becoming better.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1176,
+    "slug": "includes",
+    "word": "includes",
+    "finalSentence": "The pack includes pencils, glue, and a ruler.",
+    "meaning": "Includes means has something as one part of a group or set.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1177,
+    "slug": "including",
+    "word": "including",
+    "finalSentence": "The team packed safety equipment, including a torch.",
+    "meaning": "Including means with something as part of a group or list.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1178,
+    "slug": "interests",
+    "word": "interests",
+    "finalSentence": "Lina's interests include music, football, gardening, and chess.",
+    "meaning": "Interests are activities or subjects someone enjoys or wants to learn about.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1179,
+    "slug": "knowingly",
+    "word": "knowingly",
+    "finalSentence": "He knowingly left the gate open after the warning.",
+    "meaning": "Knowingly means doing something on purpose while understanding what might happen.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1180,
+    "slug": "languages",
+    "word": "languages",
+    "finalSentence": "Our class learnt greetings in three different languages.",
+    "meaning": "Languages are systems of words and signs people use to communicate.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1181,
+    "slug": "materials",
+    "word": "materials",
+    "finalSentence": "The table listed materials needed for the experiment.",
+    "meaning": "Materials are the things used to make, build, or do something.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1182,
+    "slug": "measuring",
+    "word": "measuring",
+    "finalSentence": "Beth practised measuring rainfall each morning for a week.",
+    "meaning": "Measuring means finding the size, amount, or length of something.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1183,
+    "slug": "medicinal",
+    "word": "medicinal",
+    "finalSentence": "The plant had a medicinal use in old remedies.",
+    "meaning": "Medicinal means used for treating illness or helping people feel better.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1184,
+    "slug": "memories",
+    "word": "memories",
+    "finalSentence": "The photograph brought back happy memories of Year Four.",
+    "meaning": "Memories are things you remember from the past.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1185,
+    "slug": "memorised",
+    "word": "memorised",
+    "finalSentence": "Ella memorised the poem before the class assembly.",
+    "meaning": "Memorised means learned something so you can remember it exactly.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1186,
+    "slug": "methods",
+    "word": "methods",
+    "finalSentence": "We tested two methods for solving the problem.",
+    "meaning": "Methods are planned ways of doing something or solving a problem.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1187,
+    "slug": "mixtures",
+    "word": "mixtures",
+    "finalSentence": "The pupils separated mixtures of sand and rice.",
+    "meaning": "Mixtures are substances made by putting different things together.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1188,
+    "slug": "modernise",
+    "word": "modernise",
+    "finalSentence": "The school plans to modernise the computer room.",
+    "meaning": "Modernise means update something so it is newer, safer, or more useful.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1189,
+    "slug": "moist",
+    "word": "moist",
+    "finalSentence": "The soil stayed moist after gentle rain overnight.",
+    "meaning": "Moist means slightly wet but not completely soaked through.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1190,
+    "slug": "neutrally",
+    "word": "neutrally",
+    "finalSentence": "The judge spoke neutrally so both teams felt respected.",
+    "meaning": "Neutrally means without taking sides or showing strong feelings.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1191,
+    "slug": "noticed",
+    "word": "noticed",
+    "finalSentence": "Kai noticed fresh footprints beside the muddy pond.",
+    "meaning": "Noticed means saw or became aware of something.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1192,
+    "slug": "noticing",
+    "word": "noticing",
+    "finalSentence": "Cara was noticing tiny details in the old map.",
+    "meaning": "Noticing means seeing or becoming aware of something.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1193,
+    "slug": "objects",
+    "word": "objects",
+    "finalSentence": "Magnetic objects stuck to the side of the fridge.",
+    "meaning": "Objects are things that you can see or touch.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1194,
+    "slug": "opposites",
+    "word": "opposites",
+    "finalSentence": "Hot and cold are opposites on the word wall.",
+    "meaning": "Opposites are words, ideas, or things with completely different meanings or qualities.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1195,
+    "slug": "origins",
+    "word": "origins",
+    "finalSentence": "The museum display explained the origins of the festival.",
+    "meaning": "Origins are the beginnings or causes of something.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1196,
+    "slug": "patterned",
+    "word": "patterned",
+    "finalSentence": "The patterned scarf had stripes, dots, and stars.",
+    "meaning": "Patterned means decorated with a repeated design or set of shapes.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1197,
+    "slug": "physicals",
+    "word": "physicals",
+    "finalSentence": "The sports physicals checked each athlete's strength and balance.",
+    "meaning": "Physicals are health checks that test a person's body and fitness.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1198,
+    "slug": "pressures",
+    "word": "pressures",
+    "finalSentence": "Different pressures made the colourful balloons change shape.",
+    "meaning": "Pressures are forces that push or squeeze against something.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1199,
+    "slug": "promised",
+    "word": "promised",
+    "finalSentence": "Sofia promised to return the library book tomorrow.",
+    "meaning": "Promised means said that you would definitely do something.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1200,
+    "slug": "promising",
+    "word": "promising",
+    "finalSentence": "The seedling looked promising after a week of sunshine.",
+    "meaning": "Promising means likely to be good, successful, or helpful in future.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1201,
+    "slug": "purposes",
+    "word": "purposes",
+    "finalSentence": "The boxes served different purposes in the classroom.",
+    "meaning": "Purposes are the reasons why things are made, used, or done.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1202,
+    "slug": "qualifies",
+    "word": "qualifies",
+    "finalSentence": "A top score qualifies the team for the final.",
+    "meaning": "Qualifies means earns the right to enter, continue, or be chosen.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1203,
+    "slug": "receivers",
+    "word": "receivers",
+    "finalSentence": "The receivers picked up signals from the weather station.",
+    "meaning": "Receivers are devices or people that take in signals or information.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1204,
+    "slug": "regularly",
+    "word": "regularly",
+    "finalSentence": "Our class reads regularly to build fluency and confidence.",
+    "meaning": "Regularly means again and again, with a steady pattern or routine.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1205,
+    "slug": "rhythmic",
+    "word": "rhythmic",
+    "finalSentence": "The drummer kept a steady, rhythmic marching beat.",
+    "meaning": "Rhythmic means having a regular beat or pattern of movement.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1206,
+    "slug": "roughly",
+    "word": "roughly",
+    "finalSentence": "The path was roughly marked with chalk arrows.",
+    "meaning": "Roughly means not exactly, or in a simple and uneven way.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1207,
+    "slug": "royally",
+    "word": "royally",
+    "finalSentence": "The choir was welcomed royally at the concert.",
+    "meaning": "Royally means with great honour, as if for a king or queen.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1208,
+    "slug": "separates",
+    "word": "separates",
+    "finalSentence": "A glass wall separates the office from the hall.",
+    "meaning": "Separates means keeps things apart or divides one thing from another.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1209,
+    "slug": "shadowed",
+    "word": "shadowed",
+    "finalSentence": "The tall tower shadowed the playground at lunchtime.",
+    "meaning": "Shadowed means covered something with shade or followed closely behind.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1210,
+    "slug": "sincerity",
+    "word": "sincerity",
+    "finalSentence": "Her apology showed sincerity after the playground argument.",
+    "meaning": "Sincerity means being honest and truly meaning what you say or do.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1211,
+    "slug": "surfaced",
+    "word": "surfaced",
+    "finalSentence": "The submarine surfaced near the harbour wall at dawn.",
+    "meaning": "Surfaced means came up to the top or became visible.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1212,
+    "slug": "surfaces",
+    "word": "surfaces",
+    "finalSentence": "Smooth surfaces are easier to clean than rough ones.",
+    "meaning": "Surfaces are the outside or top parts of objects or materials.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1213,
+    "slug": "systems",
+    "word": "systems",
+    "finalSentence": "The body has systems that work together every day.",
+    "meaning": "Systems are groups of parts that work together to do a job.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1214,
+    "slug": "vehicles",
+    "word": "vehicles",
+    "finalSentence": "Electric vehicles are quieter than many petrol cars.",
+    "meaning": "Vehicles are machines that carry people or things from place to place.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 1215,
+    "slug": "writings",
+    "word": "writings",
+    "finalSentence": "Ancient writings helped historians understand the lost city.",
+    "meaning": "Writings are words or texts that someone has written.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  }
+]

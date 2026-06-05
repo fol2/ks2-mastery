@@ -900,6 +900,8 @@ export function renderSubjectRouteFixture({ subject = 'placeholder' } = {}) {
 export function renderSpellingSurfaceFixture({
   phase = 'setup',
   pendingCommand = '',
+  wordBankAnalytics = null,
+  prefs = null,
   // postMega: {} → force allWordsMega via seeded progress + optional guardian
   // records. Omit to render the legacy setup dashboard.
   postMega = null,
@@ -917,6 +919,10 @@ export function renderSpellingSurfaceFixture({
     const controller = createLocalAppController();
     const selectedPhase = ${JSON.stringify(phase)};
     const learnerId = controller.store.getState().learners.selectedId;
+    const prefs = ${JSON.stringify(prefs)};
+    if (prefs && typeof prefs === 'object') {
+      controller.services.spelling.savePrefs(learnerId, prefs);
+    }
     const postMega = ${JSON.stringify(postMega)};
     if (postMega) {
       // Seed all core words as stage-4 secure, then optionally drop a guardian
@@ -971,6 +977,10 @@ export function renderSpellingSurfaceFixture({
     if (selectedPhase === 'word-bank' || selectedPhase === 'modal') {
       controller.dispatch('spelling-open-word-bank');
     }
+    const wordBankAnalytics = ${JSON.stringify(wordBankAnalytics)};
+    if (wordBankAnalytics) {
+      controller.store.updateSubjectUi('spelling', { analytics: wordBankAnalytics });
+    }
     if (selectedPhase === 'modal') {
       controller.dispatch('spelling-word-detail-open', { slug: 'possess', value: 'drill' });
     }
@@ -992,6 +1002,34 @@ export function renderSpellingSurfaceFixture({
       openAdminHub() { controller.dispatch('open-admin-hub'); },
     };
     const html = renderToStaticMarkup(<SubjectRoute appState={appState} context={context} actions={actions} />);
+    console.log(html);
+  `);
+}
+
+export function renderSpellingWordBankSceneFixture({
+  analytics,
+  transientUi = {},
+  postMastery = null,
+} = {}) {
+  return renderFixture(`
+    import React from 'react';
+    import { renderToStaticMarkup } from 'react-dom/server';
+    import { SpellingWordBankScene } from ${JSON.stringify(absoluteSpecifier('src/subjects/spelling/components/SpellingWordBankScene.jsx'))};
+
+    const analytics = ${JSON.stringify(analytics || { wordGroups: [], wordBank: {} })};
+    const transientUi = ${JSON.stringify(transientUi || {})};
+    const postMastery = ${JSON.stringify(postMastery)};
+    const actions = { dispatch() {} };
+    const html = renderToStaticMarkup(
+      <SpellingWordBankScene
+        appState={{ transientUi }}
+        learner={{ id: 'learner-a', name: 'Nelson' }}
+        analytics={analytics}
+        accent="#3E6FA8"
+        actions={actions}
+        postMastery={postMastery}
+      />
+    );
     console.log(html);
   `);
 }

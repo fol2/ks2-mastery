@@ -1,21 +1,28 @@
 import { cloneSerialisable } from '../../../src/platform/core/repositories/helpers.js';
+import {
+  SPELLING_ANALYTICS_POOL_CATEGORIES,
+  SPELLING_ANALYTICS_WORD_GROUP_CATEGORIES,
+  SPELLING_POOL_CATEGORIES,
+  SPELLING_WORD_BANK_FILTER_IDS,
+  normaliseSpellingWordBankFilterId,
+  spellingPoolCategoryMatchesWord,
+} from '../../../shared/spelling/pool-taxonomy.js';
 import { normaliseServerSpellingData } from '../subjects/spelling/engine.js';
 import { buildSpellingWordBankAudioCue } from '../subjects/spelling/audio.js';
 import { BadRequestError, NotFoundError } from '../errors.js';
 import {
   coverageTierForWord,
   coverageTierLabel,
-  isEnrichmentExtraWord,
-  isSecureExtensionWord,
-  isStatutoryCoreWord,
 } from '../../../src/subjects/spelling/content/taxonomy.js';
+import { isGuardianEligibleSlug } from '../../../src/subjects/spelling/service-contract.js';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const STAGE_INTERVALS = [0, 1, 3, 7, 14, 30, 60];
 const SECURE_STAGE = 4;
+const GUARDIAN_RENEWED_RECENTLY_WINDOW_DAYS = 7;
 const STATUS_FILTERS = new Set(['all', 'due', 'weak', 'learning', 'secure', 'unseen']);
-const YEAR_FILTERS = new Set(['all', 'y3-4', 'y5-6', 'secure-extension', 'extra']);
-const MAX_PAGE_SIZE = 250;
+const YEAR_FILTERS = new Set(SPELLING_WORD_BANK_FILTER_IDS);
+const MAX_PAGE_SIZE = 5000;
 
 function cleanText(value) {
   return String(value || '').replace(/\s+/g, ' ').trim();
@@ -78,10 +85,7 @@ function statusForProgress(progress, now) {
 }
 
 function yearMatches(filter, row) {
-  if (filter === 'all') return true;
-  if (filter === 'secure-extension') return isSecureExtensionWord(row);
-  if (filter === 'extra') return isEnrichmentExtraWord(row);
-  return isStatutoryCoreWord(row) && row.year === filter.replace(/^y/, '');
+  return spellingPoolCategoryMatchesWord(normaliseSpellingWordBankFilterId(filter, 'all'), row, { coverageTierForWord });
 }
 
 function statusMatches(filter, row) {
@@ -89,6 +93,105 @@ function statusMatches(filter, row) {
   if (filter === 'weak') return row.status === 'trouble';
   if (filter === 'unseen') return row.status === 'new';
   return row.status === filter;
+}
+
+function categoryFacetCounts(rows) {
+  const safeRows = Array.isArray(rows) ? rows : [];
+  const counts = {};
+  for (const category of SPELLING_POOL_CATEGORIES) {
+    const count = safeRows.filter((row) => spellingPoolCategoryMatchesWord(category, row, { coverageTierForWord })).length;
+    counts[category.id] = count;
+    if (category.statsKey && category.statsKey !== category.id) counts[category.statsKey] = count;
+  }
+  return counts;
+}
+
+function statusFacetCounts(rows, {
+  guardianMap = {},
+  progressMap = {},
+  wordBySlug = {},
+  today = 0,
+} = {}) {
+  const stats = {
+    all: 0,
+    total: 0,
+    secure: 0,
+    due: 0,
+    trouble: 0,
+    weak: 0,
+    learning: 0,
+    unseen: 0,
+    guardianDue: 0,
+    wobbling: 0,
+    renewedRecently: 0,
+    neverRenewed: 0,
+  };
+  for (const row of Array.isArray(rows) ? rows : []) {
+    stats.all += 1;
+    stats.total += 1;
+    if (row.status === 'secure') stats.secure += 1;
+    else if (row.status === 'due') stats.due += 1;
+    else if (row.status === 'trouble') {
+      stats.trouble += 1;
+      stats.weak += 1;
+    } else if (row.status === 'learning') stats.learning += 1;
+    else if (row.status === 'new') stats.unseen += 1;
+
+    const eligible = isGuardianEligibleSlug(row.slug, progressMap, wordBySlug);
+    const guardian = row.slug && guardianMap[row.slug] && typeof guardianMap[row.slug] === 'object'
+      ? guardianMap[row.slug]
+      : null;
+    if (!eligible) continue;
+    if (!guardian) {
+      if (row.status === 'secure') stats.neverRenewed += 1;
+      continue;
+    }
+    const nextDue = Number.isFinite(Number(guardian.nextDueDay)) ? Math.floor(Number(guardian.nextDueDay)) : Infinity;
+    if (row.status === 'secure' && nextDue <= today) stats.guardianDue += 1;
+    if (row.status === 'secure' && guardian.wobbling === true) stats.wobbling += 1;
+    const lastReviewed = Number(guardian.lastReviewedDay);
+    if (Number.isFinite(lastReviewed) && today - Math.floor(lastReviewed) <= GUARDIAN_RENEWED_RECENTLY_WINDOW_DAYS) {
+      stats.renewedRecently += 1;
+    }
+  }
+  return stats;
+}
+
+function categoryStatusFacets(rows, context = {}) {
+  const safeRows = Array.isArray(rows) ? rows : [];
+  return Object.fromEntries(SPELLING_POOL_CATEGORIES.map((category) => [
+    category.id,
+    statusFacetCounts(
+      safeRows.filter((row) => spellingPoolCategoryMatchesWord(category, row, { coverageTierForWord })),
+      context,
+    ),
+  ]));
+}
+
+function buildWordBankFacets({
+  rows,
+  filters,
+  contentSnapshot,
+  progressMap,
+  guardianMap,
+  now,
+} = {}) {
+  const queryRows = (Array.isArray(rows) ? rows : [])
+    .filter((row) => searchMatches(filters.query, contentSnapshot?.wordBySlug?.[row.slug] || row));
+  const categoryRows = queryRows.filter((row) => statusMatches(filters.status, row));
+  const statusRows = queryRows.filter((row) => yearMatches(filters.year, row));
+  const context = {
+    guardianMap,
+    progressMap,
+    wordBySlug: contentSnapshot?.wordBySlug || {},
+    today: todayDay(now),
+  };
+  return {
+    version: 1,
+    categories: categoryFacetCounts(categoryRows),
+    status: statusFacetCounts(statusRows, context),
+    categoryStatus: categoryStatusFacets(categoryRows, context),
+  };
 }
 
 function searchMatches(query, word) {
@@ -161,35 +264,23 @@ function withAccuracy(stats) {
 }
 
 function poolsFor(words, progressMap, now) {
-  const coreWords = words.filter((word) => isStatutoryCoreWord(word));
-  const y34Words = coreWords.filter((word) => word.year === '3-4');
-  const y56Words = coreWords.filter((word) => word.year === '5-6');
-  const secureExtensionWords = words.filter((word) => isSecureExtensionWord(word));
-  const extraWords = words.filter((word) => isEnrichmentExtraWord(word));
-  return {
-    all: withAccuracy(statsForWords(coreWords, progressMap, now)),
-    core: withAccuracy(statsForWords(coreWords, progressMap, now)),
-    y34: withAccuracy(statsForWords(y34Words, progressMap, now)),
-    y56: withAccuracy(statsForWords(y56Words, progressMap, now)),
-    secureExtension: withAccuracy(statsForWords(secureExtensionWords, progressMap, now)),
-    extra: withAccuracy(statsForWords(extraWords, progressMap, now)),
-  };
+  const pools = {};
+  for (const category of SPELLING_ANALYTICS_POOL_CATEGORIES) {
+    const categoryWords = words.filter((word) => spellingPoolCategoryMatchesWord(category, word, { coverageTierForWord }));
+    const stats = withAccuracy(statsForWords(categoryWords, progressMap, now));
+    for (const alias of category.analyticsAliases) pools[alias] = stats;
+    pools[category.statsKey] = stats;
+  }
+  return pools;
 }
 
 function groupRows(rows) {
-  const groups = [
-    { key: 'y3-4', title: 'Years 3-4', spellingPool: 'core', year: '3-4' },
-    { key: 'y5-6', title: 'Years 5-6', spellingPool: 'core', year: '5-6' },
-    { key: 'secure-extension', title: 'Secure vocabulary', spellingPool: 'core', year: 'secure-extension' },
-    { key: 'extra', title: 'Extra', spellingPool: 'extra', year: 'extra' },
-  ];
-  return groups.map((group) => ({
-    ...group,
-    words: rows.filter((row) => {
-      if (group.key === 'secure-extension') return isSecureExtensionWord(row);
-      if (group.key === 'extra') return isEnrichmentExtraWord(row);
-      return isStatutoryCoreWord(row) && row.year === group.year;
-    }),
+  return SPELLING_ANALYTICS_WORD_GROUP_CATEGORIES.map((group) => ({
+    key: group.id,
+    title: group.label,
+    spellingPool: group.spellingPool || 'core',
+    year: group.year || group.id,
+    words: rows.filter((row) => spellingPoolCategoryMatchesWord(group, row, { coverageTierForWord })),
   }));
 }
 
@@ -228,7 +319,9 @@ export async function buildSpellingWordBankReadModel({
 } = {}) {
   const filters = normaliseWordBankFilters(rawFilters);
   const words = Array.isArray(contentSnapshot?.words) ? contentSnapshot.words : [];
-  const progressMap = normaliseServerSpellingData(data).progress;
+  const spellingData = normaliseServerSpellingData(data, now);
+  const progressMap = spellingData.progress;
+  const guardianMap = spellingData.guardian;
   const rows = words.map((word) => publicWordRow(word, progressFor(progressMap, word.slug, now), now));
   const filtered = rows
     .filter((row) => yearMatches(filters.year, row))
@@ -276,6 +369,14 @@ export async function buildSpellingWordBankReadModel({
         filteredRows: filtered.length,
         returnedRows: pageRows.length,
         hasNextPage: start + pageRows.length < filtered.length,
+        facets: buildWordBankFacets({
+          rows,
+          filters,
+          contentSnapshot,
+          progressMap,
+          guardianMap,
+          now,
+        }),
       },
     },
     detail,

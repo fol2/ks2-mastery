@@ -1,0 +1,1829 @@
+[
+  {
+    "index": 204,
+    "slug": "achievable",
+    "word": "achievable",
+    "finalSentence": "A clear plan made the target achievable before Friday.",
+    "meaning": "Achievable means possible to do or reach with effort and a sensible plan.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 205,
+    "slug": "achievement",
+    "word": "achievement",
+    "finalSentence": "Winning the reading award was a proud achievement for Sam.",
+    "meaning": "Achievement means something successful that someone has done through effort.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 206,
+    "slug": "acquisition",
+    "word": "acquisition",
+    "finalSentence": "The school's acquisition of new books excited the whole class.",
+    "meaning": "Acquisition means the act of getting or buying something new.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 207,
+    "slug": "additional",
+    "word": "additional",
+    "finalSentence": "Mr Evans gave the group an additional clue before lunch.",
+    "meaning": "Additional means extra or more than what was already there.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 208,
+    "slug": "adjustable",
+    "word": "adjustable",
+    "finalSentence": "The adjustable desk helped Priya draw at the right height.",
+    "meaning": "Adjustable means able to be changed to fit a different size, height, or position.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 209,
+    "slug": "advantageous",
+    "word": "advantageous",
+    "finalSentence": "Choosing a quiet corner was advantageous during the spelling test.",
+    "meaning": "Advantageous means helpful because it gives someone a better chance of success.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 210,
+    "slug": "afterwards",
+    "word": "afterwards",
+    "finalSentence": "We tidied the art tables afterwards and washed the brushes.",
+    "meaning": "Afterwards means later, after something else has already happened.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 211,
+    "slug": "alphabetical",
+    "word": "alphabetical",
+    "finalSentence": "The pupils arranged the glossary words in alphabetical order.",
+    "meaning": "Alphabetical means arranged in the order of the letters of the alphabet.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 212,
+    "slug": "alternative",
+    "word": "alternative",
+    "finalSentence": "Lina chose an alternative route when the path was muddy.",
+    "meaning": "Alternative means another choice or way when the first one is not used.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 213,
+    "slug": "announcement",
+    "word": "announcement",
+    "finalSentence": "The headteacher made an announcement about the summer concert.",
+    "meaning": "Announcement means a spoken or written message that tells people important news.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 214,
+    "slug": "application",
+    "word": "application",
+    "finalSentence": "Noah submitted his application for the school council.",
+    "meaning": "Application means a written request to join, take part, or be considered.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 215,
+    "slug": "appropriate",
+    "word": "appropriate",
+    "finalSentence": "A calm voice is appropriate during a library visit.",
+    "meaning": "Appropriate means suitable and sensible for a particular place, time, or situation.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 216,
+    "slug": "approximate",
+    "word": "approximate",
+    "finalSentence": "Can you approximate the total before using a calculator?",
+    "meaning": "Approximate means to make a close estimate rather than an exact answer.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 217,
+    "slug": "artificial",
+    "word": "artificial",
+    "finalSentence": "The model volcano used artificial smoke for the demonstration.",
+    "meaning": "Artificial means made by people, rather than natural.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 218,
+    "slug": "beneficial",
+    "word": "beneficial",
+    "finalSentence": "Daily reading is beneficial for vocabulary and confidence.",
+    "meaning": "Beneficial means useful or helpful because it has a good effect.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 219,
+    "slug": "calculated",
+    "word": "calculated",
+    "finalSentence": "Zara calculated the cost of three tickets before paying.",
+    "meaning": "Calculated means worked out an answer using maths or careful thinking.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 220,
+    "slug": "calculation",
+    "word": "calculation",
+    "finalSentence": "His calculation showed the class had enough paint.",
+    "meaning": "Calculation means the process of working out an answer using numbers.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 221,
+    "slug": "calculator",
+    "word": "calculator",
+    "finalSentence": "Eleni checked the long division with a calculator.",
+    "meaning": "Calculator means a tool or machine used to work out number problems.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 222,
+    "slug": "celebration",
+    "word": "celebration",
+    "finalSentence": "The class held a celebration after finishing the play.",
+    "meaning": "Celebration means a happy event or activity that marks something special.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 223,
+    "slug": "challenging",
+    "word": "challenging",
+    "finalSentence": "The maze was challenging, but Theo solved it patiently.",
+    "meaning": "Challenging means difficult in a way that needs effort and thought.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 224,
+    "slug": "characteristic",
+    "word": "characteristic",
+    "finalSentence": "Kindness is a characteristic we value in our classroom.",
+    "meaning": "Characteristic means a feature or quality that helps describe someone or something.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 225,
+    "slug": "civilisation",
+    "word": "civilisation",
+    "finalSentence": "Ancient Greek civilisation influenced art, sport, and government.",
+    "meaning": "Civilisation means a large organised society with its own culture, rules, and way of life.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 226,
+    "slug": "collection",
+    "word": "collection",
+    "finalSentence": "Ravi displayed his collection of shells on the science table.",
+    "meaning": "Collection means a group of things gathered and kept together.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 227,
+    "slug": "collective",
+    "word": "collective",
+    "finalSentence": "The collective decision was to plant trees near the playground.",
+    "meaning": "Collective means shared by, or involving, a whole group of people.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 228,
+    "slug": "comfortable",
+    "word": "comfortable",
+    "finalSentence": "A comfortable chair helped Grace read for longer.",
+    "meaning": "Comfortable means pleasant to sit, stand, wear, or be in.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 229,
+    "slug": "comfortably",
+    "word": "comfortably",
+    "finalSentence": "Imran sat comfortably while he listened to the story.",
+    "meaning": "Comfortably means in a relaxed and pleasant way, without pain or difficulty.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 230,
+    "slug": "communication",
+    "word": "communication",
+    "finalSentence": "Clear communication helped the team finish the group task.",
+    "meaning": "Communication means sharing information, ideas, or feelings clearly with others.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 231,
+    "slug": "comparison",
+    "word": "comparison",
+    "finalSentence": "The chart made a comparison between two habitats.",
+    "meaning": "Comparison means looking at two or more things to see how they are alike or different.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 232,
+    "slug": "competitive",
+    "word": "competitive",
+    "finalSentence": "The class relay race was competitive but friendly throughout.",
+    "meaning": "Competitive means involving people trying to do better than each other.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 233,
+    "slug": "completion",
+    "word": "completion",
+    "finalSentence": "The art club celebrated completion of the mural after three weeks.",
+    "meaning": "Completion means finishing something so that no more work is needed.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 234,
+    "slug": "concentrate",
+    "word": "concentrate",
+    "finalSentence": "I concentrate better when my desk is tidy.",
+    "meaning": "Concentrate means to give your full attention to one thing.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 235,
+    "slug": "concentration",
+    "word": "concentration",
+    "finalSentence": "Long division requires steady concentration and careful checking.",
+    "meaning": "Concentration means careful attention given to one thing for a period of time.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 236,
+    "slug": "conclusion",
+    "word": "conclusion",
+    "finalSentence": "Her conclusion explained why the plant grew taller.",
+    "meaning": "Conclusion means the final idea or decision reached after thinking about evidence.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 237,
+    "slug": "confidence",
+    "word": "confidence",
+    "finalSentence": "Speaking clearly gave Amir confidence during the assembly.",
+    "meaning": "Confidence means believing you can do something or speak without fear.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 238,
+    "slug": "confidently",
+    "word": "confidently",
+    "finalSentence": "Beth answered confidently after checking her history notes.",
+    "meaning": "Confidently means in a sure and brave way.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 239,
+    "slug": "connection",
+    "word": "connection",
+    "finalSentence": "We found a connection between exercise and better sleep.",
+    "meaning": "Connection means a link or relationship between two things.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 240,
+    "slug": "consequence",
+    "word": "consequence",
+    "finalSentence": "A natural consequence of rain is a muddy field.",
+    "meaning": "Consequence means something that happens because of an action or event.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 241,
+    "slug": "considerable",
+    "word": "considerable",
+    "finalSentence": "The team made considerable progress before the deadline.",
+    "meaning": "Considerable means large enough to be noticed or important.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 242,
+    "slug": "contribution",
+    "word": "contribution",
+    "finalSentence": "Each pupil's contribution greatly improved the class newspaper.",
+    "meaning": "Contribution means something someone gives or does to help a group or task.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 243,
+    "slug": "convenient",
+    "word": "convenient",
+    "finalSentence": "The bus stop is convenient for families near school.",
+    "meaning": "Convenient means easy to use, reach, or fit into a plan.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 244,
+    "slug": "cooperation",
+    "word": "cooperation",
+    "finalSentence": "The group used cooperation to build a strong bridge model.",
+    "meaning": "Cooperation means working together helpfully towards the same goal.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 245,
+    "slug": "coordinate",
+    "word": "coordinate",
+    "finalSentence": "Mia will coordinate the costumes for the school play.",
+    "meaning": "Coordinate means to organise people or things so they work well together.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 246,
+    "slug": "coordination",
+    "word": "coordination",
+    "finalSentence": "Good coordination helped Ben catch the cricket ball.",
+    "meaning": "Coordination means using different parts or actions together smoothly.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 247,
+    "slug": "courageous",
+    "word": "courageous",
+    "finalSentence": "It was courageous of Aisha to perform first.",
+    "meaning": "Courageous means brave, especially when something feels difficult or frightening.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 248,
+    "slug": "definition",
+    "word": "definition",
+    "finalSentence": "The dictionary gave a clear definition of habitat.",
+    "meaning": "Definition means a clear explanation of what a word or idea means.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 249,
+    "slug": "deliberate",
+    "word": "deliberate",
+    "finalSentence": "The deliberate pause helped Sara choose her words.",
+    "meaning": "Deliberate means done slowly and carefully on purpose.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 250,
+    "slug": "demonstrate",
+    "word": "demonstrate",
+    "finalSentence": "Leo will demonstrate how to fold the paper boat.",
+    "meaning": "Demonstrate means to show how something is done or how something works.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 251,
+    "slug": "demonstration",
+    "word": "demonstration",
+    "finalSentence": "The teacher's demonstration showed how shadows change shape.",
+    "meaning": "Demonstration means an example or showing that explains how something works.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 252,
+    "slug": "description",
+    "word": "description",
+    "finalSentence": "Her description of the storm made us listen closely.",
+    "meaning": "Description means words that tell what someone or something is like.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 253,
+    "slug": "destruction",
+    "word": "destruction",
+    "finalSentence": "The fire caused the destruction of the old shed.",
+    "meaning": "Destruction means serious damage that ruins or breaks something.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 254,
+    "slug": "development",
+    "word": "development",
+    "finalSentence": "Reading daily supports the development of strong language skills.",
+    "meaning": "Development means the process of growing, improving, or becoming stronger.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 255,
+    "slug": "difference",
+    "word": "difference",
+    "finalSentence": "One small difference changed the result of the experiment.",
+    "meaning": "Difference means a way in which two things are not the same.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 256,
+    "slug": "difficulty",
+    "word": "difficulty",
+    "finalSentence": "Hugo had difficulty measuring the angle accurately today.",
+    "meaning": "Difficulty means a problem or challenge that makes something hard to do.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 257,
+    "slug": "distinction",
+    "word": "distinction",
+    "finalSentence": "The distinction between fact and opinion matters in reports.",
+    "meaning": "Distinction means a clear difference between two things.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 258,
+    "slug": "effectively",
+    "word": "effectively",
+    "finalSentence": "The group worked effectively by sharing each role fairly.",
+    "meaning": "Effectively means in a way that works well and achieves the result wanted.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 259,
+    "slug": "electrical",
+    "word": "electrical",
+    "finalSentence": "An electrical circuit needs a complete path to work.",
+    "meaning": "Electrical means connected with electricity or using electricity.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 260,
+    "slug": "electricity",
+    "word": "electricity",
+    "finalSentence": "The classroom lights use electricity each morning before lessons.",
+    "meaning": "Electricity means energy that can power lights, machines, and circuits.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 261,
+    "slug": "environmental",
+    "word": "environmental",
+    "finalSentence": "The council discussed environmental changes near the river.",
+    "meaning": "Environmental means connected with the natural world and the places around us.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 262,
+    "slug": "excitement",
+    "word": "excitement",
+    "finalSentence": "The hall filled with excitement before the talent show.",
+    "meaning": "Excitement means a happy, eager feeling when something interesting is about to happen.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 263,
+    "slug": "experimental",
+    "word": "experimental",
+    "finalSentence": "The experimental design tested which paper was strongest.",
+    "meaning": "Experimental means used for testing an idea or trying something out.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 264,
+    "slug": "expression",
+    "word": "expression",
+    "finalSentence": "Her expression showed surprise when the seedlings appeared.",
+    "meaning": "Expression means a look on someone's face that shows a feeling.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 265,
+    "slug": "impossible",
+    "word": "impossible",
+    "finalSentence": "It is impossible to divide ten sweets equally among three pupils.",
+    "meaning": "Impossible means not able to happen or be done.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 266,
+    "slug": "improvement",
+    "word": "improvement",
+    "finalSentence": "The coach noticed improvement in Maya's throwing technique.",
+    "meaning": "Improvement means a change that makes something better.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 267,
+    "slug": "independence",
+    "word": "independence",
+    "finalSentence": "Cycling safely to school gave Tom more independence.",
+    "meaning": "Independence means being able to do things for yourself or make your own choices.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 268,
+    "slug": "independent",
+    "word": "independent",
+    "finalSentence": "An independent reader can choose books with confidence.",
+    "meaning": "Independent means able to do something by yourself without needing much help.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 269,
+    "slug": "information",
+    "word": "information",
+    "finalSentence": "The leaflet gave useful information about recycling at home.",
+    "meaning": "Information means facts or details that help someone understand something.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 270,
+    "slug": "instruction",
+    "word": "instruction",
+    "finalSentence": "Follow each instruction before starting the science test.",
+    "meaning": "Instruction means a direction that tells someone what to do.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 271,
+    "slug": "instrument",
+    "word": "instrument",
+    "finalSentence": "A thermometer is an instrument for measuring temperature.",
+    "meaning": "Instrument means a tool used for a special purpose, such as measuring or making music.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 272,
+    "slug": "interesting",
+    "word": "interesting",
+    "finalSentence": "The museum guide told an interesting story about fossils.",
+    "meaning": "Interesting means enjoyable or worth attention because it makes you curious.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 273,
+    "slug": "investigate",
+    "word": "investigate",
+    "finalSentence": "We will investigate why the magnet attracts some metals.",
+    "meaning": "Investigate means to look carefully for facts and answers.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 274,
+    "slug": "investigation",
+    "word": "investigation",
+    "finalSentence": "The investigation showed that plants need light to grow.",
+    "meaning": "Investigation means a careful search for facts or answers.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 275,
+    "slug": "measurement",
+    "word": "measurement",
+    "finalSentence": "Her measurement of the window was exactly one metre.",
+    "meaning": "Measurement means the size, length, amount, or result found by measuring.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 276,
+    "slug": "organisation",
+    "word": "organisation",
+    "finalSentence": "Good organisation kept the group project on schedule.",
+    "meaning": "Organisation means arranging people, things, or tasks in a clear and useful way.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 277,
+    "slug": "performance",
+    "word": "performance",
+    "finalSentence": "The choir's performance impressed everyone in the hall.",
+    "meaning": "Performance means how well someone does an activity, or a show for others.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 278,
+    "slug": "responsible",
+    "word": "responsible",
+    "finalSentence": "A responsible monitor returns the tablets after lessons.",
+    "meaning": "Responsible means trusted to do something properly and safely.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 279,
+    "slug": "scientific",
+    "word": "scientific",
+    "finalSentence": "The scientific diagram labelled each part of the flower.",
+    "meaning": "Scientific means connected with science and careful study of evidence.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 280,
+    "slug": "separation",
+    "word": "separation",
+    "finalSentence": "Careful separation of the mixtures required patience and filtering.",
+    "meaning": "Separation means the act of sorting things apart or keeping them apart.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 281,
+    "slug": "adjective",
+    "word": "adjective",
+    "finalSentence": "An adjective can describe the size of a noun.",
+    "meaning": "Adjective means a word that describes a noun.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 282,
+    "slug": "adverb",
+    "word": "adverb",
+    "finalSentence": "The adverb quickly tells how the runner moved.",
+    "meaning": "Adverb means a word that describes how, when, or where an action happens.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 283,
+    "slug": "biography",
+    "word": "biography",
+    "finalSentence": "A biography tells the story of a real person's life.",
+    "meaning": "Biography means a book or account about a real person's life.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 284,
+    "slug": "colon",
+    "word": "colon",
+    "finalSentence": "Use a colon before a list of examples.",
+    "meaning": "Colon means a punctuation mark used before a list, explanation, or example.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 285,
+    "slug": "comma",
+    "word": "comma",
+    "finalSentence": "A comma can separate two items in a list.",
+    "meaning": "Comma means a punctuation mark that separates parts of a sentence.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 286,
+    "slug": "connect",
+    "word": "connect",
+    "finalSentence": "We can connect the clauses with a suitable joining word.",
+    "meaning": "Connect means to join two things or ideas together.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 287,
+    "slug": "dialogue",
+    "word": "dialogue",
+    "finalSentence": "The dialogue showed what each character was feeling.",
+    "meaning": "Dialogue means the words spoken between characters in a story or play.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 288,
+    "slug": "draft",
+    "word": "draft",
+    "finalSentence": "Maya wrote a first draft before editing her story.",
+    "meaning": "Draft means an early version of writing that can still be improved.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 289,
+    "slug": "edit",
+    "word": "edit",
+    "finalSentence": "Please edit your paragraph for spelling and punctuation.",
+    "meaning": "Edit means to change and improve writing before it is finished.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 290,
+    "slug": "editing",
+    "word": "editing",
+    "finalSentence": "Careful editing helped Noah improve the ending of his report.",
+    "meaning": "Editing means checking and improving writing before it is finished.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 291,
+    "slug": "ellipsis",
+    "word": "ellipsis",
+    "finalSentence": "An ellipsis can show a pause in dialogue.",
+    "meaning": "Ellipsis means three dots that can show a pause or missing words.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 292,
+    "slug": "extract",
+    "word": "extract",
+    "finalSentence": "The teacher read an extract from the adventure novel.",
+    "meaning": "Extract means a short piece taken from a longer text.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 293,
+    "slug": "formal",
+    "word": "formal",
+    "finalSentence": "A formal letter uses polite and careful language.",
+    "meaning": "Formal means careful and polite, often used for serious writing or occasions.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 294,
+    "slug": "informal",
+    "word": "informal",
+    "finalSentence": "An informal note can sound friendly and relaxed.",
+    "meaning": "Informal means relaxed and friendly, often used with people you know well.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 295,
+    "slug": "metaphor",
+    "word": "metaphor",
+    "finalSentence": "The metaphor called the moon a silver coin.",
+    "meaning": "Metaphor means a comparison that says one thing is another to create an image.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 296,
+    "slug": "narrative",
+    "word": "narrative",
+    "finalSentence": "The narrative followed a child lost in a forest.",
+    "meaning": "Narrative means a story or account of events.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 297,
+    "slug": "noun",
+    "word": "noun",
+    "finalSentence": "A noun can name a person, place, or thing.",
+    "meaning": "Noun means a word that names a person, place, thing, or idea.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 298,
+    "slug": "phrase",
+    "word": "phrase",
+    "finalSentence": "The phrase beside the river described the setting.",
+    "meaning": "Phrase means a small group of words that gives part of an idea.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 299,
+    "slug": "plural",
+    "word": "plural",
+    "finalSentence": "The plural of fox is foxes in standard English.",
+    "meaning": "Plural means the form of a word used for more than one.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 300,
+    "slug": "prefix",
+    "word": "prefix",
+    "finalSentence": "The prefix un changes happy into unhappy in English.",
+    "meaning": "Prefix means letters added to the start of a word to change its meaning.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 301,
+    "slug": "pronoun",
+    "word": "pronoun",
+    "finalSentence": "A pronoun can replace a noun in a sentence.",
+    "meaning": "Pronoun means a word that can stand in place of a noun.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 302,
+    "slug": "proofread",
+    "word": "proofread",
+    "finalSentence": "Please proofread your answer before handing it in.",
+    "meaning": "Proofread means to check writing carefully for errors before sharing it.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 303,
+    "slug": "revision",
+    "word": "revision",
+    "finalSentence": "Careful revision made the science explanation much clearer.",
+    "meaning": "Revision means changing and improving work after looking at it again.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 304,
+    "slug": "root",
+    "word": "root",
+    "finalSentence": "The root of the word playful is play.",
+    "meaning": "Root means the main part of a word before prefixes or suffixes are added.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 305,
+    "slug": "word",
+    "word": "word",
+    "finalSentence": "Each word in the poem was chosen carefully.",
+    "meaning": "Word means a single unit of language that carries meaning.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 306,
+    "slug": "semicolon",
+    "word": "semicolon",
+    "finalSentence": "A semicolon can join two closely linked clauses.",
+    "meaning": "Semicolon means a punctuation mark that can join closely linked clauses.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 307,
+    "slug": "simile",
+    "word": "simile",
+    "finalSentence": "The simile compared the snow to a blanket.",
+    "meaning": "Simile means a comparison using like or as.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 308,
+    "slug": "singular",
+    "word": "singular",
+    "finalSentence": "The singular form of children is child in English.",
+    "meaning": "Singular means the form of a word used for just one person or thing.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 309,
+    "slug": "marks",
+    "word": "marks",
+    "finalSentence": "Speech marks show the exact words a character says.",
+    "meaning": "Marks means written signs used to show information, such as speech marks around spoken words.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 310,
+    "slug": "standard",
+    "word": "standard",
+    "finalSentence": "The teacher showed the standard method for subtraction.",
+    "meaning": "Standard means the usual or accepted way of doing something.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 311,
+    "slug": "suffix",
+    "word": "suffix",
+    "finalSentence": "The suffix ness changes kind into kindness in English.",
+    "meaning": "Suffix means letters added to the end of a word to change its meaning.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 312,
+    "slug": "syllable",
+    "word": "syllable",
+    "finalSentence": "Clap each syllable as you say the word.",
+    "meaning": "Syllable means a beat or sound part within a spoken word.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 313,
+    "slug": "synonym",
+    "word": "synonym",
+    "finalSentence": "A synonym for happy is cheerful in this sentence.",
+    "meaning": "Synonym means a word with the same or a similar meaning as another word.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 314,
+    "slug": "tense",
+    "word": "tense",
+    "finalSentence": "The tense shows whether an action happened before now.",
+    "meaning": "Tense means the form of a verb that shows when an action happens.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 315,
+    "slug": "verb",
+    "word": "verb",
+    "finalSentence": "A verb can show an action or a state.",
+    "meaning": "Verb means a word that shows an action or state.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 316,
+    "slug": "vowel",
+    "word": "vowel",
+    "finalSentence": "Every syllable usually contains at least one vowel.",
+    "meaning": "Vowel means a speech sound made with an open mouth, or a letter for that sound.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 317,
+    "slug": "consonant",
+    "word": "consonant",
+    "finalSentence": "The word brick begins with a consonant sound.",
+    "meaning": "Consonant means a speech sound made with some mouth closure, or a letter for that sound.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 318,
+    "slug": "heading",
+    "word": "heading",
+    "finalSentence": "The heading tells readers what the section covers.",
+    "meaning": "Heading means a title that introduces a section of writing.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 319,
+    "slug": "caption",
+    "word": "caption",
+    "finalSentence": "The caption explained the photograph below the article.",
+    "meaning": "Caption means a short explanation beside or under a picture.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 320,
+    "slug": "quotation",
+    "word": "quotation",
+    "finalSentence": "Her quotation from the text supported the answer.",
+    "meaning": "Quotation means words copied exactly from a text or person.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 321,
+    "slug": "quote",
+    "word": "quote",
+    "finalSentence": "Use a short quote to support your opinion.",
+    "meaning": "Quote means a short piece of exact wording from a text or person.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 322,
+    "slug": "reporter",
+    "word": "reporter",
+    "finalSentence": "The reporter asked clear questions after the match.",
+    "meaning": "Reporter means someone who gathers information and tells news stories.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 323,
+    "slug": "statement",
+    "word": "statement",
+    "finalSentence": "A statement gives information and ends with a full stop.",
+    "meaning": "Statement means a sentence that gives information clearly.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 324,
+    "slug": "bracket",
+    "word": "bracket",
+    "finalSentence": "A bracket can add extra information to a sentence.",
+    "meaning": "Bracket means a punctuation mark used to hold extra information in a sentence.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 325,
+    "slug": "dash",
+    "word": "dash",
+    "finalSentence": "A dash can mark a sudden change in thought.",
+    "meaning": "Dash means a punctuation mark that can show a break or sudden change.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 326,
+    "slug": "hyphen",
+    "word": "hyphen",
+    "finalSentence": "A hyphen joins words in well-known compound phrases.",
+    "meaning": "Hyphen means a short mark that joins words or parts of words.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 327,
+    "slug": "glossary",
+    "word": "glossary",
+    "finalSentence": "The glossary explained tricky words at the book's end.",
+    "meaning": "Glossary means a list of tricky words with their meanings.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 328,
+    "slug": "index",
+    "word": "index",
+    "finalSentence": "The index helped us find volcanoes on page twelve.",
+    "meaning": "Index means an alphabetical list that helps readers find topics in a book.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 329,
+    "slug": "contents",
+    "word": "contents",
+    "finalSentence": "The contents page listed each chapter and its page number.",
+    "meaning": "Contents means the list near the front of a book showing sections and pages.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 330,
+    "slug": "summary",
+    "word": "summary",
+    "finalSentence": "A summary includes the main points without every detail.",
+    "meaning": "Summary means a short version that gives only the main points.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 331,
+    "slug": "reason",
+    "word": "reason",
+    "finalSentence": "Give one reason for your answer using evidence.",
+    "meaning": "Reason means an explanation for why something happened or why you think something.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 332,
+    "slug": "opinion",
+    "word": "opinion",
+    "finalSentence": "My opinion changed after I read the evidence.",
+    "meaning": "Opinion means what someone thinks or feels about something.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 333,
+    "slug": "viewpoint",
+    "word": "viewpoint",
+    "finalSentence": "The article presented a different viewpoint about school uniforms.",
+    "meaning": "Viewpoint means a particular way of thinking about a topic.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 334,
+    "slug": "recount",
+    "word": "recount",
+    "finalSentence": "Her recount described the trip in time order.",
+    "meaning": "Recount means writing or telling events in the order they happened.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 335,
+    "slug": "report",
+    "word": "report",
+    "finalSentence": "The report explained how pupils travel to school.",
+    "meaning": "Report means a text that gives organised information about a topic.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 336,
+    "slug": "newspaper",
+    "word": "newspaper",
+    "finalSentence": "The newspaper published a story about the school fair.",
+    "meaning": "Newspaper means a printed or online publication that shares news and information.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 337,
+    "slug": "script",
+    "word": "script",
+    "finalSentence": "The script showed each actor when to speak.",
+    "meaning": "Script means the written words and directions for a play or performance.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 338,
+    "slug": "play",
+    "word": "play",
+    "finalSentence": "The play began with music and a dark stage.",
+    "meaning": "Play means a story performed by actors for an audience.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 339,
+    "slug": "stanza",
+    "word": "stanza",
+    "finalSentence": "Each stanza in the poem had four lines.",
+    "meaning": "Stanza means a group of lines in a poem.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 340,
+    "slug": "verse",
+    "word": "verse",
+    "finalSentence": "The final verse repeated the main idea clearly.",
+    "meaning": "Verse means a section of a poem or song.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 341,
+    "slug": "chapter",
+    "word": "chapter",
+    "finalSentence": "The chapter ended with a surprising discovery inside the cave.",
+    "meaning": "Chapter means one main section of a book.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 342,
+    "slug": "setting",
+    "word": "setting",
+    "finalSentence": "The setting of the story was a windy island.",
+    "meaning": "Setting means the time and place where a story happens.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 343,
+    "slug": "plot",
+    "word": "plot",
+    "finalSentence": "The plot became exciting when the treasure disappeared.",
+    "meaning": "Plot means the main events of a story.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 344,
+    "slug": "theme",
+    "word": "theme",
+    "finalSentence": "The main theme of the story was friendship.",
+    "meaning": "Theme means the main idea or message in a story.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 345,
+    "slug": "narrator",
+    "word": "narrator",
+    "finalSentence": "The narrator described the events from Sam's viewpoint.",
+    "meaning": "Narrator means the person or voice that tells a story.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 346,
+    "slug": "imagery",
+    "word": "imagery",
+    "finalSentence": "The poet used imagery to describe the roaring sea.",
+    "meaning": "Imagery means descriptive language that helps readers imagine sights, sounds, or feelings.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 347,
+    "slug": "inference",
+    "word": "inference",
+    "finalSentence": "Her inference was based on clues in the text.",
+    "meaning": "Inference means an idea worked out from clues and evidence.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 348,
+    "slug": "retrieval",
+    "word": "retrieval",
+    "finalSentence": "A retrieval question asks for facts stated in the text.",
+    "meaning": "Retrieval means finding information that is already stated in a text.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 349,
+    "slug": "contrast",
+    "word": "contrast",
+    "finalSentence": "The paragraph made a contrast between city and village life.",
+    "meaning": "Contrast means a clear difference between two things.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 350,
+    "slug": "apostrophe",
+    "word": "apostrophe",
+    "finalSentence": "The apostrophe showed that the pencil belonged to Aisha.",
+    "meaning": "Apostrophe means a punctuation mark used for possession or missing letters.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 351,
+    "slug": "conjunction",
+    "word": "conjunction",
+    "finalSentence": "A conjunction can join two ideas in one sentence.",
+    "meaning": "Conjunction means a word that joins words, phrases, or clauses.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 352,
+    "slug": "connective",
+    "word": "connective",
+    "finalSentence": "The connective meanwhile linked the two events in order.",
+    "meaning": "Connective means a word or phrase that links ideas or events.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 353,
+    "slug": "exclamation",
+    "word": "exclamation",
+    "finalSentence": "His exclamation showed surprise when the lights went out.",
+    "meaning": "Exclamation means a sudden word or sentence showing strong feeling.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 354,
+    "slug": "figurative",
+    "word": "figurative",
+    "finalSentence": "The figurative phrase helped readers imagine the storm.",
+    "meaning": "Figurative means using language in an imaginative way, not always literally.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 355,
+    "slug": "possessive",
+    "word": "possessive",
+    "finalSentence": "The possessive apostrophe showed that the coat was Maya's.",
+    "meaning": "Possessive means showing that something belongs to someone or something.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 356,
+    "slug": "punctuation",
+    "word": "punctuation",
+    "finalSentence": "Careful punctuation made the instructions easier to follow.",
+    "meaning": "Punctuation means marks that help readers understand sentences.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 357,
+    "slug": "standardise",
+    "word": "standardise",
+    "finalSentence": "We will standardise the headings across every group poster.",
+    "meaning": "Standardise means to make things follow the same agreed pattern.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 358,
+    "slug": "vocabulary",
+    "word": "vocabulary",
+    "finalSentence": "Reading widely builds vocabulary for speaking and writing.",
+    "meaning": "Vocabulary means the words someone knows and uses.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 359,
+    "slug": "handwriting",
+    "word": "handwriting",
+    "finalSentence": "Neat handwriting helps others read your ideas without guessing.",
+    "meaning": "Handwriting means writing made by hand with letters formed clearly.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 360,
+    "slug": "subheading",
+    "word": "subheading",
+    "finalSentence": "A subheading introduces a smaller section of information.",
+    "meaning": "Subheading means a smaller heading that introduces part of a section.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 361,
+    "slug": "parenthesis",
+    "word": "parenthesis",
+    "finalSentence": "The parenthesis added extra detail inside the sentence.",
+    "meaning": "Parenthesis means extra information added into a sentence.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 362,
+    "slug": "parentheses",
+    "word": "parentheses",
+    "finalSentence": "The parentheses showed where the extra detail began and ended.",
+    "meaning": "Parentheses means a pair of brackets used to add extra information.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 363,
+    "slug": "introduction",
+    "word": "introduction",
+    "finalSentence": "The introduction welcomed readers and explained the topic.",
+    "meaning": "Introduction means the opening part that begins and explains a text or speech.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 364,
+    "slug": "counterargument",
+    "word": "counterargument",
+    "finalSentence": "Her counterargument answered the strongest point against school uniforms.",
+    "meaning": "Counterargument means a reason or idea that argues against another point.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 365,
+    "slug": "persuasive",
+    "word": "persuasive",
+    "finalSentence": "A persuasive speech can change how people think.",
+    "meaning": "Persuasive means intended to make someone agree, think, or act in a certain way.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 366,
+    "slug": "descriptive",
+    "word": "descriptive",
+    "finalSentence": "Her descriptive writing helped readers picture the scene clearly.",
+    "meaning": "Descriptive means using details to help readers picture or understand something.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 367,
+    "slug": "informative",
+    "word": "informative",
+    "finalSentence": "The informative leaflet explained how bees make honey.",
+    "meaning": "Informative means giving useful facts or explanations to help readers learn.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 368,
+    "slug": "characterisation",
+    "word": "characterisation",
+    "finalSentence": "Strong characterisation made the villain seem believable and human.",
+    "meaning": "Characterisation means the way a writer shows what a character is like.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 369,
+    "slug": "alliteration",
+    "word": "alliteration",
+    "finalSentence": "The alliteration made the tongue twister funny to read.",
+    "meaning": "Alliteration means repeating the same starting sound in nearby words.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 370,
+    "slug": "personification",
+    "word": "personification",
+    "finalSentence": "The poet used personification to make the house seem alive.",
+    "meaning": "Personification means describing something non-human as if it has human actions or feelings.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 371,
+    "slug": "prediction",
+    "word": "prediction",
+    "finalSentence": "Her prediction was that the character would return.",
+    "meaning": "Prediction means a sensible guess about what may happen next.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 372,
+    "slug": "subtract",
+    "word": "subtract",
+    "finalSentence": "We can subtract seven from twenty to find the answer.",
+    "meaning": "Subtract means to take one number away from another.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 373,
+    "slug": "subtraction",
+    "word": "subtraction",
+    "finalSentence": "A subtraction calculation helps find the difference between numbers.",
+    "meaning": "Subtraction means taking one number away from another to find the difference.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 374,
+    "slug": "multiply",
+    "word": "multiply",
+    "finalSentence": "We multiply six by four to find the total.",
+    "meaning": "Multiply means to combine equal groups to find a total.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 375,
+    "slug": "multiplication",
+    "word": "multiplication",
+    "finalSentence": "This multiplication fact makes repeated addition much quicker in maths.",
+    "meaning": "Multiplication means combining equal groups, often quicker than repeated addition.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 376,
+    "slug": "divisor",
+    "word": "divisor",
+    "finalSentence": "The divisor tells us what number we divide by.",
+    "meaning": "Divisor means the number that another number is divided by.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 377,
+    "slug": "dividend",
+    "word": "dividend",
+    "finalSentence": "The dividend is the number being divided in a calculation.",
+    "meaning": "Dividend means the number being divided in a division calculation.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 378,
+    "slug": "quotient",
+    "word": "quotient",
+    "finalSentence": "The quotient is the answer to a division question.",
+    "meaning": "Quotient means the answer to a division calculation.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 379,
+    "slug": "remainder",
+    "word": "remainder",
+    "finalSentence": "The remainder is left after equal groups are made.",
+    "meaning": "Remainder means the amount left over after equal groups are made.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 380,
+    "slug": "multiple",
+    "word": "multiple",
+    "finalSentence": "Twelve is a multiple of three and four.",
+    "meaning": "Multiple means a number made by multiplying another number by a whole number.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 381,
+    "slug": "numerator",
+    "word": "numerator",
+    "finalSentence": "The numerator shows how many parts are selected.",
+    "meaning": "Numerator means the top number in a fraction, showing selected parts.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 382,
+    "slug": "denominator",
+    "word": "denominator",
+    "finalSentence": "The denominator shows how many equal parts exist.",
+    "meaning": "Denominator means the bottom number in a fraction, showing equal parts in the whole.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 383,
+    "slug": "equivalent",
+    "word": "equivalent",
+    "finalSentence": "These equivalent fractions name exactly the same amount.",
+    "meaning": "Equivalent means equal in value, amount, or meaning.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 384,
+    "slug": "percentage",
+    "word": "percentage",
+    "finalSentence": "A percentage shows a number out of one hundred.",
+    "meaning": "Percentage means a way of showing a number as parts out of one hundred.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 385,
+    "slug": "percent",
+    "word": "percent",
+    "finalSentence": "Fifty percent means fifty parts out of one hundred.",
+    "meaning": "Percent means a number shown as parts out of one hundred.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 386,
+    "slug": "proportion",
+    "word": "proportion",
+    "finalSentence": "The proportion of shaded squares was three out of ten.",
+    "meaning": "Proportion means a part compared with the whole amount.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 387,
+    "slug": "ratio",
+    "word": "ratio",
+    "finalSentence": "The ratio of red beads to blue beads was two to three.",
+    "meaning": "Ratio means a comparison showing how much there is of one amount against another.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 388,
+    "slug": "algebra",
+    "word": "algebra",
+    "finalSentence": "In algebra, letters can stand for unknown numbers.",
+    "meaning": "Algebra means maths where letters can stand for unknown numbers.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 389,
+    "slug": "geometry",
+    "word": "geometry",
+    "finalSentence": "In geometry, we study shapes, angles, and position.",
+    "meaning": "Geometry means the part of maths that studies shapes, angles, and position.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 390,
+    "slug": "acute",
+    "word": "acute",
+    "finalSentence": "An acute angle is smaller than a right angle.",
+    "meaning": "Acute means less than ninety degrees when describing an angle.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 391,
+    "slug": "obtuse",
+    "word": "obtuse",
+    "finalSentence": "An obtuse angle is larger than a right angle.",
+    "meaning": "Obtuse means more than ninety degrees but less than 180 degrees when describing an angle.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 392,
+    "slug": "reflex",
+    "word": "reflex",
+    "finalSentence": "A reflex angle is greater than 180 degrees.",
+    "meaning": "Reflex means more than 180 degrees when describing an angle.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 393,
+    "slug": "parallel",
+    "word": "parallel",
+    "finalSentence": "The parallel lines stayed the same distance apart forever.",
+    "meaning": "Parallel means lines or surfaces that stay the same distance apart and never meet.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 394,
+    "slug": "perpendicular",
+    "word": "perpendicular",
+    "finalSentence": "The perpendicular lines met at exactly a right angle.",
+    "meaning": "Perpendicular means meeting at a right angle, such as two straight lines.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 395,
+    "slug": "horizontal",
+    "word": "horizontal",
+    "finalSentence": "A horizontal line goes straight from left to right.",
+    "meaning": "Horizontal means going straight across from side to side.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 396,
+    "slug": "vertical",
+    "word": "vertical",
+    "finalSentence": "A vertical line goes straight up and down.",
+    "meaning": "Vertical means going straight up and down, not sideways.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 397,
+    "slug": "diagonal",
+    "word": "diagonal",
+    "finalSentence": "A diagonal line joins opposite corners of a square.",
+    "meaning": "Diagonal means slanting between opposite corners or across a shape.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 398,
+    "slug": "radius",
+    "word": "radius",
+    "finalSentence": "The radius measures from the centre to the circle's edge.",
+    "meaning": "Radius means the distance from the centre of a circle to its edge.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 399,
+    "slug": "diameter",
+    "word": "diameter",
+    "finalSentence": "The diameter passes through the centre of a circle.",
+    "meaning": "Diameter means the distance across a circle through its centre.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 400,
+    "slug": "circumference",
+    "word": "circumference",
+    "finalSentence": "The circumference is the distance around a circle.",
+    "meaning": "Circumference means the distance around the outside edge of a circle.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 401,
+    "slug": "perimeter",
+    "word": "perimeter",
+    "finalSentence": "The perimeter is the distance around a shape.",
+    "meaning": "Perimeter means the total distance around the edge of a shape.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 402,
+    "slug": "area",
+    "word": "area",
+    "finalSentence": "The area measures the space inside a flat shape.",
+    "meaning": "Area means the amount of flat space inside a shape.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 403,
+    "slug": "volume",
+    "word": "volume",
+    "finalSentence": "The volume measures how much space a solid shape fills.",
+    "meaning": "Volume means the amount of space inside a solid shape.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 404,
+    "slug": "mass",
+    "word": "mass",
+    "finalSentence": "The mass shows how much matter an object contains.",
+    "meaning": "Mass means how much matter an object contains.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 405,
+    "slug": "width",
+    "word": "width",
+    "finalSentence": "The width of the table was eighty centimetres.",
+    "meaning": "Width means how wide something is from one side to the other.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  },
+  {
+    "index": 406,
+    "slug": "symmetry",
+    "word": "symmetry",
+    "finalSentence": "A butterfly's wings often show symmetry across the middle.",
+    "meaning": "Symmetry means a balanced match where two sides or parts are the same.",
+    "changed": true,
+    "reviewNote": "Rewritten for natural KS2 usage and correct sense."
+  }
+]
