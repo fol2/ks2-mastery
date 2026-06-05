@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
+import { secureVocabularySentenceFor } from './spelling-secure-vocabulary-sentence-generator.mjs';
 
 export const SOURCE_ARTIFACT_ID = 'ks2-spelling-secure-vocabulary-source-v1';
 export const AUDITED_SOURCE_PROVENANCE = 'ks2-spelling-secure-vocabulary-source-v1';
@@ -74,28 +75,21 @@ function capitaliseWord(word) {
   return word ? `${word.slice(0, 1).toUpperCase()}${word.slice(1)}` : 'This word';
 }
 
-function generatedExampleSentenceFor(word) {
-  if (word === 'able') return 'The pupil was able to explain the answer after checking each step.';
-  if (word === 'aloud') return 'The group read the poem aloud so everyone could hear the rhythm.';
-  if (word === 'acid') return 'The science test showed acid reacting with the metal strip.';
-  if (word === 'angle') return 'The pupil measured the angle before drawing the triangle.';
-  if (word === 'moist') return 'The soil felt moist after rain fell overnight.';
-  if (word.endsWith('ly')) return `The pupil checked the final answer ${word} before explaining the method.`;
-  if (word.endsWith('ing')) return `The class was ${word} ideas before choosing the strongest evidence.`;
-  if (word.endsWith('ed')) return `The pupil ${word} the paragraph after reading the feedback.`;
-  if (/(tion|sion|ment|ness|ity|ance|ence|acy|ship)$/.test(word)) {
-    return `The report explained the ${word} behind the result clearly.`;
-  }
-  if (/(able|ible|ous|ful|less|ive|al|ic|ant|ent)$/.test(word)) {
-    return `The pupil chose a ${word} example to support the explanation.`;
-  }
-  if (word.endsWith('s') && !word.endsWith('ss')) {
-    return `The class compared several ${word} before writing a conclusion.`;
-  }
-  if (/(ate|ise|ize|ify)$/.test(word)) {
-    return `The pupil needed to ${word} the answer using evidence from the lesson.`;
-  }
-  return `${capitaliseWord(word)} helped the pupil explain the idea with more detail.`;
+function generatedExampleSentenceFor(record, morphologyTags) {
+  const word = normaliseString(record.word);
+  const sourceBucket = normaliseString(record.sourceBucket).replace(/_/g, '-');
+  return secureVocabularySentenceFor({
+    slug: word,
+    word,
+    accepted: [word],
+    coverageTier: 'secure-extension',
+    listId: `secure-extension-${sourceBucket || 'school-academic-secure'}`,
+    tags: [
+      'secure-extension',
+      sourceBucket || 'school-academic-secure',
+      ...morphologyTags,
+    ],
+  }, 0);
 }
 
 function releaseQualityPolicyAllowsGeneratedFallback(approval) {
@@ -154,7 +148,7 @@ function generatedReleaseReadinessFields(record) {
     acceptedSpellings: [word],
     rejectedVariants: [],
     explanation: `${displayWord} is an owner-approved generated KS2 secure-extension spelling-practice entry. Pupils should read it clearly, spell each letter in order, and keep the accepted UK form unchanged.`,
-    exampleSentences: [generatedExampleSentenceFor(word)],
+    exampleSentences: [generatedExampleSentenceFor(record, morphologyTags)],
     ukSpellingDecision: `UK spelling approved: ${word} is the accepted spelling for this secure-extension entry.`,
     familyRoot,
     morphologyTags,

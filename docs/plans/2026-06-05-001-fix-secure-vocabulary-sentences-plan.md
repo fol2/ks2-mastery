@@ -13,14 +13,16 @@ The secure-extension spelling vocabulary currently contains repeated placeholder
 
 ## Scope
 
-Repair the published spelling content so every affected secure vocabulary word has at least one usable, context-bearing example sentence. Keep the work to content, generated runtime artefacts, and regression coverage. Do not change spelling progression, remote sync, learner state, D1 schema, or non-spelling subject behaviour.
+Repair the published spelling content so every affected secure vocabulary word has at least one usable, context-bearing example sentence. The follow-up quality standard is stricter than simple placeholder removal: the latest secure vocabulary release must have no exact duplicate sentences, no normalised duplicate sentences, and no repeated sentence frame after the target word is blanked out. Keep the work to content, generated runtime artefacts, and regression coverage. Do not change spelling progression, remote sync, learner state, D1 schema, or non-spelling subject behaviour.
 
 ## Requirements
 
 - Replace every secure vocabulary sentence using the repeated board-practice template in `content/spelling.seed.json`.
+- Replace the first repair pass's weak generated frames with safer word-sensitive, source-bucket-aware sentences.
 - Preserve each existing `sentenceEntryIds` link, word slug, accepted spelling, provenance, list membership, publication metadata, and spelling pool classification.
 - Regenerate the spelling runtime artefacts consumed by the app and Worker.
 - Add a regression check that fails if the board-practice template returns to the published spelling content.
+- Add a regression check that fails on exact duplicate, normalised duplicate, or blanked-target repeated-frame secure vocabulary sentences.
 - Deploy through the package scripts, not raw Wrangler, and verify production content after deployment.
 
 ## Existing Patterns
@@ -43,6 +45,7 @@ Test scenarios:
 - All affected entries still reference an existing word slug.
 - No secure vocabulary sentence contains `on the board for secure vocabulary spelling practice`.
 - Each repaired sentence still contains its target word as a whole word or accepted spelling.
+- The latest published secure vocabulary snapshot contains exactly 1,215 secure-extension words and zero duplicate-frame audit issues.
 
 ### 2. Runtime Regeneration
 
