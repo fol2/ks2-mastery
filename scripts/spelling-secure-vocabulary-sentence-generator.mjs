@@ -1,4 +1,9 @@
+import { existsSync, readFileSync } from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
 export const BAD_TEMPLATE_FRAGMENT = 'on the board for secure vocabulary spelling practice';
+export const SEMANTIC_SENTENCE_SOURCE_PATH = 'content/spelling-secure-vocabulary-semantic-sentences.json';
 
 const WEAK_FRAME_FRAGMENTS = Object.freeze([
   'helped the pupil explain the idea with more detail',
@@ -242,6 +247,24 @@ const INTRANSITIVE_ING = new Set([
 
 const DIRECTION_WORDS = new Set(['clockwise', 'anticlockwise']);
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const rootDir = path.resolve(__dirname, '..');
+
+function loadSemanticSentenceOverrides() {
+  const filePath = path.join(rootDir, SEMANTIC_SENTENCE_SOURCE_PATH);
+  if (!existsSync(filePath)) return new Map();
+
+  const parsed = JSON.parse(readFileSync(filePath, 'utf8'));
+  const rows = Array.isArray(parsed?.sentences) ? parsed.sentences : [];
+  return new Map(rows.map((row) => [
+    normaliseString(row?.slug || row?.word).toLowerCase(),
+    normaliseString(row?.sentence || row?.finalSentence),
+  ]).filter(([slug, sentence]) => slug && sentence));
+}
+
+const SEMANTIC_SENTENCE_OVERRIDES = loadSemanticSentenceOverrides();
+
 const SPECIAL_SENTENCES = Object.freeze({
   ability: 'Maya showed her ability by explaining the hardest step clearly.',
   able: 'Noah was able to solve the final question after checking each clue.',
@@ -447,6 +470,8 @@ function sentenceForFallbackNoun(word, context) {
 export function secureVocabularySentenceFor(wordEntry, sentenceIndex = 0) {
   const word = normaliseString(wordEntry?.word || wordEntry?.slug).toLowerCase();
   if (!word) throw new Error('Cannot generate a secure vocabulary sentence without a word.');
+  const override = secureVocabularySemanticSentenceOverrideFor(wordEntry);
+  if (override) return override;
   if (SPECIAL_SENTENCES[word]) return SPECIAL_SENTENCES[word];
 
   const context = contextFor(wordEntry, sentenceIndex);
@@ -478,6 +503,12 @@ export function secureVocabularySentenceFor(wordEntry, sentenceIndex = 0) {
     return sentenceForBaseVerb(word, context);
   }
   return sentenceForFallbackNoun(word, context);
+}
+
+export function secureVocabularySemanticSentenceOverrideFor(wordEntry) {
+  const word = normaliseString(wordEntry?.word || wordEntry?.slug).toLowerCase();
+  const slug = normaliseString(wordEntry?.slug).toLowerCase();
+  return SEMANTIC_SENTENCE_OVERRIDES.get(slug) || SEMANTIC_SENTENCE_OVERRIDES.get(word) || '';
 }
 
 export function normaliseSentenceForAudit(value) {
@@ -513,8 +544,15 @@ export function assertSecureVocabularySentenceQuality({ sentence, wordEntry }) {
   if (text.includes(BAD_TEMPLATE_FRAGMENT)) {
     throw new Error(`Secure vocabulary sentence still uses the board-practice placeholder for ${slug}.`);
   }
+  const normalisedText = normaliseSentenceForAudit(text);
+  if (normalisedText.includes('used the form')) {
+    throw new Error(`Secure vocabulary sentence keeps the lazy form-description frame for ${slug}: ${text}`);
+  }
+  if (normalisedText.includes(`explained ${normaliseSentenceForAudit(wordEntry?.word || slug)} when`)) {
+    throw new Error(`Secure vocabulary sentence explains the word as a token rather than using it naturally for ${slug}: ${text}`);
+  }
   for (const fragment of WEAK_FRAME_FRAGMENTS) {
-    if (normaliseSentenceForAudit(text).includes(normaliseSentenceForAudit(fragment))) {
+    if (normalisedText.includes(normaliseSentenceForAudit(fragment))) {
       throw new Error(`Secure vocabulary sentence keeps a weak generated frame for ${slug}: ${text}`);
     }
   }
@@ -536,7 +574,7 @@ export function assertSecureVocabularySentenceQuality({ sentence, wordEntry }) {
   if (wrongAn && !startsWithVowelSound(wrongAn[1])) {
     throw new Error(`Secure vocabulary sentence has a likely article error for ${slug}: ${text}`);
   }
-  if (normaliseSentenceForAudit(text).split(' ').length < 8) {
+  if (normalisedText.split(' ').length < 8) {
     throw new Error(`Secure vocabulary sentence is too thin for ${slug}: ${text}`);
   }
 }

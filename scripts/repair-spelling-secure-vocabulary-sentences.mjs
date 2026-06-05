@@ -12,6 +12,7 @@ import {
   assertSecureVocabularySentenceQuality,
   assertSecureVocabularySentenceSet,
   secureVocabularySentenceFor,
+  secureVocabularySemanticSentenceOverrideFor,
 } from './spelling-secure-vocabulary-sentence-generator.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -19,8 +20,8 @@ const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, '..');
 const contentPath = path.join(rootDir, 'content', 'spelling.seed.json');
 const SECURE_SENTENCE_PREFIX = 'secure-vocabulary-';
-const PUBLISHED_AT = Date.parse('2026-06-05T20:15:00.000Z');
-const REPAIR_RELEASE_TITLE = 'Secure vocabulary sentence quality repair r9';
+const PUBLISHED_AT = Date.parse('2026-06-05T21:35:00.000Z');
+const REPAIR_RELEASE_TITLE = 'Secure vocabulary semantic sentence proofread r10';
 
 function normaliseString(value) {
   return typeof value === 'string' ? value.trim() : '';
@@ -52,6 +53,10 @@ function isSecureVocabularyWord(wordEntry) {
     && (tags.includes('secure-extension') || provenanceText.includes('ks2-spelling-secure-vocabulary-source-v1'));
 }
 
+function hasSemanticProofreadSentence(wordEntry) {
+  return Boolean(secureVocabularySemanticSentenceOverrideFor(wordEntry));
+}
+
 function repairSentenceText({ sentence, wordEntry, index, force = false }) {
   if (!force && !sentenceHasBadTemplate(sentence)) return sentence;
   const text = sentenceFor(wordEntry, index);
@@ -63,7 +68,7 @@ function repairSnapshot(snapshot) {
   if (!snapshot || typeof snapshot !== 'object' || !Array.isArray(snapshot.words)) return snapshot;
 
   const words = snapshot.words.map((word, index) => {
-    const force = isSecureVocabularyWord(word);
+    const force = isSecureVocabularyWord(word) && hasSemanticProofreadSentence(word);
     const sentence = repairSentenceText({ sentence: word.sentence, wordEntry: word, index, force });
     const sentences = Array.isArray(word.sentences)
       ? word.sentences.map((entry, sentenceIndex) => repairSentenceText({
@@ -142,6 +147,9 @@ const repairedDraft = {
     if (!wordEntry) {
       throw new Error(`Secure vocabulary sentence ${sentence.id} points to missing word ${sentence.wordSlug}.`);
     }
+    if (!hasSemanticProofreadSentence(wordEntry)) {
+      return sentence;
+    }
     const text = sentenceFor(wordEntry, index);
     assertSentenceQuality({ sentence: text, wordEntry });
     repairedCount += 1;
@@ -171,7 +179,7 @@ const shouldPublishRepairRelease = currentRelease?.title !== REPAIR_RELEASE_TITL
 const publishedBundle = shouldPublishRepairRelease
   ? publishSpellingContentBundle(repairedValidation.bundle, {
     title: REPAIR_RELEASE_TITLE,
-    notes: 'Replaces repeated secure-extension vocabulary placeholder sentences with context-bearing examples.',
+    notes: 'Publishes one-by-one semantic-proofread secure-extension vocabulary sentences with natural UK English examples.',
     publishedAt: PUBLISHED_AT,
   })
   : repairedValidation.bundle;

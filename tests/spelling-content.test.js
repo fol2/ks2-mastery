@@ -208,8 +208,8 @@ test('seeded spelling content validates and round-trips through the portable exp
   assert.equal(validation.bundle.modelVersion, SPELLING_CONTENT_MODEL_VERSION);
   assert.equal(SPELLING_CONTENT_MODEL_VERSION, 6, 'Spelling content model keeps the even-version convention.');
   assert.equal(validation.errors.length, 0);
-  assert.equal(validation.bundle.releases.length, 9);
-  assert.equal(validation.bundle.publication.publishedVersion, 9);
+  assert.equal(validation.bundle.releases.length, 10);
+  assert.equal(validation.bundle.publication.publishedVersion, 10);
   assert.ok(validation.bundle.draft.wordLists
     .filter((list) => list.id.startsWith('statutory-'))
     .every((list) => list.spellingPool === 'core'));
@@ -249,7 +249,7 @@ test('seeded spelling content validates and round-trips through the portable exp
   const exported = content.exportPortable();
   const roundTripped = extractPortableSpellingContent(exported);
   assert.equal(roundTripped.draft.words.length, validation.bundle.draft.words.length);
-  assert.equal(roundTripped.releases.at(-1).version, 9);
+  assert.equal(roundTripped.releases.at(-1).version, 10);
 });
 
 test('secure vocabulary sentences do not use the repeated board-practice placeholder', () => {
