@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import {
   renderSpellingClozeFixture,
   renderSpellingGuardianSummaryFixture,
+  renderSpellingWordBankSceneFixture,
   renderSpellingSurfaceFixture,
 } from './helpers/react-render.js';
 import { createSpellingReadModelService } from '../src/subjects/spelling/client-read-models.js';
@@ -419,6 +420,102 @@ test('React spelling Word Bank renders the legacy 6-chip row identically when al
   // Legacy chips must still be present.
   assert.match(html, /data-action="spelling-analytics-status-filter"[^>]*data-value="all"/);
   assert.match(html, /data-action="spelling-analytics-status-filter"[^>]*data-value="secure"/);
+});
+
+function wordBankFacetAnalytics({ year = 'all' } = {}) {
+  const extraRows = Array.from({ length: year === 'extra' ? 52 : 37 }, (_, index) => ({
+    slug: `extra-${index}`,
+    word: `extra-${index}`,
+    status: index < 35 ? 'secure' : index < 41 ? 'learning' : 'new',
+    year: 'extra',
+    yearLabel: 'Extra',
+    spellingPool: 'extra',
+    progress: { stage: index < 35 ? 4 : 0, attempts: index < 41 ? 1 : 0, correct: index < 35 ? 1 : 0, wrong: 0 },
+  }));
+  const y34Rows = year === 'all'
+    ? [{
+        slug: 'accident',
+        word: 'accident',
+        status: 'secure',
+        year: '3-4',
+        yearLabel: 'Years 3-4',
+        spellingPool: 'core',
+        progress: { stage: 4, attempts: 1, correct: 1, wrong: 0 },
+      }]
+    : [];
+  return {
+    wordGroups: [
+      { key: 'y3-4', title: 'Years 3-4', words: y34Rows },
+      { key: 'extra', title: 'Extra', words: extraRows },
+    ],
+    wordBank: {
+      page: 1,
+      pageSize: 250,
+      totalRows: 265,
+      filteredRows: year === 'extra' ? 52 : 265,
+      returnedRows: year === 'extra' ? 52 : 250,
+      hasNextPage: year !== 'extra',
+      facets: {
+        version: 1,
+        categories: {
+          all: 265,
+          core: 213,
+          'y3-4': 109,
+          'y5-6': 104,
+          'secure-extension': 0,
+          extra: 52,
+        },
+        status: {
+          all: year === 'extra' ? 52 : 265,
+          total: year === 'extra' ? 52 : 265,
+          secure: year === 'extra' ? 35 : 207,
+          due: year === 'extra' ? 0 : 40,
+          trouble: 0,
+          weak: 0,
+          learning: year === 'extra' ? 6 : 6,
+          unseen: year === 'extra' ? 11 : 12,
+          guardianDue: 0,
+          wobbling: 0,
+          renewedRecently: 0,
+          neverRenewed: 0,
+        },
+        categoryStatus: {
+          core: { all: 213, total: 213, secure: 172, due: 40, trouble: 0, weak: 0, learning: 1, unseen: 0 },
+          'y3-4': { all: 109, total: 109, secure: 80, due: 28, trouble: 0, weak: 0, learning: 1, unseen: 0 },
+          'y5-6': { all: 104, total: 104, secure: 92, due: 12, trouble: 0, weak: 0, learning: 0, unseen: 0 },
+          'secure-extension': { all: 0, total: 0, secure: 0, due: 0, trouble: 0, weak: 0, learning: 0, unseen: 0 },
+          extra: { all: 52, total: 52, secure: 35, due: 0, trouble: 0, weak: 0, learning: 6, unseen: 11 },
+        },
+      },
+    },
+  };
+}
+
+test('React spelling Word Bank uses server facets when All page rows are truncated', async () => {
+  const html = await renderSpellingWordBankSceneFixture({
+    analytics: wordBankFacetAnalytics({ year: 'all' }),
+  });
+
+  assert.match(html, /data-value="extra"[\s\S]*?<span class="wb-chip-count"[^>]*>52<\/span>/);
+  assert.match(html, /data-value="all"[\s\S]*?<span class="wb-chip-count"[^>]*>265<\/span>/);
+  assert.match(html, /Showing 38 visible spellings from 250 loaded rows/);
+  assert.match(html, /265 authorised matches available/);
+  assert.match(html, /Expansion spelling pool[\s\S]*?Total[\s\S]*?52/);
+});
+
+test('React spelling Word Bank keeps sibling category counts when Extra is selected', async () => {
+  const html = await renderSpellingWordBankSceneFixture({
+    analytics: wordBankFacetAnalytics({ year: 'extra' }),
+    transientUi: { spellingAnalyticsYearFilter: 'extra' },
+  });
+
+  assert.match(html, /Extra selected[\s\S]*?52 of 265 words/);
+  assert.match(html, /data-value="y3-4"[\s\S]*?<span class="wb-chip-count"[^>]*>109<\/span>/);
+  assert.match(html, /data-value="y5-6"[\s\S]*?<span class="wb-chip-count"[^>]*>104<\/span>/);
+  assert.match(html, /data-value="extra"[\s\S]*?<span class="wb-chip-count"[^>]*>52<\/span>/);
+  assert.match(html, /data-value="secure"[\s\S]*?<span class="wb-chip-count"[^>]*>35<\/span>/);
+  assert.match(html, /data-value="unseen"[\s\S]*?<span class="wb-chip-count"[^>]*>11<\/span>/);
+  assert.match(html, /Showing 52 of 52 Extra spellings/);
 });
 
 test('React spelling Word Bank renders the 4 Guardian chips only when allWordsMega is true', async () => {

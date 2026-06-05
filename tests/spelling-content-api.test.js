@@ -330,15 +330,38 @@ test('worker spelling word bank route returns the complete Extra pool when categ
   try {
     seedAccountLearner(server.DB);
 
+    const allResponse = await server.fetch('https://repo.test/api/subjects/spelling/word-bank?learnerId=learner-a&pageSize=250');
+    const allPayload = await allResponse.json();
+    const allRows = allPayload.wordBank.analytics.wordGroups.flatMap((group) => group.words);
+
+    assert.equal(allResponse.status, 200);
+    assert.equal(allPayload.wordBank.analytics.wordBank.returnedRows, 250);
+    assert.equal(allPayload.wordBank.analytics.wordBank.hasNextPage, true);
+    assert.equal(allRows.filter((word) => word.spellingPool === 'extra').length, 37);
+    assert.equal(allPayload.wordBank.analytics.wordBank.facets.categories.extra, 52);
+    assert.equal(allPayload.wordBank.analytics.wordBank.facets.categoryStatus.extra.total, 52);
+    assert.ok(allPayload.wordBank.analytics.wordBank.facets.categories['y3-4'] > 0);
+    assert.ok(allPayload.wordBank.analytics.wordBank.facets.categories['y5-6'] > 0);
+
     const response = await server.fetch('https://repo.test/api/subjects/spelling/word-bank?learnerId=learner-a&pageSize=250&year=extra');
     const payload = await response.json();
     const rows = payload.wordBank.analytics.wordGroups.flatMap((group) => group.words);
+    const facets = payload.wordBank.analytics.wordBank.facets;
 
     assert.equal(response.status, 200);
     assert.equal(payload.wordBank.analytics.pools.extra.total, 52);
     assert.equal(payload.wordBank.analytics.wordBank.filteredRows, 52);
     assert.equal(payload.wordBank.analytics.wordBank.returnedRows, 52);
     assert.equal(payload.wordBank.analytics.wordBank.hasNextPage, false);
+    assert.equal(facets.categories.extra, 52);
+    assert.ok(facets.categories['y3-4'] > 0);
+    assert.ok(facets.categories['y5-6'] > 0);
+    assert.equal(facets.status.total, 52);
+    assert.equal(
+      facets.status.secure + facets.status.due + facets.status.trouble + facets.status.learning + facets.status.unseen,
+      52,
+    );
+    assert.equal(facets.categoryStatus.extra.total, 52);
     assert.equal(rows.length, 52);
     assert.equal(rows.every((word) => word.spellingPool === 'extra'), true);
   } finally {

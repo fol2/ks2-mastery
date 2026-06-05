@@ -996,6 +996,34 @@ export function renderSpellingSurfaceFixture({
   `);
 }
 
+export function renderSpellingWordBankSceneFixture({
+  analytics,
+  transientUi = {},
+  postMastery = null,
+} = {}) {
+  return renderFixture(`
+    import React from 'react';
+    import { renderToStaticMarkup } from 'react-dom/server';
+    import { SpellingWordBankScene } from ${JSON.stringify(absoluteSpecifier('src/subjects/spelling/components/SpellingWordBankScene.jsx'))};
+
+    const analytics = ${JSON.stringify(analytics || { wordGroups: [], wordBank: {} })};
+    const transientUi = ${JSON.stringify(transientUi || {})};
+    const postMastery = ${JSON.stringify(postMastery)};
+    const actions = { dispatch() {} };
+    const html = renderToStaticMarkup(
+      <SpellingWordBankScene
+        appState={{ transientUi }}
+        learner={{ id: 'learner-a', name: 'Nelson' }}
+        analytics={analytics}
+        accent="#3E6FA8"
+        actions={actions}
+        postMastery={postMastery}
+      />
+    );
+    console.log(html);
+  `);
+}
+
 /**
  * Render the Spelling summary scene after a Guardian Mission round ends.
  *

@@ -18,7 +18,6 @@ import {
   WORD_BANK_YEAR_FILTER_IDS,
   countWordBankExtra,
   countWordBankSecureExtension,
-  countWordBankStatus,
   countWordBankYear,
   dueLabel,
   findWordBankEntry,
@@ -195,6 +194,57 @@ function WordGroup({ group, words, query, actions, runtimeReadOnly = false }) {
   );
 }
 
+function countFromFacet(source, key, fallback = 0) {
+  const value = source && typeof source === 'object' ? source[key] : undefined;
+  const numeric = Number(value);
+  return Number.isFinite(numeric) && numeric >= 0 ? Math.floor(numeric) : fallback;
+}
+
+function countFromMeta(source, key, fallback = 0) {
+  const value = source && typeof source === 'object' ? source[key] : undefined;
+  const numeric = Number(value);
+  return Number.isFinite(numeric) && numeric >= 0 ? Math.floor(numeric) : fallback;
+}
+
+function statusCountsFromFacet(source, fallbackStats = {}) {
+  const trouble = countFromFacet(source, 'trouble', Number(fallbackStats.trouble) || 0);
+  const all = countFromFacet(source, 'all', Number(fallbackStats.total) || 0);
+  return {
+    all,
+    total: all,
+    due: countFromFacet(source, 'due', Number(fallbackStats.due) || 0),
+    weak: countFromFacet(source, 'weak', trouble),
+    trouble,
+    learning: countFromFacet(source, 'learning', Number(fallbackStats.learning) || 0),
+    secure: countFromFacet(source, 'secure', Number(fallbackStats.secure) || 0),
+    unseen: countFromFacet(source, 'unseen', Number(fallbackStats.unseen) || 0),
+    ...(Object.prototype.hasOwnProperty.call(fallbackStats, 'guardianDue') || source ? {
+      guardianDue: countFromFacet(source, 'guardianDue', Number(fallbackStats.guardianDue) || 0),
+      wobbling: countFromFacet(source, 'wobbling', Number(fallbackStats.wobbling) || 0),
+      renewedRecently: countFromFacet(source, 'renewedRecently', Number(fallbackStats.renewedRecently) || 0),
+      neverRenewed: countFromFacet(source, 'neverRenewed', Number(fallbackStats.neverRenewed) || 0),
+    } : {}),
+  };
+}
+
+function wordBankCategoryCounts({ facets, allWords, fallbackTotal }) {
+  const categories = facets && typeof facets.categories === 'object' ? facets.categories : null;
+  const allFallback = Number(fallbackTotal) || allWords.length;
+  return {
+    all: countFromFacet(categories, 'all', allFallback),
+    'y3-4': countFromFacet(categories, 'y3-4', countWordBankYear(allWords, '3-4')),
+    'y5-6': countFromFacet(categories, 'y5-6', countWordBankYear(allWords, '5-6')),
+    'secure-extension': countFromFacet(categories, 'secure-extension', countWordBankSecureExtension(allWords)),
+    extra: countFromFacet(categories, 'extra', countWordBankExtra(allWords)),
+  };
+}
+
+function categoryStatusFacet(facets, categoryId) {
+  const categoryStatus = facets && typeof facets.categoryStatus === 'object' ? facets.categoryStatus : null;
+  if (!categoryStatus) return null;
+  return categoryStatus[categoryId] || null;
+}
+
 function WordBankCard({ learner, analytics, appState, actions, postMastery = null, runtimeReadOnly = false }) {
   const persistedSearchQuery = appState?.transientUi?.spellingAnalyticsWordSearch || '';
   const [draftSearch, setDraftSearch] = React.useState(persistedSearchQuery);
@@ -228,12 +278,13 @@ function WordBankCard({ learner, analytics, appState, actions, postMastery = nul
   const activeYearFilter = WORD_BANK_YEAR_FILTER_IDS.has(yearFilter) ? yearFilter : 'all';
   const groups = Array.isArray(analytics.wordGroups) ? analytics.wordGroups : [];
   const wordBankMeta = analytics.wordBank || {};
+  const facets = wordBankMeta.facets && typeof wordBankMeta.facets === 'object' ? wordBankMeta.facets : null;
   const allWords = groups.flatMap((group) => Array.isArray(group.words) ? group.words : []);
   // SH2-U5: when the learner has zero tracked words we short-circuit to
   // the shared empty-state card. No filters, no toolbar, no group head —
   // the progress is genuinely empty so the canonical "what happened /
   // progress safe / action" copy is the whole panel.
-  const totalTrackedWords = allWords.length;
+  const totalTrackedWords = Math.max(0, Number(wordBankMeta.totalRows) || allWords.length);
   const categoryWords = allWords.filter((word) => wordBankYearFilterMatches(activeYearFilter, word));
   // U2 orphan-sanitiser context: wordBankFilterMatchesStatus uses these when
   // checking `guardianDue` / `wobbling` so a row whose slug no longer
@@ -287,32 +338,12 @@ function WordBankCard({ learner, analytics, appState, actions, postMastery = nul
         wordBySlug: orphanWordBySlug,
       })
     : null;
-  const counts = {
-    all: categoryWords.length,
-    due: legacyStats.due,
-    weak: legacyStats.trouble,
-    learning: legacyStats.learning,
-    secure: legacyStats.secure,
-    unseen: legacyStats.unseen,
-    // Guardian counts only materialise when the chips are surfaced. Keeping
-    // them off the object entirely when allWordsMega === false means the
-    // legacy `counts` literal is byte-identical to what shipped before U6.
-    ...(guardianStats ? {
-      guardianDue: guardianStats.guardianDue,
-      wobbling: guardianStats.wobbling,
-      renewedRecently: guardianStats.renewedRecently,
-      neverRenewed: guardianStats.neverRenewed,
-    } : {}),
-  };
-  const yearCounts = {
-    all: allWords.length,
-    'y3-4': countWordBankYear(allWords, '3-4'),
-    'y5-6': countWordBankYear(allWords, '5-6'),
-    'secure-extension': countWordBankSecureExtension(allWords),
-    extra: countWordBankExtra(allWords),
-  };
-  const totalWords = allWords.length;
-  const categoryTotal = categoryWords.length;
+  const counts = statusCountsFromFacet(facets?.status, guardianStats || legacyStats);
+  const yearCounts = wordBankCategoryCounts({ facets, allWords, fallbackTotal: wordBankMeta.totalRows });
+  const totalWords = facets?.categories ? yearCounts.all : (yearCounts.all || totalTrackedWords);
+  const categoryTotal = activeYearFilter === 'all'
+    ? totalWords
+    : countFromFacet(yearCounts, activeYearFilter, categoryWords.length);
   const categoryLabel = wordBankYearFilterLabel(activeYearFilter);
   const ledeBase = activeYearFilter === 'all'
     ? `${totalWords} word${totalWords === 1 ? '' : 's'} tracked — ${counts.secure} secure, ${counts.due} due today, ${counts.weak} weak spots.`
@@ -320,8 +351,8 @@ function WordBankCard({ learner, analytics, appState, actions, postMastery = nul
   const ledeSearch = query
     ? ` Showing ${visibleWords.length} match${visibleWords.length === 1 ? '' : 'es'} for "${searchQuery}".`
     : '';
-  const loadedRows = Number(wordBankMeta.returnedRows) || totalWords;
-  const filteredRows = Number(wordBankMeta.filteredRows) || categoryTotal || totalWords;
+  const loadedRows = countFromMeta(wordBankMeta, 'returnedRows', totalWords);
+  const filteredRows = countFromMeta(wordBankMeta, 'filteredRows', categoryTotal || totalWords);
   const footText = wordBankMeta.hasNextPage
     ? `Showing ${visibleWords.length} visible spellings from ${loadedRows} loaded rows.`
     : activeYearFilter === 'all'
@@ -422,6 +453,8 @@ function WordBankCard({ learner, analytics, appState, actions, postMastery = nul
 
 function WordBankAggregates({ analytics, postMastery = null }) {
   const groups = Array.isArray(analytics.wordGroups) ? analytics.wordGroups : [];
+  const wordBankMeta = analytics.wordBank || {};
+  const facets = wordBankMeta.facets && typeof wordBankMeta.facets === 'object' ? wordBankMeta.facets : null;
   const allWords = groups.flatMap((group) => Array.isArray(group.words) ? group.words : []);
   const showGuardianCards = Boolean(postMastery?.allWordsMega);
   const guardianMap = postMastery?.guardianMap && typeof postMastery.guardianMap === 'object'
@@ -454,11 +487,16 @@ function WordBankAggregates({ analytics, postMastery = null }) {
     ? { guardianMap, todayDay, progressMap: orphanProgressMap, wordBySlug: orphanWordBySlug }
     : undefined;
   const cardOptions = showGuardianCards ? { showGuardian: true } : undefined;
-  const core = wordBankAggregateStats(allWords.filter((word) => wordBankYearFilterMatches('core', word)), statsOptions);
-  const y34 = wordBankAggregateStats(allWords.filter((word) => wordBankYearFilterMatches('y3-4', word)), statsOptions);
-  const y56 = wordBankAggregateStats(allWords.filter((word) => wordBankYearFilterMatches('y5-6', word)), statsOptions);
-  const secureExtension = wordBankAggregateStats(allWords.filter((word) => wordBankYearFilterMatches('secure-extension', word)), statsOptions);
-  const extra = wordBankAggregateStats(allWords.filter((word) => wordBankYearFilterMatches('extra', word)), statsOptions);
+  const coreFallback = wordBankAggregateStats(allWords.filter((word) => wordBankYearFilterMatches('core', word)), statsOptions);
+  const y34Fallback = wordBankAggregateStats(allWords.filter((word) => wordBankYearFilterMatches('y3-4', word)), statsOptions);
+  const y56Fallback = wordBankAggregateStats(allWords.filter((word) => wordBankYearFilterMatches('y5-6', word)), statsOptions);
+  const secureExtensionFallback = wordBankAggregateStats(allWords.filter((word) => wordBankYearFilterMatches('secure-extension', word)), statsOptions);
+  const extraFallback = wordBankAggregateStats(allWords.filter((word) => wordBankYearFilterMatches('extra', word)));
+  const core = statusCountsFromFacet(categoryStatusFacet(facets, 'core'), coreFallback);
+  const y34 = statusCountsFromFacet(categoryStatusFacet(facets, 'y3-4'), y34Fallback);
+  const y56 = statusCountsFromFacet(categoryStatusFacet(facets, 'y5-6'), y56Fallback);
+  const secureExtension = statusCountsFromFacet(categoryStatusFacet(facets, 'secure-extension'), secureExtensionFallback);
+  const extra = statusCountsFromFacet(categoryStatusFacet(facets, 'extra'), extraFallback);
   const cards = [
     {
       eyebrow: 'Core spellings',

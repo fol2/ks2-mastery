@@ -1124,7 +1124,49 @@ test('remote spelling word bank category filter reloads the server-filtered rows
           wordBank: {
             analytics: {
               wordGroups: [{ key: 'extra', words: Array.from({ length: 52 }, (_, index) => ({ slug: `extra-${index}` })) }],
-              wordBank: { page: 1, hasNextPage: false, returnedRows: 52, filteredRows: 52 },
+              wordBank: {
+                page: 1,
+                hasNextPage: false,
+                returnedRows: 52,
+                filteredRows: 52,
+                totalRows: 265,
+                facets: {
+                  categories: {
+                    all: 265,
+                    core: 213,
+                    'y3-4': 109,
+                    'y5-6': 104,
+                    'secure-extension': 0,
+                    extra: 52,
+                  },
+                  status: {
+                    all: 52,
+                    total: 52,
+                    secure: 35,
+                    due: 0,
+                    trouble: 0,
+                    weak: 0,
+                    learning: 6,
+                    unseen: 11,
+                    guardianDue: 0,
+                    wobbling: 0,
+                    renewedRecently: 0,
+                    neverRenewed: 0,
+                  },
+                  categoryStatus: {
+                    extra: {
+                      all: 52,
+                      total: 52,
+                      secure: 35,
+                      due: 0,
+                      trouble: 0,
+                      weak: 0,
+                      learning: 6,
+                      unseen: 11,
+                    },
+                  },
+                },
+              },
             },
           },
         };
@@ -1143,6 +1185,9 @@ test('remote spelling word bank category filter reloads the server-filtered rows
   assert.equal(getState().transientUi.spellingAnalyticsYearFilter, 'extra');
   assert.equal(getState().subjectUi.spelling.analytics.wordGroups[0].words.length, 52);
   assert.equal(getState().subjectUi.spelling.analytics.wordBank.filteredRows, 52);
+  assert.equal(getState().subjectUi.spelling.analytics.wordBank.facets.categories.extra, 52);
+  assert.equal(getState().subjectUi.spelling.analytics.wordBank.facets.categories['y3-4'], 109);
+  assert.equal(getState().subjectUi.spelling.analytics.wordBank.facets.status.total, 52);
 });
 
 test('remote spelling word-bank drill submit is blocked while read-only', () => {
