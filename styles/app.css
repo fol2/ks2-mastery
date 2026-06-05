@@ -6051,6 +6051,30 @@ button.chip,
   color: #fff;
   text-shadow: 0 1px 2px rgba(0,0,0,0.18);
 }
+.length-picker.pool-picker {
+  max-width: 100%;
+  flex-wrap: wrap;
+  align-items: stretch;
+}
+.length-picker.pool-picker .length-slider {
+  display: none;
+}
+.length-picker.pool-picker .length-option {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: max-content;
+  white-space: nowrap;
+}
+.length-picker.pool-picker .length-option.selected {
+  background:
+    linear-gradient(180deg,
+      color-mix(in oklab, var(--brand) 92%, white) 0%,
+      var(--brand) 100%);
+  box-shadow:
+    0 1px 2px rgba(0,0,0,0.14),
+    inset 0 1px 0 color-mix(in oklab, white 28%, transparent);
+}
 .length-unit {
   color: var(--setup-label-ink);
   font-weight: 600;

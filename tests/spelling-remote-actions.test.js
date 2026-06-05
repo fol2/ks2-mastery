@@ -280,6 +280,57 @@ test('remote spelling setup preference changes are coalesced before saving', asy
   });
 });
 
+test('remote spelling preferences accept secure vocabulary as a setup pool', async () => {
+  const { getState, store } = createStoreHarness({
+    subjectUi: {
+      spelling: {
+        phase: 'dashboard',
+        prefs: {
+          mode: 'smart',
+          roundLength: '20',
+          yearFilter: 'core',
+          autoSpeak: true,
+          showCloze: true,
+        },
+        analytics: null,
+        error: '',
+      },
+    },
+  });
+  const sent = [];
+  const handler = createRemoteSpellingActionHandler({
+    store,
+    services: {
+      spelling: {
+        getPrefs() {
+          return getState().subjectUi.spelling.prefs;
+        },
+      },
+    },
+    tts: createTtsHarness(),
+    readModels: { readJson: async () => ({}) },
+    subjectCommands: {
+      send(request) {
+        sent.push(request);
+        return Promise.resolve({ subjectReadModel: { phase: 'dashboard' } });
+      },
+    },
+    preferenceSaveDebounceMs: 0,
+  });
+
+  assert.equal(handler.handle('spelling-set-pref', { pref: 'yearFilter', value: 'secure-extension' }), true);
+  assert.equal(getState().subjectUi.spelling.prefs.yearFilter, 'secure-extension');
+
+  await flushTimers();
+  await flushPromises();
+
+  assert.equal(sent.length, 1);
+  assert.equal(sent[0].command, 'save-prefs');
+  assert.deepEqual(sent[0].payload, {
+    prefs: { yearFilter: 'secure-extension' },
+  });
+});
+
 test('remote spelling start flushes pending setup preferences first', async () => {
   const { getState, store } = createStoreHarness({
     subjectUi: {

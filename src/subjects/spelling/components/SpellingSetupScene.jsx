@@ -608,8 +608,10 @@ function LegacySetupContent({
             onChange={(value, event) => renderAction(actions, event, 'spelling-set-pref', { pref: 'yearFilter', value })}
             disabled={hideTweaks || preferenceControlsDisabled}
             ariaLabel="Spelling pool"
+            className="pool-picker"
             actionName="spelling-set-pref"
             prefKey="yearFilter"
+            includeDataValue
           />
         </div>
         <div className="tweak-row">

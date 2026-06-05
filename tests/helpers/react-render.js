@@ -901,6 +901,7 @@ export function renderSpellingSurfaceFixture({
   phase = 'setup',
   pendingCommand = '',
   wordBankAnalytics = null,
+  prefs = null,
   // postMega: {} → force allWordsMega via seeded progress + optional guardian
   // records. Omit to render the legacy setup dashboard.
   postMega = null,
@@ -918,6 +919,10 @@ export function renderSpellingSurfaceFixture({
     const controller = createLocalAppController();
     const selectedPhase = ${JSON.stringify(phase)};
     const learnerId = controller.store.getState().learners.selectedId;
+    const prefs = ${JSON.stringify(prefs)};
+    if (prefs && typeof prefs === 'object') {
+      controller.services.spelling.savePrefs(learnerId, prefs);
+    }
     const postMega = ${JSON.stringify(postMega)};
     if (postMega) {
       // Seed all core words as stage-4 secure, then optionally drop a guardian

@@ -17,6 +17,24 @@ test('React spelling setup scene renders primary practice controls', async () =>
   assert.match(html, /data-action="spelling-start"/);
 });
 
+test('React spelling setup scene can select the secure vocabulary pool', async () => {
+  const html = await renderSpellingSurfaceFixture({
+    phase: 'setup',
+    prefs: { yearFilter: 'secure-extension' },
+  });
+
+  assert.match(
+    html,
+    /<div class="length-picker pool-picker" role="radiogroup" aria-label="Spelling pool"/,
+  );
+  const securePoolButtonMatch = html.match(
+    /<button\b(?=[^>]*data-action="spelling-set-pref")(?=[^>]*data-pref="yearFilter")(?=[^>]*data-value="secure-extension")(?=[^>]*value="secure-extension")[^>]*>[\s\S]*?<span>Secure vocabulary<\/span><\/button>/,
+  );
+  assert.ok(securePoolButtonMatch, 'expected a secure vocabulary pool button with the yearFilter payload');
+  assert.match(securePoolButtonMatch[0], /class="length-option selected"/);
+  assert.match(securePoolButtonMatch[0], /aria-checked="true"/);
+});
+
 test('React spelling setup scene disables start while a remote start is pending', async () => {
   const html = await renderSpellingSurfaceFixture({
     phase: 'setup',

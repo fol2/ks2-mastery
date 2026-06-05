@@ -8,7 +8,7 @@ import { createSpellingPersistence } from '../src/subjects/spelling/repository.j
 import { SPELLING_EVENT_TYPES } from '../src/subjects/spelling/events.js';
 import { SPELLING_SERVICE_STATE_VERSION } from '../src/subjects/spelling/service-contract.js';
 import { WORDS, WORD_BY_SLUG } from '../src/subjects/spelling/data/word-data.js';
-import { isStatutoryCoreWord } from '../src/subjects/spelling/content/taxonomy.js';
+import { isSecureExtensionWord, isStatutoryCoreWord } from '../src/subjects/spelling/content/taxonomy.js';
 import { rewardEventsFromSpellingEvents } from '../src/subjects/spelling/event-hooks.js';
 import { monsterSummaryFromSpellingAnalytics } from '../src/platform/game/monster-system.js';
 import { getOverallSpellingStats, spellingModule } from '../src/subjects/spelling/module.js';
@@ -153,6 +153,22 @@ test('Smart Review can be scoped to the Extra spelling pool', () => {
   assert.equal(words.length, 6);
   assert.ok(words.every((word) => word.spellingPool === 'extra'));
   assert.ok(words.every((word) => word.year === 'extra'));
+});
+
+test('Smart Review can be scoped to the secure vocabulary pool', () => {
+  const { service } = makeService({ random: makeSeededRandom(7) });
+  const transition = service.startSession('learner-a', {
+    mode: 'smart',
+    yearFilter: 'secure-extension',
+    length: 6,
+  });
+
+  assert.equal(transition.ok, true);
+  const words = sessionWords(transition.state.session);
+  assert.equal(words.length, 6);
+  assert.ok(words.every((word) => word.spellingPool === 'core'));
+  assert.ok(words.every((word) => word.coverageTier === 'secure-extension'));
+  assert.ok(words.every((word) => isSecureExtensionWord(word)));
 });
 
 test('Smart Review reuses one progress snapshot when starting from dense learner history', () => {
