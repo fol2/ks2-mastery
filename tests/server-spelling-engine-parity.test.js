@@ -238,6 +238,30 @@ test('server spelling engine preserves deterministic selection and retry progres
   assert.deepEqual(serverSubmitted.data.progress, {});
 });
 
+test('server spelling command stats include secure vocabulary pool', () => {
+  const server = createServerSpellingEngine({
+    now: () => Date.UTC(2026, 0, 1),
+    random: makeSeededRandom(7),
+    contentSnapshot: contentSnapshot(),
+  });
+
+  const result = server.apply({
+    learnerId: 'learner-a',
+    subjectRecord: { ui: null, data: {} },
+    latestSession: null,
+    command: 'save-prefs',
+    payload: {
+      prefs: { yearFilter: 'secure-extension' },
+    },
+  });
+
+  assert.equal(result.prefs.yearFilter, 'secure-extension');
+  assert.equal(result.stats.core.total, 213);
+  assert.equal(result.stats.secureExtension.total, 1215);
+  assert.equal(result.stats.secureExtension.fresh, 1215);
+  assert.notEqual(result.stats.secureExtension.total, result.stats.core.total);
+});
+
 test('worker spelling command route starts, submits, continues, and completes server-side', async () => {
   const server = createWorkerRepositoryServer();
   seedAccountLearner(server.DB);

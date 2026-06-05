@@ -33,6 +33,16 @@ test('React spelling setup scene can select the secure vocabulary pool', async (
   assert.ok(securePoolButtonMatch, 'expected a secure vocabulary pool button with the yearFilter payload');
   assert.match(securePoolButtonMatch[0], /class="length-option selected"/);
   assert.match(securePoolButtonMatch[0], /aria-checked="true"/);
+  assert.match(html, /<p class="eyebrow">Secure vocabulary<\/p>/);
+  assert.match(
+    html,
+    /<div class="ss-stat-label">Secure vocabulary words<\/div><div class="ss-stat-value">1215<\/div>/,
+  );
+  assert.match(
+    html,
+    /<div class="ss-stat-label">Not tried yet<\/div><div class="ss-stat-value">1215<\/div>/,
+  );
+  assert.match(html, /Secure vocabulary words for Learner 1, with progress and difficulty\./);
 });
 
 test('React spelling setup scene disables start while a remote start is pending', async () => {
@@ -137,6 +147,41 @@ test('client spelling read model preserves word-family variant preference', () =
   });
 
   assert.equal(service.getPrefs('learner-a').extraWordFamilies, true);
+});
+
+test('client spelling read model uses analytics pool stats before falling back to core', () => {
+  const service = createSpellingReadModelService({
+    getState: () => ({
+      learners: { selectedId: 'learner-a' },
+      subjectUi: {
+        spelling: {
+          subjectId: 'spelling',
+          learnerId: 'learner-a',
+          version: 3,
+          prefs: {
+            mode: 'smart',
+            yearFilter: 'secure-extension',
+            roundLength: '20',
+            showCloze: true,
+            autoSpeak: true,
+          },
+          stats: {
+            core: { total: 213, secure: 0, due: 0, trouble: 0, fresh: 213 },
+          },
+          analytics: {
+            pools: {
+              secureExtension: { total: 1215, secure: 35, due: 0, trouble: 0, fresh: 1180 },
+            },
+          },
+        },
+      },
+    }),
+  });
+
+  const secureStats = service.getStats('learner-a', 'secure-extension');
+  assert.equal(secureStats.total, 1215);
+  assert.equal(secureStats.secure, 35);
+  assert.equal(secureStats.fresh, 1180);
 });
 
 // ----- U1: remote-sync fallback getPostMasteryState stub ---------------------

@@ -5897,9 +5897,10 @@ button.chip,
   margin-top: 20px;
 }
 .tweak-row {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: 102px minmax(0, 1fr);
+  column-gap: 14px;
+  row-gap: 8px;
   align-items: center;
   padding: 18px 0 2px;
   border-top: 1px dashed var(--line);
@@ -5930,15 +5931,31 @@ button.chip,
 }
 .tool-label {
   display: inline-block;
-  min-width: 102px;
+  min-width: 0;
   font-size: 0.78rem;
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--setup-label-ink);
   text-shadow: 0 1px 12px var(--setup-label-shadow);
-  margin-right: 4px;
+  margin-right: 0;
   transition: color var(--dur) var(--ease-out), text-shadow var(--dur) var(--ease-out);
+}
+.tweak-controls {
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+.tweak-controls--pool {
+  gap: 8px;
+}
+@media (max-width: 560px) {
+  .tweak-row {
+    grid-template-columns: 1fr;
+    column-gap: 0;
+  }
 }
 
 .toggle-chip {
@@ -5992,6 +6009,7 @@ button.chip,
   display: inline-flex;
   align-items: center;
   gap: 10px;
+  min-width: 0;
 }
 .length-picker {
   --option-count: 3;
@@ -6053,8 +6071,16 @@ button.chip,
 }
 .length-picker.pool-picker {
   max-width: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
   flex-wrap: wrap;
-  align-items: stretch;
+  align-items: center;
+  gap: 8px;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 .length-picker.pool-picker .length-slider {
   display: none;
@@ -6064,13 +6090,27 @@ button.chip,
   align-items: center;
   justify-content: center;
   min-width: max-content;
+  height: 34px;
   white-space: nowrap;
+  border: 1px solid var(--toggle-chip-border, color-mix(in oklab, white 26%, transparent));
+  background: var(--toggle-chip-surface, color-mix(in oklab, black 20%, transparent));
+  box-shadow: inset 0 1px 0 color-mix(in oklab, white 16%, transparent);
+  transition: border-color var(--dur) var(--ease-out),
+              background var(--dur) var(--ease-out),
+              color var(--dur) var(--ease-out),
+              transform var(--dur) var(--ease-out),
+              text-shadow var(--dur) var(--ease-out);
+}
+.length-picker.pool-picker .length-option:hover {
+  transform: translateY(-1px);
+  border-color: var(--toggle-chip-hover-border, color-mix(in oklab, var(--brand) 38%, white 20%));
 }
 .length-picker.pool-picker .length-option.selected {
   background:
     linear-gradient(180deg,
       color-mix(in oklab, var(--brand) 92%, white) 0%,
       var(--brand) 100%);
+  border-color: color-mix(in oklab, var(--brand) 82%, white 20%);
   box-shadow:
     0 1px 2px rgba(0,0,0,0.14),
     inset 0 1px 0 color-mix(in oklab, white 28%, transparent);

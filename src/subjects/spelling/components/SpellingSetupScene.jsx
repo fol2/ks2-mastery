@@ -45,6 +45,67 @@ function postMegaBranchFromRepositories(repositories, learnerId) {
   }
 }
 
+const SETUP_POOL_PANEL_COPY = Object.freeze({
+  core: {
+    eyebrow: 'Where you stand',
+    totalLabel: 'Total spellings',
+    secureLabel: 'Secure',
+    dueLabel: 'Due today',
+    troubleLabel: 'Weak spots',
+    freshLabel: 'Unseen',
+    bankSub: (name) => `Every word ${name} is learning, with progress and difficulty.`,
+  },
+  'y3-4': {
+    eyebrow: 'Years 3-4 pool',
+    totalLabel: 'Years 3-4 words',
+    secureLabel: 'Secure',
+    dueLabel: 'Due today',
+    troubleLabel: 'Weak spots',
+    freshLabel: 'Unseen',
+    bankSub: (name) => `Years 3-4 words for ${name}, with progress and difficulty.`,
+    nextFocus: 'Years 3-4 pool selected.',
+  },
+  'y5-6': {
+    eyebrow: 'Years 5-6 pool',
+    totalLabel: 'Years 5-6 words',
+    secureLabel: 'Secure',
+    dueLabel: 'Due today',
+    troubleLabel: 'Weak spots',
+    freshLabel: 'Unseen',
+    bankSub: (name) => `Years 5-6 words for ${name}, with progress and difficulty.`,
+    nextFocus: 'Years 5-6 pool selected.',
+  },
+  'secure-extension': {
+    eyebrow: 'Secure vocabulary',
+    totalLabel: 'Secure vocabulary words',
+    secureLabel: 'Already secure',
+    dueLabel: 'Due today',
+    troubleLabel: 'Weak spots',
+    freshLabel: 'Not tried yet',
+    bankSub: (name) => `Secure vocabulary words for ${name}, with progress and difficulty.`,
+    nextFocus: 'Secure vocabulary pool selected.',
+  },
+  extra: {
+    eyebrow: 'Extra pool',
+    totalLabel: 'Extra words',
+    secureLabel: 'Secure',
+    dueLabel: 'Due today',
+    troubleLabel: 'Weak spots',
+    freshLabel: 'Unseen',
+    bankSub: (name) => `Extra words for ${name}, with progress and difficulty.`,
+    nextFocus: 'Extra pool selected.',
+  },
+});
+
+function setupPoolPanelCopy(statsFilter, learnerName) {
+  const safeName = String(learnerName || 'this learner');
+  const copy = SETUP_POOL_PANEL_COPY[statsFilter] || SETUP_POOL_PANEL_COPY.core;
+  return {
+    ...copy,
+    bankSubText: copy.bankSub(safeName),
+  };
+}
+
 function ModeCard({ mode, selected, disabled = false, description, badge, actions, textTone = 'dark' }) {
   const desc = description != null ? description : mode.desc;
   const classes = ['mode-card'];
@@ -308,6 +369,7 @@ export function SpellingSetupScene({
 }) {
   const statsFilter = prefs.mode === 'test' ? 'core' : prefs.yearFilter;
   const stats = service.getStats(learner.id, statsFilter);
+  const panelCopy = setupPoolPanelCopy(statsFilter, learner.name);
   // Post-Mega gating for the hero backdrop. When the learner has a sticky
   // graduation record (or is currently fully Mega), swap the legacy
   // mode-driven region for the post-Mega `f` vista bound to Phaeton's
@@ -490,7 +552,7 @@ export function SpellingSetupScene({
             visible
             head={(
               <>
-                <p className="eyebrow">Where you stand</p>
+                <p className="eyebrow">{panelCopy.eyebrow}</p>
                 <button
                   type="button"
                   className="ss-codex-link"
@@ -504,15 +566,15 @@ export function SpellingSetupScene({
             )}
             monsterVisuals={panelMonsterVisuals}
             stats={[
-              { label: 'Total spellings', value: String(stats.total ?? 0) },
-              { label: 'Secure', value: String(stats.secure ?? 0) },
-              { label: 'Due today', value: String(stats.due ?? 0), tone: 'warn' },
-              { label: 'Weak spots', value: String(stats.trouble ?? 0) },
-              { label: 'Unseen', value: String(stats.fresh ?? 0) },
+              { label: panelCopy.totalLabel, value: String(stats.total ?? 0) },
+              { label: panelCopy.secureLabel, value: String(stats.secure ?? 0) },
+              { label: panelCopy.dueLabel, value: String(stats.due ?? 0), tone: 'warn' },
+              { label: panelCopy.troubleLabel, value: String(stats.trouble ?? 0) },
+              { label: panelCopy.freshLabel, value: String(stats.fresh ?? 0) },
               { label: 'Accuracy', value: stats.accuracy == null ? '—' : `${stats.accuracy}%` },
             ]}
             meadowEmpty="Catch your first monster to populate this meadow."
-            nextFocus={stats.trouble > 0 ? 'Trouble words need attention' : ''}
+            nextFocus={stats.trouble > 0 ? 'Trouble words need attention' : (panelCopy.nextFocus || '')}
           />
         )}
         footer={(
@@ -524,7 +586,7 @@ export function SpellingSetupScene({
           >
             <span className="ss-bank-link-body">
               <span className="ss-bank-link-head">Browse the word bank</span>
-              <span className="ss-bank-link-sub">Every word {learner.name} is learning, with progress and difficulty.</span>
+              <span className="ss-bank-link-sub">{panelCopy.bankSubText}</span>
             </span>
             <span className="ss-bank-link-arrow" aria-hidden="true">→</span>
           </button>
@@ -589,38 +651,44 @@ function LegacySetupContent({
       <div className="setup-control-stack">
         <div className={tweakClass} {...tweakAria}>
           <span className="tool-label">Round length</span>
-          <LengthPicker
-            options={ROUND_LENGTH_OPTIONS}
-            selectedValue={String(prefs.roundLength || '10')}
-            onChange={(value, event) => renderAction(actions, event, 'spelling-set-pref', { pref: 'roundLength', value })}
-            disabled={hideTweaks || preferenceControlsDisabled}
-            ariaLabel="Round length"
-            unit="words"
-            actionName="spelling-set-pref"
-            prefKey="roundLength"
-          />
+          <div className="tweak-controls">
+            <LengthPicker
+              options={ROUND_LENGTH_OPTIONS}
+              selectedValue={String(prefs.roundLength || '10')}
+              onChange={(value, event) => renderAction(actions, event, 'spelling-set-pref', { pref: 'roundLength', value })}
+              disabled={hideTweaks || preferenceControlsDisabled}
+              ariaLabel="Round length"
+              unit="words"
+              actionName="spelling-set-pref"
+              prefKey="roundLength"
+            />
+          </div>
         </div>
         <div className={tweakClass} {...tweakAria}>
           <span className="tool-label">Pool</span>
-          <LengthPicker
-            options={YEAR_FILTER_OPTIONS}
-            selectedValue={prefs.yearFilter || 'core'}
-            onChange={(value, event) => renderAction(actions, event, 'spelling-set-pref', { pref: 'yearFilter', value })}
-            disabled={hideTweaks || preferenceControlsDisabled}
-            ariaLabel="Spelling pool"
-            className="pool-picker"
-            actionName="spelling-set-pref"
-            prefKey="yearFilter"
-            includeDataValue
-          />
+          <div className="tweak-controls tweak-controls--pool">
+            <LengthPicker
+              options={YEAR_FILTER_OPTIONS}
+              selectedValue={prefs.yearFilter || 'core'}
+              onChange={(value, event) => renderAction(actions, event, 'spelling-set-pref', { pref: 'yearFilter', value })}
+              disabled={hideTweaks || preferenceControlsDisabled}
+              ariaLabel="Spelling pool"
+              className="pool-picker"
+              actionName="spelling-set-pref"
+              prefKey="yearFilter"
+              includeDataValue
+            />
+          </div>
         </div>
         <div className="tweak-row">
           <span className="tool-label">Options</span>
-          <ToggleChip pref="showCloze" checked={Boolean(prefs.showCloze)} label="Show sentence" actions={actions} disabled={preferenceControlsDisabled} />
-          <ToggleChip pref="autoSpeak" checked={Boolean(prefs.autoSpeak)} label="Auto-play audio" actions={actions} disabled={preferenceControlsDisabled} />
-          {showExtraFamilyOption ? (
-            <ToggleChip pref="extraWordFamilies" checked={Boolean(prefs.extraWordFamilies)} label="Word-family variants" actions={actions} disabled={preferenceControlsDisabled} />
-          ) : <span className="toggle-chip option-placeholder" aria-hidden="true" />}
+          <div className="tweak-controls">
+            <ToggleChip pref="showCloze" checked={Boolean(prefs.showCloze)} label="Show sentence" actions={actions} disabled={preferenceControlsDisabled} />
+            <ToggleChip pref="autoSpeak" checked={Boolean(prefs.autoSpeak)} label="Auto-play audio" actions={actions} disabled={preferenceControlsDisabled} />
+            {showExtraFamilyOption ? (
+              <ToggleChip pref="extraWordFamilies" checked={Boolean(prefs.extraWordFamilies)} label="Word-family variants" actions={actions} disabled={preferenceControlsDisabled} />
+            ) : <span className="toggle-chip option-placeholder" aria-hidden="true" />}
+          </div>
         </div>
       </div>
       <div className="setup-begin-row">

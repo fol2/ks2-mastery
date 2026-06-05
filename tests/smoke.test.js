@@ -194,7 +194,8 @@ test('spelling word bank opens from setup and exposes searchable progress with e
   html = harness.render();
   assert.match(html, /value="extra"[^>]*>\s*<span>Extra<\/span>/);
   assert.match(html, /data-pref="extraWordFamilies"[\s\S]*Word-family variants/);
-  assert.match(html, new RegExp(`ss-stat-label">Total spellings</div>\\s*<div class="ss-stat-value"[^>]*>${EXTRA_SPELLING_WORDS}</div>`));
+  assert.match(html, /<p class="eyebrow">Extra pool<\/p>/);
+  assert.match(html, new RegExp(`ss-stat-label">Extra words</div>\\s*<div class="ss-stat-value"[^>]*>${EXTRA_SPELLING_WORDS}</div>`));
   assert.match(html, /value="trouble"[^>]*disabled[^>]*>[\s\S]*Trouble Drill/);
 
   /* The Codex Journal redesign folds the old Analytics tab into a standalone
