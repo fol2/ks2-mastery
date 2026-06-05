@@ -1,3 +1,5 @@
+import { useCallback, useEffect, useRef, useState } from 'react';
+
 /* Platform slide-button length picker.
  *
  * Canonicalisation of Grammar's `RoundLengthPicker` and Spelling's
@@ -49,7 +51,38 @@ export function LengthPicker({
   actionName,
   prefKey,
   includeDataValue = false,
+  sliderMode = 'indexed',
 }) {
+  const model = normalisePickerModel(options, selectedValue);
+  if (sliderMode === 'measured') {
+    return (
+      <MeasuredLengthPicker
+        {...model}
+        onChange={onChange}
+        disabled={disabled}
+        ariaLabel={ariaLabel}
+        unit={unit}
+        className={className}
+        actionName={actionName}
+        prefKey={prefKey}
+        includeDataValue={includeDataValue}
+      />
+    );
+  }
+  return renderLengthPicker({
+    ...model,
+    onChange,
+    disabled,
+    ariaLabel,
+    unit,
+    className,
+    actionName,
+    prefKey,
+    includeDataValue,
+  });
+}
+
+function normalisePickerModel(options, selectedValue) {
   const optionList = Array.isArray(options) ? options : [];
   const normalised = optionList.map((entry) => {
     if (entry && typeof entry === 'object' && 'value' in entry) {
@@ -69,18 +102,147 @@ export function LengthPicker({
   // in this edge case; changing to -1 would break every such assertion
   // and shift the slider visually. Do NOT change to -1.
   const selectedIndex = selectedIndexRaw >= 0 ? selectedIndexRaw : 0;
+  return { normalised, compareValue, selectedIndex };
+}
 
+function MeasuredLengthPicker({
+  normalised,
+  compareValue,
+  selectedIndex,
+  onChange,
+  disabled = false,
+  ariaLabel,
+  unit,
+  className,
+  actionName,
+  prefKey,
+  includeDataValue = false,
+}) {
+  const pickerRef = useRef(null);
+  const optionRefs = useRef(new Map());
+  const [measuredSliderBox, setMeasuredSliderBox] = useState(null);
+  const optionSignature = normalised
+    .map((entry) => `${entry.value}\u0002${entry.label}`)
+    .join('\u0001');
+
+  const setOptionRef = useCallback((value, node) => {
+    if (node) {
+      optionRefs.current.set(value, node);
+    } else {
+      optionRefs.current.delete(value);
+    }
+  }, []);
+
+  const measureSlider = useCallback(() => {
+    const picker = pickerRef.current;
+    const selectedOption = optionRefs.current.get(compareValue);
+    if (!picker || !selectedOption) {
+      setMeasuredSliderBox(null);
+      return;
+    }
+    const pickerRect = picker.getBoundingClientRect();
+    const optionRect = selectedOption.getBoundingClientRect();
+    const next = {
+      x: Math.round((optionRect.left - pickerRect.left) * 100) / 100,
+      y: Math.round((optionRect.top - pickerRect.top) * 100) / 100,
+      width: Math.round(optionRect.width * 100) / 100,
+      height: Math.round(optionRect.height * 100) / 100,
+    };
+    setMeasuredSliderBox((current) => (
+      current
+        && current.x === next.x
+        && current.y === next.y
+        && current.width === next.width
+        && current.height === next.height
+        ? current
+        : next
+    ));
+  }, [compareValue]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const run = () => {
+      if (!cancelled) measureSlider();
+    };
+    run();
+    const frame = globalThis.requestAnimationFrame ? globalThis.requestAnimationFrame(run) : 0;
+    const picker = pickerRef.current;
+    const selectedOption = optionRefs.current.get(compareValue);
+    const observer = typeof ResizeObserver === 'function' ? new ResizeObserver(run) : null;
+    if (observer && picker) observer.observe(picker);
+    if (observer && selectedOption) observer.observe(selectedOption);
+    globalThis.addEventListener?.('resize', run);
+    if (globalThis.document?.fonts?.ready) {
+      globalThis.document.fonts.ready.then(run).catch(() => {});
+    }
+    return () => {
+      cancelled = true;
+      if (frame && globalThis.cancelAnimationFrame) globalThis.cancelAnimationFrame(frame);
+      observer?.disconnect();
+      globalThis.removeEventListener?.('resize', run);
+    };
+  }, [compareValue, measureSlider, optionSignature]);
+
+  return renderLengthPicker({
+    normalised,
+    compareValue,
+    selectedIndex,
+    onChange,
+    disabled,
+    ariaLabel,
+    unit,
+    className,
+    actionName,
+    prefKey,
+    includeDataValue,
+    measuredSliderBox,
+    pickerRef,
+    setOptionRef,
+    sliderMode: 'measured',
+  });
+}
+
+function renderLengthPicker({
+  normalised,
+  compareValue,
+  selectedIndex,
+  onChange,
+  disabled = false,
+  ariaLabel,
+  unit,
+  className,
+  actionName,
+  prefKey,
+  includeDataValue = false,
+  measuredSliderBox = null,
+  pickerRef = null,
+  setOptionRef = null,
+  sliderMode = 'indexed',
+}) {
+  const measuredSlider = sliderMode === 'measured';
   const pickerClassName = className ? `length-picker ${className}` : 'length-picker';
+  const pickerStyle = {
+    '--option-count': String(normalised.length),
+    '--selected-index': String(selectedIndex),
+  };
+  if (measuredSlider && measuredSliderBox) {
+    pickerStyle['--measured-slider-x'] = `${measuredSliderBox.x}px`;
+    pickerStyle['--measured-slider-y'] = `${measuredSliderBox.y}px`;
+    pickerStyle['--measured-slider-width'] = `${measuredSliderBox.width}px`;
+    pickerStyle['--measured-slider-height'] = `${measuredSliderBox.height}px`;
+  }
 
   const picker = (
     <div
+      ref={pickerRef || undefined}
       className={pickerClassName}
       role="radiogroup"
       aria-label={ariaLabel}
-      style={{
-        '--option-count': String(normalised.length),
-        '--selected-index': String(selectedIndex),
-      }}
+      style={pickerStyle}
+      {...(measuredSlider ? {
+        'data-slider-mode': 'measured',
+        ...(measuredSliderBox ? { 'data-slider-ready': 'true' } : {}),
+      } : {})}
     >
       <span className="length-slider" aria-hidden="true" />
       {normalised.map((entry) => {
@@ -103,6 +265,7 @@ export function LengthPicker({
         buttonProps.value = entry.value;
         buttonProps.disabled = disabled;
         buttonProps.onClick = (event) => onChange(entry.value, event);
+        if (measuredSlider && setOptionRef) buttonProps.ref = (node) => setOptionRef(entry.value, node);
         return (
           <button key={entry.value} {...buttonProps}>
             <span>{entry.label}</span>

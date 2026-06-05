@@ -25,6 +25,7 @@ import {
   monsterImageVisual,
   normalisePostMegaBranch,
   renderAction,
+  setupPoolPanelCopyForFilter,
 } from './spelling-view-model.js';
 
 // Setup scene picks the post-Mega vista (`f` region) directly when it
@@ -43,67 +44,6 @@ function postMegaBranchFromRepositories(repositories, learnerId) {
   } catch (_error) {
     return normalisePostMegaBranch();
   }
-}
-
-const SETUP_POOL_PANEL_COPY = Object.freeze({
-  core: {
-    eyebrow: 'Where you stand',
-    totalLabel: 'Total spellings',
-    secureLabel: 'Secure',
-    dueLabel: 'Due today',
-    troubleLabel: 'Weak spots',
-    freshLabel: 'Unseen',
-    bankSub: (name) => `Every word ${name} is learning, with progress and difficulty.`,
-  },
-  'y3-4': {
-    eyebrow: 'Years 3-4 pool',
-    totalLabel: 'Years 3-4 words',
-    secureLabel: 'Secure',
-    dueLabel: 'Due today',
-    troubleLabel: 'Weak spots',
-    freshLabel: 'Unseen',
-    bankSub: (name) => `Years 3-4 words for ${name}, with progress and difficulty.`,
-    nextFocus: 'Years 3-4 pool selected.',
-  },
-  'y5-6': {
-    eyebrow: 'Years 5-6 pool',
-    totalLabel: 'Years 5-6 words',
-    secureLabel: 'Secure',
-    dueLabel: 'Due today',
-    troubleLabel: 'Weak spots',
-    freshLabel: 'Unseen',
-    bankSub: (name) => `Years 5-6 words for ${name}, with progress and difficulty.`,
-    nextFocus: 'Years 5-6 pool selected.',
-  },
-  'secure-extension': {
-    eyebrow: 'Secure vocabulary',
-    totalLabel: 'Secure vocabulary words',
-    secureLabel: 'Already secure',
-    dueLabel: 'Due today',
-    troubleLabel: 'Weak spots',
-    freshLabel: 'Not tried yet',
-    bankSub: (name) => `Secure vocabulary words for ${name}, with progress and difficulty.`,
-    nextFocus: 'Secure vocabulary pool selected.',
-  },
-  extra: {
-    eyebrow: 'Extra pool',
-    totalLabel: 'Extra words',
-    secureLabel: 'Secure',
-    dueLabel: 'Due today',
-    troubleLabel: 'Weak spots',
-    freshLabel: 'Unseen',
-    bankSub: (name) => `Extra words for ${name}, with progress and difficulty.`,
-    nextFocus: 'Extra pool selected.',
-  },
-});
-
-function setupPoolPanelCopy(statsFilter, learnerName) {
-  const safeName = String(learnerName || 'this learner');
-  const copy = SETUP_POOL_PANEL_COPY[statsFilter] || SETUP_POOL_PANEL_COPY.core;
-  return {
-    ...copy,
-    bankSubText: copy.bankSub(safeName),
-  };
 }
 
 function ModeCard({ mode, selected, disabled = false, description, badge, actions, textTone = 'dark' }) {
@@ -369,7 +309,7 @@ export function SpellingSetupScene({
 }) {
   const statsFilter = prefs.mode === 'test' ? 'core' : prefs.yearFilter;
   const stats = service.getStats(learner.id, statsFilter);
-  const panelCopy = setupPoolPanelCopy(statsFilter, learner.name);
+  const panelCopy = setupPoolPanelCopyForFilter(statsFilter, learner.name);
   // Post-Mega gating for the hero backdrop. When the learner has a sticky
   // graduation record (or is currently fully Mega), swap the legacy
   // mode-driven region for the post-Mega `f` vista bound to Phaeton's
@@ -674,6 +614,7 @@ function LegacySetupContent({
               disabled={hideTweaks || preferenceControlsDisabled}
               ariaLabel="Spelling pool"
               className="pool-picker"
+              sliderMode="measured"
               actionName="spelling-set-pref"
               prefKey="yearFilter"
               includeDataValue

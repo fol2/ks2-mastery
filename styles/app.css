@@ -6044,7 +6044,10 @@ button.chip,
     0 1px 2px rgba(0,0,0,0.14),
     inset 0 1px 0 color-mix(in oklab, white 28%, transparent);
   transform: translateX(calc(var(--selected-index) * 100%));
-  transition: transform 260ms var(--ease-out);
+  transition:
+    transform 260ms var(--ease-out),
+    width 260ms var(--ease-out),
+    height 260ms var(--ease-out);
   z-index: 0;
   pointer-events: none;
 }
@@ -6071,19 +6074,23 @@ button.chip,
 }
 .length-picker.pool-picker {
   max-width: 100%;
-  padding: 0;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  box-shadow: none;
+  padding: var(--picker-pad);
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
+  gap: 2px 4px;
 }
-.length-picker.pool-picker .length-slider {
-  display: none;
+.length-picker[data-slider-mode="measured"] .length-slider {
+  top: 0;
+  bottom: auto;
+  left: 0;
+  width: var(--measured-slider-width, var(--slider-width));
+  height: var(--measured-slider-height, calc(100% - (var(--picker-pad) * 2)));
+  transform:
+    translateX(var(--measured-slider-x, var(--picker-pad)))
+    translateY(var(--measured-slider-y, var(--picker-pad)));
+}
+.length-picker[data-slider-mode="measured"]:not([data-slider-ready="true"]) .length-slider {
+  opacity: 0;
 }
 .length-picker.pool-picker .length-option {
   display: inline-flex;
@@ -6092,28 +6099,28 @@ button.chip,
   min-width: max-content;
   height: 34px;
   white-space: nowrap;
-  border: 1px solid var(--toggle-chip-border, color-mix(in oklab, white 26%, transparent));
-  background: var(--toggle-chip-surface, color-mix(in oklab, black 20%, transparent));
-  box-shadow: inset 0 1px 0 color-mix(in oklab, white 16%, transparent);
-  transition: border-color var(--dur) var(--ease-out),
-              background var(--dur) var(--ease-out),
-              color var(--dur) var(--ease-out),
-              transform var(--dur) var(--ease-out),
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  transition: color var(--dur) var(--ease-out),
               text-shadow var(--dur) var(--ease-out);
 }
 .length-picker.pool-picker .length-option:hover {
-  transform: translateY(-1px);
-  border-color: var(--toggle-chip-hover-border, color-mix(in oklab, var(--brand) 38%, white 20%));
+  color: var(--length-option-hover);
 }
-.length-picker.pool-picker .length-option.selected {
+.length-picker.pool-picker[data-slider-mode="measured"]:not([data-slider-ready="true"]) .length-option.selected {
   background:
     linear-gradient(180deg,
       color-mix(in oklab, var(--brand) 92%, white) 0%,
       var(--brand) 100%);
-  border-color: color-mix(in oklab, var(--brand) 82%, white 20%);
   box-shadow:
     0 1px 2px rgba(0,0,0,0.14),
     inset 0 1px 0 color-mix(in oklab, white 28%, transparent);
+}
+@media (prefers-reduced-motion: reduce) {
+  .length-picker[data-slider-mode="measured"] .length-slider {
+    transition: none;
+  }
 }
 .length-unit {
   color: var(--setup-label-ink);

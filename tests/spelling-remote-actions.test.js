@@ -1241,6 +1241,76 @@ test('remote spelling word bank category filter reloads the server-filtered rows
   assert.equal(getState().subjectUi.spelling.analytics.wordBank.facets.status.total, 52);
 });
 
+test('remote spelling word bank category filter preserves secure vocabulary UI state', async () => {
+  const { getState, store } = createStoreHarness({
+    subjectUi: {
+      spelling: {
+        phase: 'word-bank',
+        analytics: {
+          wordGroups: [],
+          wordBank: { page: 1, hasNextPage: true, returnedRows: 250 },
+        },
+        error: '',
+      },
+    },
+  });
+  const urls = [];
+  const handler = createRemoteSpellingActionHandler({
+    store,
+    services: { spelling: {} },
+    tts: createTtsHarness(),
+    subjectCommands: { send: async () => ({}) },
+    readModels: {
+      async readJson(url) {
+        urls.push(url);
+        return {
+          wordBank: {
+            analytics: {
+              wordGroups: [
+                { key: 'secure-extension', title: 'Secure vocabulary', words: Array.from({ length: 250 }, (_, index) => ({ slug: `secure-${index}` })) },
+              ],
+              wordBank: {
+                page: 1,
+                hasNextPage: true,
+                returnedRows: 250,
+                filteredRows: 1215,
+                totalRows: 1480,
+                facets: {
+                  categories: {
+                    all: 1480,
+                    'y3-4': 109,
+                    'y5-6': 104,
+                    'secure-extension': 1215,
+                    extra: 52,
+                  },
+                  status: {
+                    all: 1215,
+                    total: 1215,
+                    secure: 0,
+                    due: 0,
+                    trouble: 0,
+                    weak: 0,
+                    learning: 0,
+                    unseen: 1215,
+                  },
+                },
+              },
+            },
+          },
+        };
+      },
+    },
+  });
+
+  assert.equal(handler.handle('spelling-analytics-year-filter', { value: 'secure-extension' }), true);
+
+  await flushPromises();
+  const request = new URL(`https://repo.test${urls[0]}`);
+  assert.equal(request.searchParams.get('year'), 'secure-extension');
+  assert.equal(getState().transientUi.spellingAnalyticsYearFilter, 'secure-extension');
+  assert.equal(getState().subjectUi.spelling.analytics.wordBank.facets.status.total, 1215);
+});
+
 test('remote spelling word-bank drill submit is blocked while read-only', () => {
   const { store } = createStoreHarness({
     transientUi: {

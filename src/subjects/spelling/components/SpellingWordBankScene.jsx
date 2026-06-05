@@ -15,10 +15,10 @@ import {
   WORD_BANK_GUARDIAN_FILTER_HINTS,
   WORD_BANK_GUARDIAN_FILTER_IDS,
   WORD_BANK_GUARDIAN_FILTER_ID_SET,
+  WORD_BANK_SUMMARY_CATEGORIES,
+  WORD_BANK_YEAR_FILTER_OPTIONS,
   WORD_BANK_YEAR_FILTER_IDS,
-  countWordBankExtra,
-  countWordBankSecureExtension,
-  countWordBankYear,
+  countWordBankCategory,
   dueLabel,
   findWordBankEntry,
   heroBgForLearner,
@@ -116,16 +116,9 @@ function GuardianFilterChips({ counts, activeFilter, actions }) {
 }
 
 function YearChips({ counts, activeYearFilter, actions }) {
-  const chips = [
-    { id: 'all', label: 'All' },
-    { id: 'y3-4', label: 'Years 3-4' },
-    { id: 'y5-6', label: 'Years 5-6' },
-    { id: 'secure-extension', label: 'Secure vocabulary' },
-    { id: 'extra', label: 'Extra' },
-  ];
   return (
     <div className="wb-chips wb-year-chips" role="group" aria-label="Filter word bank by category">
-      {chips.map((chip) => {
+      {WORD_BANK_YEAR_FILTER_OPTIONS.map((chip) => {
         const active = chip.id === activeYearFilter;
         return (
           <button
@@ -230,13 +223,14 @@ function statusCountsFromFacet(source, fallbackStats = {}) {
 function wordBankCategoryCounts({ facets, allWords, fallbackTotal }) {
   const categories = facets && typeof facets.categories === 'object' ? facets.categories : null;
   const allFallback = Number(fallbackTotal) || allWords.length;
-  return {
-    all: countFromFacet(categories, 'all', allFallback),
-    'y3-4': countFromFacet(categories, 'y3-4', countWordBankYear(allWords, '3-4')),
-    'y5-6': countFromFacet(categories, 'y5-6', countWordBankYear(allWords, '5-6')),
-    'secure-extension': countFromFacet(categories, 'secure-extension', countWordBankSecureExtension(allWords)),
-    extra: countFromFacet(categories, 'extra', countWordBankExtra(allWords)),
-  };
+  return Object.fromEntries(WORD_BANK_YEAR_FILTER_OPTIONS.map((option) => [
+    option.id,
+    countFromFacet(
+      categories,
+      option.id,
+      option.id === 'all' ? allFallback : countWordBankCategory(allWords, option.id),
+    ),
+  ]));
 }
 
 function categoryStatusFacet(facets, categoryId) {
@@ -487,47 +481,24 @@ function WordBankAggregates({ analytics, postMastery = null }) {
     ? { guardianMap, todayDay, progressMap: orphanProgressMap, wordBySlug: orphanWordBySlug }
     : undefined;
   const cardOptions = showGuardianCards ? { showGuardian: true } : undefined;
-  const coreFallback = wordBankAggregateStats(allWords.filter((word) => wordBankYearFilterMatches('core', word)), statsOptions);
-  const y34Fallback = wordBankAggregateStats(allWords.filter((word) => wordBankYearFilterMatches('y3-4', word)), statsOptions);
-  const y56Fallback = wordBankAggregateStats(allWords.filter((word) => wordBankYearFilterMatches('y5-6', word)), statsOptions);
-  const secureExtensionFallback = wordBankAggregateStats(allWords.filter((word) => wordBankYearFilterMatches('secure-extension', word)), statsOptions);
-  const extraFallback = wordBankAggregateStats(allWords.filter((word) => wordBankYearFilterMatches('extra', word)));
-  const core = statusCountsFromFacet(categoryStatusFacet(facets, 'core'), coreFallback);
-  const y34 = statusCountsFromFacet(categoryStatusFacet(facets, 'y3-4'), y34Fallback);
-  const y56 = statusCountsFromFacet(categoryStatusFacet(facets, 'y5-6'), y56Fallback);
-  const secureExtension = statusCountsFromFacet(categoryStatusFacet(facets, 'secure-extension'), secureExtensionFallback);
-  const extra = statusCountsFromFacet(categoryStatusFacet(facets, 'extra'), extraFallback);
-  const cards = [
-    {
-      eyebrow: 'Core spellings',
-      title: 'Core statutory progress',
-      stats: wordBankAggregateCards(core, 'Words in official statutory pool', cardOptions),
-    },
-    {
-      eyebrow: 'Years 3-4',
-      title: 'Lower KS2 spelling pool',
-      stats: wordBankAggregateCards(y34, 'Words in pool', cardOptions),
-    },
-    {
-      eyebrow: 'Years 5-6',
-      title: 'Upper KS2 spelling pool',
-      stats: wordBankAggregateCards(y56, 'Words in pool', cardOptions),
-    },
-    {
-      eyebrow: 'Secure vocabulary',
-      title: 'Approved secure-extension progress',
-      stats: wordBankAggregateCards(secureExtension, 'Words in secure vocabulary', cardOptions),
-    },
-    {
-      eyebrow: 'Extra',
-      // Extra pool is never Guardian-eligible (Guardian Mega is core-only),
-      // so we always use the legacy card shape here regardless of
-      // showGuardianCards. This keeps the Extra card's visual rhythm
-      // identical across the post-Mega transition.
-      title: 'Expansion spelling pool',
-      stats: wordBankAggregateCards(extra, 'Words in enrichment pool'),
-    },
-  ];
+  const cards = WORD_BANK_SUMMARY_CATEGORIES.map((category) => {
+    const includeGuardian = category.id !== 'extra';
+    const summary = category.wordBankSummary || {};
+    const fallback = wordBankAggregateStats(
+      allWords.filter((word) => wordBankYearFilterMatches(category.id, word)),
+      includeGuardian ? statsOptions : undefined,
+    );
+    const counts = statusCountsFromFacet(categoryStatusFacet(facets, category.id), fallback);
+    return {
+      eyebrow: summary.eyebrow || category.label,
+      title: summary.title || `${category.label} progress`,
+      stats: wordBankAggregateCards(
+        counts,
+        summary.statLabel || 'Words in pool',
+        includeGuardian ? cardOptions : undefined,
+      ),
+    };
+  });
   return (
     <div className="wb-aggregates">
       {cards.map((card) => (

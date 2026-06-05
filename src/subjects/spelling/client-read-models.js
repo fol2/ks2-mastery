@@ -6,6 +6,7 @@ import {
   normaliseMode,
   normaliseRoundLength,
   normaliseStats,
+  spellingPoolStatsKey,
   normaliseYearFilter,
 } from './service-contract.js';
 import {
@@ -64,15 +65,7 @@ function statsForFilter(stats, analytics, yearFilter) {
   const analyticsPools = safeAnalytics.pools && typeof safeAnalytics.pools === 'object' && !Array.isArray(safeAnalytics.pools)
     ? safeAnalytics.pools
     : {};
-  const key = yearFilter === 'y3-4'
-    ? 'y34'
-    : yearFilter === 'y5-6'
-      ? 'y56'
-      : yearFilter === 'secure-extension'
-        ? 'secureExtension'
-        : yearFilter === 'extra'
-          ? 'extra'
-          : 'core';
+  const key = spellingPoolStatsKey(yearFilter, 'core');
   return normaliseStats(safeStats[key] || analyticsPools[key] || safeStats.core || safeStats.all || {});
 }
 

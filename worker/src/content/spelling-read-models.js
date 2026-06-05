@@ -1,13 +1,18 @@
 import { cloneSerialisable } from '../../../src/platform/core/repositories/helpers.js';
+import {
+  SPELLING_ANALYTICS_POOL_CATEGORIES,
+  SPELLING_ANALYTICS_WORD_GROUP_CATEGORIES,
+  SPELLING_POOL_CATEGORIES,
+  SPELLING_WORD_BANK_FILTER_IDS,
+  normaliseSpellingWordBankFilterId,
+  spellingPoolCategoryMatchesWord,
+} from '../../../shared/spelling/pool-taxonomy.js';
 import { normaliseServerSpellingData } from '../subjects/spelling/engine.js';
 import { buildSpellingWordBankAudioCue } from '../subjects/spelling/audio.js';
 import { BadRequestError, NotFoundError } from '../errors.js';
 import {
   coverageTierForWord,
   coverageTierLabel,
-  isEnrichmentExtraWord,
-  isSecureExtensionWord,
-  isStatutoryCoreWord,
 } from '../../../src/subjects/spelling/content/taxonomy.js';
 import { isGuardianEligibleSlug } from '../../../src/subjects/spelling/service-contract.js';
 
@@ -16,7 +21,7 @@ const STAGE_INTERVALS = [0, 1, 3, 7, 14, 30, 60];
 const SECURE_STAGE = 4;
 const GUARDIAN_RENEWED_RECENTLY_WINDOW_DAYS = 7;
 const STATUS_FILTERS = new Set(['all', 'due', 'weak', 'learning', 'secure', 'unseen']);
-const YEAR_FILTERS = new Set(['all', 'y3-4', 'y5-6', 'secure-extension', 'extra']);
+const YEAR_FILTERS = new Set(SPELLING_WORD_BANK_FILTER_IDS);
 const MAX_PAGE_SIZE = 250;
 
 function cleanText(value) {
@@ -80,10 +85,7 @@ function statusForProgress(progress, now) {
 }
 
 function yearMatches(filter, row) {
-  if (filter === 'all') return true;
-  if (filter === 'secure-extension') return isSecureExtensionWord(row);
-  if (filter === 'extra') return isEnrichmentExtraWord(row);
-  return isStatutoryCoreWord(row) && row.year === filter.replace(/^y/, '');
+  return spellingPoolCategoryMatchesWord(normaliseSpellingWordBankFilterId(filter, 'all'), row, { coverageTierForWord });
 }
 
 function statusMatches(filter, row) {
@@ -95,19 +97,13 @@ function statusMatches(filter, row) {
 
 function categoryFacetCounts(rows) {
   const safeRows = Array.isArray(rows) ? rows : [];
-  const y34 = safeRows.filter((row) => isStatutoryCoreWord(row) && row.year === '3-4').length;
-  const y56 = safeRows.filter((row) => isStatutoryCoreWord(row) && row.year === '5-6').length;
-  const secureExtension = safeRows.filter((row) => isSecureExtensionWord(row)).length;
-  const extra = safeRows.filter((row) => isEnrichmentExtraWord(row)).length;
-  return {
-    all: safeRows.length,
-    core: y34 + y56,
-    'y3-4': y34,
-    'y5-6': y56,
-    'secure-extension': secureExtension,
-    secureExtension,
-    extra,
-  };
+  const counts = {};
+  for (const category of SPELLING_POOL_CATEGORIES) {
+    const count = safeRows.filter((row) => spellingPoolCategoryMatchesWord(category, row, { coverageTierForWord })).length;
+    counts[category.id] = count;
+    if (category.statsKey && category.statsKey !== category.id) counts[category.statsKey] = count;
+  }
+  return counts;
 }
 
 function statusFacetCounts(rows, {
@@ -163,14 +159,13 @@ function statusFacetCounts(rows, {
 
 function categoryStatusFacets(rows, context = {}) {
   const safeRows = Array.isArray(rows) ? rows : [];
-  return {
-    all: statusFacetCounts(safeRows, context),
-    core: statusFacetCounts(safeRows.filter((row) => isStatutoryCoreWord(row)), context),
-    'y3-4': statusFacetCounts(safeRows.filter((row) => isStatutoryCoreWord(row) && row.year === '3-4'), context),
-    'y5-6': statusFacetCounts(safeRows.filter((row) => isStatutoryCoreWord(row) && row.year === '5-6'), context),
-    'secure-extension': statusFacetCounts(safeRows.filter((row) => isSecureExtensionWord(row)), context),
-    extra: statusFacetCounts(safeRows.filter((row) => isEnrichmentExtraWord(row)), context),
-  };
+  return Object.fromEntries(SPELLING_POOL_CATEGORIES.map((category) => [
+    category.id,
+    statusFacetCounts(
+      safeRows.filter((row) => spellingPoolCategoryMatchesWord(category, row, { coverageTierForWord })),
+      context,
+    ),
+  ]));
 }
 
 function buildWordBankFacets({
@@ -269,35 +264,23 @@ function withAccuracy(stats) {
 }
 
 function poolsFor(words, progressMap, now) {
-  const coreWords = words.filter((word) => isStatutoryCoreWord(word));
-  const y34Words = coreWords.filter((word) => word.year === '3-4');
-  const y56Words = coreWords.filter((word) => word.year === '5-6');
-  const secureExtensionWords = words.filter((word) => isSecureExtensionWord(word));
-  const extraWords = words.filter((word) => isEnrichmentExtraWord(word));
-  return {
-    all: withAccuracy(statsForWords(coreWords, progressMap, now)),
-    core: withAccuracy(statsForWords(coreWords, progressMap, now)),
-    y34: withAccuracy(statsForWords(y34Words, progressMap, now)),
-    y56: withAccuracy(statsForWords(y56Words, progressMap, now)),
-    secureExtension: withAccuracy(statsForWords(secureExtensionWords, progressMap, now)),
-    extra: withAccuracy(statsForWords(extraWords, progressMap, now)),
-  };
+  const pools = {};
+  for (const category of SPELLING_ANALYTICS_POOL_CATEGORIES) {
+    const categoryWords = words.filter((word) => spellingPoolCategoryMatchesWord(category, word, { coverageTierForWord }));
+    const stats = withAccuracy(statsForWords(categoryWords, progressMap, now));
+    for (const alias of category.analyticsAliases) pools[alias] = stats;
+    pools[category.statsKey] = stats;
+  }
+  return pools;
 }
 
 function groupRows(rows) {
-  const groups = [
-    { key: 'y3-4', title: 'Years 3-4', spellingPool: 'core', year: '3-4' },
-    { key: 'y5-6', title: 'Years 5-6', spellingPool: 'core', year: '5-6' },
-    { key: 'secure-extension', title: 'Secure vocabulary', spellingPool: 'core', year: 'secure-extension' },
-    { key: 'extra', title: 'Extra', spellingPool: 'extra', year: 'extra' },
-  ];
-  return groups.map((group) => ({
-    ...group,
-    words: rows.filter((row) => {
-      if (group.key === 'secure-extension') return isSecureExtensionWord(row);
-      if (group.key === 'extra') return isEnrichmentExtraWord(row);
-      return isStatutoryCoreWord(row) && row.year === group.year;
-    }),
+  return SPELLING_ANALYTICS_WORD_GROUP_CATEGORIES.map((group) => ({
+    key: group.id,
+    title: group.label,
+    spellingPool: group.spellingPool || 'core',
+    year: group.year || group.id,
+    words: rows.filter((row) => spellingPoolCategoryMatchesWord(group, row, { coverageTierForWord })),
   }));
 }
 

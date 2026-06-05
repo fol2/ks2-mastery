@@ -1,5 +1,10 @@
 import { createLegacySpellingEngine } from './legacy-engine.js';
 import {
+  SPELLING_ANALYTICS_POOL_CATEGORIES,
+  SPELLING_ANALYTICS_WORD_GROUP_CATEGORIES,
+  spellingPoolCategoryMatchesWord,
+} from './pool-taxonomy.js';
+import {
   SPELLING_MASTERY_MILESTONES,
   createSpellingBossCompletedEvent,
   createSpellingGuardianMissionCompletedEvent,
@@ -1402,23 +1407,13 @@ export function createSpellingService({ repository, storage, tts, now, random, c
   }
 
   function analyticsWordGroups(learnerId, progressStore = null) {
-    const groups = [
-      { key: 'y3-4', title: 'Years 3-4', spellingPool: 'core', year: '3-4' },
-      { key: 'y5-6', title: 'Years 5-6', spellingPool: 'core', year: '5-6' },
-      { key: 'secure-extension', title: 'Secure vocabulary', spellingPool: 'core', year: 'secure-extension' },
-      { key: 'extra', title: 'Extra', spellingPool: 'extra', year: 'extra' },
-    ];
-    return groups.map((group) => ({
-      key: group.key,
-      title: group.title,
-      spellingPool: group.spellingPool,
-      year: group.year,
+    return SPELLING_ANALYTICS_WORD_GROUP_CATEGORIES.map((group) => ({
+      key: group.id,
+      title: group.label,
+      spellingPool: group.spellingPool || 'core',
+      year: group.year || group.id,
       words: runtimeWords
-        .filter((word) => {
-          if (group.key === 'secure-extension') return isSecureExtensionWord(word);
-          if (group.key === 'extra') return isEnrichmentExtraWord(word);
-          return isStatutoryCoreWord(word) && word.year === group.year;
-        })
+        .filter((word) => spellingPoolCategoryMatchesWord(group, word, { coverageTierForWord }))
         .map((word) => analyticsWordRow(learnerId, word, progressStore)),
     }));
   }
@@ -1888,17 +1883,16 @@ export function createSpellingService({ repository, storage, tts, now, random, c
 
   function getAnalyticsSnapshot(learnerId) {
     const progressStore = progressSnapshot(learnerId);
+    const pools = {};
+    for (const category of SPELLING_ANALYTICS_POOL_CATEGORIES) {
+      const stats = getStats(learnerId, category.id, progressStore);
+      for (const alias of category.analyticsAliases) pools[alias] = stats;
+      pools[category.statsKey] = stats;
+    }
     return {
       version: SPELLING_SERVICE_STATE_VERSION,
       generatedAt: clock(),
-      pools: {
-        all: getStats(learnerId, 'core', progressStore),
-        core: getStats(learnerId, 'core', progressStore),
-        y34: getStats(learnerId, 'y3-4', progressStore),
-        y56: getStats(learnerId, 'y5-6', progressStore),
-        secureExtension: getStats(learnerId, 'secure-extension', progressStore),
-        extra: getStats(learnerId, 'extra', progressStore),
-      },
+      pools,
       wordGroups: analyticsWordGroups(learnerId, progressStore),
     };
   }

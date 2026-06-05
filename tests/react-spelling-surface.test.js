@@ -27,6 +27,7 @@ test('React spelling setup scene can select the secure vocabulary pool', async (
     html,
     /<div class="length-picker pool-picker" role="radiogroup" aria-label="Spelling pool"/,
   );
+  assert.match(html, /data-slider-mode="measured"/);
   const securePoolButtonMatch = html.match(
     /<button\b(?=[^>]*data-action="spelling-set-pref")(?=[^>]*data-pref="yearFilter")(?=[^>]*data-value="secure-extension")(?=[^>]*value="secure-extension")[^>]*>[\s\S]*?<span>Secure vocabulary<\/span><\/button>/,
   );
