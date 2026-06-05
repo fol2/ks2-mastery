@@ -399,7 +399,7 @@ test('spelling word bank opens from setup and exposes searchable progress with e
   harness.dispatch('spelling-analytics-search', { value: 'division' });
   html = harness.render();
   assert.match(html, />divide</);
-  assert.match(html, /Showing 2 matches for &quot;division&quot;/);
+  assert.match(html, /Showing 4 matches for &quot;division&quot;/);
 
   harness.dispatch('spelling-word-detail-open', { slug: 'divide', value: 'explain' });
   html = harness.render();

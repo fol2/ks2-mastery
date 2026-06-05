@@ -22,6 +22,7 @@ import {
   normaliseCoverageTier,
 } from '../src/subjects/spelling/content/taxonomy.js';
 import {
+  collectSecureVocabularyMeaningIssues,
   collectSecureVocabularySentenceIssues,
 } from '../scripts/spelling-secure-vocabulary-sentence-generator.mjs';
 import { SEEDED_SPELLING_CONTENT_BUNDLE } from '../src/subjects/spelling/data/content-data.js';
@@ -208,8 +209,8 @@ test('seeded spelling content validates and round-trips through the portable exp
   assert.equal(validation.bundle.modelVersion, SPELLING_CONTENT_MODEL_VERSION);
   assert.equal(SPELLING_CONTENT_MODEL_VERSION, 6, 'Spelling content model keeps the even-version convention.');
   assert.equal(validation.errors.length, 0);
-  assert.equal(validation.bundle.releases.length, 10);
-  assert.equal(validation.bundle.publication.publishedVersion, 10);
+  assert.equal(validation.bundle.releases.length, 11);
+  assert.equal(validation.bundle.publication.publishedVersion, 11);
   assert.ok(validation.bundle.draft.wordLists
     .filter((list) => list.id.startsWith('statutory-'))
     .every((list) => list.spellingPool === 'core'));
@@ -249,7 +250,7 @@ test('seeded spelling content validates and round-trips through the portable exp
   const exported = content.exportPortable();
   const roundTripped = extractPortableSpellingContent(exported);
   assert.equal(roundTripped.draft.words.length, validation.bundle.draft.words.length);
-  assert.equal(roundTripped.releases.at(-1).version, 10);
+  assert.equal(roundTripped.releases.at(-1).version, 11);
 });
 
 test('secure vocabulary sentences do not use the repeated board-practice placeholder', () => {
@@ -278,6 +279,16 @@ test('secure vocabulary sentences do not use the repeated board-practice placeho
     sentence: word.sentence,
   })));
   assert.deepEqual(sentenceIssues, []);
+  const meaningIssues = collectSecureVocabularyMeaningIssues(secureWords.map((word) => ({
+    slug: word.slug,
+    word: word.word,
+    meaning: word.explanation,
+  })));
+  assert.deepEqual(meaningIssues, []);
+  assert.equal(
+    secureWords.find((word) => word.slug === 'absence')?.explanation,
+    'Absence means being away from a place where someone is expected.'
+  );
 
   for (const word of secureWords) {
     const sentences = [word.sentence, ...(word.sentences || [])].filter(Boolean);

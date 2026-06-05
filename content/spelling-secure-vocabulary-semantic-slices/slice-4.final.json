@@ -4,6 +4,7 @@
     "slug": "canal",
     "word": "canal",
     "finalSentence": "The narrow canal carried boats between the old mill and town.",
+    "meaning": "Canal means a man-made waterway used by boats or for moving water.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -12,6 +13,7 @@
     "slug": "reservoir",
     "word": "reservoir",
     "finalSentence": "The reservoir stored water for the village during the dry summer.",
+    "meaning": "Reservoir means a large place where water is stored for later use.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -20,6 +22,7 @@
     "slug": "acknowledge",
     "word": "acknowledge",
     "finalSentence": "Lina remembered to acknowledge every source in her history report.",
+    "meaning": "Acknowledge means to show that you recognise a source, fact, or person's help.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -28,6 +31,7 @@
     "slug": "admiration",
     "word": "admiration",
     "finalSentence": "The class showed admiration for Aisha's careful model of the bridge.",
+    "meaning": "Admiration means warm respect for someone or something impressive.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -36,6 +40,7 @@
     "slug": "affectionate",
     "word": "affectionate",
     "finalSentence": "Grandad wrote an affectionate note inside Maya's birthday card.",
+    "meaning": "Affectionate means showing love, care, or fondness towards someone.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -44,6 +49,7 @@
     "slug": "arrangement",
     "word": "arrangement",
     "finalSentence": "The flower arrangement brightened the hall before the concert.",
+    "meaning": "Arrangement means a planned order, pattern, or group of things placed together.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -52,6 +58,7 @@
     "slug": "assistance",
     "word": "assistance",
     "finalSentence": "Ravi asked for assistance when the atlas page confused him.",
+    "meaning": "Assistance means help given to someone who needs support.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -60,6 +67,7 @@
     "slug": "completely",
     "word": "completely",
     "finalSentence": "Dylan checked the answer completely before handing in his work.",
+    "meaning": "Completely means fully, with nothing missed or left unfinished.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -68,6 +76,7 @@
     "slug": "construction",
     "word": "construction",
     "finalSentence": "The construction of the shelter took the group two afternoons.",
+    "meaning": "Construction means the process of building or making something.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -76,6 +85,7 @@
     "slug": "continuation",
     "word": "continuation",
     "finalSentence": "The sequel was a continuation of the adventure from last term.",
+    "meaning": "Continuation means something that carries on from where another thing stopped.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -84,6 +94,7 @@
     "slug": "decoration",
     "word": "decoration",
     "finalSentence": "Each paper decoration showed a different pattern from nature.",
+    "meaning": "Decoration means something added to make a place or object look nicer.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -92,6 +103,7 @@
     "slug": "disappointed",
     "word": "disappointed",
     "finalSentence": "Zara felt disappointed when rain cancelled the sports afternoon.",
+    "meaning": "Disappointed means feeling sad because something did not happen as hoped.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -100,6 +112,7 @@
     "slug": "disagreement",
     "word": "disagreement",
     "finalSentence": "The team solved the disagreement by listening to both ideas.",
+    "meaning": "Disagreement means a difference of opinion between people.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -108,6 +121,7 @@
     "slug": "disobedient",
     "word": "disobedient",
     "finalSentence": "The disobedient puppy ignored every call in the park.",
+    "meaning": "Disobedient means not doing what a rule or trusted adult asks.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -116,6 +130,7 @@
     "slug": "encouragement",
     "word": "encouragement",
     "finalSentence": "A little encouragement helped Ben finish the difficult paragraph.",
+    "meaning": "Encouragement means kind words or actions that help someone keep trying.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -124,6 +139,7 @@
     "slug": "fashionable",
     "word": "fashionable",
     "finalSentence": "Her fashionable jacket matched the colours in the school play.",
+    "meaning": "Fashionable means popular or stylish at a particular time.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -132,6 +148,7 @@
     "slug": "forgiveness",
     "word": "forgiveness",
     "finalSentence": "Tom asked for forgiveness after breaking his sister's model.",
+    "meaning": "Forgiveness means choosing not to stay angry after someone has done wrong.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -140,6 +157,7 @@
     "slug": "imagination",
     "word": "imagination",
     "finalSentence": "Grace used imagination to turn the cardboard box into a castle.",
+    "meaning": "Imagination means the ability to picture or create ideas in your mind.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -148,6 +166,7 @@
     "slug": "interruption",
     "word": "interruption",
     "finalSentence": "The sudden interruption made everyone lose their place in the song.",
+    "meaning": "Interruption means something that briefly stops an activity or conversation.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -156,6 +175,7 @@
     "slug": "manageable",
     "word": "manageable",
     "finalSentence": "The teacher split the project into manageable weekly tasks.",
+    "meaning": "Manageable means not too difficult to deal with or complete.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -164,6 +184,7 @@
     "slug": "management",
     "word": "management",
     "finalSentence": "Good time management helped Priya finish her homework calmly.",
+    "meaning": "Management means organising people, time, or things so work is done well.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -172,6 +193,7 @@
     "slug": "mysterious",
     "word": "mysterious",
     "finalSentence": "A mysterious footprint appeared beside the pond at lunchtime.",
+    "meaning": "Mysterious means strange and hard to explain or understand.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -180,6 +202,7 @@
     "slug": "noticeable",
     "word": "noticeable",
     "finalSentence": "The new sign made the library entrance more noticeable.",
+    "meaning": "Noticeable means easy to see, hear, or recognise.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -188,6 +211,7 @@
     "slug": "preference",
     "word": "preference",
     "finalSentence": "Noah explained his preference for drawing maps before writing notes.",
+    "meaning": "Preference means liking one choice more than another.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -196,6 +220,7 @@
     "slug": "preparation",
     "word": "preparation",
     "finalSentence": "Careful preparation made the class assembly run smoothly.",
+    "meaning": "Preparation means getting ready before doing something important.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -204,6 +229,7 @@
     "slug": "recognition",
     "word": "recognition",
     "finalSentence": "Maya received recognition for improving her reading aloud.",
+    "meaning": "Recognition means being noticed or praised for something you have done.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -212,6 +238,7 @@
     "slug": "remembered",
     "word": "remembered",
     "finalSentence": "Iris remembered the poem without looking at her notes.",
+    "meaning": "Remembered means kept something in your mind or brought it back to mind.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -220,6 +247,7 @@
     "slug": "repetition",
     "word": "repetition",
     "finalSentence": "Careful repetition helped the choir learn the tricky chorus.",
+    "meaning": "Repetition means doing or saying something again to practise or emphasise it.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -228,6 +256,7 @@
     "slug": "replacement",
     "word": "replacement",
     "finalSentence": "The caretaker found a replacement key for the cupboard.",
+    "meaning": "Replacement means a thing or person that takes another's place.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -236,6 +265,7 @@
     "slug": "ridiculous",
     "word": "ridiculous",
     "finalSentence": "The ridiculous hat made everyone laugh during rehearsal.",
+    "meaning": "Ridiculous means very silly, unreasonable, or hard to take seriously.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -244,6 +274,7 @@
     "slug": "successful",
     "word": "successful",
     "finalSentence": "The successful experiment proved that plants need light.",
+    "meaning": "Successful means achieving what was planned, hoped for, or needed.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -252,6 +283,7 @@
     "slug": "troublesome",
     "word": "troublesome",
     "finalSentence": "The troublesome lock stuck whenever the weather turned cold.",
+    "meaning": "Troublesome means causing problems, worry, or difficulty for others.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -260,6 +292,7 @@
     "slug": "action",
     "word": "action",
     "finalSentence": "The class chose one action to reduce playground litter.",
+    "meaning": "Action means something done to make something happen or change.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -268,6 +301,7 @@
     "slug": "admirable",
     "word": "admirable",
     "finalSentence": "Helping the new pupil was an admirable act of kindness.",
+    "meaning": "Admirable means deserving respect because it is good, brave, or kind.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -276,6 +310,7 @@
     "slug": "adventure",
     "word": "adventure",
     "finalSentence": "The story followed an adventure through mountains and caves.",
+    "meaning": "Adventure means an exciting or unusual journey or experience.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -284,6 +319,7 @@
     "slug": "affection",
     "word": "affection",
     "finalSentence": "Mum showed affection by saving the last slice for Ellie.",
+    "meaning": "Affection means a warm feeling of love, care, or fondness.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -292,6 +328,7 @@
     "slug": "alight",
     "word": "alight",
     "finalSentence": "The lanterns made the garden path look alight.",
+    "meaning": "Alight means lit up, shining, or glowing with light.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -300,6 +337,7 @@
     "slug": "amazing",
     "word": "amazing",
     "finalSentence": "The amazing mural covered one whole wall of the library.",
+    "meaning": "Amazing means very surprising, impressive, or wonderful to see.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -308,6 +346,7 @@
     "slug": "amusement",
     "word": "amusement",
     "finalSentence": "The puppet show caused great amusement among the younger children.",
+    "meaning": "Amusement means a feeling of being entertained or finding something funny.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -316,6 +355,7 @@
     "slug": "appliance",
     "word": "appliance",
     "finalSentence": "The kitchen appliance hummed while it mixed the batter.",
+    "meaning": "Appliance means a machine or device used for a job, often at home.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -324,6 +364,7 @@
     "slug": "approval",
     "word": "approval",
     "finalSentence": "The club needed approval before using the school hall.",
+    "meaning": "Approval means agreement, support, or permission from someone.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -332,6 +373,7 @@
     "slug": "assistant",
     "word": "assistant",
     "finalSentence": "The teaching assistant helped Liam find the correct page.",
+    "meaning": "Assistant means a person who helps someone with their work.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -340,6 +382,7 @@
     "slug": "attention",
     "word": "attention",
     "finalSentence": "Cara paid close attention during the science demonstration.",
+    "meaning": "Attention means careful listening, watching, or thinking about something.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -348,6 +391,7 @@
     "slug": "avoid",
     "word": "avoid",
     "finalSentence": "Cyclists avoid puddles when the path becomes slippery.",
+    "meaning": "Avoid means to keep away from something or stop it happening.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -356,6 +400,7 @@
     "slug": "bravery",
     "word": "bravery",
     "finalSentence": "Her bravery impressed everyone during the fire drill.",
+    "meaning": "Bravery means courage when facing something difficult or frightening.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -364,6 +409,7 @@
     "slug": "ceremony",
     "word": "ceremony",
     "finalSentence": "The ceremony began when the choir entered the hall.",
+    "meaning": "Ceremony means a formal event held for an important occasion.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -372,6 +418,7 @@
     "slug": "certainly",
     "word": "certainly",
     "finalSentence": "The answer was certainly correct after Priya checked it twice.",
+    "meaning": "Certainly means definitely, or with no real doubt.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -380,6 +427,7 @@
     "slug": "choice",
     "word": "choice",
     "finalSentence": "Each choice in the story changed the ending.",
+    "meaning": "Choice means an option you can pick from when deciding.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -388,6 +436,7 @@
     "slug": "collapse",
     "word": "collapse",
     "finalSentence": "The old shed began to collapse after the heavy snow.",
+    "meaning": "Collapse means to fall down suddenly or stop standing properly.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -396,6 +445,7 @@
     "slug": "collision",
     "word": "collision",
     "finalSentence": "The collision knocked both toy cars off the track.",
+    "meaning": "Collision means a crash between moving things, such as vehicles.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -404,6 +454,7 @@
     "slug": "confusion",
     "word": "confusion",
     "finalSentence": "Clear labels prevented confusion during the group experiment.",
+    "meaning": "Confusion means not understanding clearly what is happening or what to do.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -412,6 +463,7 @@
     "slug": "creation",
     "word": "creation",
     "finalSentence": "The creation of the mural took several careful weeks.",
+    "meaning": "Creation means the act of making something new.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -420,6 +472,7 @@
     "slug": "delicious",
     "word": "delicious",
     "finalSentence": "The delicious soup warmed everyone after the winter walk.",
+    "meaning": "Delicious means tasting very pleasant and enjoyable to eat.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -428,6 +481,7 @@
     "slug": "disbelief",
     "word": "disbelief",
     "finalSentence": "Freya stared in disbelief when the tiny seed sprouted.",
+    "meaning": "Disbelief means the feeling that something is hard to accept as true.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -436,6 +490,7 @@
     "slug": "disorder",
     "word": "disorder",
     "finalSentence": "The drawer was in disorder after the hurried search.",
+    "meaning": "Disorder means a messy, mixed-up, or confused state.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -444,6 +499,7 @@
     "slug": "doubtful",
     "word": "doubtful",
     "finalSentence": "Amir felt doubtful about the answer until he checked again.",
+    "meaning": "Doubtful means unsure whether something is true, correct, or likely.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -452,6 +508,7 @@
     "slug": "edible",
     "word": "edible",
     "finalSentence": "Only the edible berries were picked for the crumble.",
+    "meaning": "Edible means safe and suitable for people to eat.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -460,6 +517,7 @@
     "slug": "enjoyment",
     "word": "enjoyment",
     "finalSentence": "Reading outside brought great enjoyment to the whole class.",
+    "meaning": "Enjoyment means pleasure or happiness from doing something.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -468,6 +526,7 @@
     "slug": "enormous",
     "word": "enormous",
     "finalSentence": "An enormous wave crashed against the harbour wall.",
+    "meaning": "Enormous means extremely large in size or amount.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -476,6 +535,7 @@
     "slug": "fortunate",
     "word": "fortunate",
     "finalSentence": "We were fortunate to find shelter before the storm.",
+    "meaning": "Fortunate means lucky or having something good happen.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -484,6 +544,7 @@
     "slug": "gentle",
     "word": "gentle",
     "finalSentence": "The gentle breeze moved the flags above the playground.",
+    "meaning": "Gentle means soft, calm, kind, or not rough.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -492,6 +553,7 @@
     "slug": "gently",
     "word": "gently",
     "finalSentence": "Eleni gently placed the glass beaker on the tray.",
+    "meaning": "Gently means in a soft, careful, or kind way.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -500,6 +562,7 @@
     "slug": "happiness",
     "word": "happiness",
     "finalSentence": "True happiness spread through the room when the team won.",
+    "meaning": "Happiness means a feeling of joy, pleasure, or being pleased.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -508,6 +571,7 @@
     "slug": "healthy",
     "word": "healthy",
     "finalSentence": "A healthy lunch gave Caleb energy for football.",
+    "meaning": "Healthy means good for your body or showing good health.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -516,6 +580,7 @@
     "slug": "historian",
     "word": "historian",
     "finalSentence": "The historian studied old letters from the castle.",
+    "meaning": "Historian means a person who studies and writes about the past.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -524,6 +589,7 @@
     "slug": "influence",
     "word": "influence",
     "finalSentence": "Friends can influence choices, so Ravi thought carefully before deciding.",
+    "meaning": "Influence means to affect what someone thinks, chooses, or does.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -532,6 +598,7 @@
     "slug": "invisible",
     "word": "invisible",
     "finalSentence": "The fishing line was almost invisible in the water.",
+    "meaning": "Invisible means unable to be seen, even when something is there.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -540,6 +607,7 @@
     "slug": "jewellery",
     "word": "jewellery",
     "finalSentence": "Freya wore silver jewellery for the family photograph.",
+    "meaning": "Jewellery means small decorative items people wear, such as rings or necklaces.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -548,6 +616,7 @@
     "slug": "lengthen",
     "word": "lengthen",
     "finalSentence": "Leo decided to lengthen his explanation with more evidence.",
+    "meaning": "Lengthen means to make something longer than it was before.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -556,6 +625,7 @@
     "slug": "nervous",
     "word": "nervous",
     "finalSentence": "Orla felt nervous before speaking to the whole class.",
+    "meaning": "Nervous means worried or uneasy about what might happen.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -564,6 +634,7 @@
     "slug": "patience",
     "word": "patience",
     "finalSentence": "Sofia showed patience while helping her brother read.",
+    "meaning": "Patience means staying calm while waiting or doing something difficult.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -572,6 +643,7 @@
     "slug": "patient",
     "word": "patient",
     "finalSentence": "Hugo was patient while the younger pupils chose books.",
+    "meaning": "Patient means able to wait calmly without becoming annoyed.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -580,6 +652,7 @@
     "slug": "poisonous",
     "word": "poisonous",
     "finalSentence": "The guide warned us that the berries were poisonous.",
+    "meaning": "Poisonous means harmful or dangerous if touched, eaten, or drunk.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -588,6 +661,7 @@
     "slug": "quarrel",
     "word": "quarrel",
     "finalSentence": "A small quarrel started over who would carry the flag.",
+    "meaning": "Quarrel means an angry disagreement or argument between people.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -596,6 +670,7 @@
     "slug": "recovery",
     "word": "recovery",
     "finalSentence": "Freya's recovery after the race was quick and steady.",
+    "meaning": "Recovery means getting better or returning to normal after difficulty.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -604,6 +679,7 @@
     "slug": "regret",
     "word": "regret",
     "finalSentence": "Una felt regret after throwing away her rough notes.",
+    "meaning": "Regret means sadness about something you did or did not do.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -612,6 +688,7 @@
     "slug": "reliable",
     "word": "reliable",
     "finalSentence": "Ben chose a reliable source for his history project.",
+    "meaning": "Reliable means trusted to work well or tell the truth.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -620,6 +697,7 @@
     "slug": "relief",
     "word": "relief",
     "finalSentence": "Victor felt relief when he found his missing folder.",
+    "meaning": "Relief means a calmer feeling after worry or pain has gone.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -628,6 +706,7 @@
     "slug": "secret",
     "word": "secret",
     "finalSentence": "Daisy kept the secret until the surprise party began.",
+    "meaning": "Secret means something kept hidden or known by only a few people.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -636,6 +715,7 @@
     "slug": "service",
     "word": "service",
     "finalSentence": "The bus service stopped outside the village school.",
+    "meaning": "Service means a regular public activity that helps people, such as buses.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -644,6 +724,7 @@
     "slug": "society",
     "word": "society",
     "finalSentence": "Ancient society changed when people began farming together.",
+    "meaning": "Society means a group of people living together with shared rules or ways.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -652,6 +733,7 @@
     "slug": "suitable",
     "word": "suitable",
     "finalSentence": "Theo chose a suitable container for the science sample.",
+    "meaning": "Suitable means right or acceptable for a particular purpose.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -660,6 +742,7 @@
     "slug": "suspicion",
     "word": "suspicion",
     "finalSentence": "Ethan's suspicion grew when the footprints led to the shed.",
+    "meaning": "Suspicion means a feeling that something may be wrong or hidden.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -668,6 +751,7 @@
     "slug": "volunteer",
     "word": "volunteer",
     "finalSentence": "Beth decided to volunteer at the library on Saturday.",
+    "meaning": "Volunteer means to offer to do something without being forced or paid.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -676,6 +760,7 @@
     "slug": "accept",
     "word": "accept",
     "finalSentence": "Ben learned to accept feedback on his first draft.",
+    "meaning": "Accept means to agree to receive, allow, or take something.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -684,6 +769,7 @@
     "slug": "acceptably",
     "word": "acceptably",
     "finalSentence": "Jonah's handwriting was acceptably clear after he slowed down.",
+    "meaning": "Acceptably means in a way that is good enough for what is needed.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -692,6 +778,7 @@
     "slug": "accepted",
     "word": "accepted",
     "finalSentence": "Daisy accepted the captain's decision after the match.",
+    "meaning": "Accepted means agreed to, received, or allowed by someone.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -700,6 +787,7 @@
     "slug": "accepting",
     "word": "accepting",
     "finalSentence": "Grace found accepting help made the calculation easier.",
+    "meaning": "Accepting means agreeing to take something or welcome help.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -708,6 +796,7 @@
     "slug": "accusing",
     "word": "accusing",
     "finalSentence": "The accusing note upset Ben before the truth emerged.",
+    "meaning": "Accusing means suggesting that someone has done something wrong.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -716,6 +805,7 @@
     "slug": "achieved",
     "word": "achieved",
     "finalSentence": "Willow achieved her reading target before the half-term holiday.",
+    "meaning": "Achieved means succeeded in doing something through effort.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -724,6 +814,7 @@
     "slug": "admire",
     "word": "admire",
     "finalSentence": "Ravi could admire the sculpture from every side.",
+    "meaning": "Admire means to look at someone or something with respect or pleasure.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -732,6 +823,7 @@
     "slug": "admired",
     "word": "admired",
     "finalSentence": "Ravi admired the careful stitching on the costume.",
+    "meaning": "Admired means respected or looked at with pleasure by someone.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -740,6 +832,7 @@
     "slug": "admittedly",
     "word": "admittedly",
     "finalSentence": "The first bridge was admittedly weaker than the second.",
+    "meaning": "Admittedly means used when accepting that something is true, even if not ideal.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -748,6 +841,7 @@
     "slug": "admitting",
     "word": "admitting",
     "finalSentence": "Ben found admitting the mistake easier than hiding it.",
+    "meaning": "Admitting means saying that something is true, especially after hiding it.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -756,6 +850,7 @@
     "slug": "adviser",
     "word": "adviser",
     "finalSentence": "Iris asked the careers adviser about becoming an engineer.",
+    "meaning": "Adviser means a person who gives helpful guidance or information.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -764,6 +859,7 @@
     "slug": "advisory",
     "word": "advisory",
     "finalSentence": "The advisory notice warned pupils about the icy steps.",
+    "meaning": "Advisory means giving advice or warning about something.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -772,6 +868,7 @@
     "slug": "agree",
     "word": "agree",
     "finalSentence": "Willow and Daisy agree about the best ending.",
+    "meaning": "Agree means to have the same opinion or accept a plan.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -780,6 +877,7 @@
     "slug": "analyse",
     "word": "analyse",
     "finalSentence": "Caleb used the graph to analyse rainfall patterns.",
+    "meaning": "Analyse means to study something carefully to understand it.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -788,6 +886,7 @@
     "slug": "analysed",
     "word": "analysed",
     "finalSentence": "Imran analysed the results before drawing his conclusion.",
+    "meaning": "Analysed means studied something carefully to understand it.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -796,6 +895,7 @@
     "slug": "analyses",
     "word": "analyses",
     "finalSentence": "The two analyses showed different causes for the flood.",
+    "meaning": "Analyses are careful studies that examine something closely.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -804,6 +904,7 @@
     "slug": "analysing",
     "word": "analysing",
     "finalSentence": "Dylan enjoyed analysing the clues in the mystery story.",
+    "meaning": "Analysing means studying something carefully to understand it.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -812,6 +913,7 @@
     "slug": "analysis",
     "word": "analysis",
     "finalSentence": "Finn's analysis explained why the bridge stayed strong.",
+    "meaning": "Analysis means a careful study that explains something.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -820,6 +922,7 @@
     "slug": "analyst",
     "word": "analyst",
     "finalSentence": "The analyst checked each chart before the meeting.",
+    "meaning": "Analyst means a person who studies information carefully.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -828,6 +931,7 @@
     "slug": "analytical",
     "word": "analytical",
     "finalSentence": "Ben used analytical thinking to compare the two designs.",
+    "meaning": "Analytical means using careful thinking to study and compare information.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -836,6 +940,7 @@
     "slug": "appearance",
     "word": "appearance",
     "finalSentence": "Noah described the dragon's appearance in careful detail.",
+    "meaning": "Appearance means the way someone or something looks.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -844,6 +949,7 @@
     "slug": "appearing",
     "word": "appearing",
     "finalSentence": "A rainbow was appearing above the field after the rain.",
+    "meaning": "Appearing means coming into sight or starting to be seen.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -852,6 +958,7 @@
     "slug": "applied",
     "word": "applied",
     "finalSentence": "Zara applied the rule correctly in every example.",
+    "meaning": "Applied means used a rule, idea, or method in a situation.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -860,6 +967,7 @@
     "slug": "applies",
     "word": "applies",
     "finalSentence": "The same rule applies to every question in this section.",
+    "meaning": "Applies means is relevant or works for a particular situation.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -868,6 +976,7 @@
     "slug": "applying",
     "word": "applying",
     "finalSentence": "Iris practised applying the method to new problems.",
+    "meaning": "Applying means using a rule, idea, or method in a situation.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -876,6 +985,7 @@
     "slug": "applicable",
     "word": "applicable",
     "finalSentence": "The safety rule was applicable to every science experiment.",
+    "meaning": "Applicable means relevant or suitable for a particular situation.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -884,6 +994,7 @@
     "slug": "appoint",
     "word": "appoint",
     "finalSentence": "The council will appoint a new sports captain tomorrow.",
+    "meaning": "Appoint means to choose someone for a job or role.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -892,6 +1003,7 @@
     "slug": "appointed",
     "word": "appointed",
     "finalSentence": "Imran was appointed leader for the robotics challenge.",
+    "meaning": "Appointed means chosen for a job or role by someone.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -900,6 +1012,7 @@
     "slug": "appointment",
     "word": "appointment",
     "finalSentence": "Ben wrote the appointment time carefully in his planner.",
+    "meaning": "Appointment means an arranged time to meet someone or do something.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -908,6 +1021,7 @@
     "slug": "appreciated",
     "word": "appreciated",
     "finalSentence": "Aisha appreciated the quiet help from her partner.",
+    "meaning": "Appreciated means valued something or felt thankful for it.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -916,6 +1030,7 @@
     "slug": "appreciation",
     "word": "appreciation",
     "finalSentence": "Priya showed appreciation by thanking every volunteer after lunch.",
+    "meaning": "Appreciation means thanks, respect, or understanding of value.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -924,6 +1039,7 @@
     "slug": "approached",
     "word": "approached",
     "finalSentence": "Lina approached the nervous dog slowly and calmly.",
+    "meaning": "Approached means moved nearer to something or someone.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -932,6 +1048,7 @@
     "slug": "approaching",
     "word": "approaching",
     "finalSentence": "The approaching storm darkened the sky before playtime.",
+    "meaning": "Approaching means coming nearer in place or time.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -940,6 +1057,7 @@
     "slug": "approving",
     "word": "approving",
     "finalSentence": "Jonah gave an approving smile after the clear explanation.",
+    "meaning": "Approving means showing that you agree with or like something.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -948,6 +1066,7 @@
     "slug": "argue",
     "word": "argue",
     "finalSentence": "Finn tried to argue his point with clear evidence.",
+    "meaning": "Argue means to give reasons for an idea or disagree with someone.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -956,6 +1075,7 @@
     "slug": "argued",
     "word": "argued",
     "finalSentence": "Finn argued that the answer needed more evidence.",
+    "meaning": "Argued means gave reasons for an idea or disagreed with someone.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -964,6 +1084,7 @@
     "slug": "arguing",
     "word": "arguing",
     "finalSentence": "Cara disliked arguing, so she suggested a vote.",
+    "meaning": "Arguing means giving reasons or disagreeing, often in a strong way.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -972,6 +1093,7 @@
     "slug": "arrange",
     "word": "arrange",
     "finalSentence": "Leo helped arrange the chairs before the assembly.",
+    "meaning": "Arrange means to put things in order or plan something.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -980,6 +1102,7 @@
     "slug": "arranged",
     "word": "arranged",
     "finalSentence": "Sofia arranged the data cards into three clear groups.",
+    "meaning": "Arranged means put things in order or planned something.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -988,6 +1111,7 @@
     "slug": "arranging",
     "word": "arranging",
     "finalSentence": "Cara enjoyed arranging the shells from smallest to largest.",
+    "meaning": "Arranging means putting things in order or planning something.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -996,6 +1120,7 @@
     "slug": "assist",
     "word": "assist",
     "finalSentence": "Eleni stayed behind to assist the younger readers.",
+    "meaning": "Assist means to help someone with a task or need.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -1004,6 +1129,7 @@
     "slug": "assisted",
     "word": "assisted",
     "finalSentence": "Hugo assisted the referee during the school tournament.",
+    "meaning": "Assisted means helped someone with a task or activity.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -1012,6 +1138,7 @@
     "slug": "attend",
     "word": "attend",
     "finalSentence": "Imran will attend the rehearsal before the concert.",
+    "meaning": "Attend means to go to an event, lesson, or meeting.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -1020,6 +1147,7 @@
     "slug": "attended",
     "word": "attended",
     "finalSentence": "Una attended the science club every Tuesday after school.",
+    "meaning": "Attended means went to an event, lesson, or meeting.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -1028,6 +1156,7 @@
     "slug": "attentive",
     "word": "attentive",
     "finalSentence": "Keira stayed attentive while the guide explained the fossils.",
+    "meaning": "Attentive means listening or watching carefully with focus.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -1036,6 +1165,7 @@
     "slug": "avoided",
     "word": "avoided",
     "finalSentence": "Eleni avoided the puddle by stepping onto the path.",
+    "meaning": "Avoided means kept away from something or stopped it happening.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -1044,6 +1174,7 @@
     "slug": "avoiding",
     "word": "avoiding",
     "finalSentence": "Leo practised avoiding distractions during silent reading time.",
+    "meaning": "Avoiding means keeping away from something or stopping it happening.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -1052,6 +1183,7 @@
     "slug": "avoidance",
     "word": "avoidance",
     "finalSentence": "The poster explained avoidance of sunburn during the summer trip.",
+    "meaning": "Avoidance means the act of keeping away from something.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -1060,6 +1192,7 @@
     "slug": "behave",
     "word": "behave",
     "finalSentence": "Noah promised to behave sensibly during the museum visit.",
+    "meaning": "Behave means to act in a particular way, especially sensibly.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -1068,6 +1201,7 @@
     "slug": "behaved",
     "word": "behaved",
     "finalSentence": "Lina behaved politely while the visitor answered questions.",
+    "meaning": "Behaved means acted in a particular way in a situation.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -1076,6 +1210,7 @@
     "slug": "behaviour",
     "word": "behaviour",
     "finalSentence": "Daisy's behaviour improved after she followed the class routine.",
+    "meaning": "Behaviour means the way a person or animal acts.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -1084,6 +1219,7 @@
     "slug": "behavioural",
     "word": "behavioural",
     "finalSentence": "Theo noticed a behavioural pattern in the nesting birds.",
+    "meaning": "Behavioural means related to the way people or animals act.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -1092,6 +1228,7 @@
     "slug": "believed",
     "word": "believed",
     "finalSentence": "Sofia believed the map would lead them home.",
+    "meaning": "Believed means thought something was true or likely.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -1100,6 +1237,7 @@
     "slug": "believable",
     "word": "believable",
     "finalSentence": "Orla wrote a believable ending for her adventure story.",
+    "meaning": "Believable means seeming true, possible, or easy to accept.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -1108,6 +1246,7 @@
     "slug": "benefited",
     "word": "benefited",
     "finalSentence": "Noah benefited from extra practice before the spelling test.",
+    "meaning": "Benefited means gained help or advantage from something.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -1116,6 +1255,7 @@
     "slug": "breathed",
     "word": "breathed",
     "finalSentence": "Eleni breathed slowly before beginning her presentation aloud.",
+    "meaning": "Breathed means took air into the lungs and let it out.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -1124,6 +1264,7 @@
     "slug": "calculating",
     "word": "calculating",
     "finalSentence": "Maya was calculating the total cost of the picnic.",
+    "meaning": "Calculating means working out an answer using numbers or careful thinking.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -1132,6 +1273,7 @@
     "slug": "carefully",
     "word": "carefully",
     "finalSentence": "Keira carefully labelled each bone in the diagram.",
+    "meaning": "Carefully means with thought and attention, avoiding mistakes.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -1140,6 +1282,7 @@
     "slug": "carelessly",
     "word": "carelessly",
     "finalSentence": "Maya carelessly left muddy footprints across the clean floor.",
+    "meaning": "Carelessly means without enough thought, attention, or care.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -1148,6 +1291,7 @@
     "slug": "celebrate",
     "word": "celebrate",
     "finalSentence": "Yasmin wanted to celebrate the team's hard work.",
+    "meaning": "Celebrate means to show happiness about a special event or success.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -1156,6 +1300,7 @@
     "slug": "celebrated",
     "word": "celebrated",
     "finalSentence": "Orla celebrated her improvement with a quiet smile.",
+    "meaning": "Celebrated means showed happiness about a special event or success.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -1164,6 +1309,7 @@
     "slug": "celebratory",
     "word": "celebratory",
     "finalSentence": "Leo made a celebratory banner for the class performance.",
+    "meaning": "Celebratory means showing happiness about a special event or success.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -1172,6 +1318,7 @@
     "slug": "classified",
     "word": "classified",
     "finalSentence": "Freya classified the leaves by shape and colour.",
+    "meaning": "Classified means sorted into groups by shared features.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -1180,6 +1327,7 @@
     "slug": "comfort",
     "word": "comfort",
     "finalSentence": "Cara offered comfort to her friend after the fall.",
+    "meaning": "Comfort means kindness or support that helps someone feel better.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -1188,6 +1336,7 @@
     "slug": "compared",
     "word": "compared",
     "finalSentence": "Priya compared the two maps before choosing her route.",
+    "meaning": "Compared means looked at two or more things to see similarities or differences.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -1196,6 +1345,7 @@
     "slug": "comparative",
     "word": "comparative",
     "finalSentence": "Jonah wrote a comparative paragraph about two rivers.",
+    "meaning": "Comparative means involving a comparison between two or more things.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -1204,6 +1354,7 @@
     "slug": "competed",
     "word": "competed",
     "finalSentence": "Sofia competed in the relay and finished strongly.",
+    "meaning": "Competed means took part in a contest or race against others.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -1212,6 +1363,7 @@
     "slug": "compose",
     "word": "compose",
     "finalSentence": "Grace planned to compose a tune for the assembly.",
+    "meaning": "Compose means to create music, writing, or another planned piece.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -1220,6 +1372,7 @@
     "slug": "composed",
     "word": "composed",
     "finalSentence": "Ethan composed a short poem about the sea.",
+    "meaning": "Composed means created music, writing, or another planned piece.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -1228,6 +1381,7 @@
     "slug": "composition",
     "word": "composition",
     "finalSentence": "Eleni improved the composition by moving the main figure.",
+    "meaning": "Composition means how parts are arranged in a piece of art, music, or writing.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -1236,6 +1390,7 @@
     "slug": "concentrated",
     "word": "concentrated",
     "finalSentence": "Victor concentrated on the pattern until the answer appeared.",
+    "meaning": "Concentrated means focused attention carefully on one thing.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -1244,6 +1399,7 @@
     "slug": "confirm",
     "word": "confirm",
     "finalSentence": "Orla checked the timetable to confirm the train time.",
+    "meaning": "Confirm means to check or show that something is true or certain.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -1252,6 +1408,7 @@
     "slug": "confirmed",
     "word": "confirmed",
     "finalSentence": "Caleb confirmed the answer by checking the worked example.",
+    "meaning": "Confirmed means checked or showed that something was true or certain.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -1260,6 +1417,7 @@
     "slug": "confirmation",
     "word": "confirmation",
     "finalSentence": "The email gave confirmation that the trip was booked.",
+    "meaning": "Confirmation means proof or a message that something is true or arranged.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -1268,6 +1426,7 @@
     "slug": "connected",
     "word": "connected",
     "finalSentence": "Aisha connected the battery before testing the circuit.",
+    "meaning": "Connected means joined or linked things together in some way.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -1276,6 +1435,7 @@
     "slug": "construct",
     "word": "construct",
     "finalSentence": "Ravi used sticks to construct a model bridge.",
+    "meaning": "Construct means to build or make something carefully.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -1284,6 +1444,7 @@
     "slug": "constructed",
     "word": "constructed",
     "finalSentence": "Sofia constructed a shelter from branches and string.",
+    "meaning": "Constructed means built or made something carefully from parts.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -1292,6 +1453,7 @@
     "slug": "constructive",
     "word": "constructive",
     "finalSentence": "Amir gave constructive feedback after reading the draft.",
+    "meaning": "Constructive means helpful and aimed at improving something.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -1300,6 +1462,7 @@
     "slug": "continued",
     "word": "continued",
     "finalSentence": "Ethan continued reading quietly after the bell rang.",
+    "meaning": "Continued means carried on without stopping for longer.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -1308,6 +1471,7 @@
     "slug": "continuous",
     "word": "continuous",
     "finalSentence": "The continuous hum from the fridge filled the kitchen.",
+    "meaning": "Continuous means going on without stopping or gaps.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -1316,6 +1480,7 @@
     "slug": "contribute",
     "word": "contribute",
     "finalSentence": "Ravi offered to contribute a drawing to the display.",
+    "meaning": "Contribute means to give something to help a shared task or group.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -1324,6 +1489,7 @@
     "slug": "contributed",
     "word": "contributed",
     "finalSentence": "Ethan contributed three facts to the group poster.",
+    "meaning": "Contributed means gave something to help a shared task or group.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -1332,6 +1498,7 @@
     "slug": "cooperated",
     "word": "cooperated",
     "finalSentence": "Iris cooperated with her partner during the coding task.",
+    "meaning": "Cooperated means worked together helpfully with someone else.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -1340,6 +1507,7 @@
     "slug": "coordinated",
     "word": "coordinated",
     "finalSentence": "Keira coordinated the costumes for the school play.",
+    "meaning": "Coordinated means organised different people or parts to work together.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -1348,6 +1516,7 @@
     "slug": "courageously",
     "word": "courageously",
     "finalSentence": "Eleni spoke courageously when she defended her idea.",
+    "meaning": "Courageously means in a brave way when facing difficulty.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -1356,6 +1525,7 @@
     "slug": "create",
     "word": "create",
     "finalSentence": "Imran used clay to create a Roman coin.",
+    "meaning": "Create means to make something new from ideas or materials.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -1364,6 +1534,7 @@
     "slug": "created",
     "word": "created",
     "finalSentence": "Ethan created a poster about healthy lunches yesterday.",
+    "meaning": "Created means made something new from ideas or materials.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -1372,6 +1543,7 @@
     "slug": "decided",
     "word": "decided",
     "finalSentence": "Cara decided to test the strongest magnet first.",
+    "meaning": "Decided means chose what to do after thinking.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -1380,6 +1552,7 @@
     "slug": "decisive",
     "word": "decisive",
     "finalSentence": "Amir made a decisive move in the final round.",
+    "meaning": "Decisive means able to decide clearly or settle a result.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -1388,6 +1561,7 @@
     "slug": "defined",
     "word": "defined",
     "finalSentence": "Daisy defined each key term before the quiz.",
+    "meaning": "Defined means explained the exact meaning of a word or idea.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -1396,6 +1570,7 @@
     "slug": "demonstrated",
     "word": "demonstrated",
     "finalSentence": "Maya demonstrated the dance steps for the younger pupils.",
+    "meaning": "Demonstrated means showed how to do something or proved something clearly.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -1404,6 +1579,7 @@
     "slug": "described",
     "word": "described",
     "finalSentence": "Leo described the mountain path in vivid detail.",
+    "meaning": "Described means explained what something was like using words.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -1412,6 +1588,7 @@
     "slug": "designed",
     "word": "designed",
     "finalSentence": "Theo designed a badge for the reading club.",
+    "meaning": "Designed means planned how something should look or work.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -1420,6 +1597,7 @@
     "slug": "designer",
     "word": "designer",
     "finalSentence": "Eleni interviewed the designer of the theatre costumes.",
+    "meaning": "Designer means a person who plans how something looks or works.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -1428,6 +1606,7 @@
     "slug": "destroyed",
     "word": "destroyed",
     "finalSentence": "The storm destroyed the old fence behind the school.",
+    "meaning": "Destroyed means damaged something so badly it could not be used.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -1436,6 +1615,7 @@
     "slug": "destructive",
     "word": "destructive",
     "finalSentence": "Noah explained why destructive waves damage cliffs quickly.",
+    "meaning": "Destructive means causing serious damage or harm to something.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -1444,6 +1624,7 @@
     "slug": "developed",
     "word": "developed",
     "finalSentence": "Una developed her idea after reading the feedback.",
+    "meaning": "Developed means grew, improved, or changed over time.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -1452,6 +1633,7 @@
     "slug": "developmental",
     "word": "developmental",
     "finalSentence": "The nurse checked each developmental stage during the appointment.",
+    "meaning": "Developmental means related to growth, learning, or gradual change.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -1460,6 +1642,7 @@
     "slug": "discovered",
     "word": "discovered",
     "finalSentence": "Hugo discovered a fossil on the beach path.",
+    "meaning": "Discovered means found or learned something for the first time.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -1468,6 +1651,7 @@
     "slug": "divided",
     "word": "divided",
     "finalSentence": "Eleni divided the cake into eight equal slices.",
+    "meaning": "Divided means split something into separate parts or groups.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -1476,6 +1660,7 @@
     "slug": "educate",
     "word": "educate",
     "finalSentence": "Caleb wanted to educate visitors about river pollution.",
+    "meaning": "Educate means to teach people or help them learn.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -1484,6 +1669,7 @@
     "slug": "educated",
     "word": "educated",
     "finalSentence": "Yasmin was educated at a small village school.",
+    "meaning": "Educated means taught at school or trained through learning.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -1492,6 +1678,7 @@
     "slug": "educational",
     "word": "educational",
     "finalSentence": "Ben chose an educational game about the solar system.",
+    "meaning": "Educational means helping people learn or understand something.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -1500,6 +1687,7 @@
     "slug": "encourage",
     "word": "encourage",
     "finalSentence": "Freya tried to encourage her team before the race.",
+    "meaning": "Encourage means to give someone confidence or support to keep trying.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -1508,6 +1696,7 @@
     "slug": "encouraged",
     "word": "encouraged",
     "finalSentence": "Jonah encouraged his partner to explain the method clearly.",
+    "meaning": "Encouraged means gave someone confidence or support to keep trying.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -1516,6 +1705,7 @@
     "slug": "encouraging",
     "word": "encouraging",
     "finalSentence": "Ravi wrote an encouraging message inside the card.",
+    "meaning": "Encouraging means giving confidence or support to help someone keep trying.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -1524,6 +1714,7 @@
     "slug": "enthusiast",
     "word": "enthusiast",
     "finalSentence": "Grace is a chess enthusiast who practises every lunchtime.",
+    "meaning": "Enthusiast means a person who is very interested in an activity or subject.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -1532,6 +1723,7 @@
     "slug": "enthusiastic",
     "word": "enthusiastic",
     "finalSentence": "Maya was enthusiastic about joining the science club.",
+    "meaning": "Enthusiastic means very interested and excited about something.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -1540,6 +1732,7 @@
     "slug": "enthusiasm",
     "word": "enthusiasm",
     "finalSentence": "Noah showed enthusiasm when the project began after lunch.",
+    "meaning": "Enthusiasm means strong interest and excitement about something.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -1548,6 +1741,7 @@
     "slug": "estimated",
     "word": "estimated",
     "finalSentence": "Amir estimated the distance before measuring it accurately.",
+    "meaning": "Estimated means made a sensible guess using available information.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -1556,6 +1750,7 @@
     "slug": "estimation",
     "word": "estimation",
     "finalSentence": "Priya's estimation was close to the actual length.",
+    "meaning": "Estimation means a sensible guess based on available information.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -1564,6 +1759,7 @@
     "slug": "evaluated",
     "word": "evaluated",
     "finalSentence": "Priya evaluated each design before choosing the strongest.",
+    "meaning": "Evaluated means judged something carefully to decide its value or quality.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -1572,6 +1768,7 @@
     "slug": "evaluation",
     "word": "evaluation",
     "finalSentence": "The evaluation explained which method worked best overall.",
+    "meaning": "Evaluation means a careful judgement about value, quality, or success.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -1580,6 +1777,7 @@
     "slug": "evidently",
     "word": "evidently",
     "finalSentence": "Beth had evidently practised because her reading was fluent.",
+    "meaning": "Evidently means clearly, or in a way that can be seen from evidence.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -1588,6 +1786,7 @@
     "slug": "familiarise",
     "word": "familiarise",
     "finalSentence": "Priya wanted to familiarise herself with the new library system.",
+    "meaning": "Familiarise means to help yourself or someone else get to know something.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -1596,6 +1795,7 @@
     "slug": "familiarity",
     "word": "familiarity",
     "finalSentence": "Ethan's familiarity with the route helped him guide visitors.",
+    "meaning": "Familiarity means knowing something well through experience or practice.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -1604,6 +1804,7 @@
     "slug": "forgive",
     "word": "forgive",
     "finalSentence": "Beth chose to forgive her friend after the argument.",
+    "meaning": "Forgive means to stop feeling angry with someone for a wrong action.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -1612,6 +1813,7 @@
     "slug": "forgiven",
     "word": "forgiven",
     "finalSentence": "Willow felt forgiven after she apologised for the mistake.",
+    "meaning": "Forgiven means no longer blamed after an apology or wrong action.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   },
@@ -1620,6 +1822,7 @@
     "slug": "generate",
     "word": "generate",
     "finalSentence": "Amir used the program to generate a random number.",
+    "meaning": "Generate means to make or produce something new.",
     "changed": true,
     "reviewNote": "Rewritten to improve semantic fit."
   }

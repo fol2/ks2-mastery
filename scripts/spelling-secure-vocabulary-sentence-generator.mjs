@@ -251,7 +251,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, '..');
 
-function loadSemanticSentenceOverrides() {
+function loadSemanticVocabularyOverrides() {
   const filePath = path.join(rootDir, SEMANTIC_SENTENCE_SOURCE_PATH);
   if (!existsSync(filePath)) return new Map();
 
@@ -259,11 +259,14 @@ function loadSemanticSentenceOverrides() {
   const rows = Array.isArray(parsed?.sentences) ? parsed.sentences : [];
   return new Map(rows.map((row) => [
     normaliseString(row?.slug || row?.word).toLowerCase(),
-    normaliseString(row?.sentence || row?.finalSentence),
-  ]).filter(([slug, sentence]) => slug && sentence));
+    {
+      sentence: normaliseString(row?.sentence || row?.finalSentence),
+      meaning: normaliseString(row?.meaning || row?.explanation),
+    },
+  ]).filter(([slug, entry]) => slug && (entry.sentence || entry.meaning)));
 }
 
-const SEMANTIC_SENTENCE_OVERRIDES = loadSemanticSentenceOverrides();
+const SEMANTIC_VOCABULARY_OVERRIDES = loadSemanticVocabularyOverrides();
 
 const SPECIAL_SENTENCES = Object.freeze({
   ability: 'Maya showed her ability by explaining the hardest step clearly.',
@@ -508,7 +511,17 @@ export function secureVocabularySentenceFor(wordEntry, sentenceIndex = 0) {
 export function secureVocabularySemanticSentenceOverrideFor(wordEntry) {
   const word = normaliseString(wordEntry?.word || wordEntry?.slug).toLowerCase();
   const slug = normaliseString(wordEntry?.slug).toLowerCase();
-  return SEMANTIC_SENTENCE_OVERRIDES.get(slug) || SEMANTIC_SENTENCE_OVERRIDES.get(word) || '';
+  return SEMANTIC_VOCABULARY_OVERRIDES.get(slug)?.sentence
+    || SEMANTIC_VOCABULARY_OVERRIDES.get(word)?.sentence
+    || '';
+}
+
+export function secureVocabularySemanticMeaningOverrideFor(wordEntry) {
+  const word = normaliseString(wordEntry?.word || wordEntry?.slug).toLowerCase();
+  const slug = normaliseString(wordEntry?.slug).toLowerCase();
+  return SEMANTIC_VOCABULARY_OVERRIDES.get(slug)?.meaning
+    || SEMANTIC_VOCABULARY_OVERRIDES.get(word)?.meaning
+    || '';
 }
 
 export function normaliseSentenceForAudit(value) {
@@ -639,5 +652,64 @@ export function assertSecureVocabularySentenceSet(entries) {
   if (issues.length > 0) {
     const preview = JSON.stringify(issues.slice(0, 5), null, 2);
     throw new Error(`Secure vocabulary sentence audit found ${issues.length} issue(s): ${preview}`);
+  }
+}
+
+const BAD_MEANING_FRAGMENTS = Object.freeze([
+  'owner-approved generated',
+  'spelling-practice entry',
+  'spell each letter',
+  'accepted uk form',
+  'secure-extension spelling',
+]);
+
+export function assertSecureVocabularyMeaningQuality({ meaning, wordEntry }) {
+  const text = normaliseString(meaning);
+  const slug = normaliseString(wordEntry?.slug || wordEntry?.word) || 'unknown';
+  if (!text) throw new Error(`Missing secure vocabulary meaning for ${slug}.`);
+  if (!/[.!?]$/.test(text)) {
+    throw new Error(`Secure vocabulary meaning must end with sentence punctuation for ${slug}: ${text}`);
+  }
+  if ((text.match(/[.!?]/g) || []).length !== 1) {
+    throw new Error(`Secure vocabulary meaning must be one sentence for ${slug}: ${text}`);
+  }
+  const normalisedText = normaliseSentenceForAudit(text);
+  for (const fragment of BAD_MEANING_FRAGMENTS) {
+    if (normalisedText.includes(normaliseSentenceForAudit(fragment))) {
+      throw new Error(`Secure vocabulary meaning keeps meta fallback copy for ${slug}: ${text}`);
+    }
+  }
+  const wordCount = normalisedText ? normalisedText.split(' ').length : 0;
+  if (wordCount < 5) {
+    throw new Error(`Secure vocabulary meaning is too thin for ${slug}: ${text}`);
+  }
+  if (wordCount > 32) {
+    throw new Error(`Secure vocabulary meaning is too long for ${slug}: ${text}`);
+  }
+}
+
+export function collectSecureVocabularyMeaningIssues(entries) {
+  const issues = [];
+  for (const row of entries) {
+    try {
+      assertSecureVocabularyMeaningQuality({ meaning: row.meaning, wordEntry: row });
+    } catch (error) {
+      issues.push({
+        type: 'quality',
+        slug: row.slug,
+        word: row.word,
+        meaning: row.meaning,
+        message: error.message,
+      });
+    }
+  }
+  return issues;
+}
+
+export function assertSecureVocabularyMeaningSet(entries) {
+  const issues = collectSecureVocabularyMeaningIssues(entries);
+  if (issues.length > 0) {
+    const preview = JSON.stringify(issues.slice(0, 5), null, 2);
+    throw new Error(`Secure vocabulary meaning audit found ${issues.length} issue(s): ${preview}`);
   }
 }

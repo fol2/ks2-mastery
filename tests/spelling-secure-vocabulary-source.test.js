@@ -15,6 +15,9 @@ import {
   buildSecureVocabularyRuntimeImport,
 } from '../scripts/import-spelling-secure-vocabulary.mjs';
 import {
+  secureVocabularySemanticMeaningOverrideFor,
+} from '../scripts/spelling-secure-vocabulary-sentence-generator.mjs';
+import {
   verifySecureVocabularyRuntime,
 } from '../scripts/verify-spelling-secure-vocabulary-runtime.mjs';
 import {
@@ -333,14 +336,13 @@ test('owner-approved release-quality policy populates secure-extension release f
   const generatedSecureWord = artifacts.auditedSource.words.find((word) => word.word === 'careful');
   const reviewPackGeneratedWord = artifacts.reviewPack.words.find((word) => word.word === 'careful');
   const statutoryWord = artifacts.auditedSource.words.find((word) => word.word === 'accident');
+  const semanticMeaning = secureVocabularySemanticMeaningOverrideFor({ slug: 'careful', word: 'careful' });
 
   assert.equal(suppliedSecureWord.releaseReadiness.explanation, 'Record supplied explanation stays in place.');
   assert.deepEqual(suppliedSecureWord.releaseReadiness.morphologyTags, ['record-supplied-morphology']);
   assert.deepEqual(generatedSecureWord.releaseReadiness.acceptedSpellings, ['careful']);
-  assert.equal(
-    generatedSecureWord.releaseReadiness.explanation,
-    'Careful is an owner-approved generated KS2 secure-extension spelling-practice entry. Pupils should read it clearly, spell each letter in order, and keep the accepted UK form unchanged.'
-  );
+  assert.equal(generatedSecureWord.releaseReadiness.explanation, semanticMeaning);
+  assert.doesNotMatch(generatedSecureWord.releaseReadiness.explanation, /owner-approved generated|spelling-practice entry|spell each letter|accepted UK form/i);
   assert.deepEqual(
     generatedSecureWord.releaseReadiness.exampleSentences,
     ['Cara made a careful choice before cutting the card.']
@@ -392,7 +394,7 @@ test('secure vocabulary runtime import publishes approved secure-extension words
   assert.equal(imported.manifest.imported.secureExtensionWordCount, 1);
   assert.equal(imported.manifest.imported.skippedExistingExtraWordCount, 1);
   assert.deepEqual(imported.manifest.imported.skippedExistingExtraWordSlugs, ['admission']);
-  assert.equal(imported.manifest.release.id, 'spelling-r11');
+  assert.equal(imported.manifest.release.id, 'spelling-r12');
   assert.equal(report.ok, true);
   assert.equal(report.issueCount, 0);
   assert.equal(report.summary.statutoryCoreCount, 213);

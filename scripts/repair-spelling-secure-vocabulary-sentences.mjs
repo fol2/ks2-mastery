@@ -9,9 +9,12 @@ import {
 } from '../src/subjects/spelling/content/model.js';
 import {
   BAD_TEMPLATE_FRAGMENT,
+  assertSecureVocabularyMeaningQuality,
+  assertSecureVocabularyMeaningSet,
   assertSecureVocabularySentenceQuality,
   assertSecureVocabularySentenceSet,
   secureVocabularySentenceFor,
+  secureVocabularySemanticMeaningOverrideFor,
   secureVocabularySemanticSentenceOverrideFor,
 } from './spelling-secure-vocabulary-sentence-generator.mjs';
 
@@ -20,8 +23,9 @@ const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, '..');
 const contentPath = path.join(rootDir, 'content', 'spelling.seed.json');
 const SECURE_SENTENCE_PREFIX = 'secure-vocabulary-';
-const PUBLISHED_AT = Date.parse('2026-06-05T21:35:00.000Z');
-const REPAIR_RELEASE_TITLE = 'Secure vocabulary semantic sentence proofread r10';
+const PUBLISHED_AT = Date.parse('2026-06-05T23:00:00.000Z');
+const REPAIR_RELEASE_TITLE = 'Secure vocabulary semantic sentence and meaning proofread r11';
+const MEANING_FALLBACKS_BY_SLUG = new Map();
 
 function normaliseString(value) {
   return typeof value === 'string' ? value.trim() : '';
@@ -55,6 +59,30 @@ function isSecureVocabularyWord(wordEntry) {
 
 function hasSemanticProofreadSentence(wordEntry) {
   return Boolean(secureVocabularySemanticSentenceOverrideFor(wordEntry));
+}
+
+function meaningFor(wordEntry) {
+  const slug = normaliseString(wordEntry?.slug || wordEntry?.word).toLowerCase();
+  const word = normaliseString(wordEntry?.word || wordEntry?.slug).toLowerCase();
+  const meaning = secureVocabularySemanticMeaningOverrideFor(wordEntry)
+    || MEANING_FALLBACKS_BY_SLUG.get(slug)
+    || MEANING_FALLBACKS_BY_SLUG.get(word)
+    || '';
+  if (meaning) {
+    assertSecureVocabularyMeaningQuality({ meaning, wordEntry });
+  }
+  return meaning;
+}
+
+function hasSemanticProofreadMeaning(wordEntry) {
+  return Boolean(meaningFor(wordEntry));
+}
+
+function repairWordMeaning(wordEntry) {
+  if (!isSecureVocabularyWord(wordEntry) || !hasSemanticProofreadMeaning(wordEntry)) return wordEntry;
+  const explanation = meaningFor(wordEntry);
+  if (!explanation || normaliseString(wordEntry.explanation) === explanation) return wordEntry;
+  return { ...wordEntry, explanation };
 }
 
 function repairSentenceText({ sentence, wordEntry, index, force = false }) {
@@ -97,7 +125,7 @@ function repairSnapshot(snapshot) {
           : variant.sentences,
       }))
       : word.variants;
-    return { ...word, sentence, sentences, variants };
+    return repairWordMeaning({ ...word, sentence, sentences, variants });
   });
 
   return {
@@ -127,6 +155,18 @@ function countBadSnapshotSentences(snapshot) {
   }, 0);
 }
 
+function countBadSnapshotMeanings(snapshot) {
+  if (!snapshot || typeof snapshot !== 'object' || !Array.isArray(snapshot.words)) return 0;
+  return snapshot.words.filter(isSecureVocabularyWord).reduce((count, word) => {
+    try {
+      assertSecureVocabularyMeaningQuality({ meaning: word.explanation, wordEntry: word });
+      return count;
+    } catch {
+      return count + 1;
+    }
+  }, 0);
+}
+
 const rawBundle = JSON.parse(await readFile(contentPath, 'utf8'));
 const draftValidation = validateSpellingContentBundle(rawBundle);
 if (!draftValidation.ok) {
@@ -134,11 +174,22 @@ if (!draftValidation.ok) {
 }
 
 const bundle = draftValidation.bundle;
+for (const word of bundle.draft.words) {
+  const explanation = normaliseString(word.explanation);
+  if (!explanation) continue;
+  try {
+    assertSecureVocabularyMeaningQuality({ meaning: explanation, wordEntry: word });
+    MEANING_FALLBACKS_BY_SLUG.set(normaliseString(word.slug || word.word).toLowerCase(), explanation);
+  } catch {
+    // Draft fallbacks are only used for legacy archived secure rows when they are already learner-facing.
+  }
+}
 const wordBySlug = new Map(bundle.draft.words.map((word) => [word.slug, word]));
 let repairedCount = 0;
 
 const repairedDraft = {
   ...bundle.draft,
+  words: bundle.draft.words.map((word) => repairWordMeaning(word)),
   sentences: bundle.draft.sentences.map((sentence, index) => {
     if (!sentence.id.startsWith(SECURE_SENTENCE_PREFIX)) {
       return sentence;
@@ -175,11 +226,12 @@ const currentRelease = repairedValidation.bundle.releases.find((release) => (
   release.id === repairedValidation.bundle.publication.currentReleaseId
 ));
 const shouldPublishRepairRelease = currentRelease?.title !== REPAIR_RELEASE_TITLE
-  || countBadSnapshotSentences(currentRelease?.snapshot) > 0;
+  || countBadSnapshotSentences(currentRelease?.snapshot) > 0
+  || countBadSnapshotMeanings(currentRelease?.snapshot) > 0;
 const publishedBundle = shouldPublishRepairRelease
   ? publishSpellingContentBundle(repairedValidation.bundle, {
     title: REPAIR_RELEASE_TITLE,
-    notes: 'Publishes one-by-one semantic-proofread secure-extension vocabulary sentences with natural UK English examples.',
+    notes: 'Publishes one-by-one semantic-proofread secure-extension vocabulary sentences and learner-facing meanings with natural UK English examples.',
     publishedAt: PUBLISHED_AT,
   })
   : repairedValidation.bundle;
@@ -202,6 +254,12 @@ if (releaseBadSentenceCount > 0) {
   throw new Error(`Found ${releaseBadSentenceCount} unrepaired secure vocabulary snapshot sentence(s).`);
 }
 
+const releaseBadMeaningCount = finalValidation.bundle.releases
+  .reduce((count, release) => count + countBadSnapshotMeanings(release.snapshot), 0);
+if (releaseBadMeaningCount > 0) {
+  throw new Error(`Found ${releaseBadMeaningCount} unrepaired secure vocabulary snapshot meaning(s).`);
+}
+
 const publishedSecureWords = finalValidation.bundle.releases
   .find((release) => release.id === finalValidation.bundle.publication.currentReleaseId)
   ?.snapshot.words
@@ -211,8 +269,10 @@ const publishedSecureWords = finalValidation.bundle.releases
     word: word.word,
     accepted: word.accepted,
     sentence: word.sentence || word.sentences?.[0] || '',
+    meaning: word.explanation || '',
   })) || [];
 assertSecureVocabularySentenceSet(publishedSecureWords);
+assertSecureVocabularyMeaningSet(publishedSecureWords);
 
 await writeFile(contentPath, `${JSON.stringify(finalValidation.bundle, null, 2)}\n`, 'utf8');
 

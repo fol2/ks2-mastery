@@ -6,7 +6,9 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   SEMANTIC_SENTENCE_SOURCE_PATH,
+  assertSecureVocabularyMeaningQuality,
   assertSecureVocabularySentenceQuality,
+  collectSecureVocabularyMeaningIssues,
   collectSecureVocabularySentenceIssues,
   normaliseSentenceForAudit,
 } from './spelling-secure-vocabulary-sentence-generator.mjs';
@@ -19,7 +21,7 @@ const rootDir = path.resolve(__dirname, '..');
 const DEFAULT_SLICE_DIR = path.join(rootDir, 'content', 'spelling-secure-vocabulary-semantic-slices');
 const DEFAULT_INPUT_DIR = path.join(rootDir, 'tmp', 'secure-vocabulary-semantic-audit');
 const DEFAULT_OUT = path.join(rootDir, SEMANTIC_SENTENCE_SOURCE_PATH);
-const DEFAULT_REPORT_OUT = path.join(rootDir, 'reports', 'spelling', 'secure-vocabulary-semantic-audit-r10.json');
+const DEFAULT_REPORT_OUT = path.join(rootDir, 'reports', 'spelling', 'secure-vocabulary-semantic-meaning-audit-r11.json');
 const DEFAULT_CONTENT_PATH = path.join(rootDir, 'content', 'spelling.seed.json');
 const EXPECTED_SLICE_COUNT = 6;
 
@@ -207,7 +209,7 @@ function loadSliceRows({ sliceDir, inputDir }) {
         return;
       }
 
-      for (const field of ['index', 'slug', 'word', 'finalSentence', 'changed', 'reviewNote']) {
+      for (const field of ['index', 'slug', 'word', 'finalSentence', 'meaning', 'changed', 'reviewNote']) {
         if (!Object.prototype.hasOwnProperty.call(finalRow, field)) {
           issues.push(issue('missing_final_row_field', `${outputPath}.${field}`, `Missing required field "${field}".`));
         }
@@ -251,6 +253,24 @@ function loadSliceRows({ sliceDir, inputDir }) {
         ));
       }
 
+      const meaning = normaliseString(finalRow.meaning);
+      try {
+        assertSecureVocabularyMeaningQuality({
+          meaning,
+          wordEntry: {
+            ...inputRow,
+            accepted: Array.isArray(inputRow.accepted) ? inputRow.accepted : [inputRow.word],
+          },
+        });
+      } catch (error) {
+        issues.push(issue(
+          'meaning_quality',
+          `${outputPath}.meaning`,
+          error.message,
+          { slug: inputRow.slug, meaning },
+        ));
+      }
+
       issues.push(...collectSemanticFrameIssues({ finalSentence, inputRow, outputPath }));
       rows.push({
         index: Number(inputRow.index),
@@ -258,6 +278,7 @@ function loadSliceRows({ sliceDir, inputDir }) {
         word: normaliseString(inputRow.word),
         accepted: Array.isArray(inputRow.accepted) ? inputRow.accepted : [normaliseString(inputRow.word)],
         sentence: finalSentence,
+        meaning,
         previousSentence: normaliseString(inputRow.sentence),
         changed: finalSentence !== normaliseString(inputRow.sentence),
         reviewerChanged: Boolean(finalRow.changed),
@@ -328,22 +349,31 @@ rows.forEach((row, index) => {
 
 const coverage = validateCoverage({ rows, contentPath });
 const duplicateIssues = validateDuplicates(rows);
+const meaningIssues = collectSecureVocabularyMeaningIssues(rows).map((entry, index) => issue(
+  `meaning_${entry.type}`,
+  `sentences[${index}].meaning`,
+  `Secure vocabulary meaning audit reported ${entry.type}.`,
+  entry,
+));
 const issues = [
   ...loaded.issues,
   ...rowIssues,
   ...coverage.issues,
   ...duplicateIssues,
+  ...meaningIssues,
 ];
 const changedRows = rows.filter((row) => row.changed);
+const meaningRows = rows.filter((row) => row.meaning);
 
 const sourcePayload = {
   kind: 'ks2-spelling-secure-vocabulary-semantic-sentences',
-  version: 1,
-  generatedAt: '2026-06-05T21:30:00.000Z',
+  version: 2,
+  generatedAt: '2026-06-05T23:00:00.000Z',
   review: {
-    method: 'Six slice one-by-one semantic proofread; every secure-extension sentence reviewed before publication.',
+    method: 'Six slice one-by-one semantic proofread; every secure-extension sentence and meaning reviewed before publication.',
     expectedSecureVocabularyCount: coverage.expectedSecureVocabularyCount,
     rowCount: rows.length,
+    meaningCount: meaningRows.length,
     changedCount: changedRows.length,
     sourceSlices: loaded.sourceFiles,
   },
@@ -354,6 +384,7 @@ const report = {
   generatedAt: sourcePayload.generatedAt,
   rowCount: rows.length,
   expectedSecureVocabularyCount: coverage.expectedSecureVocabularyCount,
+  meaningCount: meaningRows.length,
   changedCount: changedRows.length,
   issueCount: issues.length,
   sourcePath: path.relative(rootDir, outPath),
