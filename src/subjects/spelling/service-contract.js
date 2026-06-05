@@ -2,6 +2,10 @@ import {
   SPELLING_COVERAGE_TIER as SPELLING_COVERAGE_TIER_VALUE,
   coverageTierForWord as coverageTierForWordValue,
 } from './content/taxonomy.js';
+import {
+  SPELLING_SETUP_POOL_IDS as SPELLING_SETUP_POOL_IDS_VALUE,
+  normaliseSpellingSetupPoolId as normaliseSpellingSetupPoolIdValue,
+} from '../../../shared/spelling/pool-taxonomy.js';
 
 /**
  * P2 versioning convention (H7 synthesis, documented at U10): content-model
@@ -52,6 +56,27 @@ export {
   isStatutoryCoreWord,
   normaliseCoverageTier,
 } from './content/taxonomy.js';
+
+export {
+  SPELLING_ANALYTICS_POOL_CATEGORIES,
+  SPELLING_ANALYTICS_WORD_GROUP_CATEGORIES,
+  SPELLING_POOL_CATEGORIES,
+  SPELLING_SETUP_POOL_CATEGORIES,
+  SPELLING_SETUP_POOL_IDS,
+  SPELLING_WORD_BANK_FILTER_CATEGORIES,
+  SPELLING_WORD_BANK_FILTER_IDS,
+  SPELLING_WORD_BANK_SUMMARY_CATEGORIES,
+  normaliseSpellingPoolCategoryId,
+  normaliseSpellingSetupPoolId,
+  normaliseSpellingWordBankFilterId,
+  spellingPoolCategoryById,
+  spellingPoolCategoryForWord,
+  spellingPoolCategoryMatchesWord,
+  spellingPoolStatsKey,
+  spellingSetupPoolOptions,
+  spellingWordBankFilterOptions,
+  validateSpellingPoolCategories,
+} from '../../../shared/spelling/pool-taxonomy.js';
 
 /**
  * P2 U12: re-export of the achievement-framework canonical identifiers so
@@ -290,7 +315,7 @@ export function isMegaSafeMode(mode, options = {}) {
 export function isSingleAttemptMegaSafeMode(mode) {
   return isPostMasteryMode(mode);
 }
-export const SPELLING_YEAR_FILTERS = Object.freeze(['core', 'y3-4', 'y5-6', 'secure-extension', 'extra']);
+export const SPELLING_YEAR_FILTERS = Object.freeze([...SPELLING_SETUP_POOL_IDS_VALUE]);
 export const LEGACY_SPELLING_YEAR_FILTER_ALIASES = Object.freeze({
   all: 'core',
 });
@@ -329,10 +354,11 @@ export function normaliseMode(value, fallback = 'smart') {
 export function normaliseYearFilter(value, fallback = 'core') {
   const candidate = typeof value === 'string' ? value : '';
   const aliased = LEGACY_SPELLING_YEAR_FILTER_ALIASES[candidate] || candidate;
-  const normalisedFallback = SPELLING_YEAR_FILTERS.includes(fallback)
-    ? fallback
-    : LEGACY_SPELLING_YEAR_FILTER_ALIASES[fallback] || 'core';
-  return SPELLING_YEAR_FILTERS.includes(aliased) ? aliased : normalisedFallback;
+  const normalisedFallback = normaliseSpellingSetupPoolIdValue(
+    LEGACY_SPELLING_YEAR_FILTER_ALIASES[fallback] || fallback,
+    'core',
+  );
+  return normaliseSpellingSetupPoolIdValue(aliased, normalisedFallback);
 }
 
 export function normaliseRoundLength(value, mode = 'smart') {

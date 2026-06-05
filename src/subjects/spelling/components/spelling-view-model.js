@@ -9,11 +9,19 @@ import {
 } from '../../../platform/ui/hero-bg.js';
 import {
   coverageTierLabel,
+  coverageTierForWord,
   createLockedPostMasteryState,
   isEnrichmentExtraWord,
   isGuardianEligibleSlug,
   isSecureExtensionWord,
   isStatutoryCoreWord,
+  normaliseSpellingWordBankFilterId,
+  spellingPoolCategoryById,
+  spellingPoolCategoryForWord,
+  spellingPoolCategoryMatchesWord,
+  SPELLING_WORD_BANK_SUMMARY_CATEGORIES,
+  spellingSetupPoolOptions,
+  spellingWordBankFilterOptions,
 } from '../service-contract.js';
 
 export const SPELLING_ACCENT = '#3E6FA8';
@@ -108,13 +116,7 @@ export const POST_MEGA_MODE_CARDS = Object.freeze([
   },
 ]);
 export const ROUND_LENGTH_OPTIONS = Object.freeze(['10', '20', '40']);
-export const YEAR_FILTER_OPTIONS = Object.freeze([
-  { value: 'core', label: 'Core' },
-  { value: 'y3-4', label: 'Y3-4' },
-  { value: 'y5-6', label: 'Y5-6' },
-  { value: 'secure-extension', label: 'Secure vocabulary' },
-  { value: 'extra', label: 'Extra' },
-]);
+export const YEAR_FILTER_OPTIONS = Object.freeze(spellingSetupPoolOptions());
 export const WORD_BANK_FILTER_IDS = new Set([
   'all',
   'due',
@@ -140,7 +142,9 @@ export const WORD_BANK_GUARDIAN_FILTER_IDS = Object.freeze([
   'neverRenewed',
 ]);
 export const WORD_BANK_GUARDIAN_FILTER_ID_SET = new Set(WORD_BANK_GUARDIAN_FILTER_IDS);
-export const WORD_BANK_YEAR_FILTER_IDS = new Set(['all', 'y3-4', 'y5-6', 'secure-extension', 'extra']);
+export const WORD_BANK_YEAR_FILTER_OPTIONS = Object.freeze(spellingWordBankFilterOptions());
+export const WORD_BANK_YEAR_FILTER_IDS = new Set(WORD_BANK_YEAR_FILTER_OPTIONS.map((option) => option.id));
+export const WORD_BANK_SUMMARY_CATEGORIES = SPELLING_WORD_BANK_SUMMARY_CATEGORIES;
 
 /* U5: Word Bank Guardian chip copy polish (R10).
  *
@@ -533,21 +537,31 @@ export function wordBankFilterMatchesStatus(filter, status, options = {}) {
 }
 
 export function wordBankYearFilterMatches(filter, word) {
-  if (filter === 'all') return true;
-  if (filter === 'core') return isStatutoryCoreWord(word);
-  if (filter === 'y3-4') return isStatutoryCoreWord(word) && word.year === '3-4';
-  if (filter === 'y5-6') return isStatutoryCoreWord(word) && word.year === '5-6';
-  if (filter === 'secure-extension') return isSecureExtensionWord(word);
-  if (filter === 'extra') return isEnrichmentExtraWord(word);
-  return true;
+  const category = spellingPoolCategoryById(filter)
+    || spellingPoolCategoryById(normaliseSpellingWordBankFilterId(filter, 'all'));
+  return spellingPoolCategoryMatchesWord(category, word, { coverageTierForWord });
 }
 
 export function wordBankYearFilterLabel(filter) {
-  if (filter === 'y3-4') return 'Years 3-4';
-  if (filter === 'y5-6') return 'Years 5-6';
-  if (filter === 'secure-extension') return 'Secure vocabulary';
-  if (filter === 'extra') return 'Extra';
-  return 'All';
+  const category = spellingPoolCategoryById(normaliseSpellingWordBankFilterId(filter, 'all'));
+  return category?.label || 'All';
+}
+
+export function setupPoolPanelCopyForFilter(filter, learnerName) {
+  const category = spellingPoolCategoryById(filter) || spellingPoolCategoryById('core');
+  const panel = category?.setupPanel || spellingPoolCategoryById('core')?.setupPanel || {};
+  const safeName = String(learnerName || 'this learner');
+  return {
+    eyebrow: panel.eyebrow || category?.label || 'Where you stand',
+    totalLabel: panel.totalLabel || 'Total spellings',
+    secureLabel: panel.secureLabel || 'Secure',
+    dueLabel: panel.dueLabel || 'Due today',
+    troubleLabel: panel.troubleLabel || 'Weak spots',
+    freshLabel: panel.freshLabel || 'Unseen',
+    nextFocus: panel.nextFocus,
+    bankSubText: String(panel.bankSubTemplate || 'Every word {learner} is learning, with progress and difficulty.')
+      .replaceAll('{learner}', safeName),
+  };
 }
 
 export function wordStatusLabel(status) {
@@ -568,8 +582,8 @@ export function wordBankPillClass(status) {
 }
 
 export function spellingPoolLabel(word) {
-  if (isSecureExtensionWord(word)) return 'Secure vocabulary';
-  if (isEnrichmentExtraWord(word)) return 'Extra';
+  const category = spellingPoolCategoryForWord(word, undefined, { coverageTierForWord });
+  if (category) return category.label;
   return word?.yearLabel || 'Core';
 }
 
@@ -906,16 +920,25 @@ export function countWordBankStatus(words, status) {
   return words.reduce((count, word) => count + (word.status === status ? 1 : 0), 0);
 }
 
+export function countWordBankCategory(words, categoryId) {
+  const safeCategoryId = normaliseSpellingWordBankFilterId(categoryId, 'all');
+  return words.reduce(
+    (count, word) => count + (spellingPoolCategoryMatchesWord(safeCategoryId, word, { coverageTierForWord }) ? 1 : 0),
+    0,
+  );
+}
+
 export function countWordBankYear(words, year) {
-  return words.reduce((count, word) => count + (isStatutoryCoreWord(word) && word.year === year ? 1 : 0), 0);
+  const categoryId = year === '5-6' ? 'y5-6' : 'y3-4';
+  return countWordBankCategory(words, categoryId);
 }
 
 export function countWordBankExtra(words) {
-  return words.reduce((count, word) => count + (isEnrichmentExtraWord(word) ? 1 : 0), 0);
+  return countWordBankCategory(words, 'extra');
 }
 
 export function countWordBankSecureExtension(words) {
-  return words.reduce((count, word) => count + (isSecureExtensionWord(word) ? 1 : 0), 0);
+  return countWordBankCategory(words, 'secure-extension');
 }
 
 /**
@@ -1029,7 +1052,17 @@ export function buildSpellingContext({ appState, service, repositories, subject 
     pendingCommand: appState.transientUi?.spellingPendingCommand || '',
   };
   const needsAnalytics = ui.phase === 'dashboard' || ui.phase === 'word-bank';
-  const analytics = needsAnalytics ? service.getAnalyticsSnapshot(learner.id) : null;
+  const loadedWordBankAnalytics = appState.subjectUi?.spelling?.analytics;
+  const hasLoadedWordBankAnalytics = loadedWordBankAnalytics
+    && typeof loadedWordBankAnalytics === 'object'
+    && Array.isArray(loadedWordBankAnalytics.wordGroups)
+    && loadedWordBankAnalytics.wordBank
+    && typeof loadedWordBankAnalytics.wordBank === 'object';
+  const analytics = needsAnalytics
+    ? (ui.phase === 'word-bank' && hasLoadedWordBankAnalytics
+        ? loadedWordBankAnalytics
+        : service.getAnalyticsSnapshot(learner.id))
+    : null;
   // Post-mastery aggregates are needed on the dashboard (mode selection,
   // Alt+4 gate), the summary scene (to render "Next check" in Guardian
   // mode), and the Word Bank (to gate the four Guardian filter chips and

@@ -12,6 +12,9 @@ import {
   normaliseMonsterCelebrations,
 } from '../game/monster-celebrations.js';
 import { normaliseRewardToastEvents } from '../rewards/reward-toast-events.js';
+import {
+  SPELLING_WORD_BANK_FILTER_IDS as SPELLING_WORD_BANK_CATEGORY_FILTER_IDS,
+} from '../../../shared/spelling/pool-taxonomy.js';
 
 const DEFAULT_ROUTE = {
   screen: 'dashboard',
@@ -191,12 +194,7 @@ const VALID_SPELLING_WORD_BANK_FILTERS = new Set([
   'renewedRecently',
   'neverRenewed',
 ]);
-const VALID_SPELLING_WORD_BANK_YEAR_FILTERS = new Set([
-  'all',
-  'y3-4',
-  'y5-6',
-  'extra',
-]);
+const VALID_SPELLING_WORD_BANK_YEAR_FILTERS = new Set(SPELLING_WORD_BANK_CATEGORY_FILTER_IDS);
 
 const VALID_WORD_DETAIL_MODES = new Set(['explain', 'drill']);
 const VALID_WORD_DRILL_RESULTS = new Set(['correct', 'incorrect']);

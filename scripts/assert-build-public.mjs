@@ -286,6 +286,7 @@ assertCacheSplitRules(publishedHeadersContent);
 
 const indexHtml = await readFile(path.join(publicDir, 'index.html'), 'utf8');
 const appBundle = await readFile(path.join(publicDir, 'src/bundles/app.bundle.js'), 'utf8');
+const appStylesheet = await readFile(path.join(publicDir, 'styles/app.css'), 'utf8');
 const llmsTxt = await readFile(path.join(publicDir, 'llms.txt'), 'utf8');
 const robotsTxt = await readFile(path.join(publicDir, 'robots.txt'), 'utf8');
 const sitemapXml = await readFile(path.join(publicDir, 'sitemap.xml'), 'utf8');
@@ -316,6 +317,14 @@ if (!appBundleVersionMatch) {
 const expectedAppBundleVersion = createHash('sha256').update(appBundle).digest('hex').slice(0, 12);
 if (appBundleVersionMatch[1] !== expectedAppBundleVersion) {
   throw new Error('Public index.html app.bundle.js version query does not match the bundle content hash.');
+}
+const appStylesheetVersionMatch = indexHtml.match(/\.\/styles\/app\.css\?v=([a-f0-9]{12})/);
+if (!appStylesheetVersionMatch) {
+  throw new Error('Public index.html must load styles/app.css with a content-hash query string.');
+}
+const expectedAppStylesheetVersion = createHash('sha256').update(appStylesheet).digest('hex').slice(0, 12);
+if (appStylesheetVersionMatch[1] !== expectedAppStylesheetVersion) {
+  throw new Error('Public index.html styles/app.css version query does not match the stylesheet content hash.');
 }
 if (indexHtml.includes('home.bundle.js') || indexHtml.includes('src/main.js')) {
   throw new Error('Public index.html must not load legacy home islands or the raw source entry.');

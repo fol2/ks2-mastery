@@ -6,6 +6,7 @@ import {
   normaliseMode,
   normaliseRoundLength,
   normaliseStats,
+  spellingPoolStatsKey,
   normaliseYearFilter,
 } from './service-contract.js';
 import {
@@ -58,18 +59,14 @@ function emptyAnalytics() {
   };
 }
 
-function statsForFilter(stats, yearFilter) {
+function statsForFilter(stats, analytics, yearFilter) {
   const safeStats = stats && typeof stats === 'object' && !Array.isArray(stats) ? stats : {};
-  const key = yearFilter === 'y3-4'
-    ? 'y34'
-    : yearFilter === 'y5-6'
-      ? 'y56'
-      : yearFilter === 'secure-extension'
-        ? 'secureExtension'
-        : yearFilter === 'extra'
-          ? 'extra'
-          : 'core';
-  return normaliseStats(safeStats[key] || safeStats.core || safeStats.all || {});
+  const safeAnalytics = analytics && typeof analytics === 'object' && !Array.isArray(analytics) ? analytics : {};
+  const analyticsPools = safeAnalytics.pools && typeof safeAnalytics.pools === 'object' && !Array.isArray(safeAnalytics.pools)
+    ? safeAnalytics.pools
+    : {};
+  const key = spellingPoolStatsKey(yearFilter, 'core');
+  return normaliseStats(safeStats[key] || analyticsPools[key] || safeStats.core || safeStats.all || {});
 }
 
 function asReadModel(rawValue, learnerId) {
@@ -167,7 +164,8 @@ export function createSpellingReadModelService({
       return readModel(learnerId).prefs;
     },
     getStats(learnerId, yearFilter = 'core') {
-      return statsForFilter(readModel(learnerId).stats, yearFilter);
+      const model = readModel(learnerId);
+      return statsForFilter(model.stats, model.analytics, yearFilter);
     },
     getAnalyticsSnapshot(learnerId) {
       return cloneSerialisable(readModel(learnerId).analytics || emptyAnalytics());

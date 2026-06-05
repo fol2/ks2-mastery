@@ -196,6 +196,21 @@ test('shared store preserves transient word-bank detail payloads for remote moda
   assert.equal(detail.audio.word.promptToken, 'word-token');
 });
 
+test('shared store preserves secure vocabulary as a word-bank category filter', () => {
+  const storage = installMemoryStorage();
+  const repositories = createLocalPlatformRepositories({ storage });
+  const store = createStore(SUBJECTS, { repositories });
+
+  store.patch((current) => ({
+    transientUi: {
+      ...current.transientUi,
+      spellingAnalyticsYearFilter: 'secure-extension',
+    },
+  }));
+
+  assert.equal(store.getState().transientUi.spellingAnalyticsYearFilter, 'secure-extension');
+});
+
 test('serialisable spelling state survives store persistence for resume', () => {
   const storage = installMemoryStorage();
   const repositories = createLocalPlatformRepositories({ storage });
