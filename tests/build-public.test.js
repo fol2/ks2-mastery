@@ -50,10 +50,16 @@ test('public build emits the React app bundle entrypoint', () => {
   ]));
   const cspHashArtefact = readFileSync('dist/public/.csp-theme-hash', 'utf8');
   const appBundle = readFileSync('dist/public/src/bundles/app.bundle.js', 'utf8');
+  const appStylesheet = readFileSync('dist/public/styles/app.css', 'utf8');
   const expectedAppBundleVersion = createHash('sha256').update(appBundle).digest('hex').slice(0, 12);
+  const expectedAppStylesheetVersion = createHash('sha256').update(appStylesheet).digest('hex').slice(0, 12);
   assert.match(
     indexHtml,
     new RegExp(`type="module" src="\\.\\/src\\/bundles\\/app\\.bundle\\.js\\?v=${expectedAppBundleVersion}"`),
+  );
+  assert.match(
+    indexHtml,
+    new RegExp(`rel="stylesheet" href="\\.\\/styles\\/app\\.css\\?v=${expectedAppStylesheetVersion}"`),
   );
   assert.doesNotMatch(indexHtml, /home\.bundle\.js/);
   assert.doesNotMatch(indexHtml, /src\/main\.js/);

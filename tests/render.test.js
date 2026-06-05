@@ -27,9 +27,11 @@ test('spelling setup renders pool choices without the legacy All label', () => {
   const html = harness.render();
 
   assert.match(html, /aria-label="Spelling pool"/);
-  assert.match(html, /data-pref="yearFilter" value="core"/);
-  assert.match(html, /data-pref="yearFilter" value="extra"/);
+  assert.match(html, /<button\b(?=[^>]*data-pref="yearFilter")(?=[^>]*data-value="core")(?=[^>]*value="core")[^>]*>/);
+  assert.match(html, /<button\b(?=[^>]*data-pref="yearFilter")(?=[^>]*data-value="secure-extension")(?=[^>]*value="secure-extension")[^>]*>/);
+  assert.match(html, /<button\b(?=[^>]*data-pref="yearFilter")(?=[^>]*data-value="extra")(?=[^>]*value="extra")[^>]*>/);
   assert.match(html, />Core<\/span>/);
+  assert.match(html, />Secure vocabulary<\/span>/);
   assert.match(html, />Extra<\/span>/);
   assert.doesNotMatch(html, />All<\/span>/);
   assert.doesNotMatch(html, /Year group/);

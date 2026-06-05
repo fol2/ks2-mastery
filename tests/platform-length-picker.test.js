@@ -141,6 +141,39 @@ test('LengthPicker: without `unit` renders the bare .length-picker (Spelling yea
   assert.match(html, /<button[^>]*value="core"[^>]*><span>Core<\/span>/);
 });
 
+test('LengthPicker: measured slider mode is opt-in and keeps selected fallback markup', async () => {
+  const html = await runFixture(`
+    ${renderHeader(componentSpec)}
+    const tree = React.createElement(LengthPicker, {
+      options: [
+        { value: 'core', label: 'Core' },
+        { value: 'secure-extension', label: 'Secure vocabulary' },
+        { value: 'extra', label: 'Extra' },
+      ],
+      selectedValue: 'secure-extension',
+      onChange: () => {},
+      ariaLabel: 'Spelling pool',
+      className: 'pool-picker',
+      sliderMode: 'measured',
+      actionName: 'spelling-set-pref',
+      prefKey: 'yearFilter',
+      includeDataValue: true,
+    });
+    console.log(renderToStaticMarkup(tree));
+  `);
+  assert.match(
+    html,
+    /^<div class="length-picker pool-picker" role="radiogroup" aria-label="Spelling pool" style="--option-count:3;--selected-index:1" data-slider-mode="measured">/,
+  );
+  assert.doesNotMatch(html, /data-slider-ready/);
+  const securePoolButtonMatch = html.match(
+    /<button\b(?=[^>]*data-value="secure-extension")(?=[^>]*value="secure-extension")[^>]*>[\s\S]*?<span>Secure vocabulary<\/span><\/button>/,
+  );
+  assert.ok(securePoolButtonMatch, 'expected secure vocabulary option');
+  assert.match(securePoolButtonMatch[0], /class="length-option selected"/);
+  assert.match(securePoolButtonMatch[0], /aria-checked="true"/);
+});
+
 // ---------------------------------------------------------------
 // Edge case: zero-length options array.
 // ---------------------------------------------------------------
