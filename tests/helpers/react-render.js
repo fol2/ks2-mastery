@@ -900,6 +900,7 @@ export function renderSubjectRouteFixture({ subject = 'placeholder' } = {}) {
 export function renderSpellingSurfaceFixture({
   phase = 'setup',
   pendingCommand = '',
+  wordBankAnalytics = null,
   // postMega: {} → force allWordsMega via seeded progress + optional guardian
   // records. Omit to render the legacy setup dashboard.
   postMega = null,
@@ -970,6 +971,10 @@ export function renderSpellingSurfaceFixture({
     }
     if (selectedPhase === 'word-bank' || selectedPhase === 'modal') {
       controller.dispatch('spelling-open-word-bank');
+    }
+    const wordBankAnalytics = ${JSON.stringify(wordBankAnalytics)};
+    if (wordBankAnalytics) {
+      controller.store.updateSubjectUi('spelling', { analytics: wordBankAnalytics });
     }
     if (selectedPhase === 'modal') {
       controller.dispatch('spelling-word-detail-open', { slug: 'possess', value: 'drill' });

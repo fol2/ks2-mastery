@@ -1029,7 +1029,17 @@ export function buildSpellingContext({ appState, service, repositories, subject 
     pendingCommand: appState.transientUi?.spellingPendingCommand || '',
   };
   const needsAnalytics = ui.phase === 'dashboard' || ui.phase === 'word-bank';
-  const analytics = needsAnalytics ? service.getAnalyticsSnapshot(learner.id) : null;
+  const loadedWordBankAnalytics = appState.subjectUi?.spelling?.analytics;
+  const hasLoadedWordBankAnalytics = loadedWordBankAnalytics
+    && typeof loadedWordBankAnalytics === 'object'
+    && Array.isArray(loadedWordBankAnalytics.wordGroups)
+    && loadedWordBankAnalytics.wordBank
+    && typeof loadedWordBankAnalytics.wordBank === 'object';
+  const analytics = needsAnalytics
+    ? (ui.phase === 'word-bank' && hasLoadedWordBankAnalytics
+        ? loadedWordBankAnalytics
+        : service.getAnalyticsSnapshot(learner.id))
+    : null;
   // Post-mastery aggregates are needed on the dashboard (mode selection,
   // Alt+4 gate), the summary scene (to render "Next check" in Guardian
   // mode), and the Word Bank (to gate the four Guardian filter chips and

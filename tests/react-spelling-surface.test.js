@@ -518,6 +518,18 @@ test('React spelling Word Bank keeps sibling category counts when Extra is selec
   assert.match(html, /Showing 52 of 52 Extra spellings/);
 });
 
+test('React spelling Word Bank surface uses server-loaded analytics', async () => {
+  const html = await renderSpellingSurfaceFixture({
+    phase: 'word-bank',
+    wordBankAnalytics: wordBankFacetAnalytics({ year: 'all' }),
+  });
+
+  assert.doesNotMatch(html, /No words yet/);
+  assert.match(html, /data-value="extra"[\s\S]*?<span class="wb-chip-count"[^>]*>52<\/span>/);
+  assert.match(html, /Showing 38 visible spellings from 250 loaded rows/);
+  assert.match(html, /265 authorised matches available/);
+});
+
 test('React spelling Word Bank renders the 4 Guardian chips only when allWordsMega is true', async () => {
   const today = Math.floor(Date.now() / (24 * 60 * 60 * 1000));
   const html = await renderSpellingSurfaceFixture({
