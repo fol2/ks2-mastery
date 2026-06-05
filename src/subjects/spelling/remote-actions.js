@@ -19,6 +19,7 @@ import { isMegaSafeMode, isPostMasteryMode } from './service-contract.js';
 const READ_ONLY_MESSAGE = 'Practice is read-only while sync is degraded. Retry sync before continuing.';
 const SETUP_PREF_SAVE_DEBOUNCE_MS = 120;
 const SPELLING_COMPENSATION_EVENT_LIMIT = 25;
+const SERVER_WORD_BANK_STATUS_FILTER_IDS = new Set(['all', 'due', 'weak', 'learning', 'secure', 'unseen']);
 
 const SPELLING_COMMAND_ACTIONS = new Set([
   'spelling-set-mode',
@@ -213,6 +214,18 @@ export function createRemoteSpellingActionHandler({
 
   function wordBankAnalyticsFromState(state = appState()) {
     return state.subjectUi?.spelling?.analytics || null;
+  }
+
+  function wordBankFiltersFromState(state = appState(), overrides = {}) {
+    const transient = state.transientUi || {};
+    const query = String(overrides.query ?? transient.spellingAnalyticsWordSearch ?? '').slice(0, 80);
+    const rawYear = String(overrides.year ?? transient.spellingAnalyticsYearFilter ?? 'all');
+    const rawStatus = String(overrides.status ?? transient.spellingAnalyticsStatusFilter ?? 'all');
+    return {
+      query,
+      year: WORD_BANK_YEAR_FILTER_IDS.has(rawYear) ? rawYear : 'all',
+      status: SERVER_WORD_BANK_STATUS_FILTER_IDS.has(rawStatus) ? rawStatus : 'all',
+    };
   }
 
   function currentSpellingRewardEventIds(learnerId) {
@@ -430,12 +443,16 @@ export function createRemoteSpellingActionHandler({
     }
   }
 
-  async function loadWordBank({ detailSlug = '', page = 1, append = false } = {}) {
+  async function loadWordBank({ detailSlug = '', page = 1, append = false, filters: filterOverrides = {} } = {}) {
     const state = appState();
     const learnerId = state.learners?.selectedId;
     if (!learnerId) return null;
+    const filters = wordBankFiltersFromState(state, filterOverrides);
     const params = new URLSearchParams({
       learnerId,
+      q: filters.query,
+      status: filters.status,
+      year: filters.year,
       page: String(page),
       pageSize: '250',
     });
@@ -774,12 +791,19 @@ export function createRemoteSpellingActionHandler({
     }
 
     if (action === 'spelling-analytics-search') {
+      const nextValue = String(data.value || '').slice(0, 80);
       store.patch((current) => ({
         transientUi: {
           ...current.transientUi,
-          spellingAnalyticsWordSearch: String(data.value || '').slice(0, 80),
+          spellingAnalyticsWordSearch: nextValue,
         },
       }));
+      if (!isReadOnly()) {
+        loadWordBank({ page: 1, filters: { query: nextValue } }).catch((error) => {
+          globalThis.console?.warn?.('Word bank search failed.', error);
+          setRuntimeError(commandErrorMessage(error, 'The word bank could not be searched.'));
+        });
+      }
       return true;
     }
 
@@ -791,6 +815,12 @@ export function createRemoteSpellingActionHandler({
           spellingAnalyticsYearFilter: WORD_BANK_YEAR_FILTER_IDS.has(raw) ? raw : 'all',
         },
       }));
+      if (!isReadOnly()) {
+        loadWordBank({ page: 1, filters: { year: raw } }).catch((error) => {
+          globalThis.console?.warn?.('Word bank category filter failed.', error);
+          setRuntimeError(commandErrorMessage(error, 'The word bank category could not be loaded.'));
+        });
+      }
       return true;
     }
 
@@ -802,6 +832,12 @@ export function createRemoteSpellingActionHandler({
           spellingAnalyticsStatusFilter: WORD_BANK_FILTER_IDS.has(raw) ? raw : 'all',
         },
       }));
+      if (!isReadOnly() && SERVER_WORD_BANK_STATUS_FILTER_IDS.has(raw)) {
+        loadWordBank({ page: 1, filters: { status: raw } }).catch((error) => {
+          globalThis.console?.warn?.('Word bank status filter failed.', error);
+          setRuntimeError(commandErrorMessage(error, 'The word bank status could not be loaded.'));
+        });
+      }
       return true;
     }
 

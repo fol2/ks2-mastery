@@ -1098,6 +1098,53 @@ test('remote spelling word bank open loads analytics and detail into the store',
   assert.equal(getState().transientUi.spellingWordDetail.slug, 'early');
 });
 
+test('remote spelling word bank category filter reloads the server-filtered rows', async () => {
+  const { getState, store } = createStoreHarness({
+    subjectUi: {
+      spelling: {
+        phase: 'word-bank',
+        analytics: {
+          wordGroups: [{ key: 'extra', words: Array.from({ length: 37 }, (_, index) => ({ slug: `extra-${index}` })) }],
+          wordBank: { page: 1, hasNextPage: true, returnedRows: 250 },
+        },
+        error: '',
+      },
+    },
+  });
+  const urls = [];
+  const handler = createRemoteSpellingActionHandler({
+    store,
+    services: { spelling: {} },
+    tts: createTtsHarness(),
+    subjectCommands: { send: async () => ({}) },
+    readModels: {
+      async readJson(url) {
+        urls.push(url);
+        return {
+          wordBank: {
+            analytics: {
+              wordGroups: [{ key: 'extra', words: Array.from({ length: 52 }, (_, index) => ({ slug: `extra-${index}` })) }],
+              wordBank: { page: 1, hasNextPage: false, returnedRows: 52, filteredRows: 52 },
+            },
+          },
+        };
+      },
+    },
+  });
+
+  assert.equal(handler.handle('spelling-analytics-year-filter', { value: 'extra' }), true);
+
+  await flushPromises();
+  const request = new URL(`https://repo.test${urls[0]}`);
+  assert.equal(request.searchParams.get('learnerId'), 'learner-a');
+  assert.equal(request.searchParams.get('year'), 'extra');
+  assert.equal(request.searchParams.get('page'), '1');
+  assert.equal(request.searchParams.get('pageSize'), '250');
+  assert.equal(getState().transientUi.spellingAnalyticsYearFilter, 'extra');
+  assert.equal(getState().subjectUi.spelling.analytics.wordGroups[0].words.length, 52);
+  assert.equal(getState().subjectUi.spelling.analytics.wordBank.filteredRows, 52);
+});
+
 test('remote spelling word-bank drill submit is blocked while read-only', () => {
   const { store } = createStoreHarness({
     transientUi: {

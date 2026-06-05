@@ -325,6 +325,27 @@ test('worker spelling word bank route returns paginated public rows and detail a
   }
 });
 
+test('worker spelling word bank route returns the complete Extra pool when category-filtered', async () => {
+  const server = createWorkerRepositoryServer();
+  try {
+    seedAccountLearner(server.DB);
+
+    const response = await server.fetch('https://repo.test/api/subjects/spelling/word-bank?learnerId=learner-a&pageSize=250&year=extra');
+    const payload = await response.json();
+    const rows = payload.wordBank.analytics.wordGroups.flatMap((group) => group.words);
+
+    assert.equal(response.status, 200);
+    assert.equal(payload.wordBank.analytics.pools.extra.total, 52);
+    assert.equal(payload.wordBank.analytics.wordBank.filteredRows, 52);
+    assert.equal(payload.wordBank.analytics.wordBank.returnedRows, 52);
+    assert.equal(payload.wordBank.analytics.wordBank.hasNextPage, false);
+    assert.equal(rows.length, 52);
+    assert.equal(rows.every((word) => word.spellingPool === 'extra'), true);
+  } finally {
+    server.close();
+  }
+});
+
 test('worker spelling word bank route controls empty, high-page, and invalid-detail cases', async () => {
   const server = createWorkerRepositoryServer();
   try {
