@@ -325,25 +325,29 @@ test('worker spelling word bank route returns paginated public rows and detail a
   }
 });
 
-test('worker spelling word bank route returns the complete Extra pool when category-filtered', async () => {
+test('worker spelling word bank route returns complete category rows with the expanded page size', async () => {
   const server = createWorkerRepositoryServer();
   try {
     seedAccountLearner(server.DB);
 
-    const allResponse = await server.fetch('https://repo.test/api/subjects/spelling/word-bank?learnerId=learner-a&pageSize=250');
+    const allResponse = await server.fetch('https://repo.test/api/subjects/spelling/word-bank?learnerId=learner-a&pageSize=5000');
     const allPayload = await allResponse.json();
     const allRows = allPayload.wordBank.analytics.wordGroups.flatMap((group) => group.words);
 
     assert.equal(allResponse.status, 200);
-    assert.equal(allPayload.wordBank.analytics.wordBank.returnedRows, 250);
-    assert.equal(allPayload.wordBank.analytics.wordBank.hasNextPage, true);
-    assert.equal(allRows.filter((word) => word.spellingPool === 'extra').length, 37);
+    assert.equal(allPayload.wordBank.analytics.wordBank.returnedRows, 1480);
+    assert.equal(allPayload.wordBank.analytics.wordBank.hasNextPage, false);
+    assert.equal(allRows.length, 1480);
+    assert.equal(allRows.filter((word) => word.spellingPool === 'extra').length, 52);
+    assert.equal(allRows.filter((word) => word.coverageTier === 'secure-extension').length, 1215);
     assert.equal(allPayload.wordBank.analytics.wordBank.facets.categories.extra, 52);
+    assert.equal(allPayload.wordBank.analytics.wordBank.facets.categories['secure-extension'], 1215);
     assert.equal(allPayload.wordBank.analytics.wordBank.facets.categoryStatus.extra.total, 52);
+    assert.equal(allPayload.wordBank.analytics.wordBank.facets.categoryStatus['secure-extension'].total, 1215);
     assert.ok(allPayload.wordBank.analytics.wordBank.facets.categories['y3-4'] > 0);
     assert.ok(allPayload.wordBank.analytics.wordBank.facets.categories['y5-6'] > 0);
 
-    const response = await server.fetch('https://repo.test/api/subjects/spelling/word-bank?learnerId=learner-a&pageSize=250&year=extra');
+    const response = await server.fetch('https://repo.test/api/subjects/spelling/word-bank?learnerId=learner-a&pageSize=5000&year=extra');
     const payload = await response.json();
     const rows = payload.wordBank.analytics.wordGroups.flatMap((group) => group.words);
     const facets = payload.wordBank.analytics.wordBank.facets;

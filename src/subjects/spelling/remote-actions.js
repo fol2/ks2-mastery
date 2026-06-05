@@ -82,6 +82,10 @@ const SPELLING_WORD_BANK_ACTIONS = new Set([
   'spelling-word-bank-drill-replay-slow',
   'spelling-word-bank-load-more',
 ]);
+// The chips show full category totals, so the first page must include the
+// current complete word bank. The Worker still paginates if content outgrows
+// this safety cap.
+const WORD_BANK_PAGE_SIZE = 5000;
 
 function commandErrorMessage(error, fallback) {
   return error?.payload?.message || error?.message || fallback;
@@ -454,7 +458,7 @@ export function createRemoteSpellingActionHandler({
       status: filters.status,
       year: filters.year,
       page: String(page),
-      pageSize: '250',
+      pageSize: String(WORD_BANK_PAGE_SIZE),
     });
     if (detailSlug) params.set('detailSlug', detailSlug);
     const payload = await readModels.readJson(`/api/subjects/spelling/word-bank?${params.toString()}`);

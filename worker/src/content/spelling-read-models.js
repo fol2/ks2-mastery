@@ -22,7 +22,7 @@ const SECURE_STAGE = 4;
 const GUARDIAN_RENEWED_RECENTLY_WINDOW_DAYS = 7;
 const STATUS_FILTERS = new Set(['all', 'due', 'weak', 'learning', 'secure', 'unseen']);
 const YEAR_FILTERS = new Set(SPELLING_WORD_BANK_FILTER_IDS);
-const MAX_PAGE_SIZE = 250;
+const MAX_PAGE_SIZE = 5000;
 
 function cleanText(value) {
   return String(value || '').replace(/\s+/g, ' ').trim();

@@ -487,7 +487,42 @@ test('React spelling Word Bank renders the legacy 6-chip row identically when al
 });
 
 function wordBankFacetAnalytics({ year = 'all' } = {}) {
-  const extraRows = Array.from({ length: year === 'extra' ? 52 : 37 }, (_, index) => ({
+  const y34Rows = year === 'all'
+    ? Array.from({ length: 109 }, (_, index) => ({
+        slug: `y34-${index}`,
+        word: index === 0 ? 'accident' : `y34-${index}`,
+        status: 'new',
+        year: '3-4',
+        yearLabel: 'Years 3-4',
+        spellingPool: 'core',
+        progress: { stage: 0, attempts: 0, correct: 0, wrong: 0 },
+      }))
+    : [];
+  const y56Rows = year === 'all'
+    ? Array.from({ length: 104 }, (_, index) => ({
+        slug: `y56-${index}`,
+        word: `y56-${index}`,
+        status: 'new',
+        year: '5-6',
+        yearLabel: 'Years 5-6',
+        spellingPool: 'core',
+        progress: { stage: 0, attempts: 0, correct: 0, wrong: 0 },
+      }))
+    : [];
+  const secureRows = year === 'all' || year === 'secure-extension'
+    ? Array.from({ length: 1215 }, (_, index) => ({
+        slug: `secure-${index}`,
+        word: `secure-word-${index}`,
+        status: 'new',
+        year: 'secure-extension',
+        yearLabel: 'Secure vocabulary',
+        spellingPool: 'core',
+        coverageTier: 'secure-extension',
+        progress: { stage: 0, attempts: 0, correct: 0, wrong: 0 },
+      }))
+    : [];
+  const extraRows = year === 'all' || year === 'extra'
+    ? Array.from({ length: 52 }, (_, index) => ({
     slug: `extra-${index}`,
     word: `extra-${index}`,
     status: index < 35 ? 'secure' : index < 41 ? 'learning' : 'new',
@@ -495,59 +530,57 @@ function wordBankFacetAnalytics({ year = 'all' } = {}) {
     yearLabel: 'Extra',
     spellingPool: 'extra',
     progress: { stage: index < 35 ? 4 : 0, attempts: index < 41 ? 1 : 0, correct: index < 35 ? 1 : 0, wrong: 0 },
-  }));
-  const y34Rows = year === 'all'
-    ? [{
-        slug: 'accident',
-        word: 'accident',
-        status: 'secure',
-        year: '3-4',
-        yearLabel: 'Years 3-4',
-        spellingPool: 'core',
-        progress: { stage: 4, attempts: 1, correct: 1, wrong: 0 },
-      }]
+  }))
     : [];
+  const returnedRows = y34Rows.length + y56Rows.length + secureRows.length + extraRows.length;
+  const filteredRows = year === 'extra' ? 52 : year === 'secure-extension' ? 1215 : 1480;
+  const statusTotal = filteredRows;
+  const statusSecure = year === 'extra' ? 35 : 0;
+  const statusLearning = year === 'extra' ? 6 : 0;
+  const statusUnseen = year === 'extra' ? 11 : statusTotal;
   return {
     wordGroups: [
       { key: 'y3-4', title: 'Years 3-4', words: y34Rows },
+      { key: 'y5-6', title: 'Years 5-6', words: y56Rows },
+      { key: 'secure-extension', title: 'Secure vocabulary', words: secureRows },
       { key: 'extra', title: 'Extra', words: extraRows },
     ],
     wordBank: {
       page: 1,
-      pageSize: 250,
-      totalRows: 265,
-      filteredRows: year === 'extra' ? 52 : 265,
-      returnedRows: year === 'extra' ? 52 : 250,
-      hasNextPage: year !== 'extra',
+      pageSize: 5000,
+      totalRows: 1480,
+      filteredRows,
+      returnedRows,
+      hasNextPage: false,
       facets: {
         version: 1,
         categories: {
-          all: 265,
+          all: 1480,
           core: 213,
           'y3-4': 109,
           'y5-6': 104,
-          'secure-extension': 0,
+          'secure-extension': 1215,
           extra: 52,
         },
         status: {
-          all: year === 'extra' ? 52 : 265,
-          total: year === 'extra' ? 52 : 265,
-          secure: year === 'extra' ? 35 : 207,
-          due: year === 'extra' ? 0 : 40,
+          all: statusTotal,
+          total: statusTotal,
+          secure: statusSecure,
+          due: 0,
           trouble: 0,
           weak: 0,
-          learning: year === 'extra' ? 6 : 6,
-          unseen: year === 'extra' ? 11 : 12,
+          learning: statusLearning,
+          unseen: statusUnseen,
           guardianDue: 0,
           wobbling: 0,
           renewedRecently: 0,
           neverRenewed: 0,
         },
         categoryStatus: {
-          core: { all: 213, total: 213, secure: 172, due: 40, trouble: 0, weak: 0, learning: 1, unseen: 0 },
-          'y3-4': { all: 109, total: 109, secure: 80, due: 28, trouble: 0, weak: 0, learning: 1, unseen: 0 },
-          'y5-6': { all: 104, total: 104, secure: 92, due: 12, trouble: 0, weak: 0, learning: 0, unseen: 0 },
-          'secure-extension': { all: 0, total: 0, secure: 0, due: 0, trouble: 0, weak: 0, learning: 0, unseen: 0 },
+          core: { all: 213, total: 213, secure: 0, due: 0, trouble: 0, weak: 0, learning: 0, unseen: 213 },
+          'y3-4': { all: 109, total: 109, secure: 0, due: 0, trouble: 0, weak: 0, learning: 0, unseen: 109 },
+          'y5-6': { all: 104, total: 104, secure: 0, due: 0, trouble: 0, weak: 0, learning: 0, unseen: 104 },
+          'secure-extension': { all: 1215, total: 1215, secure: 0, due: 0, trouble: 0, weak: 0, learning: 0, unseen: 1215 },
           extra: { all: 52, total: 52, secure: 35, due: 0, trouble: 0, weak: 0, learning: 6, unseen: 11 },
         },
       },
@@ -555,15 +588,17 @@ function wordBankFacetAnalytics({ year = 'all' } = {}) {
   };
 }
 
-test('React spelling Word Bank uses server facets when All page rows are truncated', async () => {
+test('React spelling Word Bank renders complete All rows when category totals are complete', async () => {
   const html = await renderSpellingWordBankSceneFixture({
     analytics: wordBankFacetAnalytics({ year: 'all' }),
   });
 
   assert.match(html, /data-value="extra"[\s\S]*?<span class="wb-chip-count"[^>]*>52<\/span>/);
-  assert.match(html, /data-value="all"[\s\S]*?<span class="wb-chip-count"[^>]*>265<\/span>/);
-  assert.match(html, /Showing 38 visible spellings from 250 loaded rows/);
-  assert.match(html, /265 authorised matches available/);
+  assert.match(html, /data-value="secure-extension"[\s\S]*?<span class="wb-chip-count"[^>]*>1215<\/span>/);
+  assert.match(html, /data-value="all"[\s\S]*?<span class="wb-chip-count"[^>]*>1480<\/span>/);
+  assert.match(html, /Secure vocabulary[\s\S]*?secure-word-0/);
+  assert.match(html, /Extra[\s\S]*?extra-51/);
+  assert.match(html, /Showing 1480 of 1480 tracked spellings/);
   assert.match(html, /Expansion spelling pool[\s\S]*?Total[\s\S]*?52/);
 });
 
@@ -573,7 +608,7 @@ test('React spelling Word Bank keeps sibling category counts when Extra is selec
     transientUi: { spellingAnalyticsYearFilter: 'extra' },
   });
 
-  assert.match(html, /Extra selected[\s\S]*?52 of 265 words/);
+  assert.match(html, /Extra selected[\s\S]*?52 of 1480 words/);
   assert.match(html, /data-value="y3-4"[\s\S]*?<span class="wb-chip-count"[^>]*>109<\/span>/);
   assert.match(html, /data-value="y5-6"[\s\S]*?<span class="wb-chip-count"[^>]*>104<\/span>/);
   assert.match(html, /data-value="extra"[\s\S]*?<span class="wb-chip-count"[^>]*>52<\/span>/);
@@ -590,8 +625,10 @@ test('React spelling Word Bank surface uses server-loaded analytics', async () =
 
   assert.doesNotMatch(html, /No words yet/);
   assert.match(html, /data-value="extra"[\s\S]*?<span class="wb-chip-count"[^>]*>52<\/span>/);
-  assert.match(html, /Showing 38 visible spellings from 250 loaded rows/);
-  assert.match(html, /265 authorised matches available/);
+  assert.match(html, /data-value="secure-extension"[\s\S]*?<span class="wb-chip-count"[^>]*>1215<\/span>/);
+  assert.match(html, /Secure vocabulary[\s\S]*?secure-word-0/);
+  assert.match(html, /Extra[\s\S]*?extra-51/);
+  assert.match(html, /Showing 1480 of 1480 tracked spellings/);
 });
 
 test('React spelling Word Bank renders the 4 Guardian chips only when allWordsMega is true', async () => {

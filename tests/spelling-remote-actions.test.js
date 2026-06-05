@@ -1232,7 +1232,7 @@ test('remote spelling word bank category filter reloads the server-filtered rows
   assert.equal(request.searchParams.get('learnerId'), 'learner-a');
   assert.equal(request.searchParams.get('year'), 'extra');
   assert.equal(request.searchParams.get('page'), '1');
-  assert.equal(request.searchParams.get('pageSize'), '250');
+  assert.equal(request.searchParams.get('pageSize'), '5000');
   assert.equal(getState().transientUi.spellingAnalyticsYearFilter, 'extra');
   assert.equal(getState().subjectUi.spelling.analytics.wordGroups[0].words.length, 52);
   assert.equal(getState().subjectUi.spelling.analytics.wordBank.filteredRows, 52);
@@ -1267,12 +1267,12 @@ test('remote spelling word bank category filter preserves secure vocabulary UI s
           wordBank: {
             analytics: {
               wordGroups: [
-                { key: 'secure-extension', title: 'Secure vocabulary', words: Array.from({ length: 250 }, (_, index) => ({ slug: `secure-${index}` })) },
+                { key: 'secure-extension', title: 'Secure vocabulary', words: Array.from({ length: 1215 }, (_, index) => ({ slug: `secure-${index}` })) },
               ],
               wordBank: {
                 page: 1,
-                hasNextPage: true,
-                returnedRows: 250,
+                hasNextPage: false,
+                returnedRows: 1215,
                 filteredRows: 1215,
                 totalRows: 1480,
                 facets: {
