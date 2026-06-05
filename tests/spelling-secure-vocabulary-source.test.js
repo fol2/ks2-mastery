@@ -343,7 +343,7 @@ test('owner-approved release-quality policy populates secure-extension release f
   );
   assert.deepEqual(
     generatedSecureWord.releaseReadiness.exampleSentences,
-    ['The teacher wrote the word careful on the board for secure vocabulary spelling practice.']
+    ['The pupil chose a careful example to support the explanation.']
   );
   assert.equal(
     generatedSecureWord.releaseReadiness.ukSpellingDecision,
@@ -392,7 +392,7 @@ test('secure vocabulary runtime import publishes approved secure-extension words
   assert.equal(imported.manifest.imported.secureExtensionWordCount, 1);
   assert.equal(imported.manifest.imported.skippedExistingExtraWordCount, 1);
   assert.deepEqual(imported.manifest.imported.skippedExistingExtraWordSlugs, ['admission']);
-  assert.equal(imported.manifest.release.id, 'spelling-r8');
+  assert.equal(imported.manifest.release.id, 'spelling-r9');
   assert.equal(report.ok, true);
   assert.equal(report.issueCount, 0);
   assert.equal(report.summary.statutoryCoreCount, 213);
