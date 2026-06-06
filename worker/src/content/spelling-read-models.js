@@ -3,6 +3,7 @@ import { normaliseServerSpellingData } from '../subjects/spelling/engine.js';
 import { buildSpellingWordBankAudioCue } from '../subjects/spelling/audio.js';
 import { BadRequestError, NotFoundError } from '../errors.js';
 import {
+  SPELLING_COVERAGE_TIER,
   coverageTierForWord,
   coverageTierLabel,
   isEnrichmentExtraWord,
@@ -129,19 +130,8 @@ function publicWordRow(word, progress, now, { detail = false, audio = null } = {
   return row;
 }
 
-function statsForWords(words, progressMap, now) {
-  const today = todayDay(now);
-  return words.reduce((stats, word) => {
-    const progress = progressFor(progressMap, word.slug, now);
-    stats.total += 1;
-    stats.attempts += progress.attempts;
-    stats.correct += progress.correct;
-    if (progress.attempts === 0) stats.fresh += 1;
-    if (progress.stage >= SECURE_STAGE) stats.secure += 1;
-    if (progress.attempts > 0 && progress.dueDay <= today) stats.due += 1;
-    if (progress.wrong > 0 && (progress.wrong >= progress.correct || progress.stage < SECURE_STAGE)) stats.trouble += 1;
-    return stats;
-  }, {
+function emptyStats() {
+  return {
     total: 0,
     secure: 0,
     due: 0,
@@ -150,7 +140,18 @@ function statsForWords(words, progressMap, now) {
     attempts: 0,
     correct: 0,
     accuracy: null,
-  });
+  };
+}
+
+function addProgressToStats(stats, progress, today) {
+  stats.total += 1;
+  stats.attempts += progress.attempts;
+  stats.correct += progress.correct;
+  if (progress.attempts === 0) stats.fresh += 1;
+  if (progress.stage >= SECURE_STAGE) stats.secure += 1;
+  if (progress.attempts > 0 && progress.dueDay <= today) stats.due += 1;
+  if (progress.wrong > 0 && (progress.wrong >= progress.correct || progress.stage < SECURE_STAGE)) stats.trouble += 1;
+  return stats;
 }
 
 function withAccuracy(stats) {
@@ -161,18 +162,39 @@ function withAccuracy(stats) {
 }
 
 function poolsFor(words, progressMap, now) {
-  const coreWords = words.filter((word) => isStatutoryCoreWord(word));
-  const y34Words = coreWords.filter((word) => word.year === '3-4');
-  const y56Words = coreWords.filter((word) => word.year === '5-6');
-  const secureExtensionWords = words.filter((word) => isSecureExtensionWord(word));
-  const extraWords = words.filter((word) => isEnrichmentExtraWord(word));
+  const today = todayDay(now);
+  const stats = {
+    core: emptyStats(),
+    y34: emptyStats(),
+    y56: emptyStats(),
+    secureExtension: emptyStats(),
+    extra: emptyStats(),
+  };
+
+  for (const word of words) {
+    const progress = progressFor(progressMap, word.slug, now);
+    const tier = coverageTierForWord(word);
+    if (tier === SPELLING_COVERAGE_TIER.SECURE_EXTENSION) {
+      addProgressToStats(stats.secureExtension, progress, today);
+      continue;
+    }
+    if (tier === SPELLING_COVERAGE_TIER.ENRICHMENT_EXTRA) {
+      addProgressToStats(stats.extra, progress, today);
+      continue;
+    }
+    addProgressToStats(stats.core, progress, today);
+    if (word.year === '3-4') addProgressToStats(stats.y34, progress, today);
+    if (word.year === '5-6') addProgressToStats(stats.y56, progress, today);
+  }
+
+  const coreStats = withAccuracy(stats.core);
   return {
-    all: withAccuracy(statsForWords(coreWords, progressMap, now)),
-    core: withAccuracy(statsForWords(coreWords, progressMap, now)),
-    y34: withAccuracy(statsForWords(y34Words, progressMap, now)),
-    y56: withAccuracy(statsForWords(y56Words, progressMap, now)),
-    secureExtension: withAccuracy(statsForWords(secureExtensionWords, progressMap, now)),
-    extra: withAccuracy(statsForWords(extraWords, progressMap, now)),
+    all: { ...coreStats },
+    core: coreStats,
+    y34: withAccuracy(stats.y34),
+    y56: withAccuracy(stats.y56),
+    secureExtension: withAccuracy(stats.secureExtension),
+    extra: withAccuracy(stats.extra),
   };
 }
 

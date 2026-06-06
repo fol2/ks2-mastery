@@ -7,6 +7,7 @@ import { createSpellingService } from '../src/subjects/spelling/service.js';
 import { SEEDED_SPELLING_CONTENT_BUNDLE } from '../src/subjects/spelling/data/content-data.js';
 import { resolveRuntimeSnapshot } from '../src/subjects/spelling/content/model.js';
 import { isStatutoryCoreWord } from '../src/subjects/spelling/content/taxonomy.js';
+import { SPELLING_SERVICE_STATE_VERSION } from '../src/subjects/spelling/service-contract.js';
 import { createServerSpellingEngine, SPELLING_SERVER_AUTHORITY } from '../worker/src/subjects/spelling/engine.js';
 import { createWorkerRepositoryServer } from './helpers/worker-server.js';
 import { installMemoryStorage } from './helpers/memory-storage.js';
@@ -236,6 +237,43 @@ test('server spelling engine preserves deterministic selection and retry progres
   assert.equal(serverSubmitted.state.feedback.headline, referenceSubmitted.state.feedback.headline);
   assert.equal(serverSubmitted.state.awaitingAdvance, referenceSubmitted.state.awaitingAdvance);
   assert.deepEqual(serverSubmitted.data.progress, {});
+});
+
+test('server spelling engine command analytics stay compact on the hot path', () => {
+  const now = () => Date.UTC(2026, 0, 1);
+  const learnerId = 'learner-a';
+  const engine = createServerSpellingEngine({
+    now,
+    random: makeSeededRandom(42),
+    contentSnapshot: contentSnapshot(),
+  });
+
+  const response = engine.apply({
+    learnerId,
+    subjectRecord: {
+      ui: null,
+      data: {
+        progress: {
+          possess: { stage: 4, attempts: 4, correct: 4, wrong: 0 },
+          ability: { stage: 4, attempts: 2, correct: 2, wrong: 0 },
+          mollusc: { stage: 1, attempts: 1, correct: 0, wrong: 1 },
+        },
+      },
+    },
+    latestSession: null,
+    command: 'save-prefs',
+    payload: { prefs: { mode: 'smart' } },
+  });
+
+  assert.equal(response.analytics.version, SPELLING_SERVICE_STATE_VERSION);
+  assert.equal(response.analytics.generatedAt, now());
+  assert.deepEqual(Object.keys(response.analytics.pools), ['all', 'core', 'y34', 'y56', 'secureExtension', 'extra']);
+  assert.deepEqual(response.analytics.pools, response.stats);
+  assert.deepEqual(response.analytics.wordGroups, []);
+  assert.equal(response.analytics.wordBank.source, 'server-read-model-api');
+  assert.equal(response.stats.core.secure, 1);
+  assert.equal(response.stats.secureExtension.secure, 1);
+  assert.equal(response.stats.extra.trouble, 1);
 });
 
 test('worker spelling command route starts, submits, continues, and completes server-side', async () => {

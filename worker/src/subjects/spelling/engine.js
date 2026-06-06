@@ -9,6 +9,7 @@ import {
   normaliseGuardianMap,
   normalisePatternMap,
   normalisePostMegaRecord,
+  SPELLING_SERVICE_STATE_VERSION,
 } from '../../../../src/subjects/spelling/service-contract.js';
 import { getSpellingPostMasteryState } from '../../../../src/subjects/spelling/read-model.js';
 import { createSpellingService } from '../../../../shared/spelling/service.js';
@@ -403,6 +404,18 @@ function buildTransition(state, { events = [], audio = null, changed = true, ok 
   };
 }
 
+function buildCompactCommandAnalytics(stats, generatedAt) {
+  return {
+    version: SPELLING_SERVICE_STATE_VERSION,
+    generatedAt,
+    pools: cloneSerialisable(stats) || {},
+    wordGroups: [],
+    wordBank: {
+      source: 'server-read-model-api',
+    },
+  };
+}
+
 function staleSessionError(command) {
   throw new BadRequestError('This spelling session is no longer active on the server.', {
     code: 'spelling_session_stale',
@@ -530,6 +543,15 @@ export function createServerSpellingEngine({
         globalThis.console?.warn?.('[spelling.apply] postMastery derivation failed, omitting from response', error);
         postMastery = undefined;
       }
+      const coreStats = service.getStats(learnerId, 'core');
+      const stats = {
+        all: { ...coreStats },
+        core: coreStats,
+        y34: service.getStats(learnerId, 'y3-4'),
+        y56: service.getStats(learnerId, 'y5-6'),
+        secureExtension: service.getStats(learnerId, 'secure-extension'),
+        extra: service.getStats(learnerId, 'extra'),
+      };
       return {
         ok: transition.ok !== false,
         changed: transition.changed !== false,
@@ -539,14 +561,8 @@ export function createServerSpellingEngine({
         events: transition.events || [],
         audio: transition.audio || null,
         prefs: transition.prefs || service.getPrefs(learnerId),
-        stats: {
-          all: service.getStats(learnerId, 'core'),
-          core: service.getStats(learnerId, 'core'),
-          y34: service.getStats(learnerId, 'y3-4'),
-          y56: service.getStats(learnerId, 'y5-6'),
-          extra: service.getStats(learnerId, 'extra'),
-        },
-        analytics: service.getAnalyticsSnapshot(learnerId),
+        stats,
+        analytics: buildCompactCommandAnalytics(stats, clock()),
         postMastery,
       };
     },
