@@ -61,6 +61,14 @@ test('parseArgs rejects duplicate sample flags that would hide probe shape', () 
     () => parseArgs(['--samples', '1', '--samples', '2']),
     /--samples specified more than once/,
   );
+  assert.throws(
+    () => parseArgs(['--samples', '1', '--tts-samples', '2']),
+    /--samples cannot be combined with --tts-samples/,
+  );
+  assert.throws(
+    () => parseArgs(['--asset-samples', '1', '--samples', '2']),
+    /--samples cannot be combined with --asset-samples/,
+  );
 });
 
 test('parseArgs supports low-impact focused probe shape', () => {
@@ -238,6 +246,7 @@ test('runPerformanceProbe captures asset, bootstrap, and TTS timings with reques
     assert.equal(wordLookup.status, 204);
     assert.equal(sentenceCache.cache, 'hit');
     assert.equal(sentenceCache.source, 'primary');
+    assert.equal(sentenceCache.headers, undefined);
     assert.deepEqual(sentenceCache.serverTimingPhases, {
       prompt: 10,
       lookup_limit: 8,
@@ -251,7 +260,7 @@ test('runPerformanceProbe captures asset, bootstrap, and TTS timings with reques
     assert.match(sentenceCache.clientRequestId, /^ks2_req_/);
     assert.equal(report.session.learnerIdPresent, true);
     assert.equal(report.bootstrap.selectedLearnerIdPresent, true);
-    assert.doesNotMatch(JSON.stringify(report), /ks2_session=demo|learner-a|account-a|promptToken/);
+    assert.doesNotMatch(JSON.stringify(report), /ks2_session=demo|learner-a|account-a|promptToken|server-timing|ks2_tts_prompt/);
     assert.ok(calls.some((call) => new URL(call.url).pathname === '/api/tts'));
   } finally {
     globalThis.fetch = previousFetch;
@@ -309,7 +318,7 @@ test('runPerformanceProbe can use an operator cookie from an environment variabl
 
   try {
     const report = await runPerformanceProbe({
-      origin: 'https://example.test',
+      origin: 'https://ks2.eugnel.uk',
       includeAssets: false,
       bootstrapSamples: 1,
       ttsSamples: 1,
@@ -330,6 +339,125 @@ test('runPerformanceProbe can use an operator cookie from an environment variabl
     globalThis.fetch = previousFetch;
     if (previousCookie == null) delete process.env.KS2_PROBE_TEST_COOKIE;
     else process.env.KS2_PROBE_TEST_COOKIE = previousCookie;
+  }
+});
+
+test('runPerformanceProbe does not send an operator cookie to a non-production origin', async () => {
+  const previousFetch = globalThis.fetch;
+  const previousCookie = process.env.KS2_PROBE_TEST_COOKIE;
+  const calls = [];
+  process.env.KS2_PROBE_TEST_COOKIE = 'ks2_session=real-session';
+  globalThis.fetch = async (url, init = {}) => {
+    calls.push({ url: String(url), init });
+    assert.notEqual(headerFrom(init, 'cookie'), 'ks2_session=real-session');
+    const pathname = new URL(String(url)).pathname;
+    const echoedRequestId = headerFrom(init, 'x-ks2-request-id');
+    if (pathname === '/api/demo/session') {
+      return jsonResponse({
+        ok: true,
+        session: { demo: true, accountId: 'demo-account', learnerId: 'demo-learner' },
+      }, {
+        status: 201,
+        headers: {
+          'set-cookie': 'ks2_session=demo; Path=/; HttpOnly',
+          'x-ks2-request-id': echoedRequestId,
+        },
+      });
+    }
+    if (pathname === '/api/bootstrap') {
+      assert.equal(headerFrom(init, 'cookie'), 'ks2_session=demo');
+      return jsonResponse({
+        ok: true,
+        learners: {
+          selectedId: 'demo-learner',
+          byId: { 'demo-learner': { stateRevision: 1 } },
+        },
+        meta: { capacity: { requestId: echoedRequestId, queryCount: 3, d1DurationMs: 4, d1RowsRead: 2, d1RowsWritten: 0, wallMs: 20, responseBytes: 1000 } },
+      }, {
+        headers: { 'x-ks2-request-id': echoedRequestId },
+      });
+    }
+    return jsonResponse({ ok: false, error: 'unexpected' }, { status: 500 });
+  };
+
+  try {
+    const report = await runPerformanceProbe({
+      origin: 'https://example.test',
+      includeAssets: false,
+      includeTts: false,
+      bootstrapSamples: 1,
+      warmup: 0,
+      cookieEnv: 'KS2_PROBE_TEST_COOKIE',
+    });
+
+    assert.equal(report.ok, true);
+    assert.equal(report.session.source, 'demo');
+    assert.ok(calls.some((call) => new URL(call.url).pathname === '/api/demo/session'));
+    assert.doesNotMatch(JSON.stringify(report), /real-session|demo-learner|demo-account/);
+  } finally {
+    globalThis.fetch = previousFetch;
+    if (previousCookie == null) delete process.env.KS2_PROBE_TEST_COOKIE;
+    else process.env.KS2_PROBE_TEST_COOKIE = previousCookie;
+  }
+});
+
+test('runPerformanceProbe fails sentence cache samples that are not primary hits', async () => {
+  const previousFetch = globalThis.fetch;
+  globalThis.fetch = async (url, init = {}) => {
+    const pathname = new URL(String(url)).pathname;
+    const echoedRequestId = headerFrom(init, 'x-ks2-request-id');
+    if (pathname === '/api/demo/session') {
+      return jsonResponse({
+        ok: true,
+        session: { demo: true, accountId: 'account-a', learnerId: 'learner-a' },
+      }, {
+        status: 201,
+        headers: {
+          'set-cookie': 'ks2_session=demo; Path=/; HttpOnly',
+          'x-ks2-request-id': echoedRequestId,
+        },
+      });
+    }
+    if (pathname === '/api/tts') {
+      const body = JSON.parse(init.body || '{}');
+      if (body.wordOnly === true) {
+        return response('', {
+          status: 204,
+          headers: {
+            'x-ks2-tts-cache': 'miss',
+            'x-ks2-request-id': echoedRequestId,
+          },
+        });
+      }
+      return response(new Uint8Array([1, 2, 3, 4]), {
+        headers: {
+          'content-type': 'audio/mpeg',
+          'x-ks2-tts-cache': 'hit',
+          'x-ks2-tts-cache-source': 'legacy',
+          'x-ks2-request-id': echoedRequestId,
+          'server-timing': 'ks2_tts_prompt;dur=10, ks2_tts_total;dur=40',
+        },
+      });
+    }
+    return jsonResponse({ ok: false, error: 'unexpected' }, { status: 500 });
+  };
+
+  try {
+    const report = await runPerformanceProbe({
+      origin: 'https://example.test',
+      includeAssets: false,
+      includeBootstrap: false,
+      ttsSamples: 1,
+      warmup: 0,
+      wordSample: ['accident'],
+      voices: ['Iapetus'],
+    });
+
+    assert.equal(report.ok, false);
+    assert.match(report.failures.join('\n'), /expected hit\/primary/);
+    assert.equal(report.tts.samples.find((sample) => sample.mode === 'sentence-cache').source, 'legacy');
+  } finally {
+    globalThis.fetch = previousFetch;
   }
 });
 
@@ -391,8 +519,10 @@ test('runPerformanceProbe records browser TTS play-start samples from an injecte
     assert.equal(report.ok, true);
     assert.equal(report.config.includeBrowserTts, false);
     assert.equal(report.browserTts.ok, true);
+    assert.equal(report.browserTts.scope, 'browser-direct-audio');
     assert.equal(report.browserTts.skipped, false);
     assert.equal(report.browserTts.samples.length, 1);
+    assert.equal(report.browserTts.samples[0].mode, 'browser-direct-audio-play-start');
     assert.equal(report.browserTts.playStartMs.p50, 175);
     assert.equal(report.browserTts.summary[0].key, 'accident/Iapetus/hit/primary');
     assert.equal(report.browserTts.samples[0].requestId, 'ks2_req_browser');
@@ -443,6 +573,7 @@ test('runPerformanceProbe treats browser TTS skips as non-fatal', async () => {
     assert.equal(report.ok, true);
     assert.equal(report.config.includeBrowserTts, true);
     assert.equal(report.browserTts.ok, true);
+    assert.equal(report.browserTts.scope, 'browser-direct-audio');
     assert.equal(report.browserTts.skipped, true);
     assert.equal(report.browserTts.skipReason, 'playwright import failed');
     assert.deepEqual(report.browserTts.samples, []);

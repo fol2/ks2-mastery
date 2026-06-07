@@ -584,28 +584,44 @@ export function createPlatformTts({
         //      telemetry measured from the `loading` entry.
         //   2. idle -> playing: cache-hit fast path via
         //      `speakWithCachedBufferedAudio` where `emitLoading: false`
-        //      was passed, so no `loading` transition occurred. Audio is
-        //      playing immediately, so the audio-playing invariant
-        //      (`status === 'playing' when audio.play() runs`) must hold.
-        //      Status-channel latency stays tied to `loading`, but cache
-        //      lookup timing still logs separately so production can split
-        //      header, body, and play-start delay.
-        if (cacheLookupTelemetry) {
-          emitCacheLookupLog({
-            statusTag: 'play-start',
-            kind: kindId,
-            requestStartedAt,
-            response,
-            responseAt,
-            blobAt,
-            playStartAt: now(),
-            bytes: blob.size,
-          });
-        }
+        //      was passed, so no `loading` transition occurred. The status
+        //      moves to `playing` before `audio.play()` starts, while cache
+        //      lookup telemetry records the real play() fulfilment time.
         if (status === 'loading') setStatus('playing', { telemetry: 'completed' });
         else if (status === 'idle') setStatus('playing');
         emit({ type: 'start', kind: kindId });
-        currentAudio.play().catch(() => {
+        let playPromise;
+        try {
+          playPromise = currentAudio.play();
+        } catch {
+          playPromise = Promise.reject();
+        }
+        Promise.resolve(playPromise).then(() => {
+          if (cacheLookupTelemetry && token === playbackId) {
+            emitCacheLookupLog({
+              statusTag: 'play-start',
+              kind: kindId,
+              requestStartedAt,
+              response,
+              responseAt,
+              blobAt,
+              playStartAt: now(),
+              bytes: blob.size,
+            });
+          }
+        }).catch(() => {
+          if (token !== playbackId) return;
+          if (cacheLookupTelemetry && token === playbackId) {
+            emitCacheLookupLog({
+              statusTag: 'failed',
+              kind: kindId,
+              requestStartedAt,
+              response,
+              responseAt,
+              blobAt,
+              bytes: blob.size,
+            });
+          }
           if (status === 'playing' || status === 'loading') setStatus('idle');
           emit({ type: 'end' });
           cleanupAudio();

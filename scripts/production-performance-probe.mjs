@@ -163,6 +163,12 @@ export function parseArgs(argv = process.argv.slice(2)) {
     }
   }
 
+  const perRouteSampleFlags = ['--asset-samples', '--bootstrap-samples', '--tts-samples']
+    .filter((flag) => assigned.has(flag));
+  if (assigned.has('--samples') && perRouteSampleFlags.length) {
+    throw new Error(`--samples cannot be combined with ${perRouteSampleFlags.join(', ')}; choose one sample-shape style.`);
+  }
+
   options.origin = normaliseOrigin(options.origin);
   return options;
 }
@@ -558,17 +564,16 @@ async function measureTts(origin, cookie, learnerId, options) {
             body: JSON.stringify(await ttsRequestBody({ mode, learnerId, slug, seed, voice })),
           }, { label: `POST /api/tts ${mode} ${slug}/${voice}`, timeoutMs });
           if (index >= options.warmup) {
-            const { body, ...serialisable } = sample;
-            const serverTimingPhases = parseServerTiming(sample.headers.serverTiming);
+            const { body, headers, ...serialisable } = sample;
+            const serverTimingPhases = parseServerTiming(headers.serverTiming);
             samples.push({
               ...serialisable,
               mode,
               slug,
               voice,
-              cache: sample.headers.xTtsCache || '',
-              source: sample.headers.xTtsCacheSource || '',
-              contentType: sample.headers.contentType,
-              serverTiming: sample.headers.serverTiming || '',
+              cache: headers.xTtsCache || '',
+              source: headers.xTtsCacheSource || '',
+              contentType: headers.contentType,
               serverTimingPhases,
               classification: classifyTtsTimingSample({ ...sample, serverTimingPhases }),
             });
@@ -589,7 +594,7 @@ async function measureTts(origin, cookie, learnerId, options) {
 
 function sanitiseBrowserTtsSample(sample = {}) {
   return {
-    mode: 'browser-play-start',
+    mode: 'browser-direct-audio-play-start',
     slug: String(sample.slug || ''),
     voice: String(sample.voice || ''),
     status: Number(sample.status) || 0,
@@ -614,8 +619,12 @@ function sanitiseBrowserTtsReport(report = {}) {
   const measuredSamples = samples.filter((sample) => !sample.skipped);
   return {
     ok: report.ok !== false,
+    scope: report.scope || 'browser-direct-audio',
     skipped: Boolean(report.skipped),
     skipReason: report.skipReason ? String(report.skipReason).slice(0, 200) : '',
+    notes: Array.isArray(report.notes)
+      ? report.notes.map((note) => String(note).slice(0, 240))
+      : ['Direct headless-browser fetch of /api/tts plus Audio playback; app TTS-port telemetry is covered by unit tests.'],
     samples,
     summary: summariseSamples(measuredSamples, (sample) => `${sample.slug}/${sample.voice}/${sample.cache || 'no-cache'}/${sample.source || 'no-source'}`),
     playStartMs: summariseMetric(measuredSamples, 'playStartMs'),
@@ -734,8 +743,10 @@ async function runPlaywrightBrowserTts(origin, cookie, learnerId, options) {
     }, { body: requestBody });
     return {
       ok: !sample.skipped,
+      scope: 'browser-direct-audio',
       skipped: Boolean(sample.skipped),
       skipReason: sample.skipReason || '',
+      notes: ['Direct headless-browser fetch of /api/tts plus Audio playback; not the in-app createPlatformTts path.'],
       samples: [{ ...sample, slug: seed.slug, voice }],
     };
   } catch (error) {
@@ -785,6 +796,7 @@ function operatorSessionFromEnv(options) {
   const envName = String(options.cookieEnv || '').trim();
   const cookie = envName ? process.env[envName] : '';
   if (!cookie) return null;
+  if (normaliseOrigin(options.origin) !== normaliseOrigin(DEFAULT_PRODUCTION_ORIGIN)) return null;
   return {
     ok: true,
     status: 0,
@@ -907,6 +919,8 @@ export async function runPerformanceProbe(rawOptions = {}) {
       for (const sample of report.tts.samples) {
         if (sample.mode === TTS_MODE_SENTENCE_CACHE && sample.status !== 200) {
           report.failures.push(`TTS sentence cache ${sample.slug}/${sample.voice} returned HTTP ${sample.status}.`);
+        } else if (sample.mode === TTS_MODE_SENTENCE_CACHE && (sample.cache !== 'hit' || sample.source !== 'primary')) {
+          report.failures.push(`TTS sentence cache ${sample.slug}/${sample.voice} returned cache=${sample.cache || 'missing'} source=${sample.source || 'missing'}; expected hit/primary.`);
         } else if (sample.mode === TTS_MODE_WORD_LOOKUP && sample.status !== 200 && sample.status !== 204) {
           report.failures.push(`TTS word lookup ${sample.slug}/${sample.voice} returned HTTP ${sample.status}.`);
         }
@@ -920,7 +934,7 @@ export async function runPerformanceProbe(rawOptions = {}) {
     } else {
       report.browserTts = await measureBrowserTts(options.origin, report.session.cookie, report.session.learnerId, options);
       if (report.browserTts && !report.browserTts.skipped && report.browserTts.ok === false) {
-        report.failures.push('Browser TTS play-start measurement failed.');
+        report.failures.push('Browser direct-audio TTS play-start measurement failed.');
       }
     }
   }
@@ -954,7 +968,7 @@ export function usage() {
     '  --no-assets                 Skip public page/bundle timing.',
     '  --no-bootstrap              Skip /api/bootstrap timing.',
     '  --no-tts                    Skip /api/tts timing.',
-    '  --browser-tts               Best-effort browser-side cached audio play-start timing.',
+    '  --browser-tts               Best-effort direct-browser /api/tts audio play-start timing.',
     '  --help, -h                  Show this banner.',
   ].join('\n');
 }

@@ -569,6 +569,7 @@ async function copyLegacyAudioToPrimary(bucket, {
 async function readBufferedGeminiAudio(env, payload, options = {}) {
   const lookupTelemetry = options.telemetry || null;
   const lookupAttempts = [];
+  const allowLegacyMigration = options.allowLegacyMigration !== false;
   const metadata = await bufferedAudioMetadata(payload, options);
   if (!metadata) {
     logTtsR2CacheLookup(lookupTelemetry, {
@@ -616,12 +617,14 @@ async function readBufferedGeminiAudio(env, payload, options = {}) {
         objectKey = fallbackKey;
         if (object) {
           source = 'legacy';
-          object = await copyLegacyAudioToPrimary(bucket, {
-            legacyObject: object,
-            primaryKey: key,
-            metadata,
-            extension,
-          });
+          if (allowLegacyMigration) {
+            object = await copyLegacyAudioToPrimary(bucket, {
+              legacyObject: object,
+              primaryKey: key,
+              metadata,
+              extension,
+            });
+          }
         }
       }
     } catch (error) {
@@ -1037,11 +1040,12 @@ export async function handleTextToSpeechRequest({
     return await recordDemoTtsFallback(env, session, now, withFallbackHeader(withTtsServerTiming(response, timing), fallbackFrom));
   }
 
-  async function tryGemini(fallbackFrom = '') {
+ async function tryGemini(fallbackFrom = '') {
     if (cacheLookupOnly) await protectLookupRequest();
     else if (!cacheOnly) await protectAudioRequest();
     const cacheHit = await timeTtsPhase(timing, 'cache_lookup', () => readBufferedGeminiAudio(env, payload, {
       model: geminiForPayload.model,
+      allowLegacyMigration: !cacheLookupOnly && !cacheOnly,
       telemetry: cacheLookupOnly ? {
         enabled: true,
         requestId,

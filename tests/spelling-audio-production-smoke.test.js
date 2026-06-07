@@ -434,12 +434,14 @@ test('runSpellingAudioSmoke happy path reports all probes succeeded', async () =
     assert.equal(sentenceProbe.source, 'legacy');
     const crossAccount = report.probes.find((probe) => probe.kind === 'cross-account');
     assert.ok(crossAccount, 'expected a cross-account probe');
-    assert.notEqual(crossAccount.tokenA, crossAccount.tokenB);
-    assert.equal(crossAccount.expectedR2Key, await expectedWordR2Key({
-      slug: crossAccount.fixtureWord,
-      word: crossAccount.fixtureWord,
-      voice: crossAccount.voice,
-    }));
+    assert.equal(crossAccount.learnerAPresent, true);
+    assert.equal(crossAccount.learnerBPresent, true);
+    assert.equal(crossAccount.learnersDistinct, true);
+    assert.equal(crossAccount.tokensDistinct, true);
+    assert.equal(crossAccount.r2KeyPresent, true);
+    assert.equal(crossAccount.r2KeysMatch, true);
+    assert.equal(crossAccount.tokenA, undefined);
+    assert.equal(crossAccount.expectedR2Key, undefined);
   } finally {
     fixture.restore();
   }
@@ -652,7 +654,7 @@ test('runSpellingAudioSmoke cross-account probe asserts byte-identical bodies + 
     });
     const probe = report.probes.find((entry) => entry.kind === 'cross-account');
     assert.ok(probe);
-    assert.notEqual(probe.tokenA, probe.tokenB);
+    assert.equal(probe.tokensDistinct, true);
     assert.equal(probe.bytesAlength, probe.bytesBLength);
     assert.notEqual(probe.bytesDistinctLength, 0);
   } finally {
@@ -895,8 +897,15 @@ test('runCli happy path returns EXIT_OK and emits JSON when --json supplied', as
     const payload = JSON.parse(logged.join('\n'));
     assert.equal(payload.ok, true);
     assert.equal(payload.origin, 'https://preview.example.test');
+    assert.equal(payload.accountPresent, true);
+    assert.equal(payload.learnerPresent, true);
     assert.ok(Array.isArray(payload.probes));
     assert.ok(payload.probes.length > 0);
+    const encoded = JSON.stringify(payload);
+    assert.doesNotMatch(
+      encoded,
+      /learner-a|learner-b|account-a|account-b|ks2_session|demoA|demoB|tokenA|tokenB|promptToken|expectedR2Key|spelling-audio\/v1\//,
+    );
   } finally {
     console.log = previousLog;
     fixture.restore();

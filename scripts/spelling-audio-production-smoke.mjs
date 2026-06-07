@@ -479,8 +479,8 @@ async function runWordProbe({
         kind: 'word',
         slug,
         voice,
-        promptToken,
-        expectedR2Key: expectedKey,
+        tokenPresent: Boolean(promptToken),
+        r2KeyPresent: Boolean(expectedKey),
         cache: state.cache,
         source: state.source,
         model: state.model,
@@ -503,8 +503,8 @@ async function runWordProbe({
     kind: 'word',
     slug,
     voice,
-    promptToken,
-    expectedR2Key: expectedKey,
+    tokenPresent: Boolean(promptToken),
+    r2KeyPresent: Boolean(expectedKey),
     cache,
     source,
     model,
@@ -613,7 +613,7 @@ async function runSentenceProbe({
   const probe = {
     kind: 'sentence',
     slug,
-    promptToken,
+    tokenPresent: Boolean(promptToken),
     cache,
     source,
     status: response.status,
@@ -719,13 +719,13 @@ async function runCrossAccountProbe({
   // Per-learner token salt: tokens MUST differ.
   if (tokenA === tokenB) {
     throw validationError(
-      `Cross-account probe: prompt tokens collapsed (per-learner salt regression). tokenA === tokenB`,
+      'Cross-account probe: prompt tokens collapsed (per-learner salt regression).',
     );
   }
   // Cross-account R2 reuse: keys MUST match.
   if (expectedKeyA !== expectedKeyB) {
     throw validationError(
-      `Cross-account probe: expected R2 keys diverged for the same word (accountId leaked into wordOnly metadata). keyA=${expectedKeyA} keyB=${expectedKeyB}`,
+      'Cross-account probe: expected R2 keys diverged for the same word (accountId leaked into wordOnly metadata).',
     );
   }
 
@@ -856,15 +856,16 @@ async function runCrossAccountProbe({
 
   return {
     kind: 'cross-account',
-    learnerA: bootstrapA.learnerId,
-    learnerB: bootstrapB.learnerId,
+    learnerAPresent: Boolean(bootstrapA.learnerId),
+    learnerBPresent: Boolean(bootstrapB.learnerId),
+    learnersDistinct: bootstrapA.learnerId !== bootstrapB.learnerId,
     fixtureWord,
     distinctWord,
     voice,
-    tokenA,
-    tokenB,
-    expectedR2Key: expectedKeyA,
-    expectedR2KeyDistinct: expectedKeyDistinct,
+    tokensDistinct: tokenA !== tokenB,
+    r2KeyPresent: Boolean(expectedKeyA),
+    distinctR2KeyPresent: Boolean(expectedKeyDistinct),
+    r2KeysMatch: expectedKeyA === expectedKeyB,
     bytesAlength: bytesA.length,
     bytesBLength: bytesB.length,
     bytesDistinctLength: bytesDistinct.length,
@@ -879,6 +880,13 @@ async function runCrossAccountProbe({
 // rather than short-circuiting the entire run. Operator gets the full
 // matrix of pass/fail in one report instead of "first failure only" —
 // makes triage faster when several probes regress at once.
+function redactSmokeDiagnostic(value) {
+  return String(value || '')
+    .replace(/ks2_session=[^;\s"']+/g, 'ks2_session=[redacted]')
+    .replace(/\b[a-f0-9]{64}\b/gi, '[sha256]')
+    .replace(/spelling-audio\/v1\/[^\s"'`]+/g, 'spelling-audio/v1/[redacted]');
+}
+
 async function safeRunProbe(kindLabel, runner) {
   try {
     return await runner();
@@ -888,14 +896,15 @@ async function safeRunProbe(kindLabel, runner) {
       : error?.kind === 'usage'
         ? 'usage'
         : 'validation';
+    const message = redactSmokeDiagnostic(error?.message || String(error));
     return {
       kind: kindLabel,
       ok: false,
       error: {
         kind,
-        message: error?.message || String(error),
+        message,
       },
-      notes: [`error[${kind}]: ${error?.message || String(error)}`],
+      notes: [`error[${kind}]: ${message}`],
     };
   }
 }
@@ -979,8 +988,8 @@ export async function runSpellingAudioSmoke(options = {}) {
     startedAt,
     finishedAt,
     origin,
-    accountId: demo.session?.accountId || null,
-    learnerId: bootstrap.learnerId,
+    accountPresent: Boolean(demo.session?.accountId),
+    learnerPresent: Boolean(bootstrap.learnerId),
     probes,
   };
 }
@@ -988,7 +997,7 @@ export async function runSpellingAudioSmoke(options = {}) {
 function renderHumanReadableReport(report) {
   const lines = [];
   lines.push(`spelling-audio-production-smoke @ ${report.origin}`);
-  lines.push(`  account: ${report.accountId || '(none)'}  learner: ${report.learnerId}`);
+  lines.push(`  accountPresent=${Boolean(report.accountPresent)}  learnerPresent=${Boolean(report.learnerPresent)}`);
   lines.push(`  ${report.startedAt} → ${report.finishedAt}`);
   for (const probe of report.probes) {
     if (probe.kind === 'word') {
@@ -996,7 +1005,7 @@ function renderHumanReadableReport(report) {
     } else if (probe.kind === 'sentence') {
       lines.push(`  [sentence] ${probe.slug} cache=${probe.cache || '-'} source=${probe.source || '-'}`);
     } else if (probe.kind === 'cross-account') {
-      lines.push(`  [cross-account] ${probe.fixtureWord} (${probe.voice}) tokensDistinct=true sameR2Key=true bytesIdentical=true distinctWord=${probe.distinctWord}`);
+      lines.push(`  [cross-account] ${probe.fixtureWord} (${probe.voice}) tokensDistinct=${Boolean(probe.tokensDistinct)} sameR2Key=${Boolean(probe.r2KeysMatch)} bytesIdentical=true distinctWord=${probe.distinctWord}`);
     }
     for (const note of probe.notes || []) {
       lines.push(`      - ${note}`);
