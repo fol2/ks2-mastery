@@ -18,8 +18,8 @@ import {
 //                          reuses the prefetched blob, so `emitLoading` is
 //                          skipped and the status jumps straight to
 //                          playing when audio.play() is invoked. No
-//                          `loading` latency telemetry emits on this path;
-//                          the completed telemetry fires at onended.)
+//                          status-channel latency telemetry emits on this
+//                          path; cache lookup timing logs separately.)
 //     loading -> playing  (audio play after remote fetch)
 //     loading -> failed   (watchdog fires OR fetch rejects / non-ok)
 //     loading -> idle     (abortPending called)
@@ -162,6 +162,7 @@ export function createPlatformTts({
   clearTimeoutFn = (typeof globalThis.clearTimeout === 'function' ? globalThis.clearTimeout.bind(globalThis) : null),
   now = () => Date.now(),
   logger = (typeof globalThis.console?.log === 'function' ? globalThis.console.log.bind(globalThis.console) : null),
+  onCacheLookupTelemetry = null,
 } = {}) {
   let playbackId = 0;
   let currentAbort = null;
@@ -209,6 +210,87 @@ export function createPlatformTts({
     const kind = loadingKind || 'normal';
     try {
       logger(`[ks2-tts-latency] status=${statusTag} wallMs=${wallMs} kind=${kind}`);
+    } catch { /* swallow logger failure */ }
+  }
+
+  function responseHeader(response, name) {
+    try {
+      return response?.headers?.get?.(name) || '';
+    } catch {
+      return '';
+    }
+  }
+
+  function emitCacheLookupLog({
+    statusTag,
+    kind,
+    requestStartedAt,
+    response,
+    responseAt = null,
+    blobAt = null,
+    playStartAt = null,
+    bytes = null,
+  } = {}) {
+    const startedAt = Number(requestStartedAt);
+    if (!Number.isFinite(startedAt)) return;
+    const hasTiming = (value) => value != null && Number.isFinite(Number(value));
+    const finishedAt = hasTiming(playStartAt)
+      ? Number(playStartAt)
+      : hasTiming(blobAt)
+        ? Number(blobAt)
+        : hasTiming(responseAt)
+          ? Number(responseAt)
+          : now();
+    const headerMs = hasTiming(responseAt)
+      ? Math.max(0, Math.round(Number(responseAt) - startedAt))
+      : null;
+    const blobMs = hasTiming(blobAt) && hasTiming(responseAt)
+      ? Math.max(0, Math.round(Number(blobAt) - Number(responseAt)))
+      : null;
+    const playStartMs = hasTiming(playStartAt)
+      ? Math.max(0, Math.round(Number(playStartAt) - startedAt))
+      : null;
+    const wallMs = Math.max(0, Math.round(finishedAt - startedAt));
+    const byteCount = hasTiming(bytes) ? Number(bytes) : null;
+    const telemetry = {
+      status: statusTag || 'unknown',
+      wallMs,
+      kind: kind || 'normal',
+      http: Number(response?.status) || 0,
+      cache: responseHeader(response, 'x-ks2-tts-cache') || 'unknown',
+      source: responseHeader(response, 'x-ks2-tts-cache-source') || 'unknown',
+      provider: responseHeader(response, 'x-ks2-tts-provider') || 'unknown',
+      contentType: responseHeader(response, 'content-type') || 'unknown',
+      requestId: responseHeader(response, 'x-ks2-request-id') || 'unknown',
+      headerMs,
+      blobMs,
+      playStartMs,
+      bytes: byteCount === null ? null : Math.max(0, Math.round(byteCount)),
+    };
+    if (typeof onCacheLookupTelemetry === 'function') {
+      try {
+        onCacheLookupTelemetry({ ...telemetry });
+      } catch { /* swallow observer failure */ }
+    }
+    if (typeof logger !== 'function') return;
+    const fields = [
+      '[ks2-tts-cache-latency]',
+      `status=${telemetry.status}`,
+      `wallMs=${telemetry.wallMs}`,
+      `kind=${telemetry.kind}`,
+      `http=${telemetry.http}`,
+      `cache=${telemetry.cache}`,
+      `source=${telemetry.source}`,
+      `provider=${telemetry.provider}`,
+      `contentType=${telemetry.contentType}`,
+      `requestId=${telemetry.requestId}`,
+    ];
+    if (telemetry.headerMs !== null) fields.push(`headerMs=${telemetry.headerMs}`);
+    if (telemetry.blobMs !== null) fields.push(`blobMs=${telemetry.blobMs}`);
+    if (telemetry.playStartMs !== null) fields.push(`playStartMs=${telemetry.playStartMs}`);
+    if (telemetry.bytes !== null) fields.push(`bytes=${telemetry.bytes}`);
+    try {
+      logger(fields.join(' '));
     } catch { /* swallow logger failure */ }
   }
 
@@ -419,6 +501,8 @@ export function createPlatformTts({
 
     currentAbort = new AbortController();
     const kindId = playbackKind(payload);
+    const cacheLookupTelemetry = !emitLoading && payload?.cacheLookupOnly === true;
+    const requestStartedAt = cacheLookupTelemetry ? now() : null;
     if (emitLoading) {
       emit({ type: 'loading', kind: kindId, provider: providerId });
       loadingKind = kindId;
@@ -435,17 +519,37 @@ export function createPlatformTts({
         signal: currentAbort.signal,
         body: JSON.stringify(requestBody),
       });
+      const responseAt = cacheLookupTelemetry ? now() : null;
       if (response.status === 204) {
+        if (cacheLookupTelemetry) {
+          emitCacheLookupLog({
+            statusTag: 'miss',
+            kind: kindId,
+            requestStartedAt,
+            response,
+            responseAt,
+          });
+        }
         if (emitLoading && token === playbackId && status === 'loading') setStatus('idle', { telemetry: 'completed' });
         if (emitMissEnd && token === playbackId) emit({ type: 'end' });
         return false;
       }
       if (!response.ok) {
+        if (cacheLookupTelemetry) {
+          emitCacheLookupLog({
+            statusTag: 'failed',
+            kind: kindId,
+            requestStartedAt,
+            response,
+            responseAt,
+          });
+        }
         if (emitLoading && token === playbackId && status === 'loading') setStatus('failed', { telemetry: 'failed' });
         if (emitMissEnd && token === playbackId) emit({ type: 'end' });
         return false;
       }
       const blob = await response.blob();
+      const blobAt = cacheLookupTelemetry ? now() : null;
       if (token !== playbackId) return false;
 
       currentObjectUrl = URL.createObjectURL(blob);
@@ -483,8 +587,21 @@ export function createPlatformTts({
         //      was passed, so no `loading` transition occurred. Audio is
         //      playing immediately, so the audio-playing invariant
         //      (`status === 'playing' when audio.play() runs`) must hold.
-        //      No latency telemetry emits on this path because there was
-        //      no `loading` timer to close out.
+        //      Status-channel latency stays tied to `loading`, but cache
+        //      lookup timing still logs separately so production can split
+        //      header, body, and play-start delay.
+        if (cacheLookupTelemetry) {
+          emitCacheLookupLog({
+            statusTag: 'play-start',
+            kind: kindId,
+            requestStartedAt,
+            response,
+            responseAt,
+            blobAt,
+            playStartAt: now(),
+            bytes: blob.size,
+          });
+        }
         if (status === 'loading') setStatus('playing', { telemetry: 'completed' });
         else if (status === 'idle') setStatus('playing');
         emit({ type: 'start', kind: kindId });

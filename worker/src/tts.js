@@ -60,73 +60,74 @@ function positiveInteger(value, fallback, { min = 1, max = 30000 } = {}) {
 // `worker/src/rate-limit.js`. TTS uses the shared helper with an
 // env-first signature, same shape as before (feasibility F-06).
 
-async function protectTts(env, request, session, now) {
+async function consumeTtsRateLimitPair(env, request, session, now, {
+  accountBucket,
+  accountLimit,
+  ipBucket,
+  ipLimit,
+}) {
   const { bucketKey } = rateLimitSubject(request, env);
-  const accountLimit = await consumeRateLimit(env, {
-    bucket: 'tts-account',
-    identifier: session.accountId,
-    limit: TTS_ACCOUNT_LIMIT,
-    windowMs: TTS_WINDOW_MS,
-    now,
-  });
-  const ipLimit = await consumeRateLimit(env, {
-    bucket: 'tts-ip',
-    identifier: bucketKey,
-    limit: TTS_IP_LIMIT,
-    windowMs: TTS_WINDOW_MS,
-    now,
-  });
+  const [accountResult, ipResult] = await Promise.all([
+    consumeRateLimit(env, {
+      bucket: accountBucket,
+      identifier: session.accountId,
+      limit: accountLimit,
+      windowMs: TTS_WINDOW_MS,
+      now,
+    }),
+    consumeRateLimit(env, {
+      bucket: ipBucket,
+      identifier: bucketKey,
+      limit: ipLimit,
+      windowMs: TTS_WINDOW_MS,
+      now,
+    }),
+  ]);
+  return {
+    allowed: accountResult.allowed && ipResult.allowed,
+    retryAfterSeconds: Math.max(accountResult.retryAfterSeconds, ipResult.retryAfterSeconds),
+  };
+}
 
-  if (!accountLimit.allowed || !ipLimit.allowed) {
-    throw new BadRequestError('Too many dictation audio requests. Please wait a few minutes and try again.', {
-      code: 'tts_rate_limited',
-      retryAfterSeconds: Math.max(accountLimit.retryAfterSeconds, ipLimit.retryAfterSeconds),
-    });
-  }
+async function requireTtsRateLimitPair(env, request, session, now, spec) {
+  const result = await consumeTtsRateLimitPair(env, request, session, now, spec);
+  if (result.allowed) return;
+  throw new BadRequestError(spec.message, {
+    code: spec.code,
+    retryAfterSeconds: result.retryAfterSeconds,
+  });
+}
+
+async function protectTts(env, request, session, now) {
+  await requireTtsRateLimitPair(env, request, session, now, {
+    accountBucket: 'tts-account',
+    accountLimit: TTS_ACCOUNT_LIMIT,
+    ipBucket: 'tts-ip',
+    ipLimit: TTS_IP_LIMIT,
+    message: 'Too many dictation audio requests. Please wait a few minutes and try again.',
+    code: 'tts_rate_limited',
+  });
 }
 
 async function protectTtsLookup(env, request, session, now) {
-  const { bucketKey } = rateLimitSubject(request, env);
-  const accountLimit = await consumeRateLimit(env, {
-    bucket: 'tts-lookup-account',
-    identifier: session.accountId,
-    limit: TTS_LOOKUP_ACCOUNT_LIMIT,
-    windowMs: TTS_WINDOW_MS,
-    now,
+  await requireTtsRateLimitPair(env, request, session, now, {
+    accountBucket: 'tts-lookup-account',
+    accountLimit: TTS_LOOKUP_ACCOUNT_LIMIT,
+    ipBucket: 'tts-lookup-ip',
+    ipLimit: TTS_LOOKUP_IP_LIMIT,
+    message: 'Too many dictation audio cache lookups. Please wait a few minutes and try again.',
+    code: 'tts_lookup_rate_limited',
   });
-  const ipLimit = await consumeRateLimit(env, {
-    bucket: 'tts-lookup-ip',
-    identifier: bucketKey,
-    limit: TTS_LOOKUP_IP_LIMIT,
-    windowMs: TTS_WINDOW_MS,
-    now,
-  });
-
-  if (!accountLimit.allowed || !ipLimit.allowed) {
-    throw new BadRequestError('Too many dictation audio cache lookups. Please wait a few minutes and try again.', {
-      code: 'tts_lookup_rate_limited',
-      retryAfterSeconds: Math.max(accountLimit.retryAfterSeconds, ipLimit.retryAfterSeconds),
-    });
-  }
 }
 
 async function allowTtsWarmup(env, request, session, now) {
-  const { bucketKey } = rateLimitSubject(request, env);
-  const accountLimit = await consumeRateLimit(env, {
-    bucket: 'tts-warmup-account',
-    identifier: session.accountId,
-    limit: TTS_WARMUP_ACCOUNT_LIMIT,
-    windowMs: TTS_WINDOW_MS,
-    now,
+  const result = await consumeTtsRateLimitPair(env, request, session, now, {
+    accountBucket: 'tts-warmup-account',
+    accountLimit: TTS_WARMUP_ACCOUNT_LIMIT,
+    ipBucket: 'tts-warmup-ip',
+    ipLimit: TTS_WARMUP_IP_LIMIT,
   });
-  const ipLimit = await consumeRateLimit(env, {
-    bucket: 'tts-warmup-ip',
-    identifier: bucketKey,
-    limit: TTS_WARMUP_IP_LIMIT,
-    windowMs: TTS_WINDOW_MS,
-    now,
-  });
-  return accountLimit.allowed && ipLimit.allowed;
+  return result.allowed;
 }
 
 async function recordDemoTtsFallback(env, session, now, response) {
@@ -383,11 +384,207 @@ function audioCacheErrorFields(error) {
   };
 }
 
+function monotonicNowMs() {
+  try {
+    if (typeof performance !== 'undefined' && typeof performance.now === 'function') return performance.now();
+  } catch {
+    // Fall through to Date.now below.
+  }
+  return Date.now();
+}
+
+function roundedMs(value) {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed < 0) return 0;
+  return Math.round(parsed);
+}
+
+function createTtsTiming() {
+  return {
+    enabled: false,
+    startedAt: monotonicNowMs(),
+    phases: new Map(),
+  };
+}
+
+function recordTtsTiming(timing, name, durationMs) {
+  if (!timing?.enabled) return;
+  const cleanName = cleanText(name).toLowerCase().replace(/[^a-z0-9_]/g, '');
+  if (!cleanName) return;
+  const duration = roundedMs(durationMs);
+  timing.phases.set(cleanName, roundedMs((timing.phases.get(cleanName) || 0) + duration));
+}
+
+async function timeTtsPhase(timing, name, fn) {
+  if (!timing?.enabled) return await fn();
+  const startedAt = monotonicNowMs();
+  try {
+    return await fn();
+  } finally {
+    recordTtsTiming(timing, name, monotonicNowMs() - startedAt);
+  }
+}
+
+function ttsServerTimingValue(timing) {
+  if (!timing?.enabled) return '';
+  const entries = Array.from(timing.phases.entries())
+    .filter(([name, duration]) => name && Number.isFinite(Number(duration)))
+    .map(([name, duration]) => `ks2_tts_${name};dur=${roundedMs(duration)}`);
+  entries.push(`ks2_tts_total;dur=${roundedMs(monotonicNowMs() - timing.startedAt)}`);
+  return entries.join(', ');
+}
+
+function withTtsServerTiming(response, timing) {
+  const value = ttsServerTimingValue(timing);
+  if (!value) return response;
+  const headers = new Headers(response.headers);
+  const existing = headers.get('Server-Timing');
+  headers.set('Server-Timing', existing ? `${existing}, ${value}` : value);
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+}
+
+function ttsR2LookupAttempt({ extension, source, object, startedAt, failed = false }) {
+  return {
+    extension,
+    source,
+    hit: Boolean(object),
+    failed: Boolean(failed),
+    durationMs: roundedMs(monotonicNowMs() - startedAt),
+  };
+}
+
+function logTtsR2CacheLookup(telemetry, {
+  cacheState,
+  metadata = null,
+  source = '',
+  extension = '',
+  attempts = [],
+} = {}) {
+  const r2Ms = roundedMs(attempts.reduce((sum, attempt) => sum + Number(attempt.durationMs || 0), 0));
+  try {
+    telemetry?.recordPhase?.('r2', r2Ms);
+  } catch {
+    // Best-effort telemetry must not affect audio playback.
+  }
+  if (!telemetry?.enabled) return;
+  const logEntry = {
+    event: 'tts_r2_cache_lookup',
+    requestId: cleanText(telemetry.requestId) || 'unknown',
+    provider: 'gemini',
+    cache: cacheState || 'unknown',
+    source: source || 'none',
+    kind: metadata?.kind || 'sentence',
+    extension: extension || 'none',
+    lookupCount: attempts.length,
+    r2Ms,
+    attempts: attempts.map((attempt) => ({
+      extension: attempt.extension,
+      source: attempt.source,
+      hit: Boolean(attempt.hit),
+      durationMs: roundedMs(attempt.durationMs),
+      ...(attempt.failed ? { failed: true } : {}),
+    })),
+  };
+  try {
+    console.log(JSON.stringify(logEntry));
+  } catch {
+    // Best-effort telemetry must not affect audio playback.
+  }
+}
+
+async function getBufferedAudioObject(bucket, key, { extension, source, attempts }) {
+  const startedAt = monotonicNowMs();
+  try {
+    const object = await bucket.get(key);
+    attempts.push(ttsR2LookupAttempt({ extension, source, object, startedAt }));
+    return object;
+  } catch (error) {
+    attempts.push(ttsR2LookupAttempt({ extension, source, object: null, startedAt, failed: true }));
+    throw error;
+  }
+}
+
+async function audioObjectBytes(object) {
+  if (typeof object?.arrayBuffer === 'function') return await object.arrayBuffer();
+  return await new Response(object?.body || new Uint8Array()).arrayBuffer();
+}
+
+function migratedAudioObject({ bytes, sourceObject, contentType }) {
+  return {
+    body: bytes,
+    httpMetadata: {
+      ...(sourceObject?.httpMetadata || {}),
+      contentType,
+    },
+    customMetadata: sourceObject?.customMetadata || {},
+  };
+}
+
+async function copyLegacyAudioToPrimary(bucket, {
+  legacyObject,
+  primaryKey,
+  metadata,
+  extension,
+} = {}) {
+  const contentType = objectContentType(legacyObject, extension);
+  let bytes;
+  try {
+    bytes = await audioObjectBytes(legacyObject);
+  } catch (error) {
+    console.error('[ks2-tts] R2 legacy primary migration failed', {
+      extension,
+      keyKind: metadata?.kind || 'sentence',
+      ...audioCacheErrorFields(error),
+    });
+    return legacyObject;
+  }
+  try {
+    await bucket.put(primaryKey, bytes, {
+      httpMetadata: { contentType },
+      customMetadata: {
+        model: metadata.model || SPELLING_AUDIO_MODEL,
+        voice: metadata.voice,
+        contentKey: metadata.contentKey,
+        slug: metadata.slug,
+        source: 'worker-legacy-primary-migration',
+        kind: metadata.kind || 'sentence',
+        ...(metadata.speed ? { speed: metadata.speed } : {}),
+        ...(Number.isInteger(metadata.sentenceIndex) ? { sentenceIndex: String(metadata.sentenceIndex) } : {}),
+      },
+    });
+  } catch (error) {
+    console.error('[ks2-tts] R2 legacy primary migration failed', {
+      extension,
+      keyKind: metadata?.kind || 'sentence',
+      ...audioCacheErrorFields(error),
+    });
+  }
+  return migratedAudioObject({ bytes, sourceObject: legacyObject, contentType });
+}
+
 async function readBufferedGeminiAudio(env, payload, options = {}) {
+  const lookupTelemetry = options.telemetry || null;
+  const lookupAttempts = [];
   const metadata = await bufferedAudioMetadata(payload, options);
-  if (!metadata) return null;
+  if (!metadata) {
+    logTtsR2CacheLookup(lookupTelemetry, {
+      cacheState: 'uncacheable',
+      attempts: lookupAttempts,
+    });
+    return null;
+  }
   const bucket = spellingAudioBucket(env);
   if (!bucket) {
+    logTtsR2CacheLookup(lookupTelemetry, {
+      cacheState: 'unavailable',
+      metadata,
+      extension: 'wav',
+      attempts: lookupAttempts,
+    });
     return {
       object: null,
       metadata,
@@ -405,11 +602,27 @@ async function readBufferedGeminiAudio(env, payload, options = {}) {
     let objectKey = key;
     let source = 'primary';
     try {
-      object = await bucket.get(key);
+      object = await getBufferedAudioObject(bucket, key, {
+        extension,
+        source: 'primary',
+        attempts: lookupAttempts,
+      });
       if (!object && fallbackKey) {
-        object = await bucket.get(fallbackKey);
+        object = await getBufferedAudioObject(bucket, fallbackKey, {
+          extension,
+          source: 'legacy',
+          attempts: lookupAttempts,
+        });
         objectKey = fallbackKey;
-        if (object) source = 'legacy';
+        if (object) {
+          source = 'legacy';
+          object = await copyLegacyAudioToPrimary(bucket, {
+            legacyObject: object,
+            primaryKey: key,
+            metadata,
+            extension,
+          });
+        }
       }
     } catch (error) {
       console.error('[ks2-tts] R2 audio read failed', {
@@ -417,6 +630,12 @@ async function readBufferedGeminiAudio(env, payload, options = {}) {
         keyKind: metadata.kind || 'sentence',
         triedFallback: Boolean(fallbackKey),
         ...audioCacheErrorFields(error),
+      });
+      logTtsR2CacheLookup(lookupTelemetry, {
+        cacheState: 'unavailable',
+        metadata,
+        extension,
+        attempts: lookupAttempts,
       });
       return {
         object: null,
@@ -431,6 +650,13 @@ async function readBufferedGeminiAudio(env, payload, options = {}) {
     const responseMetadata = source === 'legacy'
       ? { ...metadata, model: SPELLING_AUDIO_MODEL }
       : metadata;
+    logTtsR2CacheLookup(lookupTelemetry, {
+      cacheState: 'hit',
+      metadata: responseMetadata,
+      source,
+      extension,
+      attempts: lookupAttempts,
+    });
     return {
       object,
       metadata: responseMetadata,
@@ -440,6 +666,12 @@ async function readBufferedGeminiAudio(env, payload, options = {}) {
       source,
     };
   }
+  logTtsR2CacheLookup(lookupTelemetry, {
+    cacheState: 'miss',
+    metadata,
+    extension: 'wav',
+    attempts: lookupAttempts,
+  });
   return {
     object: null,
     metadata,
@@ -754,16 +986,22 @@ export async function handleTextToSpeechRequest({
   repository,
   now = Date.now(),
   fetchFn = fetch,
+  requestId = '',
 } = {}) {
+  const timing = createTtsTiming();
+  const bodyStartedAt = monotonicNowMs();
   const body = await readJson(request);
+  const bodyMs = monotonicNowMs() - bodyStartedAt;
   const cacheOnly = normaliseTtsCacheOnly(body?.cacheOnly);
   const cacheLookupOnly = normaliseTtsCacheLookupOnly(body?.cacheLookupOnly);
+  timing.enabled = cacheLookupOnly;
+  recordTtsTiming(timing, 'body', bodyMs);
   const payload = {
-    ...(await resolveSpellingAudioRequest({
+    ...(await timeTtsPhase(timing, 'prompt', () => resolveSpellingAudioRequest({
       repository,
       accountId: session.accountId,
       body,
-    })),
+    }))),
     accountId: session.accountId,
     provider: cacheOnly || cacheLookupOnly ? 'gemini' : normaliseRemoteTtsProvider(body?.provider),
     bufferedGeminiVoice: normaliseBufferedGeminiVoice(body?.bufferedGeminiVoice || body?.cachedVoice),
@@ -780,43 +1018,57 @@ export async function handleTextToSpeechRequest({
   let protectedLookup = false;
   async function protectAudioRequest() {
     if (protectedRequest) return;
-    await protectTts(env, request, session, now);
-    await protectDemoTtsFallback({ env, request, session, payload, now });
+    await timeTtsPhase(timing, 'audio_limit', async () => {
+      await protectTts(env, request, session, now);
+      await protectDemoTtsFallback({ env, request, session, payload, now });
+    });
     protectedRequest = true;
   }
   async function protectLookupRequest() {
     if (protectedLookup) return;
-    await protectTtsLookup(env, request, session, now);
-    await protectDemoTtsLookup({ env, request, session, now });
+    await timeTtsPhase(timing, 'lookup_limit', async () => {
+      await protectTtsLookup(env, request, session, now);
+      await protectDemoTtsLookup({ env, request, session, now });
+    });
     protectedLookup = true;
   }
 
   async function finish(response, fallbackFrom = '') {
-    return await recordDemoTtsFallback(env, session, now, withFallbackHeader(response, fallbackFrom));
+    return await recordDemoTtsFallback(env, session, now, withFallbackHeader(withTtsServerTiming(response, timing), fallbackFrom));
   }
 
   async function tryGemini(fallbackFrom = '') {
     if (cacheLookupOnly) await protectLookupRequest();
     else if (!cacheOnly) await protectAudioRequest();
-    const cacheHit = await readBufferedGeminiAudio(env, payload, { model: geminiForPayload.model });
+    const cacheHit = await timeTtsPhase(timing, 'cache_lookup', () => readBufferedGeminiAudio(env, payload, {
+      model: geminiForPayload.model,
+      telemetry: cacheLookupOnly ? {
+        enabled: true,
+        requestId,
+        recordPhase: (name, durationMs) => recordTtsTiming(timing, name, durationMs),
+      } : null,
+    }));
     if (cacheHit?.object) {
       if (cacheLookupOnly) await protectAudioRequest();
-      const output = cacheOnly ? cacheOnlyResponse('hit', cacheHit) : cachedGeminiAudioResponse(cacheHit);
-      return cacheOnly ? output : await finish(output, fallbackFrom);
+      const output = timeTtsPhase(timing, 'response', async () => (
+        cacheOnly ? cacheOnlyResponse('hit', cacheHit) : cachedGeminiAudioResponse(cacheHit)
+      ));
+      const response = await output;
+      return cacheOnly ? withTtsServerTiming(response, timing) : await finish(response, fallbackFrom);
     }
-    if (cacheLookupOnly && cacheHit?.cacheUnavailable) return cacheOnlyResponse('unavailable', cacheHit);
-    if (cacheLookupOnly && !cacheHit?.metadata) return cacheOnlyResponse('uncacheable');
-    if (cacheLookupOnly) return cacheOnlyResponse('miss', cacheHit);
-    if (cacheOnly && cacheHit?.cacheUnavailable) return cacheOnlyResponse('unavailable', cacheHit);
-    if (cacheOnly && !cacheHit?.metadata) return cacheOnlyResponse('uncacheable');
+    if (cacheLookupOnly && cacheHit?.cacheUnavailable) return withTtsServerTiming(cacheOnlyResponse('unavailable', cacheHit), timing);
+    if (cacheLookupOnly && !cacheHit?.metadata) return withTtsServerTiming(cacheOnlyResponse('uncacheable'), timing);
+    if (cacheLookupOnly) return withTtsServerTiming(cacheOnlyResponse('miss', cacheHit), timing);
+    if (cacheOnly && cacheHit?.cacheUnavailable) return withTtsServerTiming(cacheOnlyResponse('unavailable', cacheHit), timing);
+    if (cacheOnly && !cacheHit?.metadata) return withTtsServerTiming(cacheOnlyResponse('uncacheable'), timing);
     if (cacheOnly) {
-      if (!geminiForPayload.apiKey) return cacheOnlyResponse('unavailable');
+      if (!geminiForPayload.apiKey) return withTtsServerTiming(cacheOnlyResponse('unavailable'), timing);
       const warmupAllowed = await allowTtsWarmup(env, request, session, now);
-      if (!warmupAllowed) return cacheOnlyResponse('skipped_rate_limited');
+      if (!warmupAllowed) return withTtsServerTiming(cacheOnlyResponse('skipped_rate_limited'), timing);
       await protectDemoTtsFallback({ env, request, session, payload, now });
     }
     if (!geminiForPayload.apiKey) {
-      if (cacheOnly) return cacheOnlyResponse('unavailable');
+      if (cacheOnly) return withTtsServerTiming(cacheOnlyResponse('unavailable'), timing);
       throw missingProviderConfig('gemini');
     }
     if (!cacheOnly) await protectAudioRequest();
@@ -825,7 +1077,7 @@ export async function handleTextToSpeechRequest({
     const output = cacheOnly
       ? cacheOnlyResponse(stored.cacheState, { metadata: stored.metadata })
       : stored.response;
-    return await finish(output, fallbackFrom);
+    return await finish(withTtsServerTiming(output, timing), fallbackFrom);
   }
 
   async function tryOpenAi(fallbackFrom = '') {

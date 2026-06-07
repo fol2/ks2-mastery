@@ -325,11 +325,13 @@ test('runSpellingAudioSmoke passes an AbortSignal to /api/tts fetch (timeout plu
 // resulting report has `ok: false` with the failed word probe recorded
 // alongside successful sentence + cross-account probes.
 test('runSpellingAudioSmoke continues running probes after the first word probe fails', async () => {
+  let wordLookupCalls = 0;
   const fixture = installDemoBootstrapHandlers({
     ttsHandler: (body) => {
-      // Word probes always miss; sentence + cross-account probes still
-      // hit primary so the test can assert they ran.
-      if (body.wordOnly === true && body.cacheLookupOnly === true) {
+      // The first two word probes miss; sentence + cross-account probes
+      // still hit primary so the test can assert they ran.
+      if (body.wordOnly === true && body.cacheLookupOnly === true && wordLookupCalls < 2) {
+        wordLookupCalls += 1;
         return jsonResponse({ ok: true }, {
           status: 200,
           headers: { 'x-ks2-tts-cache': 'miss' },
@@ -478,6 +480,75 @@ test('runSpellingAudioSmoke reports WARN on word miss without --require-word-hit
   }
 });
 
+test('runSpellingAudioSmoke warms a cold word-only cache before final lookup', async () => {
+  const warmed = new Set();
+  const fixture = installDemoBootstrapHandlers({
+    ttsHandler: (body) => {
+      if (body.wordOnly === true && body.cacheLookupOnly === true) {
+        const key = `${body.slug}:${body.bufferedGeminiVoice || 'Iapetus'}`;
+        if (!warmed.has(key)) {
+          return jsonResponse({ ok: true }, {
+            status: 204,
+            headers: { 'x-ks2-tts-cache': 'miss' },
+          });
+        }
+        return jsonResponse({ ok: true }, {
+          status: 200,
+          headers: {
+            'x-ks2-tts-cache': 'hit',
+            'x-ks2-tts-cache-source': 'primary',
+            'x-ks2-tts-model': SPELLING_AUDIO_MODEL,
+            'x-ks2-tts-voice': body.bufferedGeminiVoice || 'Iapetus',
+          },
+          bytes: new TextEncoder().encode(`audio-${body.slug}`),
+        });
+      }
+      if (body.wordOnly === true && body.cacheOnly === true) {
+        warmed.add(`${body.slug}:${body.bufferedGeminiVoice || 'Iapetus'}`);
+        return jsonResponse({ ok: true }, {
+          status: 204,
+          headers: {
+            'x-ks2-tts-cache': 'stored',
+            'x-ks2-tts-model': SPELLING_AUDIO_MODEL,
+            'x-ks2-tts-voice': body.bufferedGeminiVoice || 'Iapetus',
+          },
+        });
+      }
+      if (body.wordOnly === true) {
+        return jsonResponse({ ok: true }, {
+          status: 200,
+          headers: {
+            'x-ks2-tts-cache': 'stored',
+            'x-ks2-tts-model': SPELLING_AUDIO_MODEL,
+            'x-ks2-tts-voice': body.bufferedGeminiVoice || 'Iapetus',
+          },
+          bytes: new TextEncoder().encode(`audio-${body.slug}`),
+        });
+      }
+      return buildPrimaryHitHandler()(body);
+    },
+  });
+  try {
+    const report = await runSpellingAudioSmoke({
+      origin: 'https://preview.example.test',
+      wordSample: ['actual'],
+      sentenceSample: [],
+      requireWordHit: true,
+    });
+    assert.equal(report.ok, true);
+    const wordProbes = report.probes.filter((probe) => probe.kind === 'word');
+    assert.equal(wordProbes.length, 2);
+    assert.ok(wordProbes.every((probe) => probe.cache === 'hit' && probe.source === 'primary'));
+    assert.ok(wordProbes.every((probe) => probe.notes.some((note) => /initial word lookup missed/i.test(note))));
+    const ttsBodies = fixture.calls
+      .filter((entry) => new URL(entry.url).pathname === '/api/tts')
+      .map((entry) => JSON.parse(entry.init.body || '{}'));
+    assert.ok(ttsBodies.some((body) => body.cacheOnly === true && body.provider === 'gemini'));
+  } finally {
+    fixture.restore();
+  }
+});
+
 test('runSpellingAudioSmoke records validation probe entry when word probe misses with --require-word-hit', async () => {
   // After the partial-failure fix, errors no longer short-circuit the run
   // — they are recorded as `{ ok: false, error: { kind, message } }` so
@@ -584,6 +655,67 @@ test('runSpellingAudioSmoke cross-account probe asserts byte-identical bodies + 
     assert.notEqual(probe.tokenA, probe.tokenB);
     assert.equal(probe.bytesAlength, probe.bytesBLength);
     assert.notEqual(probe.bytesDistinctLength, 0);
+  } finally {
+    fixture.restore();
+  }
+});
+
+test('runSpellingAudioSmoke cross-account probe warms a cold fixture before asserting shared primary hits', async () => {
+  const warmed = new Set();
+  const fixture = installDemoBootstrapHandlers({
+    demoSessions: [
+      { accountId: 'account-a', learnerId: 'learner-a', cookie: 'ks2_session=demoA' },
+      { accountId: 'account-b', learnerId: 'learner-b', cookie: 'ks2_session=demoB' },
+      { accountId: 'account-a', learnerId: 'learner-a', cookie: 'ks2_session=demoA' },
+    ],
+    ttsHandler: (body) => {
+      const key = `${body.slug}:${body.bufferedGeminiVoice || 'Iapetus'}`;
+      if (body.wordOnly === true && body.cacheLookupOnly === true && !warmed.has(key)) {
+        return jsonResponse({ ok: true }, {
+          status: 204,
+          headers: { 'x-ks2-tts-cache': 'miss' },
+        });
+      }
+      if (body.wordOnly === true && body.cacheOnly === true) {
+        warmed.add(key);
+        return jsonResponse({ ok: true }, {
+          status: 204,
+          headers: {
+            'x-ks2-tts-cache': 'stored',
+            'x-ks2-tts-model': SPELLING_AUDIO_MODEL,
+            'x-ks2-tts-voice': body.bufferedGeminiVoice || 'Iapetus',
+          },
+        });
+      }
+      const audioBytes = new TextEncoder().encode(`audio-bytes-for-${body.slug}`);
+      return jsonResponse({ ok: true }, {
+        status: 200,
+        headers: {
+          'x-ks2-tts-cache': warmed.has(key) ? 'hit' : 'stored',
+          'x-ks2-tts-cache-source': warmed.has(key) ? 'primary' : undefined,
+          'x-ks2-tts-model': SPELLING_AUDIO_MODEL,
+          'x-ks2-tts-voice': body.bufferedGeminiVoice || 'Iapetus',
+        },
+        bytes: audioBytes,
+      });
+    },
+  });
+  try {
+    const report = await runSpellingAudioSmoke({
+      origin: 'https://preview.example.test',
+      wordSample: [],
+      sentenceSample: [],
+      requireWordHit: true,
+    });
+    assert.equal(report.ok, true);
+    const probe = report.probes.find((entry) => entry.kind === 'cross-account');
+    assert.ok(probe);
+    assert.equal(probe.bytesAlength, probe.bytesBLength);
+    const ttsBodies = fixture.calls
+      .filter((entry) => new URL(entry.url).pathname === '/api/tts')
+      .map((entry) => JSON.parse(entry.init.body || '{}'));
+    assert.ok(ttsBodies.some((body) => body.cacheOnly === true && body.provider === 'gemini'));
+    assert.ok(ttsBodies.filter((body) => body.cacheLookupOnly === true && body.slug === probe.fixtureWord).length >= 3);
   } finally {
     fixture.restore();
   }

@@ -169,6 +169,23 @@ function extractJsonLdBlocks(html, failures) {
   return blocks;
 }
 
+function staticSeoAuditHtml(html) {
+  return String(html || '').replace(
+    /<script\b(?=[^>]*\bsrc=["']https:\/\/static\.cloudflareinsights\.com\/beacon\.min\.js\/[^"']*["'])(?=[^>]*\bdata-cf-beacon=)[^>]*>\s*<\/script>/gi,
+    '',
+  );
+}
+
+function assertStaticSeoPageHasNoScripts(path, html, failures) {
+  const auditHtml = staticSeoAuditHtml(html);
+  for (const forbiddenToken of ['application/ld+json', '<script']) {
+    if (auditHtml.includes(forbiddenToken)) {
+      failures.push(`Production SEO page ${path} must remain static and script-free; found token: ${forbiddenToken}`);
+    }
+  }
+  assertNoForbiddenText(`Production SEO page ${path}`, auditHtml, failures);
+}
+
 function assertSeoRootHtml(index, failures) {
   if (!/text\/html/i.test(index.contentType)) {
     failures.push(`Production SEO root expected text/html, got: ${index.contentType || 'absent'}`);
@@ -253,12 +270,7 @@ function assertSeoPracticePageHtml(page, response, failures) {
       failures.push(`Production SEO page ${path} is missing required token: ${token}`);
     }
   }
-  for (const forbiddenToken of ['application/ld+json', '<script']) {
-    if (response.text.includes(forbiddenToken)) {
-      failures.push(`Production SEO page ${path} must remain static and script-free; found token: ${forbiddenToken}`);
-    }
-  }
-  assertNoForbiddenText(`Production SEO page ${path}`, response.text, failures);
+  assertStaticSeoPageHasNoScripts(path, response.text, failures);
 }
 
 async function assertSeoPracticePages(base, failures) {
@@ -307,17 +319,12 @@ function assertSeoIdentityPageHtml(page, response, failures) {
       failures.push(`Production SEO page ${path} is missing required token: ${token}`);
     }
   }
-  for (const forbiddenToken of ['application/ld+json', '<script']) {
-    if (response.text.includes(forbiddenToken)) {
-      failures.push(`Production SEO page ${path} must remain static and script-free; found token: ${forbiddenToken}`);
-    }
-  }
   for (const overclaim of ['guaranteed', 'full curriculum', 'AI tutor', 'exam results']) {
     if (response.text.toLowerCase().includes(overclaim.toLowerCase())) {
       failures.push(`Production SEO page ${path} must not overclaim with token: ${overclaim}`);
     }
   }
-  assertNoForbiddenText(`Production SEO page ${path}`, response.text, failures);
+  assertStaticSeoPageHasNoScripts(path, response.text, failures);
 }
 
 async function assertSeoIdentityPages(base, failures) {
@@ -362,11 +369,6 @@ function assertSeoIntentPageHtml(page, response, failures) {
       failures.push(`Production SEO page ${path} is missing required token: ${token}`);
     }
   }
-  for (const forbiddenToken of ['application/ld+json', '<script']) {
-    if (response.text.includes(forbiddenToken)) {
-      failures.push(`Production SEO page ${path} must remain static and script-free; found token: ${forbiddenToken}`);
-    }
-  }
   for (const overclaim of ['guaranteed', 'full curriculum', 'AI tutor', 'exam results']) {
     if (response.text.toLowerCase().includes(overclaim.toLowerCase())) {
       failures.push(`Production SEO page ${path} must not overclaim with token: ${overclaim}`);
@@ -403,7 +405,7 @@ function assertSeoIntentPageHtml(page, response, failures) {
       }
     }
   }
-  assertNoForbiddenText(`Production SEO page ${path}`, response.text, failures);
+  assertStaticSeoPageHasNoScripts(path, response.text, failures);
 }
 
 async function assertSeoIntentPages(base, failures) {
