@@ -675,7 +675,6 @@ async function runPlaywrightBrowserTts(origin, cookie, learnerId, options) {
       name: cookiePair.name,
       value: cookiePair.value,
       url: origin,
-      path: '/',
     }]);
     const page = await context.newPage();
     await page.goto(origin, { waitUntil: 'domcontentloaded', timeout: options.timeoutMs || configuredTimeoutMs() });
