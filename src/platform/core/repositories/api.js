@@ -40,8 +40,13 @@ import {
   createCircuitBreaker,
   isResetableBreakerName,
 } from '../circuit-breaker.js';
+import {
+  fetchWithClientTimeout,
+  isClientFetchTimeout,
+} from '../fetch-timeout.js';
 
 const MUTATION_POLICY_VERSION = 1;
+const DEFAULT_REPOSITORY_FETCH_TIMEOUT_MS = 30_000;
 const OPERATION_STATUS_PENDING = 'pending';
 const OPERATION_STATUS_BLOCKED_STALE = 'blocked-stale';
 const SUBJECT_STATE_MERGE_STRATEGIES = new Set(['merge', 'ui', 'data', 'replace']);
@@ -299,13 +304,17 @@ async function fetchJson(fetchFn, url, init, authSession) {
 
   let response;
   try {
-    response = await fetchFn(url, decoratedInit);
+    response = await fetchWithClientTimeout(fetchFn, url, decoratedInit, {
+      timeoutMs: DEFAULT_REPOSITORY_FETCH_TIMEOUT_MS,
+      timeoutMessage: 'Repository request took too long to respond.',
+    });
   } catch (error) {
+    const timedOut = isClientFetchTimeout(error);
     const wrapped = new RepositoryHttpError({
       url,
       method,
       status: 0,
-      payload: null,
+      payload: timedOut ? { code: 'repository_request_timeout' } : null,
       text: error?.message || String(error),
     });
     wrapped.cause = error;

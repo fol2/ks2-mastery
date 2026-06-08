@@ -333,3 +333,48 @@ test('subject command client jitters bounded retry delays for transient command 
   assert.deepEqual(commandBodies.map((body) => body.expectedLearnerRevision), [12, 12, 12]);
   assert.deepEqual(retryDelays, [120, 220]);
 });
+
+test('subject command client retries bounded command timeouts with the same frozen request', async () => {
+  let aborted = false;
+  const commandBodies = [];
+  const fetch = (input, init = {}) => {
+    const body = JSON.parse(init.body);
+    commandBodies.push(body);
+    if (commandBodies.length > 1) {
+      return Promise.resolve(new Response(JSON.stringify({
+        ok: true,
+        mutation: {
+          appliedRevision: body.expectedLearnerRevision + 1,
+        },
+      }), { status: 200, headers: { 'content-type': 'application/json' } }));
+    }
+    init.signal?.addEventListener('abort', () => {
+      aborted = true;
+    });
+    return new Promise(() => {});
+  };
+  const commands = createSubjectCommandClient({
+    fetch,
+    getLearnerRevision: () => 9,
+    retryAttempts: 1,
+    retryDelayMs: 0,
+    timeoutMs: 1,
+  });
+
+  await commands.send({
+    subjectId: 'spelling',
+    learnerId: 'learner-a',
+    command: 'submit-answer',
+    payload: { typed: 'answer' },
+    requestId: 'cmd-timeout',
+  });
+
+  assert.equal(aborted, true);
+  assert.equal(commandBodies.length, 2);
+  assert.deepEqual(commandBodies.map((body) => body.requestId), ['cmd-timeout', 'cmd-timeout']);
+  assert.deepEqual(commandBodies.map((body) => body.expectedLearnerRevision), [9, 9]);
+  assert.deepEqual(commandBodies.map((body) => body.payload), [
+    { typed: 'answer' },
+    { typed: 'answer' },
+  ]);
+});

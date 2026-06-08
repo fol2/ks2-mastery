@@ -12,6 +12,12 @@ import {
   applyRepositoryAuthSession,
   createNoopRepositoryAuthSession,
 } from '../core/repositories/auth-session.js';
+import {
+  fetchWithClientTimeout,
+  isClientFetchTimeout,
+} from '../core/fetch-timeout.js';
+
+const DEFAULT_ADMIN_MARKETING_TIMEOUT_MS = 15_000;
 
 // ---------------------------------------------------------------------------
 // Helpers (mirrored from api.js)
@@ -31,9 +37,25 @@ async function parseResponse(response) {
   return response.text().catch(() => '');
 }
 
-async function fetchJson(fetchFn, url, init, authSession) {
+async function fetchJson(fetchFn, url, init, authSession, timeoutMs = DEFAULT_ADMIN_MARKETING_TIMEOUT_MS) {
   const requestInit = await applyRepositoryAuthSession(authSession, init);
-  const response = await fetchFn(url, requestInit);
+  let response;
+  try {
+    response = await fetchWithClientTimeout(fetchFn, url, requestInit, {
+      timeoutMs,
+      timeoutMessage: 'Marketing API request took too long to respond.',
+    });
+  } catch (error) {
+    const timedOut = isClientFetchTimeout(error);
+    const wrapped = new Error(error?.message || (timedOut
+      ? 'Marketing API request took too long to respond.'
+      : 'Marketing API request could not reach the server.'));
+    wrapped.status = 0;
+    wrapped.code = timedOut ? 'marketing_api_timeout' : 'marketing_api_network_error';
+    wrapped.payload = { code: wrapped.code };
+    wrapped.cause = error;
+    throw wrapped;
+  }
   const payload = await parseResponse(response);
   if (!response.ok) {
     const message = payload?.message || `Marketing API request failed (${response.status}).`;
@@ -108,6 +130,7 @@ export function createAdminMarketingApi({
   baseUrl = '',
   fetch: fetchImpl = globalThis.fetch?.bind(globalThis),
   authSession = createNoopRepositoryAuthSession(),
+  timeoutMs = DEFAULT_ADMIN_MARKETING_TIMEOUT_MS,
 } = {}) {
   if (typeof fetchImpl !== 'function') {
     throw new TypeError('Admin Marketing API requires a fetch implementation.');
@@ -121,7 +144,7 @@ export function createAdminMarketingApi({
     /** List all marketing messages (admin sees all; ops sees published + scheduled). */
     async fetchMarketingMessages() {
       const url = buildUrl('/api/admin/marketing/messages');
-      return fetchJson(fetchImpl, url, { method: 'GET' }, authSession);
+      return fetchJson(fetchImpl, url, { method: 'GET' }, authSession, timeoutMs);
     },
 
     /** Create a new marketing message (admin only, returns status=draft). */
@@ -131,13 +154,13 @@ export function createAdminMarketingApi({
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify(data),
-      }, authSession);
+      }, authSession, timeoutMs);
     },
 
     /** Fetch a single marketing message by ID. */
     async fetchMarketingMessage(id) {
       const url = buildUrl(`/api/admin/marketing/messages/${encodeURIComponent(id)}`);
-      return fetchJson(fetchImpl, url, { method: 'GET' }, authSession);
+      return fetchJson(fetchImpl, url, { method: 'GET' }, authSession, timeoutMs);
     },
 
     /**
@@ -150,7 +173,7 @@ export function createAdminMarketingApi({
         method: 'PUT',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify(data),
-      }, authSession);
+      }, authSession, timeoutMs);
     },
 
     /**
@@ -164,7 +187,7 @@ export function createAdminMarketingApi({
         method: 'PUT',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify(data),
-      }, authSession);
+      }, authSession, timeoutMs);
     },
   };
 }

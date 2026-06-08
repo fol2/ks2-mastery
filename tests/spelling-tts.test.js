@@ -182,8 +182,379 @@ test('platform TTS plays cached Gemini audio before the selected provider', asyn
       slow: false,
       provider: 'gemini',
       bufferedGeminiVoice: 'Iapetus',
-      cacheLookupOnly: true,
+      cachePlaybackOnly: true,
     });
+  } finally {
+    tts.stop();
+    globalThis.Audio = originalAudio;
+    URL.createObjectURL = originalCreateObjectUrl;
+    URL.revokeObjectURL = originalRevokeObjectUrl;
+  }
+});
+
+test('platform TTS logs cached Gemini lookup timing before playback', async () => {
+  const originalAudio = globalThis.Audio;
+  const originalCreateObjectUrl = URL.createObjectURL;
+  const originalRevokeObjectUrl = URL.revokeObjectURL;
+  const played = [];
+  const logs = [];
+  const telemetryEvents = [];
+  let currentTime = 1000;
+
+  globalThis.Audio = class MockAudio {
+    constructor(src) {
+      this.src = src;
+      this.onended = null;
+      this.onerror = null;
+    }
+
+    play() {
+      played.push(this.src);
+      setTimeout(() => this.onended?.(), 0);
+      return Promise.resolve();
+    }
+
+    pause() {}
+    removeAttribute() {}
+    load() {}
+  };
+  URL.createObjectURL = () => 'blob:cached-gemini-audio';
+  URL.revokeObjectURL = () => {};
+
+  const calls = [];
+  const tts = createPlatformTts({
+    remoteEnabled: true,
+    provider: 'openai',
+    now: () => {
+      currentTime += 25;
+      return currentTime;
+    },
+    logger: (line) => logs.push(line),
+    onCacheLookupTelemetry: (event) => telemetryEvents.push(event),
+    fetchFn: async (url, init = {}) => {
+      calls.push({
+        url,
+        headers: init.headers,
+        body: JSON.parse(init.body),
+      });
+      return new Response(new Blob([new Uint8Array([9, 8, 7, 6])], { type: 'audio/mpeg' }), {
+        status: 200,
+        headers: {
+          'content-type': 'audio/mpeg',
+          'x-ks2-request-id': 'ks2_req_cache_timing',
+          'x-ks2-tts-cache': 'hit',
+          'x-ks2-tts-cache-source': 'primary',
+          'x-ks2-tts-provider': 'gemini',
+        },
+      });
+    },
+  });
+
+  try {
+    const result = await tts.speak({
+      learnerId: 'learner-a',
+      promptToken: 'prompt-token-cached-timing',
+      word: 'early',
+      sentence: 'The birds sang early in the day.',
+    });
+
+    assert.equal(result, true);
+    assert.deepEqual(played, ['blob:cached-gemini-audio']);
+    assert.equal(calls.length, 1);
+    assert.deepEqual(calls[0].body, {
+      learnerId: 'learner-a',
+      promptToken: 'prompt-token-cached-timing',
+      slow: false,
+      provider: 'gemini',
+      bufferedGeminiVoice: 'Iapetus',
+      cachePlaybackOnly: true,
+    });
+
+    const cacheLog = logs.find((line) => line.startsWith('[ks2-tts-cache-latency]'));
+    assert.ok(cacheLog, `expected cache lookup telemetry, got ${JSON.stringify(logs)}`);
+    assert.match(cacheLog, /status=play-start/);
+    assert.match(cacheLog, /wallMs=75/);
+    assert.match(cacheLog, /kind=normal/);
+    assert.match(cacheLog, /http=200/);
+    assert.match(cacheLog, /cache=hit/);
+    assert.match(cacheLog, /source=primary/);
+    assert.match(cacheLog, /provider=gemini/);
+    assert.match(cacheLog, /contentType=audio\/mpeg/);
+    assert.match(cacheLog, /requestId=ks2_req_cache_timing/);
+    assert.match(cacheLog, /headerMs=25/);
+    assert.match(cacheLog, /blobMs=25/);
+    assert.match(cacheLog, /playStartMs=75/);
+    assert.match(cacheLog, /bytes=4/);
+    assert.doesNotMatch(cacheLog, /prompt-token|learner-a|early|birds/);
+    assert.deepEqual(telemetryEvents, [{
+      status: 'play-start',
+      wallMs: 75,
+      kind: 'normal',
+      http: 200,
+      cache: 'hit',
+      source: 'primary',
+      provider: 'gemini',
+      contentType: 'audio/mpeg',
+      requestId: 'ks2_req_cache_timing',
+      headerMs: 25,
+      blobMs: 25,
+      playStartMs: 75,
+      bytes: 4,
+    }]);
+  } finally {
+    tts.stop();
+    globalThis.Audio = originalAudio;
+    URL.createObjectURL = originalCreateObjectUrl;
+    URL.revokeObjectURL = originalRevokeObjectUrl;
+  }
+});
+
+test('platform TTS waits for cached audio play() before logging play-start', async () => {
+  const originalAudio = globalThis.Audio;
+  const originalCreateObjectUrl = URL.createObjectURL;
+  const originalRevokeObjectUrl = URL.revokeObjectURL;
+  const played = [];
+  const logs = [];
+  const telemetryEvents = [];
+  let currentTime = 1000;
+  let releasePlay = null;
+  let playCalled = null;
+  const playCalledPromise = new Promise((resolve) => {
+    playCalled = resolve;
+  });
+
+  globalThis.Audio = class MockAudio {
+    constructor(src) {
+      this.src = src;
+      this.onended = null;
+      this.onerror = null;
+    }
+
+    play() {
+      played.push(this.src);
+      playCalled();
+      return new Promise((resolve) => {
+        releasePlay = () => {
+          resolve();
+          setTimeout(() => this.onended?.(), 0);
+        };
+      });
+    }
+
+    pause() {}
+    removeAttribute() {}
+    load() {}
+  };
+  URL.createObjectURL = () => 'blob:cached-gemini-audio';
+  URL.revokeObjectURL = () => {};
+
+  const tts = createPlatformTts({
+    remoteEnabled: true,
+    provider: 'openai',
+    now: () => {
+      currentTime += 25;
+      return currentTime;
+    },
+    logger: (line) => logs.push(line),
+    onCacheLookupTelemetry: (event) => telemetryEvents.push(event),
+    fetchFn: async () => new Response(new Blob([new Uint8Array([9, 8, 7, 6])], { type: 'audio/mpeg' }), {
+      status: 200,
+      headers: {
+        'content-type': 'audio/mpeg',
+        'x-ks2-request-id': 'ks2_req_cache_timing_delayed',
+        'x-ks2-tts-cache': 'hit',
+        'x-ks2-tts-cache-source': 'primary',
+        'x-ks2-tts-provider': 'gemini',
+      },
+    }),
+  });
+
+  try {
+    const resultPromise = tts.speak({
+      learnerId: 'learner-a',
+      promptToken: 'prompt-token-cached-timing-delayed',
+      word: 'early',
+      sentence: 'The birds sang early in the day.',
+    });
+    await playCalledPromise;
+
+    assert.deepEqual(played, ['blob:cached-gemini-audio']);
+    assert.deepEqual(telemetryEvents, []);
+    assert.equal(logs.some((line) => line.startsWith('[ks2-tts-cache-latency]')), false);
+
+    releasePlay();
+    const result = await resultPromise;
+
+    assert.equal(result, true);
+    assert.equal(telemetryEvents.length, 1);
+    assert.equal(telemetryEvents[0].status, 'play-start');
+    assert.equal(telemetryEvents[0].playStartMs, 75);
+    assert.match(logs.find((line) => line.startsWith('[ks2-tts-cache-latency]')), /status=play-start/);
+  } finally {
+    tts.stop();
+    globalThis.Audio = originalAudio;
+    URL.createObjectURL = originalCreateObjectUrl;
+    URL.revokeObjectURL = originalRevokeObjectUrl;
+  }
+});
+
+test('platform TTS logs cached audio play rejection without play-start timing', async () => {
+  const originalAudio = globalThis.Audio;
+  const originalCreateObjectUrl = URL.createObjectURL;
+  const originalRevokeObjectUrl = URL.revokeObjectURL;
+  const logs = [];
+  const telemetryEvents = [];
+  let currentTime = 1000;
+
+  globalThis.Audio = class MockAudio {
+    constructor(src) {
+      this.src = src;
+      this.onended = null;
+      this.onerror = null;
+    }
+
+    play() {
+      return Promise.reject(new Error('Autoplay blocked.'));
+    }
+
+    pause() {}
+    removeAttribute() {}
+    load() {}
+  };
+  URL.createObjectURL = () => 'blob:cached-gemini-audio';
+  URL.revokeObjectURL = () => {};
+
+  const tts = createPlatformTts({
+    remoteEnabled: true,
+    provider: 'openai',
+    now: () => {
+      currentTime += 25;
+      return currentTime;
+    },
+    logger: (line) => logs.push(line),
+    onCacheLookupTelemetry: (event) => telemetryEvents.push(event),
+    fetchFn: async () => new Response(new Blob([new Uint8Array([9, 8, 7, 6])], { type: 'audio/mpeg' }), {
+      status: 200,
+      headers: {
+        'content-type': 'audio/mpeg',
+        'x-ks2-request-id': 'ks2_req_cache_timing_rejected',
+        'x-ks2-tts-cache': 'hit',
+        'x-ks2-tts-cache-source': 'primary',
+        'x-ks2-tts-provider': 'gemini',
+      },
+    }),
+  });
+
+  try {
+    const result = await tts.speak({
+      learnerId: 'learner-a',
+      promptToken: 'prompt-token-cached-timing-rejected',
+      word: 'early',
+      sentence: 'The birds sang early in the day.',
+    });
+
+    assert.equal(result, false);
+    assert.deepEqual(telemetryEvents, [{
+      status: 'failed',
+      wallMs: 50,
+      kind: 'normal',
+      http: 200,
+      cache: 'hit',
+      source: 'primary',
+      provider: 'gemini',
+      contentType: 'audio/mpeg',
+      requestId: 'ks2_req_cache_timing_rejected',
+      headerMs: 25,
+      blobMs: 25,
+      playStartMs: null,
+      bytes: 4,
+    }]);
+    const cacheLog = logs.find((line) => line.startsWith('[ks2-tts-cache-latency]'));
+    assert.match(cacheLog, /status=failed/);
+    assert.doesNotMatch(cacheLog, /playStartMs=/);
+  } finally {
+    tts.stop();
+    globalThis.Audio = originalAudio;
+    URL.createObjectURL = originalCreateObjectUrl;
+    URL.revokeObjectURL = originalRevokeObjectUrl;
+  }
+});
+
+test('platform TTS logs cache lookup misses without body timing fields', async () => {
+  const originalAudio = globalThis.Audio;
+  const originalCreateObjectUrl = URL.createObjectURL;
+  const originalRevokeObjectUrl = URL.revokeObjectURL;
+  const logs = [];
+  let currentTime = 2000;
+
+  globalThis.Audio = class MockAudio {
+    constructor(src) {
+      this.src = src;
+      this.onended = null;
+      this.onerror = null;
+    }
+
+    play() {
+      setTimeout(() => this.onended?.(), 0);
+      return Promise.resolve();
+    }
+
+    pause() {}
+    removeAttribute() {}
+    load() {}
+  };
+  URL.createObjectURL = () => 'blob:selected-provider-audio';
+  URL.revokeObjectURL = () => {};
+
+  const calls = [];
+  const tts = createPlatformTts({
+    remoteEnabled: true,
+    provider: 'openai',
+    now: () => {
+      currentTime += 10;
+      return currentTime;
+    },
+    logger: (line) => logs.push(line),
+    fetchFn: async (url, init = {}) => {
+      const body = JSON.parse(init.body);
+      calls.push({ url, body });
+      if (body.cacheLookupOnly || body.cachePlaybackOnly || body.cacheOnly) {
+        return new Response(null, {
+          status: 204,
+          headers: {
+            'x-ks2-request-id': 'ks2_req_cache_miss',
+            'x-ks2-tts-cache': body.cacheOnly ? 'stored' : 'miss',
+          },
+        });
+      }
+      return new Response(new Blob([new Uint8Array([1, 2, 3])], { type: 'audio/mpeg' }), {
+        status: 200,
+        headers: { 'content-type': 'audio/mpeg' },
+      });
+    },
+  });
+
+  try {
+    const result = await tts.speak({
+      learnerId: 'learner-a',
+      promptToken: 'prompt-token-cache-miss',
+      word: 'early',
+      sentence: 'The birds sang early in the day.',
+    });
+
+    assert.equal(result, true);
+    assert.ok(calls.some((call) => call.body.cachePlaybackOnly), 'preflight cache playback lookup must run');
+    const missLog = logs.find((line) => line.startsWith('[ks2-tts-cache-latency]'));
+    assert.ok(missLog, `expected cache miss telemetry, got ${JSON.stringify(logs)}`);
+    assert.match(missLog, /status=miss/);
+    assert.match(missLog, /http=204/);
+    assert.match(missLog, /cache=miss/);
+    assert.match(missLog, /requestId=ks2_req_cache_miss/);
+    assert.match(missLog, /headerMs=10/);
+    assert.doesNotMatch(missLog, /blobMs=/);
+    assert.doesNotMatch(missLog, /playStartMs=/);
+    assert.doesNotMatch(missLog, /bytes=/);
+    assert.doesNotMatch(missLog, /prompt-token|learner-a|early|birds/);
   } finally {
     tts.stop();
     globalThis.Audio = originalAudio;
@@ -257,7 +628,7 @@ test('platform TTS uses cached Gemini audio for word-bank word replay', async ()
       provider: 'gemini',
       bufferedGeminiVoice: 'Iapetus',
       wordOnly: true,
-      cacheLookupOnly: true,
+      cachePlaybackOnly: true,
       slug: 'early',
       scope: 'word-bank',
     });
@@ -285,7 +656,7 @@ test('platform TTS does not warm or fall back after cancelled cache lookup', asy
     fetchFn: async (url, init = {}) => {
       const body = JSON.parse(init.body);
       calls.push({ url, body });
-      if (body.cacheLookupOnly) {
+      if (body.cachePlaybackOnly) {
         lookupStarted();
         await new Promise((resolve) => {
           releaseLookup = resolve;
@@ -322,7 +693,7 @@ test('platform TTS does not warm or fall back after cancelled cache lookup', asy
       slow: false,
       provider: 'gemini',
       bufferedGeminiVoice: 'Iapetus',
-      cacheLookupOnly: true,
+      cachePlaybackOnly: true,
     });
   } finally {
     tts.stop();
@@ -531,7 +902,7 @@ test('platform TTS does not fall back when the selected remote provider fails', 
       slow: false,
       provider: 'gemini',
       bufferedGeminiVoice: 'Iapetus',
-      cacheLookupOnly: true,
+      cachePlaybackOnly: true,
     });
     assert.deepEqual(calls[1].body, {
       learnerId: 'learner-a',

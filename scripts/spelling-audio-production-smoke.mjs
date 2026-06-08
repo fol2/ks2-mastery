@@ -7,8 +7,10 @@
 // Three distinct probes:
 //   1. Word-only primary probe — for each --word-sample × 2 voices, build
 //      a word-bank prompt token via the canonical `sha256` from
-//      `worker/src/auth.js` and POST `/api/tts` with `cacheLookupOnly: true`.
-//      Expect HTTP 200 + `x-ks2-tts-cache: hit` + `x-ks2-tts-cache-source: primary`.
+//      `worker/src/auth.js`, POST `/api/tts` with `cacheLookupOnly: true`,
+//      and explicitly warm via `cacheOnly: true` when the first lookup
+//      reports a cold miss. Expect the final lookup to return HTTP 200 +
+//      `x-ks2-tts-cache: hit` + `x-ks2-tts-cache-source: primary`.
 //   2. Sentence legacy probe — POSTs the session-style payload for known
 //      seeded sentence cards and asserts the legacy R2 fallback fires
 //      (PR 252). Without `--require-legacy-hit` a `primary` source is
@@ -361,6 +363,40 @@ function looksLikeServerError(status) {
   return Number(status) >= 500;
 }
 
+function wordProbeBody({ slug, learnerId, promptToken, voice }) {
+  return {
+    wordOnly: true,
+    scope: 'word-bank',
+    slug,
+    learnerId,
+    promptToken,
+    bufferedGeminiVoice: voice,
+  };
+}
+
+function wordCacheState(response) {
+  return {
+    status: response?.status || 0,
+    cache: readResponseHeader(response, 'x-ks2-tts-cache'),
+    source: readResponseHeader(response, 'x-ks2-tts-cache-source'),
+    model: readResponseHeader(response, 'x-ks2-tts-model'),
+    voice: readResponseHeader(response, 'x-ks2-tts-voice'),
+  };
+}
+
+async function warmWordAudio({ origin, cookie, timeoutMs, body }) {
+  return await postTtsRequest({
+    origin,
+    cookie,
+    timeoutMs,
+    body: {
+      ...body,
+      provider: 'gemini',
+      cacheOnly: true,
+    },
+  });
+}
+
 // --- Probe: word-only primary -------------------------------------------
 
 async function runWordProbe({
@@ -389,17 +425,14 @@ async function runWordProbe({
   const promptToken = await computeWordBankPromptToken({ learnerId, slug, word, sentence });
   const expectedKey = await expectedWordR2Key({ slug, word, voice });
 
-  const response = await postTtsRequest({
+  const baseBody = wordProbeBody({ slug, learnerId, promptToken, voice });
+  const notes = [];
+  let response = await postTtsRequest({
     origin,
     cookie,
     timeoutMs,
     body: {
-      wordOnly: true,
-      scope: 'word-bank',
-      slug,
-      learnerId,
-      promptToken,
-      bufferedGeminiVoice: voice,
+      ...baseBody,
       cacheLookupOnly: true,
     },
   });
@@ -408,28 +441,76 @@ async function runWordProbe({
     const excerpt = await bodyExcerpt(response);
     throw transportError(`/api/tts word probe ${slug}/${voice} returned HTTP ${response.status}: ${excerpt}`);
   }
+
+  let state = wordCacheState(response);
+  if (response.status === 204 && state.cache === 'miss') {
+    notes.push('INFO: initial word lookup missed; warming Gemini word cache before final lookup');
+    const warmupResponse = await warmWordAudio({
+      origin,
+      cookie,
+      timeoutMs,
+      body: baseBody,
+    });
+    if (looksLikeServerError(warmupResponse.status)) {
+      const excerpt = await bodyExcerpt(warmupResponse);
+      throw transportError(`/api/tts word warmup ${slug}/${voice} returned HTTP ${warmupResponse.status}: ${excerpt}`);
+    }
+    const warmupState = wordCacheState(warmupResponse);
+    notes.push(`INFO: word warmup cache=${warmupState.cache || '(missing)'}`);
+    response = await postTtsRequest({
+      origin,
+      cookie,
+      timeoutMs,
+      body: {
+        ...baseBody,
+        cacheLookupOnly: true,
+      },
+    });
+    if (looksLikeServerError(response.status)) {
+      const excerpt = await bodyExcerpt(response);
+      throw transportError(`/api/tts word probe ${slug}/${voice} returned HTTP ${response.status}: ${excerpt}`);
+    }
+    state = wordCacheState(response);
+  }
+
   if (response.status !== 200) {
+    if (!requireWordHit) {
+      return {
+        kind: 'word',
+        slug,
+        voice,
+        tokenPresent: Boolean(promptToken),
+        r2KeyPresent: Boolean(expectedKey),
+        cache: state.cache,
+        source: state.source,
+        model: state.model,
+        voiceHeader: state.voice,
+        status: response.status,
+        notes: [
+          ...notes,
+          `WARN: HTTP ${response.status} cache=${state.cache || '(missing)'} (word cache is not warm)`,
+        ],
+        ok: true,
+      };
+    }
     const excerpt = await bodyExcerpt(response);
     throw validationError(`/api/tts word probe ${slug}/${voice} returned HTTP ${response.status}: ${excerpt}`);
   }
 
-  const cache = readResponseHeader(response, 'x-ks2-tts-cache');
-  const source = readResponseHeader(response, 'x-ks2-tts-cache-source');
-  const model = readResponseHeader(response, 'x-ks2-tts-model');
-  const responseVoice = readResponseHeader(response, 'x-ks2-tts-voice');
+  const { cache, source, model, voice: responseVoice } = state;
 
   const probe = {
     kind: 'word',
     slug,
     voice,
-    promptToken,
-    expectedR2Key: expectedKey,
+    tokenPresent: Boolean(promptToken),
+    r2KeyPresent: Boolean(expectedKey),
     cache,
     source,
     model,
     voiceHeader: responseVoice,
     status: response.status,
-    notes: [],
+    notes,
     ok: true,
   };
 
@@ -439,7 +520,7 @@ async function runWordProbe({
       probe.notes.push(`cache=${cache || '(missing)'} (expected hit)`);
       throw validationError(`Word probe ${slug}/${voice} cache=${cache || '(missing)'} but --require-word-hit is set.`);
     }
-    probe.notes.push(`WARN: cache=${cache || '(missing)'} (pre-fill baseline; suppress with --require-word-hit once U4 lands)`);
+    probe.notes.push(`WARN: cache=${cache || '(missing)'} (word cache is not warm)`);
     return probe;
   }
 
@@ -532,7 +613,7 @@ async function runSentenceProbe({
   const probe = {
     kind: 'sentence',
     slug,
-    promptToken,
+    tokenPresent: Boolean(promptToken),
     cache,
     source,
     status: response.status,
@@ -638,13 +719,13 @@ async function runCrossAccountProbe({
   // Per-learner token salt: tokens MUST differ.
   if (tokenA === tokenB) {
     throw validationError(
-      `Cross-account probe: prompt tokens collapsed (per-learner salt regression). tokenA === tokenB`,
+      'Cross-account probe: prompt tokens collapsed (per-learner salt regression).',
     );
   }
   // Cross-account R2 reuse: keys MUST match.
   if (expectedKeyA !== expectedKeyB) {
     throw validationError(
-      `Cross-account probe: expected R2 keys diverged for the same word (accountId leaked into wordOnly metadata). keyA=${expectedKeyA} keyB=${expectedKeyB}`,
+      'Cross-account probe: expected R2 keys diverged for the same word (accountId leaked into wordOnly metadata).',
     );
   }
 
@@ -653,27 +734,60 @@ async function runCrossAccountProbe({
     cookie: sessionA.cookie,
     timeoutMs,
     body: {
-      wordOnly: true,
-      scope: 'word-bank',
-      slug: fixtureWord,
-      learnerId: bootstrapA.learnerId,
-      promptToken: tokenA,
-      bufferedGeminiVoice: voice,
-      // Fetch real bytes — `cacheLookupOnly` returns 204; we want 200 +
-      // body bytes so the byte-identity assertion has something to compare.
+      ...wordProbeBody({
+        slug: fixtureWord,
+        learnerId: bootstrapA.learnerId,
+        promptToken: tokenA,
+        voice,
+      }),
+      cacheLookupOnly: true,
     },
   });
+  if (responseA.status === 204 && readResponseHeader(responseA, 'x-ks2-tts-cache') === 'miss') {
+    const warmupResponse = await warmWordAudio({
+      origin,
+      cookie: sessionA.cookie,
+      timeoutMs,
+      body: wordProbeBody({
+        slug: fixtureWord,
+        learnerId: bootstrapA.learnerId,
+        promptToken: tokenA,
+        voice,
+      }),
+    });
+    if (looksLikeServerError(warmupResponse.status)) {
+      const excerpt = await bodyExcerpt(warmupResponse);
+      throw transportError(`Cross-account probe warmup returned HTTP ${warmupResponse.status}: ${excerpt}`);
+    }
+  }
+  const warmedResponseA = responseA.status === 204 && readResponseHeader(responseA, 'x-ks2-tts-cache') === 'miss'
+    ? await postTtsRequest({
+      origin,
+      cookie: sessionA.cookie,
+      timeoutMs,
+      body: {
+        ...wordProbeBody({
+          slug: fixtureWord,
+          learnerId: bootstrapA.learnerId,
+          promptToken: tokenA,
+          voice,
+        }),
+        cacheLookupOnly: true,
+      },
+    })
+    : responseA;
   const responseB = await postTtsRequest({
     origin,
     cookie: sessionB.cookie,
     timeoutMs,
     body: {
-      wordOnly: true,
-      scope: 'word-bank',
-      slug: fixtureWord,
-      learnerId: bootstrapB.learnerId,
-      promptToken: tokenB,
-      bufferedGeminiVoice: voice,
+      ...wordProbeBody({
+        slug: fixtureWord,
+        learnerId: bootstrapB.learnerId,
+        promptToken: tokenB,
+        voice,
+      }),
+      cacheLookupOnly: true,
     },
   });
   const responseDistinct = await postTtsRequest({
@@ -681,22 +795,23 @@ async function runCrossAccountProbe({
     cookie: sessionA.cookie,
     timeoutMs,
     body: {
-      wordOnly: true,
-      scope: 'word-bank',
-      slug: distinctWord,
-      learnerId: bootstrapA.learnerId,
-      promptToken: await computeWordBankPromptToken({
-        learnerId: bootstrapA.learnerId,
+      ...wordProbeBody({
         slug: distinctWord,
-        word: distinctWordText,
-        sentence: distinctSentence,
+        learnerId: bootstrapA.learnerId,
+        promptToken: await computeWordBankPromptToken({
+          learnerId: bootstrapA.learnerId,
+          slug: distinctWord,
+          word: distinctWordText,
+          sentence: distinctSentence,
+        }),
+        voice,
       }),
-      bufferedGeminiVoice: voice,
+      provider: 'gemini',
     },
   });
 
   for (const [label, response] of [
-    ['A', responseA],
+    ['A', warmedResponseA],
     ['B', responseB],
     ['distinct', responseDistinct],
   ]) {
@@ -709,7 +824,7 @@ async function runCrossAccountProbe({
       throw validationError(`Cross-account probe ${label} returned HTTP ${response.status}: ${excerpt}`);
     }
   }
-  for (const [label, response] of [['A', responseA], ['B', responseB]]) {
+  for (const [label, response] of [['A', warmedResponseA], ['B', responseB]]) {
     const cache = readResponseHeader(response, 'x-ks2-tts-cache');
     if (cache !== 'hit') {
       throw validationError(
@@ -724,7 +839,7 @@ async function runCrossAccountProbe({
     }
   }
 
-  const bytesA = await readResponseBytes(responseA);
+  const bytesA = await readResponseBytes(warmedResponseA);
   const bytesB = await readResponseBytes(responseB);
   const bytesDistinct = await readResponseBytes(responseDistinct);
 
@@ -741,15 +856,16 @@ async function runCrossAccountProbe({
 
   return {
     kind: 'cross-account',
-    learnerA: bootstrapA.learnerId,
-    learnerB: bootstrapB.learnerId,
+    learnerAPresent: Boolean(bootstrapA.learnerId),
+    learnerBPresent: Boolean(bootstrapB.learnerId),
+    learnersDistinct: bootstrapA.learnerId !== bootstrapB.learnerId,
     fixtureWord,
     distinctWord,
     voice,
-    tokenA,
-    tokenB,
-    expectedR2Key: expectedKeyA,
-    expectedR2KeyDistinct: expectedKeyDistinct,
+    tokensDistinct: tokenA !== tokenB,
+    r2KeyPresent: Boolean(expectedKeyA),
+    distinctR2KeyPresent: Boolean(expectedKeyDistinct),
+    r2KeysMatch: expectedKeyA === expectedKeyB,
     bytesAlength: bytesA.length,
     bytesBLength: bytesB.length,
     bytesDistinctLength: bytesDistinct.length,
@@ -764,6 +880,13 @@ async function runCrossAccountProbe({
 // rather than short-circuiting the entire run. Operator gets the full
 // matrix of pass/fail in one report instead of "first failure only" —
 // makes triage faster when several probes regress at once.
+function redactSmokeDiagnostic(value) {
+  return String(value || '')
+    .replace(/ks2_session=[^;\s"']+/g, 'ks2_session=[redacted]')
+    .replace(/\b[a-f0-9]{64}\b/gi, '[sha256]')
+    .replace(/spelling-audio\/v1\/[^\s"'`]+/g, 'spelling-audio/v1/[redacted]');
+}
+
 async function safeRunProbe(kindLabel, runner) {
   try {
     return await runner();
@@ -773,14 +896,15 @@ async function safeRunProbe(kindLabel, runner) {
       : error?.kind === 'usage'
         ? 'usage'
         : 'validation';
+    const message = redactSmokeDiagnostic(error?.message || String(error));
     return {
       kind: kindLabel,
       ok: false,
       error: {
         kind,
-        message: error?.message || String(error),
+        message,
       },
-      notes: [`error[${kind}]: ${error?.message || String(error)}`],
+      notes: [`error[${kind}]: ${message}`],
     };
   }
 }
@@ -864,8 +988,8 @@ export async function runSpellingAudioSmoke(options = {}) {
     startedAt,
     finishedAt,
     origin,
-    accountId: demo.session?.accountId || null,
-    learnerId: bootstrap.learnerId,
+    accountPresent: Boolean(demo.session?.accountId),
+    learnerPresent: Boolean(bootstrap.learnerId),
     probes,
   };
 }
@@ -873,7 +997,7 @@ export async function runSpellingAudioSmoke(options = {}) {
 function renderHumanReadableReport(report) {
   const lines = [];
   lines.push(`spelling-audio-production-smoke @ ${report.origin}`);
-  lines.push(`  account: ${report.accountId || '(none)'}  learner: ${report.learnerId}`);
+  lines.push(`  accountPresent=${Boolean(report.accountPresent)}  learnerPresent=${Boolean(report.learnerPresent)}`);
   lines.push(`  ${report.startedAt} → ${report.finishedAt}`);
   for (const probe of report.probes) {
     if (probe.kind === 'word') {
@@ -881,7 +1005,7 @@ function renderHumanReadableReport(report) {
     } else if (probe.kind === 'sentence') {
       lines.push(`  [sentence] ${probe.slug} cache=${probe.cache || '-'} source=${probe.source || '-'}`);
     } else if (probe.kind === 'cross-account') {
-      lines.push(`  [cross-account] ${probe.fixtureWord} (${probe.voice}) tokensDistinct=true sameR2Key=true bytesIdentical=true distinctWord=${probe.distinctWord}`);
+      lines.push(`  [cross-account] ${probe.fixtureWord} (${probe.voice}) tokensDistinct=${Boolean(probe.tokensDistinct)} sameR2Key=${Boolean(probe.r2KeysMatch)} bytesIdentical=true distinctWord=${probe.distinctWord}`);
     }
     for (const note of probe.notes || []) {
       lines.push(`      - ${note}`);

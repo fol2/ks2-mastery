@@ -1,7 +1,12 @@
 import { uid } from '../core/utils.js';
+import {
+  fetchWithClientTimeout,
+  isClientFetchTimeout,
+} from '../core/fetch-timeout.js';
 
 const DEFAULT_RETRY_JITTER_MAX_MS = 125;
 const DEFAULT_RETRY_MAX_DELAY_MS = 2_000;
+const DEFAULT_SUBJECT_COMMAND_TIMEOUT_MS = 15_000;
 
 function joinUrl(baseUrl, path) {
   const base = String(baseUrl || '').replace(/\/$/, '');
@@ -126,6 +131,7 @@ export function createSubjectCommandClient({
   retryMaxDelayMs = DEFAULT_RETRY_MAX_DELAY_MS,
   random = Math.random,
   sleep: sleepFn = sleep,
+  timeoutMs = DEFAULT_SUBJECT_COMMAND_TIMEOUT_MS,
 } = {}) {
   if (typeof fetchFn !== 'function') {
     throw new TypeError('Subject command client requires a fetch implementation.');
@@ -158,7 +164,7 @@ export function createSubjectCommandClient({
     // alongside this function — the audit here is U3-only.
     let response;
     try {
-      response = await fetchFn(joinUrl(baseUrl, `/api/subjects/${encodeURIComponent(cleanSubjectId)}/command`), {
+      response = await fetchWithClientTimeout(fetchFn, joinUrl(baseUrl, `/api/subjects/${encodeURIComponent(cleanSubjectId)}/command`), {
         method: 'POST',
         headers: {
           accept: 'application/json',
@@ -167,12 +173,21 @@ export function createSubjectCommandClient({
           'x-ks2-correlation-id': requestId,
         },
         body,
+      }, {
+        timeoutMs,
+        timeoutMessage: 'Subject command took too long to respond.',
       });
     } catch (error) {
+      const timedOut = isClientFetchTimeout(error);
       throw new SubjectCommandClientError({
         status: 0,
-        payload: { code: 'subject_command_network_error' },
-        message: error?.message || 'Subject command could not reach the server.',
+        payload: {
+          code: 'subject_command_network_error',
+          timedOut: timedOut ? true : undefined,
+        },
+        message: error?.message || (timedOut
+          ? 'Subject command took too long to respond.'
+          : 'Subject command could not reach the server.'),
       });
     }
 

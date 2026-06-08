@@ -272,6 +272,50 @@ test('remote write failure is surfaced as degraded persistence instead of preten
   assert.equal(server.store.learners.selectedId, null);
 });
 
+test('repository hydrate timeout surfaces as a structured status-0 remote error', async () => {
+  const originalSetTimeout = globalThis.setTimeout;
+  const originalClearTimeout = globalThis.clearTimeout;
+  const storage = installMemoryStorage();
+  let aborted = false;
+
+  globalThis.setTimeout = (callback) => {
+    queueMicrotask(callback);
+    return 1;
+  };
+  globalThis.clearTimeout = () => {};
+
+  try {
+    const fetch = (url, init = {}) => new Promise((_, reject) => {
+      init.signal?.addEventListener('abort', () => {
+        aborted = true;
+        const error = new Error('The operation was aborted.');
+        error.name = 'AbortError';
+        reject(error);
+      });
+    });
+    const repositories = createApiPlatformRepositories({
+      baseUrl: 'https://repo.test',
+      fetch,
+      storage,
+    });
+
+    await assert.rejects(
+      () => repositories.hydrate(),
+      /Repository request took too long to respond/,
+    );
+
+    const snapshot = repositories.persistence.read();
+    assert.equal(aborted, true);
+    assert.equal(snapshot.lastError.code, 'repository_request_timeout');
+    assert.equal(snapshot.lastError.retryable, true);
+    assert.equal(snapshot.lastError.details.status, 0);
+    assert.equal(snapshot.inFlightWriteCount, 0);
+  } finally {
+    globalThis.setTimeout = originalSetTimeout;
+    globalThis.clearTimeout = originalClearTimeout;
+  }
+});
+
 test('retryable remote failures can leave degraded mode and clear pending writes once sync succeeds', async () => {
   const storage = installMemoryStorage();
   const server = createMockRepositoryServer();

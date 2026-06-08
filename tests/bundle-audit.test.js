@@ -860,7 +860,15 @@ function seoAuditRootHtml({ omitCanonical = false } = {}) {
   ].join('');
 }
 
-function seoAuditPracticePageHtml(page, { omitCanonical = false, forbiddenToken = '' } = {}) {
+function cloudflareWebAnalyticsBeacon() {
+  return '<script defer src="https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015" data-cf-beacon=\'{"version":"2024.11.0","token":"test"}\' crossorigin="anonymous"></script>';
+}
+
+function seoAuditPracticePageHtml(page, {
+  omitCanonical = false,
+  forbiddenToken = '',
+  edgeScript = '',
+} = {}) {
   const canonicalUrl = canonicalPracticePageUrl(page);
   return [
     '<!doctype html><html lang="en-GB"><head>',
@@ -883,11 +891,12 @@ function seoAuditPracticePageHtml(page, { omitCanonical = false, forbiddenToken 
     '<a href="/about/">About KS2 Mastery</a>',
     '<a href="/">KS2 Mastery home</a>',
     '</main>',
+    edgeScript,
     '</body></html>',
   ].join('');
 }
 
-function seoAuditIdentityPageHtml(page, { forbiddenToken = '' } = {}) {
+function seoAuditIdentityPageHtml(page, { forbiddenToken = '', edgeScript = '' } = {}) {
   const canonicalUrl = canonicalIdentityPageUrl(page);
   return [
     '<!doctype html><html lang="en-GB"><head>',
@@ -912,11 +921,12 @@ function seoAuditIdentityPageHtml(page, { forbiddenToken = '' } = {}) {
     ...INTENT_SEO_PAGES.map((intentPage) => `<a href="/${intentPage.slug}/">${intentPage.heading}</a>`),
     '<a href="/demo">Try demo</a>',
     '</main>',
+    edgeScript,
     '</body></html>',
   ].join('');
 }
 
-function seoAuditIntentPageHtml(page, { forbiddenToken = '' } = {}) {
+function seoAuditIntentPageHtml(page, { forbiddenToken = '', edgeScript = '' } = {}) {
   const canonicalUrl = canonicalIntentPageUrl(page);
   return [
     '<!doctype html><html lang="en-GB"><head>',
@@ -939,6 +949,7 @@ function seoAuditIntentPageHtml(page, { forbiddenToken = '' } = {}) {
     '<a href="/demo">Try demo</a>',
     '<a href="/">KS2 Mastery home</a>',
     '</main>',
+    edgeScript,
     '</body></html>',
   ].join('');
 }
@@ -997,6 +1008,11 @@ function createSeoAuditStubServer(options = {}) {
           forbiddenToken: options.practiceForbiddenTokenSlug === page.slug
             ? 'OPENAI_API_KEY'
             : '',
+          edgeScript: options.cloudflareWebAnalyticsBeacon
+            ? cloudflareWebAnalyticsBeacon()
+            : options.practiceScriptSlug === page.slug
+              ? '<script defer src="https://example.test/not-allowed.js"></script>'
+              : '',
         }));
         return;
       }
@@ -1011,6 +1027,9 @@ function createSeoAuditStubServer(options = {}) {
           forbiddenToken: options.identityForbiddenTokenSlug === page.slug
             ? 'OPENAI_API_KEY'
             : '',
+          edgeScript: options.cloudflareWebAnalyticsBeacon
+            ? cloudflareWebAnalyticsBeacon()
+            : '',
         }));
         return;
       }
@@ -1024,6 +1043,9 @@ function createSeoAuditStubServer(options = {}) {
         write(200, { 'content-type': 'text/html', 'cache-control': 'no-store' }, seoAuditIntentPageHtml(page, {
           forbiddenToken: options.intentForbiddenTokenSlug === page.slug
             ? 'OPENAI_API_KEY'
+            : '',
+          edgeScript: options.cloudflareWebAnalyticsBeacon
+            ? cloudflareWebAnalyticsBeacon()
             : '',
         }));
         return;
@@ -1208,6 +1230,52 @@ test('production bundle audit passes with SEO root, robots, and sitemap resource
     });
     assert.match(stdout, /Production bundle audit passed/);
     assert.match(stdout, /cache-split checks: 15\/15/);
+  } finally {
+    await closeServer(server);
+  }
+});
+
+test('production bundle audit allows Cloudflare Web Analytics beacon on static SEO pages', async () => {
+  const server = createSeoAuditStubServer({ cloudflareWebAnalyticsBeacon: true });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+
+  try {
+    const { port } = server.address();
+    const { stdout } = await execFileAsync(process.execPath, [
+      './scripts/production-bundle-audit.mjs',
+      '--skip-local',
+      '--url',
+      `http://127.0.0.1:${port}/`,
+    ], {
+      cwd: process.cwd(),
+      timeout: 8000,
+    });
+    assert.match(stdout, /Production bundle audit passed/);
+  } finally {
+    await closeServer(server);
+  }
+});
+
+test('production bundle audit rejects non-Cloudflare script on static SEO pages', async () => {
+  const server = createSeoAuditStubServer({ practiceScriptSlug: 'ks2-spelling-practice' });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+
+  try {
+    const { port } = server.address();
+    await assert.rejects(async () => {
+      await execFileAsync(process.execPath, [
+        './scripts/production-bundle-audit.mjs',
+        '--skip-local',
+        '--url',
+        `http://127.0.0.1:${port}/`,
+      ], {
+        cwd: process.cwd(),
+        timeout: 8000,
+      });
+    }, (error) => {
+      assert.match(error.stderr, /Production SEO page \/ks2-spelling-practice\/ must remain static and script-free; found token: <script/);
+      return true;
+    });
   } finally {
     await closeServer(server);
   }

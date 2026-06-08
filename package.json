@@ -51,6 +51,7 @@
     "deploy:oauth": "npm run deploy",
     "deploy:ci": "npm run deploy",
     "ops:health:production": "node ./scripts/production-health-snapshot.mjs",
+    "perf:production": "node ./scripts/production-performance-probe.mjs",
     "ops:tail": "node ./scripts/wrangler-oauth.mjs tail ks2-mastery --format pretty",
     "ops:tail:json": "node ./scripts/wrangler-oauth.mjs tail ks2-mastery --format json",
     "read-models:backfill": "node ./scripts/backfill-learner-read-models.mjs",
