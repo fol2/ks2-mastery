@@ -5,6 +5,7 @@ import { SpellingSummaryScene } from './SpellingSummaryScene.jsx';
 import { SpellingWordBankScene } from './SpellingWordBankScene.jsx';
 import { PatternQuestScene } from './PatternQuestScene.jsx';
 import { preloadImages } from '../../../platform/ui/luminance.js';
+import { POST_MASTERY_HYDRATION_WINDOW_MS } from '../client-read-models.js';
 import {
   buildSpellingContext,
   heroBgForLearner,
@@ -105,6 +106,7 @@ export function SpellingPracticeSurface(props) {
   const [setupHeroTone, setSetupHeroTone] = React.useState(() => (
     selectSpellingSetupTone(learnerId, readPreviousSetupTone(learnerId))
   ));
+  const [, refreshHydrationFallback] = React.useReducer((value) => value + 1, 0);
   const previousLearnerRef = React.useRef(learnerId);
   const previousPhaseRef = React.useRef(spelling.ui.phase);
   React.useEffect(() => {
@@ -122,6 +124,14 @@ export function SpellingPracticeSurface(props) {
   React.useEffect(() => {
     rememberSetupTone(learnerId, setupHeroTone);
   }, [learnerId, setupHeroTone]);
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+    if (spelling.postMastery?.postMasteryDebug?.source !== 'checking') return undefined;
+    const timeout = window.setTimeout(() => {
+      refreshHydrationFallback();
+    }, POST_MASTERY_HYDRATION_WINDOW_MS + 50);
+    return () => window.clearTimeout(timeout);
+  }, [learnerId, spelling.postMastery?.postMasteryDebug?.source]);
   // Post-Mega gating + branch resolution. The dashboard / sessions follow
   // the learner's Phaeton branch (b1 / b2) so the vista matches the
   // grand-master Codex creature even when the rest of the monster set
@@ -148,7 +158,8 @@ export function SpellingPracticeSurface(props) {
     postMega: isPostMegaScene,
     postMegaBranch,
   });
-  const preloadKey = preloadedHeroUrls.join('|');
+  const idleHeroPreloadUrls = preloadedHeroUrls.filter((url) => url && url !== heroBg);
+  const idlePreloadKey = idleHeroPreloadUrls.join('|');
   const previousHeroBgRef = React.useRef('');
   const previousHeroBg = previousHeroBgRef.current && previousHeroBgRef.current !== heroBg
     ? previousHeroBgRef.current
@@ -157,8 +168,12 @@ export function SpellingPracticeSurface(props) {
     if (heroBg) previousHeroBgRef.current = heroBg;
   }, [heroBg]);
   React.useEffect(() => {
-    preloadImages(preloadedHeroUrls);
-  }, [preloadKey]);
+    preloadImages(heroBg ? [heroBg] : []);
+  }, [heroBg]);
+  React.useEffect(() => {
+    if (!idleHeroPreloadUrls.length) return undefined;
+    return preloadImages(idleHeroPreloadUrls, { mode: 'idle' });
+  }, [idlePreloadKey]);
   React.useEffect(() => {
     if (typeof window === 'undefined') return undefined;
     const frame = window.requestAnimationFrame(() => {

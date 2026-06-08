@@ -665,7 +665,7 @@ async function runPlaywrightBrowserTts(origin, cookie, learnerId, options) {
     learnerId,
     promptToken,
     bufferedGeminiVoice: voice,
-    cacheLookupOnly: true,
+    cachePlaybackOnly: true,
   };
   let browser;
   try {

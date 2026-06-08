@@ -154,6 +154,10 @@ function normaliseTtsCacheLookupOnly(value) {
   return value === true || cleanText(value).toLowerCase() === 'true';
 }
 
+function normaliseTtsCachePlaybackOnly(value) {
+  return value === true || cleanText(value).toLowerCase() === 'true';
+}
+
 function ttsInstructions(slow = false, wordOnly = false) {
   if (wordOnly) {
     return 'Use natural British English pronunciation for a KS2 vocabulary preview. Read exactly the supplied word once and do not add extra words.';
@@ -617,14 +621,6 @@ async function readBufferedGeminiAudio(env, payload, options = {}) {
         objectKey = fallbackKey;
         if (object) {
           source = 'legacy';
-          if (allowLegacyMigration) {
-            object = await copyLegacyAudioToPrimary(bucket, {
-              legacyObject: object,
-              primaryKey: key,
-              metadata,
-              extension,
-            });
-          }
         }
       }
     } catch (error) {
@@ -648,6 +644,17 @@ async function readBufferedGeminiAudio(env, payload, options = {}) {
         contentType: 'audio/wav',
         cacheUnavailable: true,
       };
+    }
+    if (object && source === 'legacy' && allowLegacyMigration) {
+      if (typeof options.beforeLegacyMigration === 'function') {
+        await options.beforeLegacyMigration();
+      }
+      object = await copyLegacyAudioToPrimary(bucket, {
+        legacyObject: object,
+        primaryKey: key,
+        metadata,
+        extension,
+      });
     }
     if (!object) continue;
     const responseMetadata = source === 'legacy'
@@ -997,7 +1004,9 @@ export async function handleTextToSpeechRequest({
   const bodyMs = monotonicNowMs() - bodyStartedAt;
   const cacheOnly = normaliseTtsCacheOnly(body?.cacheOnly);
   const cacheLookupOnly = normaliseTtsCacheLookupOnly(body?.cacheLookupOnly);
-  timing.enabled = cacheLookupOnly;
+  const cachePlaybackOnly = !cacheLookupOnly && normaliseTtsCachePlaybackOnly(body?.cachePlaybackOnly);
+  const cacheReadOnly = cacheLookupOnly || cachePlaybackOnly;
+  timing.enabled = cacheReadOnly;
   recordTtsTiming(timing, 'body', bodyMs);
   const payload = {
     ...(await timeTtsPhase(timing, 'prompt', () => resolveSpellingAudioRequest({
@@ -1006,10 +1015,11 @@ export async function handleTextToSpeechRequest({
       body,
     }))),
     accountId: session.accountId,
-    provider: cacheOnly || cacheLookupOnly ? 'gemini' : normaliseRemoteTtsProvider(body?.provider),
+    provider: cacheOnly || cacheReadOnly ? 'gemini' : normaliseRemoteTtsProvider(body?.provider),
     bufferedGeminiVoice: normaliseBufferedGeminiVoice(body?.bufferedGeminiVoice || body?.cachedVoice),
     cacheOnly,
     cacheLookupOnly,
+    cachePlaybackOnly,
   };
   const openAi = openAiConfig(env);
   const gemini = geminiConfig(env);
@@ -1040,29 +1050,30 @@ export async function handleTextToSpeechRequest({
     return await recordDemoTtsFallback(env, session, now, withFallbackHeader(withTtsServerTiming(response, timing), fallbackFrom));
   }
 
- async function tryGemini(fallbackFrom = '') {
-    if (cacheLookupOnly) await protectLookupRequest();
+  async function tryGemini(fallbackFrom = '') {
+    if (cacheReadOnly) await protectLookupRequest();
     else if (!cacheOnly) await protectAudioRequest();
     const cacheHit = await timeTtsPhase(timing, 'cache_lookup', () => readBufferedGeminiAudio(env, payload, {
       model: geminiForPayload.model,
-      allowLegacyMigration: !cacheLookupOnly && !cacheOnly,
-      telemetry: cacheLookupOnly ? {
+      allowLegacyMigration: cachePlaybackOnly || (!cacheLookupOnly && !cacheOnly),
+      beforeLegacyMigration: cachePlaybackOnly ? protectAudioRequest : null,
+      telemetry: cacheReadOnly ? {
         enabled: true,
         requestId,
         recordPhase: (name, durationMs) => recordTtsTiming(timing, name, durationMs),
       } : null,
     }));
     if (cacheHit?.object) {
-      if (cacheLookupOnly) await protectAudioRequest();
+      if (cacheReadOnly) await protectAudioRequest();
       const output = timeTtsPhase(timing, 'response', async () => (
         cacheOnly ? cacheOnlyResponse('hit', cacheHit) : cachedGeminiAudioResponse(cacheHit)
       ));
       const response = await output;
       return cacheOnly ? withTtsServerTiming(response, timing) : await finish(response, fallbackFrom);
     }
-    if (cacheLookupOnly && cacheHit?.cacheUnavailable) return withTtsServerTiming(cacheOnlyResponse('unavailable', cacheHit), timing);
-    if (cacheLookupOnly && !cacheHit?.metadata) return withTtsServerTiming(cacheOnlyResponse('uncacheable'), timing);
-    if (cacheLookupOnly) return withTtsServerTiming(cacheOnlyResponse('miss', cacheHit), timing);
+    if (cacheReadOnly && cacheHit?.cacheUnavailable) return withTtsServerTiming(cacheOnlyResponse('unavailable', cacheHit), timing);
+    if (cacheReadOnly && !cacheHit?.metadata) return withTtsServerTiming(cacheOnlyResponse('uncacheable'), timing);
+    if (cacheReadOnly) return withTtsServerTiming(cacheOnlyResponse('miss', cacheHit), timing);
     if (cacheOnly && cacheHit?.cacheUnavailable) return withTtsServerTiming(cacheOnlyResponse('unavailable', cacheHit), timing);
     if (cacheOnly && !cacheHit?.metadata) return withTtsServerTiming(cacheOnlyResponse('uncacheable'), timing);
     if (cacheOnly) {

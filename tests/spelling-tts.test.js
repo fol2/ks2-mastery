@@ -182,7 +182,7 @@ test('platform TTS plays cached Gemini audio before the selected provider', asyn
       slow: false,
       provider: 'gemini',
       bufferedGeminiVoice: 'Iapetus',
-      cacheLookupOnly: true,
+      cachePlaybackOnly: true,
     });
   } finally {
     tts.stop();
@@ -267,7 +267,7 @@ test('platform TTS logs cached Gemini lookup timing before playback', async () =
       slow: false,
       provider: 'gemini',
       bufferedGeminiVoice: 'Iapetus',
-      cacheLookupOnly: true,
+      cachePlaybackOnly: true,
     });
 
     const cacheLog = logs.find((line) => line.startsWith('[ks2-tts-cache-latency]'));
@@ -518,7 +518,7 @@ test('platform TTS logs cache lookup misses without body timing fields', async (
     fetchFn: async (url, init = {}) => {
       const body = JSON.parse(init.body);
       calls.push({ url, body });
-      if (body.cacheLookupOnly || body.cacheOnly) {
+      if (body.cacheLookupOnly || body.cachePlaybackOnly || body.cacheOnly) {
         return new Response(null, {
           status: 204,
           headers: {
@@ -543,7 +543,7 @@ test('platform TTS logs cache lookup misses without body timing fields', async (
     });
 
     assert.equal(result, true);
-    assert.ok(calls.some((call) => call.body.cacheLookupOnly), 'preflight cache lookup must run');
+    assert.ok(calls.some((call) => call.body.cachePlaybackOnly), 'preflight cache playback lookup must run');
     const missLog = logs.find((line) => line.startsWith('[ks2-tts-cache-latency]'));
     assert.ok(missLog, `expected cache miss telemetry, got ${JSON.stringify(logs)}`);
     assert.match(missLog, /status=miss/);
@@ -628,7 +628,7 @@ test('platform TTS uses cached Gemini audio for word-bank word replay', async ()
       provider: 'gemini',
       bufferedGeminiVoice: 'Iapetus',
       wordOnly: true,
-      cacheLookupOnly: true,
+      cachePlaybackOnly: true,
       slug: 'early',
       scope: 'word-bank',
     });
@@ -656,7 +656,7 @@ test('platform TTS does not warm or fall back after cancelled cache lookup', asy
     fetchFn: async (url, init = {}) => {
       const body = JSON.parse(init.body);
       calls.push({ url, body });
-      if (body.cacheLookupOnly) {
+      if (body.cachePlaybackOnly) {
         lookupStarted();
         await new Promise((resolve) => {
           releaseLookup = resolve;
@@ -693,7 +693,7 @@ test('platform TTS does not warm or fall back after cancelled cache lookup', asy
       slow: false,
       provider: 'gemini',
       bufferedGeminiVoice: 'Iapetus',
-      cacheLookupOnly: true,
+      cachePlaybackOnly: true,
     });
   } finally {
     tts.stop();
@@ -902,7 +902,7 @@ test('platform TTS does not fall back when the selected remote provider fails', 
       slow: false,
       provider: 'gemini',
       bufferedGeminiVoice: 'Iapetus',
-      cacheLookupOnly: true,
+      cachePlaybackOnly: true,
     });
     assert.deepEqual(calls[1].body, {
       learnerId: 'learner-a',

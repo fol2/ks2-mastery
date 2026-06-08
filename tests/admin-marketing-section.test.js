@@ -227,6 +227,29 @@ test('createAdminMarketingApi — non-ok response throws with status and code', 
   }
 });
 
+test('createAdminMarketingApi — slow requests reject with a structured timeout error', async () => {
+  let aborted = false;
+  const mockFetch = (url, init = {}) => {
+    init.signal?.addEventListener('abort', () => {
+      aborted = true;
+    });
+    return new Promise(() => {});
+  };
+  const api = createAdminMarketingApi({ fetch: mockFetch, timeoutMs: 1 });
+
+  await assert.rejects(
+    api.fetchMarketingMessages(),
+    (error) => {
+      assert.equal(error.status, 0);
+      assert.equal(error.code, 'marketing_api_timeout');
+      assert.deepEqual(error.payload, { code: 'marketing_api_timeout' });
+      return true;
+    },
+  );
+
+  assert.equal(aborted, true);
+});
+
 // ---------------------------------------------------------------------------
 // 3. VALID_TRANSITIONS map coverage
 // ---------------------------------------------------------------------------

@@ -64,11 +64,20 @@ export function probeRelLuminance(url) {
   return pending;
 }
 
-export function preloadImages(urls) {
-  if (!Array.isArray(urls)) return;
-  urls.forEach((url) => {
-    if (url) void loadProbeImage(url);
-  });
+export function preloadImages(urls, options = {}) {
+  if (!Array.isArray(urls)) return undefined;
+  const pendingUrls = Array.from(new Set(urls.filter(Boolean)));
+  if (!pendingUrls.length) return undefined;
+
+  const run = () => {
+    pendingUrls.forEach((url) => {
+      void loadProbeImage(url);
+    });
+  };
+
+  if (options?.mode === 'idle') return scheduleIdle(run);
+  run();
+  return undefined;
 }
 
 export async function probeHeroTextTones(url, container, probes) {
@@ -147,6 +156,25 @@ function loadProbeImage(url) {
   });
   imageCache.set(url, pending);
   return pending;
+}
+
+function scheduleIdle(callback) {
+  if (typeof window !== 'undefined' && typeof window.requestIdleCallback === 'function') {
+    const handle = window.requestIdleCallback(callback, { timeout: 1500 });
+    return () => {
+      if (typeof window.cancelIdleCallback === 'function') {
+        window.cancelIdleCallback(handle);
+      }
+    };
+  }
+
+  if (typeof window !== 'undefined' && typeof window.setTimeout === 'function') {
+    const handle = window.setTimeout(callback, 250);
+    return () => window.clearTimeout(handle);
+  }
+
+  callback();
+  return undefined;
 }
 
 function fallbackToneResults(container, probes) {

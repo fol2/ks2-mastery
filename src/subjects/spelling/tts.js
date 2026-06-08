@@ -146,6 +146,7 @@ function remotePromptRequest(payload = {}, providerId = DEFAULT_TTS_PROVIDER, bu
   if (payload.wordOnly) body.wordOnly = true;
   if (payload.cacheOnly) body.cacheOnly = true;
   if (payload.cacheLookupOnly) body.cacheLookupOnly = true;
+  if (payload.cachePlaybackOnly) body.cachePlaybackOnly = true;
   if (typeof payload.slug === 'string' && payload.slug) body.slug = payload.slug;
   if (typeof payload.scope === 'string' && payload.scope) body.scope = payload.scope;
   return body;
@@ -478,7 +479,7 @@ export function createPlatformTts({
       return false;
     }
     return await speakWithRemote(
-      { ...payload, cacheLookupOnly: true },
+      { ...payload, cachePlaybackOnly: true },
       'gemini',
       bufferedVoiceId,
       token,
@@ -501,7 +502,7 @@ export function createPlatformTts({
 
     currentAbort = new AbortController();
     const kindId = playbackKind(payload);
-    const cacheLookupTelemetry = !emitLoading && payload?.cacheLookupOnly === true;
+    const cacheLookupTelemetry = !emitLoading && (payload?.cacheLookupOnly === true || payload?.cachePlaybackOnly === true);
     const requestStartedAt = cacheLookupTelemetry ? now() : null;
     if (emitLoading) {
       emit({ type: 'loading', kind: kindId, provider: providerId });
