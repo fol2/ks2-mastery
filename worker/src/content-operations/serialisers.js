@@ -207,6 +207,7 @@ export function serialiseContentOperationPackage(contentPackage = {}, { compact 
     publishedAt: contentPackage.publishedAt ?? null,
     supersededByPackageId: contentPackage.supersededByPackageId || null,
     operationCount: Array.isArray(contentPackage.operations) ? contentPackage.operations.length : undefined,
+    latestCandidate: latestCandidate ? serialiseContentOperationCandidate(latestCandidate) : null,
     blockers: envelope,
   };
   if (!compact && Array.isArray(contentPackage.operations)) {

@@ -32,6 +32,7 @@ import { createHubApi } from '../src/platform/hubs/api.js';
 import {
   CONTENT_OPERATION_DETAIL_TABS,
   CONTENT_OPERATION_LANES,
+  normaliseContentOperationCandidate,
   normaliseContentOperationPackage,
   normaliseContentOperationsOverview,
   normaliseContentOperationsPackageDetail,
@@ -426,6 +427,27 @@ const CONTENT_OPS_PACKAGE = {
     exposure: { status: 'passed', blockers: [], warnings: [] },
     publishReadiness: { status: 'not_ready', blockers: ['approval_required'], warnings: [] },
   },
+  latestCandidate: {
+    candidateId: 'cand-draft-1',
+    packageId: 'pkg-draft-1',
+    baseReleaseId: 'rel-global-1',
+    currentReleaseId: 'rel-global-1',
+    operationsHash: 'ops-hash-1',
+    candidateHash: 'candidate-hash-1',
+    validation: { ok: true, errorCount: 0, warningCount: 0, errors: [], warnings: [] },
+    blockers: {
+      validation: { status: 'passed', errorCount: 0, warningCount: 0, errors: [], warnings: [] },
+      conflicts: { status: 'passed', count: 0, items: [] },
+      audio: { status: 'passed', blockers: [], warnings: [] },
+      assets: { status: 'passed', blockers: [], warnings: [] },
+      rewards: { status: 'passed', blockers: [], warnings: [] },
+      visibility: { status: 'passed', blockers: [], warnings: [] },
+      exposure: { status: 'passed', blockers: [], warnings: [] },
+      publishReadiness: { status: 'not_ready', blockers: ['approval_required'], warnings: [] },
+    },
+    conflicts: [],
+    createdAt: Date.UTC(2026, 5, 11, 10, 5, 0),
+  },
 };
 
 const CONTENT_OPS_OVERVIEW = {
@@ -507,6 +529,7 @@ describe('Content Operations Centre normalisers', () => {
     assert.equal(overview.laneCounts.drafts, 1);
     assert.equal(overview.lanes.drafts[0].stateLabel, 'Draft');
     assert.equal(overview.lanes.drafts[0].blockers.warningCount, 1);
+    assert.equal(overview.lanes.drafts[0].latestCandidate.candidateHash, 'candidate-hash-1');
     assert.equal(overview.recentReleases[0].proof.source, 'test');
     assert.equal(overview.actor.capabilities['content_operations.approve'], true);
   });
@@ -522,10 +545,22 @@ describe('Content Operations Centre normalisers', () => {
     });
 
     assert.equal(packages[0].packageId, 'pkg-draft-1');
+    assert.equal(packages[0].latestCandidate.candidateId, 'cand-draft-1');
     assert.equal(packages[0].blockers.blockingSections.includes('audio'), true);
     assert.equal(releases[0].releaseId, 'rel-global-1');
     assert.equal(detail.package.operations[0].fieldPath, 'explanation');
+    assert.equal(detail.package.latestCandidate.operationsHash, 'ops-hash-1');
     assert.equal(detail.events[0].eventType, 'package.created');
+  });
+
+  it('normalises candidate review metadata for lifecycle controls', () => {
+    const candidate = normaliseContentOperationCandidate(CONTENT_OPS_PACKAGE.latestCandidate);
+
+    assert.equal(candidate.candidateId, 'cand-draft-1');
+    assert.equal(candidate.candidateHash, 'candidate-hash-1');
+    assert.equal(candidate.validation.status, 'passed');
+    assert.deepEqual(candidate.blockers.blockingSections, ['publishReadiness']);
+    assert.equal(candidate.blockers.publishReadiness.blockers[0], 'approval_required');
   });
 
   it('keeps compact package operation counts unknown instead of inventing zero', () => {
@@ -575,6 +610,47 @@ describe('Content Operations Centre hub API client', () => {
     assert.deepEqual(calls.map((call) => call.method), ['GET', 'GET', 'GET', 'GET', 'GET']);
   });
 
+  it('calls lifecycle mutation endpoints with package, candidate, and proof payloads', async () => {
+    const calls = [];
+    const api = createHubApi({
+      baseUrl: 'https://repo.test',
+      fetch: async (url, init = {}) => {
+        calls.push({
+          url: String(url),
+          method: init.method,
+          body: init.body ? JSON.parse(init.body) : null,
+        });
+        return jsonResponse({ ok: true });
+      },
+    });
+
+    await api.validateContentOperationPackage({
+      packageId: 'pkg/with/slash',
+      includeSnapshot: true,
+      mutation: { requestId: 'validate-1' },
+    });
+    await api.approveContentOperationPackage({
+      packageId: 'pkg/with/slash',
+      candidateId: 'cand/with/slash',
+      notes: 'Reviewed candidate.',
+      mutation: { requestId: 'approve-1' },
+    });
+    await api.publishContentOperationPackage({
+      packageId: 'pkg/with/slash',
+      proof: { source: 'test' },
+      mutation: { requestId: 'publish-1' },
+    });
+
+    assert.equal(new URL(calls[0].url).pathname, '/api/admin/content-operations/packages/pkg%2Fwith%2Fslash/validate');
+    assert.equal(new URL(calls[1].url).pathname, '/api/admin/content-operations/packages/pkg%2Fwith%2Fslash/approve');
+    assert.equal(new URL(calls[2].url).pathname, '/api/admin/content-operations/packages/pkg%2Fwith%2Fslash/publish');
+    assert.deepEqual(calls.map((call) => call.method), ['POST', 'POST', 'POST']);
+    assert.equal(calls[0].body.includeSnapshot, true);
+    assert.equal(calls[1].body.candidateId, 'cand/with/slash');
+    assert.equal(calls[1].body.notes, 'Reviewed candidate.');
+    assert.equal(calls[2].body.proof.source, 'test');
+  });
+
   it('rejects package and release detail reads without explicit ids', async () => {
     const api = createHubApi({
       baseUrl: 'https://repo.test',
@@ -588,6 +664,18 @@ describe('Content Operations Centre hub API client', () => {
     await assert.rejects(
       () => api.readContentOperationRelease({ releaseId: '' }),
       /Content operation release id is required/,
+    );
+    await assert.rejects(
+      () => api.validateContentOperationPackage({ packageId: '' }),
+      /Content operation package id is required/,
+    );
+    await assert.rejects(
+      () => api.approveContentOperationPackage({ packageId: 'pkg-1', candidateId: '' }),
+      /Content operation candidate id is required/,
+    );
+    await assert.rejects(
+      () => api.publishContentOperationPackage({ packageId: '' }),
+      /Content operation package id is required/,
     );
   });
 });

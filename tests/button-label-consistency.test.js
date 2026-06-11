@@ -527,6 +527,12 @@ test('button labels: every statically extractable label is classified', () => {
     // opens a new incident from the error-centre context.
     'Add note',
     'Create incident',
+    // Content Operations Centre T7: package lifecycle CTAs are deliberately
+    // candidate/package-specific so operators can distinguish review gates
+    // from generic form validation or asset publishing controls.
+    'Validate candidate',
+    'Approve candidate',
+    'Publish package',
     // Reasoning launch: delayed SATs-style sets use "Mark set" and "Save
     // answers" to distinguish full-set marking from single-question submit.
     // "Partly worked support" is the child-facing scaffold request, matching

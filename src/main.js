@@ -2717,6 +2717,9 @@ function buildSurfaceActions() {
     readOverview: hubApi.readContentOperationsOverview?.bind(hubApi),
     readPackages: hubApi.readContentOperationPackages?.bind(hubApi),
     readPackage: hubApi.readContentOperationPackage?.bind(hubApi),
+    validatePackage: hubApi.validateContentOperationPackage?.bind(hubApi),
+    approvePackage: hubApi.approveContentOperationPackage?.bind(hubApi),
+    publishPackage: hubApi.publishContentOperationPackage?.bind(hubApi),
     readReleases: hubApi.readContentOperationReleases?.bind(hubApi),
     readRelease: hubApi.readContentOperationRelease?.bind(hubApi),
   } : null;
