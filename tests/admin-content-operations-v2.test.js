@@ -38,6 +38,8 @@ import {
   normaliseContentOperationsPackageDetail,
   normaliseContentOperationsPackageList,
   normaliseContentOperationsReleaseList,
+  normaliseContentOperationsSpellingBrowse,
+  normaliseContentOperationsSpellingItemDetail,
 } from '../src/platform/hubs/admin-content-operations.js';
 
 // ─── Fixtures ────────────────────────────────────────────────────────────────
@@ -491,6 +493,119 @@ const CONTENT_OPS_OVERVIEW = {
   },
 };
 
+const CONTENT_OPS_SPELLING_BROWSE = {
+  ok: true,
+  actor: CONTENT_OPS_OVERVIEW.overview.actor,
+  browse: {
+    subjectId: 'spelling',
+    release: {
+      releaseId: 'rel-global-1',
+      snapshotHash: 'hash-1',
+      publishedAt: Date.UTC(2026, 5, 11, 9, 0, 0),
+      source: 'latest_release',
+    },
+    packageDraft: {
+      active: true,
+      status: 'available',
+      packageId: 'pkg-draft-1',
+      packageTitle: 'Word family update',
+      packageState: 'draft',
+      candidateId: 'cand-draft-1',
+      candidateHash: 'candidate-hash-1',
+      validation: { status: 'passed', ok: true, errorCount: 0, warningCount: 0, errors: [], warnings: [] },
+    },
+    filters: { query: 'meta', pool: 'extra', listId: 'extra-greek', limit: 75 },
+    totals: { words: 1, displayedWords: 1, matchedWords: 1, wordLists: 1, sentences: 2, variants: 1, families: 1 },
+    draftStateCounts: { modified: 1, added: 0, removed: 0, unchanged: 0 },
+    pools: [{ pool: 'extra', wordCount: 1, sentenceCount: 2, variantCount: 1, draftStateCounts: { modified: 1 } }],
+    wordLists: [{
+      id: 'extra-greek',
+      title: 'Extra Greek roots',
+      spellingPool: 'extra',
+      coverageTier: 'enrichment-extra',
+      yearGroups: [],
+      wordCount: 1,
+      draftState: 'unchanged',
+    }],
+    words: [{
+      slug: 'metamorphosis',
+      word: 'metamorphosis',
+      family: 'shape-change',
+      listId: 'extra-greek',
+      listTitle: 'Extra Greek roots',
+      spellingPool: 'extra',
+      coverageTier: 'enrichment-extra',
+      yearGroups: [],
+      tags: ['roots'],
+      patternIds: [],
+      acceptedCount: 1,
+      sentenceCount: 1,
+      variantCount: 1,
+      variantSentenceCount: 1,
+      familySize: 2,
+      draftState: 'modified',
+      hasCurrent: true,
+      hasPackageDraft: true,
+      audioReadiness: {
+        status: 'not_scanned',
+        wordProfiles: ['male.natural', 'female.natural'],
+        sentenceProfiles: ['male.normal', 'male.slow', 'female.normal', 'female.slow'],
+        wordAudioRequired: 4,
+        sentenceAudioRequired: 8,
+        totalRequired: 12,
+      },
+      validationState: { status: 'passed', ok: true, errorCount: 0, warningCount: 0, errors: [], warnings: [] },
+      rewardImpact: {
+        status: 'not_mapped',
+        spellingPool: 'extra',
+        coverageTier: 'enrichment-extra',
+        familySize: 2,
+        wordListId: 'extra-greek',
+        monsterBinding: { mode: 'pool', poolId: 'extra', assignment: 'unresolved' },
+      },
+    }],
+  },
+};
+
+const CONTENT_OPS_SPELLING_WORD_DETAIL = {
+  ok: true,
+  actor: CONTENT_OPS_OVERVIEW.overview.actor,
+  detail: {
+    type: 'word',
+    slug: 'metamorphosis',
+    found: true,
+    draftState: 'modified',
+    release: CONTENT_OPS_SPELLING_BROWSE.browse.release,
+    packageDraft: CONTENT_OPS_SPELLING_BROWSE.browse.packageDraft,
+    validationState: { status: 'passed', ok: true, errorCount: 0, warningCount: 0, errors: [], warnings: [] },
+    current: {
+      slug: 'metamorphosis',
+      word: 'metamorphosis',
+      family: 'shape-change',
+      spellingPool: 'extra',
+      coverageTier: 'enrichment-extra',
+      sentences: [{ id: 'meta-s1', wordSlug: 'metamorphosis', text: 'A tadpole changes.', tags: [] }],
+      variants: [{ word: 'metamorphic', sentenceCount: 1 }],
+      familyMembers: [{ slug: 'metamorphosis', word: 'metamorphosis' }],
+      audioReadiness: CONTENT_OPS_SPELLING_BROWSE.browse.words[0].audioReadiness,
+      rewardImpact: CONTENT_OPS_SPELLING_BROWSE.browse.words[0].rewardImpact,
+    },
+    packageValue: {
+      slug: 'metamorphosis',
+      word: 'metamorphosis',
+      family: 'shape-change',
+      spellingPool: 'extra',
+      coverageTier: 'enrichment-extra',
+      explanation: 'Package draft explanation.',
+      sentences: [{ id: 'meta-s1', wordSlug: 'metamorphosis', text: 'A tadpole changes completely.', tags: [] }],
+      variants: [{ word: 'metamorphic', sentenceCount: 1 }],
+      familyMembers: [{ slug: 'metamorphosis', word: 'metamorphosis' }],
+      audioReadiness: CONTENT_OPS_SPELLING_BROWSE.browse.words[0].audioReadiness,
+      rewardImpact: CONTENT_OPS_SPELLING_BROWSE.browse.words[0].rewardImpact,
+    },
+  },
+};
+
 function jsonResponse(payload, status = 200) {
   return new Response(JSON.stringify(payload), {
     status,
@@ -579,6 +694,65 @@ describe('Content Operations Centre normalisers', () => {
     assert.equal(missingCountPackage.operationCount, null);
     assert.equal(nullCountPackage.operationCount, null);
   });
+
+  it('normalises spelling browse rows with package draft, audio, and reward metadata', () => {
+    const browse = normaliseContentOperationsSpellingBrowse(CONTENT_OPS_SPELLING_BROWSE);
+
+    assert.equal(browse.release.releaseId, 'rel-global-1');
+    assert.equal(browse.packageDraft.status, 'available');
+    assert.equal(browse.packageDraft.validation.status, 'passed');
+    assert.equal(browse.totals.variants, 1);
+    assert.equal(browse.pools[0].draftStateCounts.modified, 1);
+    assert.equal(browse.wordLists[0].title, 'Extra Greek roots');
+    assert.equal(browse.words[0].draftState, 'modified');
+    assert.deepEqual(browse.words[0].audioReadiness.wordProfiles, ['male.natural', 'female.natural']);
+    assert.deepEqual(browse.words[0].audioReadiness.sentenceProfiles, ['male.normal', 'male.slow', 'female.normal', 'female.slow']);
+    assert.equal(browse.words[0].audioReadiness.totalRequired, 12);
+    assert.equal(browse.words[0].validationState.status, 'passed');
+    assert.equal(browse.words[0].rewardImpact.monsterBinding.poolId, 'extra');
+    assert.equal(browse.actor.platformRole, 'admin');
+  });
+
+  it('normalises stale spelling package draft metadata', () => {
+    const browse = normaliseContentOperationsSpellingBrowse({
+      browse: {
+        ...CONTENT_OPS_SPELLING_BROWSE.browse,
+        packageDraft: {
+          ...CONTENT_OPS_SPELLING_BROWSE.browse.packageDraft,
+          status: 'stale_candidate',
+          staleReasons: ['operations_stale'],
+          latestReleaseId: 'rel-global-2',
+          expectedOperationsHash: 'ops-current',
+          validation: {
+            status: 'stale_candidate',
+            ok: false,
+            errorCount: 1,
+            warningCount: 0,
+            errors: [{ code: 'stale_candidate', message: 'Rebuild required.' }],
+            warnings: [],
+          },
+        },
+      },
+    });
+
+    assert.equal(browse.packageDraft.status, 'stale_candidate');
+    assert.deepEqual(browse.packageDraft.staleReasons, ['operations_stale']);
+    assert.equal(browse.packageDraft.latestReleaseId, 'rel-global-2');
+    assert.equal(browse.packageDraft.expectedOperationsHash, 'ops-current');
+    assert.equal(browse.packageDraft.validation.errorCount, 1);
+  });
+
+  it('normalises spelling item details with current and package values', () => {
+    const detail = normaliseContentOperationsSpellingItemDetail(CONTENT_OPS_SPELLING_WORD_DETAIL);
+
+    assert.equal(detail.type, 'word');
+    assert.equal(detail.slug, 'metamorphosis');
+    assert.equal(detail.draftState, 'modified');
+    assert.equal(detail.current.sentences[0].id, 'meta-s1');
+    assert.equal(detail.packageValue.explanation, 'Package draft explanation.');
+    assert.equal(detail.packageDraft.candidateId, 'cand-draft-1');
+    assert.equal(detail.validationState.status, 'passed');
+  });
 });
 
 describe('Content Operations Centre hub API client', () => {
@@ -595,6 +769,15 @@ describe('Content Operations Centre hub API client', () => {
     await api.readContentOperationsOverview({ limit: 7 });
     await api.readContentOperationPackages({ state: 'draft', limit: 11 });
     await api.readContentOperationPackage({ packageId: 'pkg/with/slash' });
+    await api.readContentOperationSpellingBrowse({
+      packageId: 'pkg/with/slash',
+      query: 'meta',
+      pool: 'extra',
+      listId: 'extra-greek',
+      limit: 25,
+    });
+    await api.readContentOperationSpellingWord({ slug: 'meta/morphosis', packageId: 'pkg/with/slash' });
+    await api.readContentOperationSpellingSentence({ sentenceId: 'sentence/1', packageId: 'pkg/with/slash' });
     await api.readContentOperationReleases({ limit: 5, includeSnapshot: true });
     await api.readContentOperationRelease({ releaseId: 'rel/with/slash', includeSnapshot: true });
 
@@ -603,11 +786,19 @@ describe('Content Operations Centre hub API client', () => {
     assert.equal(new URL(calls[1].url).pathname, '/api/admin/content-operations/packages');
     assert.equal(new URL(calls[1].url).searchParams.get('state'), 'draft');
     assert.equal(new URL(calls[2].url).pathname, '/api/admin/content-operations/packages/pkg%2Fwith%2Fslash');
-    assert.equal(new URL(calls[3].url).pathname, '/api/admin/content-operations/subjects/spelling/releases');
-    assert.equal(new URL(calls[3].url).searchParams.get('includeSnapshot'), 'true');
-    assert.equal(new URL(calls[4].url).pathname, '/api/admin/content-operations/subjects/spelling/releases/rel%2Fwith%2Fslash');
-    assert.equal(new URL(calls[4].url).searchParams.get('includeSnapshot'), 'true');
-    assert.deepEqual(calls.map((call) => call.method), ['GET', 'GET', 'GET', 'GET', 'GET']);
+    assert.equal(new URL(calls[3].url).pathname, '/api/admin/content-operations/subjects/spelling/browse');
+    assert.equal(new URL(calls[3].url).searchParams.get('packageId'), 'pkg/with/slash');
+    assert.equal(new URL(calls[3].url).searchParams.get('query'), 'meta');
+    assert.equal(new URL(calls[3].url).searchParams.get('pool'), 'extra');
+    assert.equal(new URL(calls[3].url).searchParams.get('listId'), 'extra-greek');
+    assert.equal(new URL(calls[4].url).pathname, '/api/admin/content-operations/subjects/spelling/words/meta%2Fmorphosis');
+    assert.equal(new URL(calls[4].url).searchParams.get('packageId'), 'pkg/with/slash');
+    assert.equal(new URL(calls[5].url).pathname, '/api/admin/content-operations/subjects/spelling/sentences/sentence%2F1');
+    assert.equal(new URL(calls[6].url).pathname, '/api/admin/content-operations/subjects/spelling/releases');
+    assert.equal(new URL(calls[6].url).searchParams.get('includeSnapshot'), 'true');
+    assert.equal(new URL(calls[7].url).pathname, '/api/admin/content-operations/subjects/spelling/releases/rel%2Fwith%2Fslash');
+    assert.equal(new URL(calls[7].url).searchParams.get('includeSnapshot'), 'true');
+    assert.deepEqual(calls.map((call) => call.method), ['GET', 'GET', 'GET', 'GET', 'GET', 'GET', 'GET', 'GET']);
   });
 
   it('calls lifecycle mutation endpoints with package, candidate, and proof payloads', async () => {
@@ -675,6 +866,14 @@ describe('Content Operations Centre hub API client', () => {
     await assert.rejects(
       () => api.readContentOperationRelease({ releaseId: '' }),
       /Content operation release id is required/,
+    );
+    await assert.rejects(
+      () => api.readContentOperationSpellingWord({ slug: '' }),
+      /Spelling word slug is required/,
+    );
+    await assert.rejects(
+      () => api.readContentOperationSpellingSentence({ sentenceId: '' }),
+      /Spelling sentence id is required/,
     );
     await assert.rejects(
       () => api.validateContentOperationPackage({ packageId: '' }),

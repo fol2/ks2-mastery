@@ -270,6 +270,46 @@ export function createHubApi({
       );
       return fetchHubJson(fetch, url, { method: 'GET' }, authSession);
     },
+    async readContentOperationSpellingBrowse({
+      packageId = null,
+      query = '',
+      pool = null,
+      listId = null,
+      limit = 75,
+    } = {}) {
+      const url = buildRequestUrl(
+        baseUrl,
+        '/api/admin/content-operations/subjects/spelling/browse',
+        {
+          packageId,
+          query,
+          pool,
+          listId,
+          limit,
+        },
+      );
+      return fetchHubJson(fetch, url, { method: 'GET' }, authSession);
+    },
+    async readContentOperationSpellingWord({ slug, packageId = null } = {}) {
+      if (!slug) throw new TypeError('Spelling word slug is required.');
+      const safeSlug = encodeURIComponent(String(slug));
+      const url = buildRequestUrl(
+        baseUrl,
+        `/api/admin/content-operations/subjects/spelling/words/${safeSlug}`,
+        { packageId },
+      );
+      return fetchHubJson(fetch, url, { method: 'GET' }, authSession);
+    },
+    async readContentOperationSpellingSentence({ sentenceId, packageId = null } = {}) {
+      if (!sentenceId) throw new TypeError('Spelling sentence id is required.');
+      const safeSentenceId = encodeURIComponent(String(sentenceId));
+      const url = buildRequestUrl(
+        baseUrl,
+        `/api/admin/content-operations/subjects/spelling/sentences/${safeSentenceId}`,
+        { packageId },
+      );
+      return fetchHubJson(fetch, url, { method: 'GET' }, authSession);
+    },
     async readContentOperationPackages({ state = null, limit = 50 } = {}) {
       const url = buildRequestUrl(baseUrl, '/api/admin/content-operations/packages', {
         state,

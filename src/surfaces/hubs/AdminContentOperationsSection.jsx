@@ -10,6 +10,8 @@ import {
   normaliseContentOperationsPackageDetail,
   normaliseContentOperationsPackageList,
   normaliseContentOperationsReleaseList,
+  normaliseContentOperationsSpellingBrowse,
+  normaliseContentOperationsSpellingItemDetail,
 } from '../../platform/hubs/admin-content-operations.js';
 
 const CENTRE_TABS = Object.freeze([
@@ -197,6 +199,31 @@ function MetricTile({ label, value, detail }) {
       {detail ? <span className="small muted">{detail}</span> : null}
     </div>
   );
+}
+
+function draftStateChipClass(state) {
+  if (state === 'added') return 'good';
+  if (state === 'modified') return 'warn';
+  if (state === 'removed') return 'bad';
+  return '';
+}
+
+function draftStateLabel(state) {
+  if (state === 'added') return 'Added';
+  if (state === 'modified') return 'Modified';
+  if (state === 'removed') return 'Removed';
+  return 'Published';
+}
+
+function statusChipClass(status) {
+  if (['available', 'passed', 'published'].includes(status)) return 'good';
+  if (['blocked', 'stale_candidate'].includes(status)) return 'bad';
+  if (['candidate_required', 'not_ready', 'warning', 'warnings_only'].includes(status)) return 'warn';
+  return '';
+}
+
+function statusLabel(status) {
+  return String(status || 'unknown').replace(/_/g, ' ');
 }
 
 function CentreTabNav({ activeTab, onSelect }) {
@@ -428,6 +455,243 @@ function PublishedAreaPanel({ activeTab, latestRelease, selectedPackageId, selec
       <div className="content-ops-domain-placeholder">
         <span className="chip">No mutation controls</span>
         <span className="small muted">Package selection is required before this area can create operations.</span>
+      </div>
+    </div>
+  );
+}
+
+function SpellingBrowsePanel({
+  browse,
+  itemDetail,
+  filters,
+  selectedWordSlug,
+  selectedPackageId,
+  loadingBrowse,
+  loadingItem,
+  error,
+  onFilterChange,
+  onApplyFilters,
+  onSelectWord,
+}) {
+  const selectedRow = browse.words.find((row) => row.slug === selectedWordSlug) || browse.words[0] || null;
+  const packageDraft = browse.packageDraft;
+  const selectedDetail = itemDetail?.found
+    && itemDetail.slug === selectedRow?.slug
+    && (itemDetail.packageDraft?.packageId || '') === (packageDraft.packageId || '')
+    && (itemDetail.packageDraft?.candidateId || '') === (packageDraft.candidateId || '')
+    && (itemDetail.release?.releaseId || '') === (browse.release.releaseId || '')
+    ? itemDetail
+    : null;
+  const currentWord = selectedDetail?.current || null;
+  const packageWord = selectedDetail?.packageValue || null;
+  const releaseLabel = browse.release.releaseId || 'bundled fallback';
+  const detailValidation = selectedDetail?.validationState || selectedRow?.validationState || packageDraft.validation;
+  return (
+    <div className="content-ops-area-panel" data-content-ops-area="spelling" data-content-ops-spelling-browse="true">
+      <div className="content-ops-detail-header">
+        <div>
+          <div className="eyebrow">Published state</div>
+          <h4 className="section-title admin-section-title">Spelling browse</h4>
+          <p className="small muted admin-note-spaced">
+            Latest release {releaseLabel}
+          </p>
+        </div>
+        <div className="chip-row content-ops-chip-wrap">
+          <span className="chip">Words {String(browse.totals.words)}</span>
+          <span className="chip">Families {String(browse.totals.families)}</span>
+          {packageDraft.active ? (
+            <span className={`chip ${statusChipClass(packageDraft.status)}`}>
+              Package draft {statusLabel(packageDraft.status)}
+            </span>
+          ) : selectedPackageId ? (
+            <span className="chip warn">Package {selectedPackageId}</span>
+          ) : (
+            <span className="chip">Published only</span>
+          )}
+          {packageDraft.active ? (
+            <span className={`chip ${statusChipClass(packageDraft.validation.status)}`}>
+              Validation {statusLabel(packageDraft.validation.status)}
+            </span>
+          ) : null}
+        </div>
+      </div>
+
+      <div className="content-ops-metric-grid content-ops-spelling-metrics">
+        {browse.pools.map((pool) => (
+          <MetricTile
+            key={pool.pool}
+            label={`${pool.pool === 'extra' ? 'Extra' : 'Core'} pool`}
+            value={String(pool.wordCount)}
+            detail={`${String(pool.sentenceCount)} sentence audio units`}
+          />
+        ))}
+        <MetricTile label="Word lists" value={String(browse.totals.wordLists)} detail={`${String(browse.totals.variants)} variants`} />
+        <MetricTile label="Matched" value={String(browse.totals.matchedWords)} detail={`${String(browse.totals.displayedWords)} displayed`} />
+      </div>
+
+      <form className="content-ops-browse-toolbar" onSubmit={onApplyFilters}>
+        <label>
+          <span className="small muted">Search</span>
+          <input
+            type="search"
+            value={filters.query}
+            onChange={(event) => onFilterChange({ query: event.target.value })}
+            data-content-ops-spelling-query="true"
+          />
+        </label>
+        <label>
+          <span className="small muted">Pool</span>
+          <select
+            value={filters.pool}
+            onChange={(event) => onFilterChange({ pool: event.target.value })}
+            data-content-ops-spelling-pool="true"
+          >
+            <option value="all">All</option>
+            <option value="core">Core</option>
+            <option value="extra">Extra</option>
+          </select>
+        </label>
+        <label>
+          <span className="small muted">List</span>
+          <select
+            value={filters.listId}
+            onChange={(event) => onFilterChange({ listId: event.target.value })}
+            data-content-ops-spelling-list="true"
+          >
+            <option value="">All lists</option>
+            {browse.wordLists.map((list) => (
+              <option key={list.id} value={list.id}>{list.title}</option>
+            ))}
+          </select>
+        </label>
+        <button type="submit" className="btn secondary" disabled={loadingBrowse}>
+          Apply filters
+        </button>
+      </form>
+
+      {error ? (
+        <div className="feedback warn admin-note-spaced" data-content-ops-spelling-error="true">
+          <strong>{error.code}</strong>
+          <div>{error.message}</div>
+        </div>
+      ) : null}
+
+      <div className="content-ops-spelling-browser">
+        <div className="content-ops-table-scroll">
+          <table className="admin-overview-table content-ops-table content-ops-spelling-table" aria-label="Spelling words">
+            <thead>
+              <tr className="admin-overview-thead-row">
+                <th className="small admin-overview-th-first">Word</th>
+                <th className="small admin-overview-th">Pool</th>
+                <th className="small admin-overview-th">Family</th>
+                <th className="small admin-overview-th-right">Audio</th>
+                <th className="small admin-overview-th">Validation</th>
+                <th className="small admin-overview-th">Draft</th>
+              </tr>
+            </thead>
+            <tbody>
+              {browse.words.map((row) => (
+                <tr
+                  key={row.slug}
+                  className="admin-overview-tbody-row"
+                  data-selected={row.slug === selectedRow?.slug ? 'true' : undefined}
+                  data-spelling-draft-state={row.draftState}
+                >
+                  <td className="admin-overview-td-first">
+                    <button
+                      type="button"
+                      className="content-ops-row-button"
+                      onClick={() => onSelectWord(row.slug)}
+                      data-content-ops-spelling-word={row.slug}
+                    >
+                      {row.word}
+                    </button>
+                    <div className="small muted">{row.listTitle || row.listId}</div>
+                  </td>
+                  <td className="admin-overview-td">
+                    <span className="chip">{row.spellingPool}</span>
+                  </td>
+                  <td className="admin-overview-td small">{row.family || 'No family'}</td>
+                  <td className="admin-overview-td-right small">{String(row.audioReadiness.totalRequired)}</td>
+                  <td className="admin-overview-td">
+                    <span className={`chip ${statusChipClass(row.validationState.status)}`}>
+                      {statusLabel(row.validationState.status)}
+                    </span>
+                  </td>
+                  <td className="admin-overview-td">
+                    <span className={`chip ${draftStateChipClass(row.draftState)}`}>
+                      {draftStateLabel(row.draftState)}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <aside className="content-ops-spelling-detail" aria-label="Spelling word detail">
+          {selectedRow ? (
+            <>
+              <div className="content-ops-spelling-detail-header">
+                <div>
+                  <div className="eyebrow">Word detail</div>
+                  <h5>{currentWord?.word || packageWord?.word || selectedRow.word}</h5>
+                </div>
+                <span className={`chip ${draftStateChipClass(selectedDetail?.draftState || selectedRow.draftState)}`}>
+                  {draftStateLabel(selectedDetail?.draftState || selectedRow.draftState)}
+                </span>
+              </div>
+              <div className="content-ops-spelling-detail-grid">
+                <MetricTile
+                  label="Family"
+                  value={currentWord?.family || packageWord?.family || selectedRow.family || 'None'}
+                  detail={`${String(currentWord?.familyMembers?.length || selectedRow.familySize)} related words`}
+                />
+                <MetricTile
+                  label="Sentences"
+                  value={String(currentWord?.sentences?.length || selectedRow.sentenceCount)}
+                  detail={`${String(selectedRow.variantSentenceCount)} variant sentences`}
+                />
+                <MetricTile
+                  label="Audio required"
+                  value={String((currentWord?.audioReadiness || selectedRow.audioReadiness).totalRequired)}
+                  detail={(currentWord?.audioReadiness || selectedRow.audioReadiness).status}
+                />
+                <MetricTile
+                  label="Validation"
+                  value={statusLabel(detailValidation.status)}
+                  detail={`${String(detailValidation.errorCount || 0)} errors, ${String(detailValidation.warningCount || 0)} warnings`}
+                />
+                <MetricTile
+                  label="Reward impact"
+                  value={(currentWord?.rewardImpact || selectedRow.rewardImpact).spellingPool}
+                  detail={(currentWord?.rewardImpact || selectedRow.rewardImpact).status}
+                />
+              </div>
+              {loadingItem ? <div className="small muted admin-note-spaced">Word detail is loading.</div> : null}
+              {currentWord?.sentences?.length ? (
+                <ul className="content-ops-operation-list">
+                  {currentWord.sentences.slice(0, 3).map((sentence) => (
+                    <li key={sentence.id}>
+                      <strong>{sentence.id}</strong>
+                      <span className="small muted"> - {sentence.text}</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+              {packageWord && selectedDetail?.draftState !== 'unchanged' ? (
+                <div className="content-ops-spelling-draft-compare">
+                  <span className="chip warn">Package draft</span>
+                  <span className="small muted">{packageWord.explanation || 'Draft value available'}</span>
+                </div>
+              ) : null}
+            </>
+          ) : (
+            <div className="feedback admin-note-spaced" data-content-ops-spelling-empty="true">
+              No spelling words match the current filters.
+            </div>
+          )}
+        </aside>
       </div>
     </div>
   );
@@ -879,6 +1143,8 @@ export function AdminContentOperationsSection({
   initialPackages = null,
   initialReleases = null,
   initialPackageDetail = null,
+  initialSpellingBrowse = null,
+  initialSpellingItemDetail = null,
   initialSelectedPackageId = '',
   initialActiveTab = 'overview',
   initialDetailTab = 'spelling',
@@ -887,11 +1153,24 @@ export function AdminContentOperationsSection({
   const seedPackages = initialPackages || model?.contentOperations?.packages || null;
   const seedReleases = initialReleases || model?.contentOperations?.releases || null;
   const seedPackageDetail = initialPackageDetail || model?.contentOperations?.packageDetail || null;
-  const hasSeedData = Boolean(seedOverview || seedPackages || seedReleases || seedPackageDetail);
+  const seedSpellingBrowse = initialSpellingBrowse || model?.contentOperations?.spellingBrowse || null;
+  const seedSpellingItemDetail = initialSpellingItemDetail || model?.contentOperations?.spellingItemDetail || null;
+  const hasSeedData = Boolean(seedOverview || seedPackages || seedReleases || seedPackageDetail || seedSpellingBrowse);
   const [overviewPayload, setOverviewPayload] = React.useState(seedOverview);
   const [packageListPayload, setPackageListPayload] = React.useState(seedPackages);
   const [releaseListPayload, setReleaseListPayload] = React.useState(seedReleases);
   const [detailPayload, setDetailPayload] = React.useState(seedPackageDetail);
+  const [spellingBrowsePayload, setSpellingBrowsePayload] = React.useState(seedSpellingBrowse);
+  const [spellingItemPayload, setSpellingItemPayload] = React.useState(seedSpellingItemDetail);
+  const [spellingFilters, setSpellingFilters] = React.useState({
+    query: '',
+    pool: 'all',
+    listId: '',
+    limit: 75,
+  });
+  const [selectedWordSlug, setSelectedWordSlug] = React.useState(
+    normaliseContentOperationsSpellingItemDetail(seedSpellingItemDetail).slug,
+  );
   const [selectedPackageId, setSelectedPackageId] = React.useState(initialPackageId({
     packageDetail: seedPackageDetail,
     initialActiveTab,
@@ -900,9 +1179,12 @@ export function AdminContentOperationsSection({
   const [activeTab, setActiveTab] = React.useState(initialActiveTab);
   const [activeDetailTab, setActiveDetailTab] = React.useState(initialDetailTab);
   const [loading, setLoading] = React.useState(Boolean(actions?.contentOperationsApi?.readOverview && !hasSeedData));
+  const [loadingSpellingBrowse, setLoadingSpellingBrowse] = React.useState(false);
+  const [loadingSpellingItem, setLoadingSpellingItem] = React.useState(false);
   const [loadingDetailId, setLoadingDetailId] = React.useState('');
   const [detailErrorId, setDetailErrorId] = React.useState('');
   const [refreshError, setRefreshError] = React.useState(null);
+  const [spellingError, setSpellingError] = React.useState(null);
   const [refreshedAt, setRefreshedAt] = React.useState(hasSeedData ? Date.now() : null);
   const [lifecycleState, setLifecycleState] = React.useState({
     packageId: '',
@@ -915,6 +1197,8 @@ export function AdminContentOperationsSection({
     release: null,
   });
   const detailRequestRef = React.useRef({ id: '', seq: 0 });
+  const spellingBrowseRequestRef = React.useRef(0);
+  const spellingItemRequestRef = React.useRef({ slug: '', seq: 0 });
   const refreshRequestRef = React.useRef(0);
   const api = actions?.contentOperationsApi || null;
 
@@ -933,6 +1217,14 @@ export function AdminContentOperationsSection({
   const detail = React.useMemo(
     () => normaliseContentOperationsPackageDetail(detailPayload),
     [detailPayload],
+  );
+  const spellingBrowse = React.useMemo(
+    () => normaliseContentOperationsSpellingBrowse(spellingBrowsePayload),
+    [spellingBrowsePayload],
+  );
+  const spellingItemDetail = React.useMemo(
+    () => normaliseContentOperationsSpellingItemDetail(spellingItemPayload),
+    [spellingItemPayload],
   );
 
   const loadPackageDetail = React.useCallback(async (packageId) => {
@@ -960,7 +1252,22 @@ export function AdminContentOperationsSection({
     }
   }, [api]);
 
+  const invalidateSpellingBrowse = React.useCallback(() => {
+    spellingBrowseRequestRef.current += 1;
+    spellingItemRequestRef.current = {
+      slug: '',
+      seq: spellingItemRequestRef.current.seq + 1,
+    };
+    setSpellingBrowsePayload(null);
+    setSpellingItemPayload(null);
+    setSelectedWordSlug('');
+    setSpellingError(null);
+    setLoadingSpellingBrowse(false);
+    setLoadingSpellingItem(false);
+  }, []);
+
   const selectPackage = React.useCallback((packageId) => {
+    invalidateSpellingBrowse();
     setSelectedPackageId(packageId);
     setActiveTab('detail');
     setDetailErrorId('');
@@ -972,7 +1279,74 @@ export function AdminContentOperationsSection({
     } else {
       setDetailPayload({ package: packages.find((entry) => entry.packageId === packageId) || null, events: [] });
     }
-  }, [api, loadPackageDetail, packages]);
+  }, [api, invalidateSpellingBrowse, loadPackageDetail, packages]);
+
+  const loadSpellingBrowse = React.useCallback(async () => {
+    if (!api?.readSpellingBrowse) return;
+    const seq = spellingBrowseRequestRef.current + 1;
+    spellingBrowseRequestRef.current = seq;
+    setLoadingSpellingBrowse(true);
+    setSpellingError(null);
+    try {
+      const payload = await api.readSpellingBrowse({
+        packageId: selectedPackageId || null,
+        query: spellingFilters.query,
+        pool: spellingFilters.pool === 'all' ? null : spellingFilters.pool,
+        listId: spellingFilters.listId || null,
+        limit: spellingFilters.limit,
+      });
+      if (spellingBrowseRequestRef.current !== seq) return;
+      setSpellingBrowsePayload(payload);
+      const nextBrowse = normaliseContentOperationsSpellingBrowse(payload);
+      const firstSlug = nextBrowse.words[0]?.slug || '';
+      setSelectedWordSlug((current) => (
+        current && nextBrowse.words.some((row) => row.slug === current) ? current : firstSlug
+      ));
+      setRefreshedAt(Date.now());
+    } catch (error) {
+      if (spellingBrowseRequestRef.current !== seq) return;
+      setSpellingError(errorEnvelope(error, 'content_operations_spelling_browse_failed'));
+    } finally {
+      if (spellingBrowseRequestRef.current === seq) {
+        setLoadingSpellingBrowse(false);
+      }
+    }
+  }, [api, selectedPackageId, spellingFilters]);
+
+  const selectSpellingWord = React.useCallback(async (slug) => {
+    const safeSlug = String(slug || '');
+    setSelectedWordSlug(safeSlug);
+    setSpellingItemPayload(null);
+    if (!api?.readSpellingWord || !safeSlug) return;
+    const seq = spellingItemRequestRef.current.seq + 1;
+    spellingItemRequestRef.current = { slug: safeSlug, seq };
+    setLoadingSpellingItem(true);
+    setSpellingError(null);
+    try {
+      const payload = await api.readSpellingWord({
+        slug: safeSlug,
+        packageId: selectedPackageId || null,
+      });
+      if (spellingItemRequestRef.current.slug !== safeSlug || spellingItemRequestRef.current.seq !== seq) return;
+      setSpellingItemPayload(payload);
+    } catch (error) {
+      if (spellingItemRequestRef.current.slug !== safeSlug || spellingItemRequestRef.current.seq !== seq) return;
+      setSpellingError(errorEnvelope(error, 'content_operations_spelling_word_failed'));
+    } finally {
+      if (spellingItemRequestRef.current.slug === safeSlug && spellingItemRequestRef.current.seq === seq) {
+        setLoadingSpellingItem(false);
+      }
+    }
+  }, [api, selectedPackageId]);
+
+  const updateSpellingFilters = React.useCallback((patch) => {
+    setSpellingFilters((current) => ({ ...current, ...patch }));
+  }, []);
+
+  const applySpellingFilters = React.useCallback((event) => {
+    event?.preventDefault?.();
+    loadSpellingBrowse();
+  }, [loadSpellingBrowse]);
 
   const refresh = React.useCallback(async () => {
     if (!api?.readOverview) return;
@@ -1009,6 +1383,13 @@ export function AdminContentOperationsSection({
     if (overviewPayload || packageListPayload || releaseListPayload) return;
     refresh();
   }, [api, overviewPayload, packageListPayload, refresh, releaseListPayload]);
+
+  React.useEffect(() => {
+    if (activeTab !== 'spelling') return;
+    if (!api?.readSpellingBrowse) return;
+    if (spellingBrowsePayload) return;
+    loadSpellingBrowse();
+  }, [activeTab, api, loadSpellingBrowse, spellingBrowsePayload]);
 
   React.useEffect(() => {
     if (activeTab !== 'detail') return;
@@ -1101,6 +1482,7 @@ export function AdminContentOperationsSection({
         approval: payload?.approval || null,
         release: payload?.release || null,
       }));
+      invalidateSpellingBrowse();
       if (api.readPackage) {
         await loadPackageDetail(packageId);
       }
@@ -1117,14 +1499,15 @@ export function AdminContentOperationsSection({
         error: errorEnvelope(error, `content_operations_${action}_failed`),
       }));
     }
-  }, [api, loadPackageDetail, refresh]);
+  }, [api, invalidateSpellingBrowse, loadPackageDetail, refresh]);
 
   const latestRelease = overview.latestRelease;
-  const primaryData = overview.openPackageCount || packages.length || releases.length || latestRelease ? {
+  const primaryData = overview.openPackageCount || packages.length || releases.length || latestRelease || spellingBrowse.words.length ? {
     overview,
     packages,
     releases,
     latestRelease,
+    spellingBrowse,
   } : null;
   const selectedSummary = packages.find((entry) => entry.packageId === selectedPackageId);
   const detailMatchesSelected = detail.package?.packageId === selectedPackageId;
@@ -1183,7 +1566,23 @@ export function AdminContentOperationsSection({
         />
       ) : null}
 
-      {['spelling', 'audio', 'poolsRewards', 'monstersAssets', 'heroCodex', 'approvals'].includes(activeTab) ? (
+      {activeTab === 'spelling' ? (
+        <SpellingBrowsePanel
+          browse={spellingBrowse}
+          itemDetail={spellingItemDetail}
+          filters={spellingFilters}
+          selectedWordSlug={selectedWordSlug}
+          selectedPackageId={selectedPackageId}
+          loadingBrowse={loadingSpellingBrowse}
+          loadingItem={loadingSpellingItem}
+          error={spellingError}
+          onFilterChange={updateSpellingFilters}
+          onApplyFilters={applySpellingFilters}
+          onSelectWord={selectSpellingWord}
+        />
+      ) : null}
+
+      {['audio', 'poolsRewards', 'monstersAssets', 'heroCodex', 'approvals'].includes(activeTab) ? (
         <PublishedAreaPanel
           activeTab={activeTab}
           latestRelease={latestRelease}

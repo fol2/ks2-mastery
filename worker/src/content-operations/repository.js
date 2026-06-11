@@ -694,6 +694,48 @@ export function createContentOperationsRepository({ db, now }) {
       return record;
     },
 
+    async readLatestContentOperationCandidate(packageId, {
+      includeSnapshot = false,
+      requireCurrent = false,
+    } = {}) {
+      const packageRow = await requirePackage(db, packageId);
+      const row = await first(db, `
+        SELECT *
+        FROM content_operation_package_candidates
+        WHERE package_id = ?
+        ORDER BY created_at DESC, candidate_id DESC
+        LIMIT 1
+      `, [packageId]);
+      if (!row) return null;
+      if (!requireCurrent) {
+        return candidateRowToRecordAsync(row, { includeSnapshot });
+      }
+      const record = candidateRowToRecord(row, { includeSnapshot: false });
+
+      const operations = await listPackageOperations(db, packageId);
+      const currentOperationsHash = packageOperationsHash(operations);
+      const currentReleaseRow = await readLatestReleaseRow(db, packageRow.subject_id);
+      const latestReleaseId = currentReleaseRow?.release_id || null;
+      const staleReasons = [];
+      if (record.operationsHash !== currentOperationsHash) {
+        staleReasons.push('operations_stale');
+      }
+      if ((record.currentReleaseId || null) !== latestReleaseId) {
+        staleReasons.push('release_stale');
+      }
+      const candidate = staleReasons.length || !includeSnapshot
+        ? null
+        : (await candidateRowToRecordAsync(row, { includeSnapshot: true }))?.candidate || null;
+      return {
+        ...record,
+        candidate,
+        isCurrent: staleReasons.length === 0,
+        staleReasons,
+        expectedOperationsHash: currentOperationsHash,
+        latestReleaseId,
+      };
+    },
+
     async updateContentOperationPackage(packageId, {
       templateId = undefined,
       title = undefined,

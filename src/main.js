@@ -2715,6 +2715,9 @@ function buildCodexModel(appState, context) {
 function buildSurfaceActions() {
   const contentOperationsApi = hubApi ? {
     readOverview: hubApi.readContentOperationsOverview?.bind(hubApi),
+    readSpellingBrowse: hubApi.readContentOperationSpellingBrowse?.bind(hubApi),
+    readSpellingWord: hubApi.readContentOperationSpellingWord?.bind(hubApi),
+    readSpellingSentence: hubApi.readContentOperationSpellingSentence?.bind(hubApi),
     readPackages: hubApi.readContentOperationPackages?.bind(hubApi),
     readPackage: hubApi.readContentOperationPackage?.bind(hubApi),
     validatePackage: hubApi.validateContentOperationPackage?.bind(hubApi),
