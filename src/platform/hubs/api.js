@@ -262,6 +262,50 @@ export function createHubApi({
         body: JSON.stringify({ version, expectedPublishedVersion, mutation }),
       }, authSession);
     },
+    async readContentOperationsOverview({ limit = 30 } = {}) {
+      const url = buildRequestUrl(
+        baseUrl,
+        '/api/admin/content-operations/subjects/spelling/overview',
+        { limit },
+      );
+      return fetchHubJson(fetch, url, { method: 'GET' }, authSession);
+    },
+    async readContentOperationPackages({ state = null, limit = 50 } = {}) {
+      const url = buildRequestUrl(baseUrl, '/api/admin/content-operations/packages', {
+        state,
+        limit,
+      });
+      return fetchHubJson(fetch, url, { method: 'GET' }, authSession);
+    },
+    async readContentOperationPackage({ packageId } = {}) {
+      if (!packageId) throw new TypeError('Content operation package id is required.');
+      const safePackageId = encodeURIComponent(String(packageId));
+      const url = buildRequestUrl(baseUrl, `/api/admin/content-operations/packages/${safePackageId}`);
+      return fetchHubJson(fetch, url, { method: 'GET' }, authSession);
+    },
+    async readContentOperationReleases({ limit = 20, includeSnapshot = false } = {}) {
+      const url = buildRequestUrl(
+        baseUrl,
+        '/api/admin/content-operations/subjects/spelling/releases',
+        {
+          limit,
+          includeSnapshot: includeSnapshot ? 'true' : null,
+        },
+      );
+      return fetchHubJson(fetch, url, { method: 'GET' }, authSession);
+    },
+    async readContentOperationRelease({ releaseId, includeSnapshot = false } = {}) {
+      if (!releaseId) throw new TypeError('Content operation release id is required.');
+      const safeReleaseId = encodeURIComponent(String(releaseId));
+      const url = buildRequestUrl(
+        baseUrl,
+        `/api/admin/content-operations/subjects/spelling/releases/${safeReleaseId}`,
+        {
+          includeSnapshot: includeSnapshot ? 'true' : null,
+        },
+      );
+      return fetchHubJson(fetch, url, { method: 'GET' }, authSession);
+    },
     async readAdminOpsKpi() {
       const url = buildRequestUrl(baseUrl, '/api/admin/ops/kpi');
       return fetchHubJson(fetch, url, { method: 'GET' }, authSession);

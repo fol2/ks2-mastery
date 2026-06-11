@@ -180,7 +180,14 @@ export function serialiseContentOperationActor(actor = {}) {
 }
 
 export function serialiseContentOperationPackage(contentPackage = {}, { compact = false } = {}) {
+  const latestCandidate = contentPackage.latestCandidate || null;
   const envelope = buildContentOperationBlockerEnvelope({
+    validation: latestCandidate?.validation || null,
+    conflicts: latestCandidate?.conflicts || null,
+    audio: latestCandidate?.audioScan || null,
+    assets: latestCandidate?.assetScan || null,
+    rewards: latestCandidate?.rewardScan || null,
+    visibility: latestCandidate?.visibilityScan || null,
     publishReadiness: packagePublishReadiness(contentPackage),
   });
   const base = {
