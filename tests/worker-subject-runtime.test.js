@@ -178,6 +178,52 @@ test('repository can serve spelling runtime from the bundled snapshot without D1
   }
 });
 
+test('repository serves spelling runtime from the global content operations release', async () => {
+  const DB = createMigratedSqliteD1Database();
+  const repository = createWorkerRepository({ env: { DB }, now: () => 1_777_000_000_000 });
+  try {
+    const seeded = await readSeededSpellingContentBundle();
+    const word = seeded.draft.words[0];
+    const explanation = `A global-release learner-facing explanation for ${word.word}.`;
+    const contentPackage = await repository.createContentOperationPackage({
+      templateId: 'edit-spelling-word',
+      title: 'Runtime global release package',
+      createdByAccountId: 'admin-a',
+    });
+    await repository.appendContentOperation(contentPackage.packageId, {
+      entityType: 'spelling.word',
+      entityId: word.slug,
+      fieldPath: 'explanation',
+      action: 'set',
+      payload: explanation,
+    }, {
+      actorAccountId: 'admin-a',
+    });
+    const candidate = await repository.buildContentOperationCandidate(contentPackage.packageId, {
+      actorAccountId: 'admin-a',
+    });
+    await repository.approveContentOperationCandidate(contentPackage.packageId, candidate.candidateId, {
+      approvedByAccountId: 'admin-a',
+    });
+    await repository.publishContentOperationPackage(contentPackage.packageId, {
+      publishedByAccountId: 'admin-a',
+    });
+
+    DB.clearQueryLog();
+    const runtime = await repository.readSpellingRuntimeContent('adult-a', 'spelling', {
+      includeAccountContent: false,
+    });
+    const accountContentReads = accountContentQueries(DB);
+
+    assert.equal(runtime.content.draft.words[0].explanation, explanation);
+    assert.equal(runtime.content.draft.words.length, seeded.draft.words.length);
+    assert.equal(runtime.summary.runtimeWordCount, seeded.releases.at(-1).snapshot.words.length);
+    assert.equal(accountContentReads.length, 0);
+  } finally {
+    DB.close();
+  }
+});
+
 test('repository reads full spelling runtime content rows when they exceed the public inline budget', async () => {
   const DB = createMigratedSqliteD1Database();
   const repository = createWorkerRepository({ env: { DB }, now: () => 1_776_000_000_000 });
