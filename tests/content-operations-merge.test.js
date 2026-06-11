@@ -75,9 +75,32 @@ test('content operations detect same-field conflicts without blocking unrelated 
   const conflicts = detectContentOperationConflicts(left, right);
   assert.equal(conflicts.length, 1);
   assert.equal(conflicts[0].code, 'same_field_conflict');
+  assert.match(conflicts[0].conflictId, /^conflict-/);
   assert.equal(conflicts[0].entityType, 'spelling.word');
   assert.equal(conflicts[0].entityId, 'receipt');
   assert.equal(conflicts[0].fieldPath, 'explanation');
+});
+
+test('content operations treat an acknowledged current value as resolved', () => {
+  const releaseEdit = normaliseContentOperation({
+    operationId: 'release-op',
+    entityType: 'spelling.word',
+    entityId: 'receipt',
+    fieldPath: 'explanation',
+    action: 'set',
+    payload: 'Current published explanation.',
+  });
+  const resolvedPackageEdit = normaliseContentOperation({
+    operationId: 'resolution-op',
+    entityType: 'spelling.word',
+    entityId: 'receipt',
+    fieldPath: 'explanation',
+    action: 'set',
+    beforeHash: releaseEdit.afterHash,
+    payload: 'Merged explanation chosen by the admin.',
+  });
+
+  assert.deepEqual(detectContentOperationConflicts([resolvedPackageEdit], [releaseEdit]), []);
 });
 
 test('structural operations conflict with child-field edits on the same entity', () => {

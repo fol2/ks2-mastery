@@ -553,7 +553,7 @@ test('content operations repository keeps published packages immutable', async (
   }
 });
 
-test('content operations repository blocks stale package approval after release drift', async () => {
+test('content operations repository auto-rebases unrelated package approval after release drift', async () => {
   const DB = createMigratedSqliteD1Database();
   const repository = createWorkerRepository({
     env: { DB },
@@ -562,7 +562,7 @@ test('content operations repository blocks stale package approval after release 
 
   try {
     const seeded = await readSeededSpellingContentBundle();
-    const seedRelease = await repository.seedFirstContentOperationRelease({
+    await repository.seedFirstContentOperationRelease({
       seededByAccountId: 'admin-a',
       proof: { source: 'repository-stale-package-test' },
     });
@@ -574,16 +574,18 @@ test('content operations repository blocks stale package approval after release 
       title: 'Package that starts before a newer release',
       createdByAccountId: 'admin-a',
     });
+    const staleExplanation = `Rebased package explanation for ${firstWord.word}.`;
     await repository.appendContentOperation(stalePackage.packageId, {
       entityType: 'spelling.word',
       entityId: firstWord.slug,
       fieldPath: 'explanation',
       action: 'set',
-      payload: `Stale package explanation for ${firstWord.word}.`,
+      payload: staleExplanation,
     }, {
       actorAccountId: 'admin-a',
     });
 
+    const newerSourceNote = `Newer package note for ${secondWord.word}.`;
     const newerPackage = await repository.createContentOperationPackage({
       templateId: 'edit-spelling-word',
       title: 'Newer package',
@@ -594,7 +596,7 @@ test('content operations repository blocks stale package approval after release 
       entityId: secondWord.slug,
       fieldPath: 'sourceNote',
       action: 'set',
-      payload: `Newer package note for ${secondWord.word}.`,
+      payload: newerSourceNote,
     }, {
       actorAccountId: 'admin-b',
     });
@@ -613,10 +615,96 @@ test('content operations repository blocks stale package approval after release 
     });
 
     assert.equal(staleCandidate.currentReleaseId, newerRelease.releaseId);
+    assert.equal(staleCandidate.conflicts.length, 0);
+    assert.equal(
+      staleCandidate.candidate.draft.words.find((entry) => entry.slug === firstWord.slug).explanation,
+      staleExplanation,
+    );
+    assert.equal(
+      staleCandidate.candidate.draft.words.find((entry) => entry.slug === secondWord.slug).sourceNote,
+      newerSourceNote,
+    );
+
+    await repository.approveContentOperationCandidate(stalePackage.packageId, staleCandidate.candidateId, {
+      approvedByAccountId: 'admin-a',
+    });
+    const release = await repository.publishContentOperationPackage(stalePackage.packageId, {
+      publishedByAccountId: 'admin-a',
+    });
+    assert.equal(release.baseReleaseId, newerRelease.releaseId);
+  } finally {
+    DB.close();
+  }
+});
+
+test('content operations repository records structural release drift conflicts without throwing', async () => {
+  const DB = createMigratedSqliteD1Database();
+  const repository = createWorkerRepository({
+    env: { DB },
+    now: () => 1_777_000_000_000,
+  });
+
+  try {
+    const seeded = await readSeededSpellingContentBundle();
+    await repository.seedFirstContentOperationRelease({
+      seededByAccountId: 'admin-a',
+      proof: { source: 'repository-structural-conflict-test' },
+    });
+    const word = seeded.draft.words[0];
+    const baseSentence = seeded.draft.sentences[0];
+    const sentencePayload = {
+      ...baseSentence,
+      id: `${word.slug}__conflict_create`,
+      wordSlug: word.slug,
+      text: `A structural conflict sentence for ${word.word}.`,
+      sortIndex: 90_000,
+    };
+
+    const stalePackage = await repository.createContentOperationPackage({
+      templateId: 'edit-spelling-sentence',
+      title: 'Stale structural create',
+      createdByAccountId: 'admin-a',
+    });
+    await repository.appendContentOperation(stalePackage.packageId, {
+      entityType: 'spelling.sentenceEntry',
+      entityId: sentencePayload.id,
+      action: 'create',
+      payload: sentencePayload,
+    }, {
+      actorAccountId: 'admin-a',
+    });
+
+    const newerPackage = await repository.createContentOperationPackage({
+      templateId: 'edit-spelling-sentence',
+      title: 'Newer structural create',
+      createdByAccountId: 'admin-b',
+    });
+    await repository.appendContentOperation(newerPackage.packageId, {
+      entityType: 'spelling.sentenceEntry',
+      entityId: sentencePayload.id,
+      action: 'create',
+      payload: sentencePayload,
+    }, {
+      actorAccountId: 'admin-b',
+    });
+    const newerCandidate = await repository.buildContentOperationCandidate(newerPackage.packageId, {
+      actorAccountId: 'admin-b',
+    });
+    await repository.approveContentOperationCandidate(newerPackage.packageId, newerCandidate.candidateId, {
+      approvedByAccountId: 'admin-b',
+    });
+    const newerRelease = await repository.publishContentOperationPackage(newerPackage.packageId, {
+      publishedByAccountId: 'admin-b',
+    });
+
+    const staleCandidate = await repository.buildContentOperationCandidate(stalePackage.packageId, {
+      actorAccountId: 'admin-a',
+    });
+    assert.equal(staleCandidate.currentReleaseId, newerRelease.releaseId);
     assert.equal(staleCandidate.conflicts.length, 1);
-    assert.equal(staleCandidate.conflicts[0].code, 'base_release_changed');
-    assert.equal(staleCandidate.conflicts[0].packageBaseReleaseId, seedRelease.releaseId);
-    assert.equal(staleCandidate.conflicts[0].currentReleaseId, newerRelease.releaseId);
+    assert.equal(staleCandidate.conflicts[0].code, 'structural_conflict');
+    assert.equal(staleCandidate.conflicts[0].entityType, 'spelling.sentenceEntry');
+    assert.equal(staleCandidate.conflicts[0].entityId, sentencePayload.id);
 
     await assert.rejects(
       () => repository.approveContentOperationCandidate(stalePackage.packageId, staleCandidate.candidateId, {
@@ -624,6 +712,157 @@ test('content operations repository blocks stale package approval after release 
       }),
       /unresolved conflicts/,
     );
+  } finally {
+    DB.close();
+  }
+});
+
+test('content operations repository resolves same-field release drift conflicts', async () => {
+  const DB = createMigratedSqliteD1Database();
+  const repository = createWorkerRepository({
+    env: { DB },
+    now: () => 1_777_000_000_000,
+  });
+
+  try {
+    const seeded = await readSeededSpellingContentBundle();
+    await repository.seedFirstContentOperationRelease({
+      seededByAccountId: 'admin-a',
+      proof: { source: 'repository-conflict-resolution-test' },
+    });
+    const word = seeded.draft.words[0];
+    const packageValue = `Package explanation for ${word.word}.`;
+    const currentValue = `Current release explanation for ${word.word}.`;
+    const mergedValue = `Merged explanation for ${word.word}.`;
+
+    const conflictedPackage = await repository.createContentOperationPackage({
+      templateId: 'edit-spelling-word',
+      title: 'Package with same-field conflict',
+      createdByAccountId: 'admin-a',
+    });
+    await repository.appendContentOperation(conflictedPackage.packageId, {
+      entityType: 'spelling.word',
+      entityId: word.slug,
+      fieldPath: 'explanation',
+      action: 'set',
+      payload: packageValue,
+    }, {
+      actorAccountId: 'admin-a',
+    });
+
+    const newerPackage = await repository.createContentOperationPackage({
+      templateId: 'edit-spelling-word',
+      title: 'Conflicting release',
+      createdByAccountId: 'admin-b',
+    });
+    await repository.appendContentOperation(newerPackage.packageId, {
+      entityType: 'spelling.word',
+      entityId: word.slug,
+      fieldPath: 'explanation',
+      action: 'set',
+      payload: currentValue,
+    }, {
+      actorAccountId: 'admin-b',
+    });
+    const newerCandidate = await repository.buildContentOperationCandidate(newerPackage.packageId, {
+      actorAccountId: 'admin-b',
+    });
+    await repository.approveContentOperationCandidate(newerPackage.packageId, newerCandidate.candidateId, {
+      approvedByAccountId: 'admin-b',
+    });
+    const newerRelease = await repository.publishContentOperationPackage(newerPackage.packageId, {
+      publishedByAccountId: 'admin-b',
+    });
+
+    const conflictedCandidate = await repository.buildContentOperationCandidate(conflictedPackage.packageId, {
+      actorAccountId: 'admin-a',
+    });
+    assert.equal(conflictedCandidate.currentReleaseId, newerRelease.releaseId);
+    assert.equal(conflictedCandidate.conflicts.length, 1);
+    assert.equal(conflictedCandidate.conflicts[0].code, 'same_field_conflict');
+    assert.equal(conflictedCandidate.conflicts[0].packageValue, packageValue);
+    assert.equal(conflictedCandidate.conflicts[0].currentValue, currentValue);
+
+    await assert.rejects(
+      () => repository.approveContentOperationCandidate(conflictedPackage.packageId, conflictedCandidate.candidateId, {
+        approvedByAccountId: 'admin-a',
+      }),
+      /unresolved conflicts/,
+    );
+
+    const resolved = await repository.resolveContentOperationConflict(conflictedPackage.packageId, {
+      conflictId: conflictedCandidate.conflicts[0].conflictId,
+      resolution: 'edit',
+      value: mergedValue,
+    }, {
+      actorAccountId: 'admin-a',
+    });
+    assert.equal(resolved.operation.fieldPath, 'explanation');
+    assert.equal(resolved.operation.payload, mergedValue);
+    assert.notEqual(resolved.candidate.candidateHash, conflictedCandidate.candidateHash);
+    assert.equal(resolved.candidate.conflicts.length, 0);
+
+    await repository.approveContentOperationCandidate(conflictedPackage.packageId, resolved.candidate.candidateId, {
+      approvedByAccountId: 'admin-a',
+    });
+    const release = await repository.publishContentOperationPackage(conflictedPackage.packageId, {
+      publishedByAccountId: 'admin-a',
+    });
+    assert.equal(
+      release.snapshot.draft.words.find((entry) => entry.slug === word.slug).explanation,
+      mergedValue,
+    );
+
+    const keepPackage = await repository.createContentOperationPackage({
+      templateId: 'edit-spelling-word',
+      title: 'Package-value conflict resolution',
+      createdByAccountId: 'admin-a',
+    });
+    await repository.appendContentOperation(keepPackage.packageId, {
+      entityType: 'spelling.word',
+      entityId: word.slug,
+      fieldPath: 'sourceNote',
+      action: 'set',
+      payload: `Package source note for ${word.word}.`,
+    }, {
+      actorAccountId: 'admin-a',
+    });
+    const newerSource = await repository.createContentOperationPackage({
+      templateId: 'edit-spelling-word',
+      title: 'Conflicting source note release',
+      createdByAccountId: 'admin-b',
+    });
+    await repository.appendContentOperation(newerSource.packageId, {
+      entityType: 'spelling.word',
+      entityId: word.slug,
+      fieldPath: 'sourceNote',
+      action: 'set',
+      payload: `Current source note for ${word.word}.`,
+    }, {
+      actorAccountId: 'admin-b',
+    });
+    const newerSourceCandidate = await repository.buildContentOperationCandidate(newerSource.packageId, {
+      actorAccountId: 'admin-b',
+    });
+    await repository.approveContentOperationCandidate(newerSource.packageId, newerSourceCandidate.candidateId, {
+      approvedByAccountId: 'admin-b',
+    });
+    await repository.publishContentOperationPackage(newerSource.packageId, {
+      publishedByAccountId: 'admin-b',
+    });
+
+    const packageConflict = await repository.buildContentOperationCandidate(keepPackage.packageId, {
+      actorAccountId: 'admin-a',
+    });
+    assert.equal(packageConflict.conflicts.length, 1);
+    const packageResolved = await repository.resolveContentOperationConflict(keepPackage.packageId, {
+      conflictId: packageConflict.conflicts[0].conflictId,
+      resolution: 'package',
+    }, {
+      actorAccountId: 'admin-a',
+    });
+    assert.equal(packageResolved.candidate.conflicts.length, 0);
+    assert.notEqual(packageResolved.candidate.candidateHash, packageConflict.candidateHash);
   } finally {
     DB.close();
   }

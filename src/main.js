@@ -2720,6 +2720,7 @@ function buildSurfaceActions() {
     validatePackage: hubApi.validateContentOperationPackage?.bind(hubApi),
     approvePackage: hubApi.approveContentOperationPackage?.bind(hubApi),
     publishPackage: hubApi.publishContentOperationPackage?.bind(hubApi),
+    resolveConflict: hubApi.resolveContentOperationConflict?.bind(hubApi),
     readReleases: hubApi.readContentOperationReleases?.bind(hubApi),
     readRelease: hubApi.readContentOperationRelease?.bind(hubApi),
   } : null;

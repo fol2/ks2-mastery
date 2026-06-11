@@ -339,6 +339,32 @@ export function createHubApi({
         }),
       }, authSession);
     },
+    async resolveContentOperationConflict({
+      packageId,
+      conflictId = '',
+      conflict = null,
+      resolution,
+      value,
+      includeSnapshot = false,
+      mutation,
+    } = {}) {
+      if (!packageId) throw new TypeError('Content operation package id is required.');
+      if (!resolution) throw new TypeError('Content operation conflict resolution is required.');
+      const safePackageId = encodeURIComponent(String(packageId));
+      const url = buildRequestUrl(baseUrl, `/api/admin/content-operations/packages/${safePackageId}/resolve-conflict`);
+      return fetchHubJson(fetch, url, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          conflictId,
+          conflict,
+          resolution,
+          value,
+          includeSnapshot: Boolean(includeSnapshot),
+          mutation,
+        }),
+      }, authSession);
+    },
     async readContentOperationReleases({ limit = 20, includeSnapshot = false } = {}) {
       const url = buildRequestUrl(
         baseUrl,

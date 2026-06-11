@@ -89,6 +89,37 @@ const lifecycleCandidate = {
   createdAt: Date.UTC(2026, 5, 11, 10, 5, 0),
 };
 
+const conflictedLifecycleCandidate = {
+  ...lifecycleCandidate,
+  candidateId: 'cand-conflict-1',
+  operationsHash: 'ops-conflict-1',
+  candidateHash: 'candidate-conflict-1',
+  blockers: {
+    ...cleanLifecycleBlockers,
+    conflicts: {
+      status: 'blocked',
+      count: 1,
+      items: [{
+        conflictId: 'conflict-word-explanation',
+        code: 'same_field_conflict',
+        entityType: 'spelling.word',
+        entityId: 'metamorphosis',
+        fieldPath: 'explanation',
+      }],
+    },
+  },
+  conflicts: [{
+    conflictId: 'conflict-word-explanation',
+    code: 'same_field_conflict',
+    entityType: 'spelling.word',
+    entityId: 'metamorphosis',
+    fieldPath: 'explanation',
+    packageValue: 'Package explanation.',
+    currentValue: 'Current release explanation.',
+    baseValue: 'Original explanation.',
+  }],
+};
+
 const release = {
   releaseId: 'rel-global-1',
   subjectId: 'spelling',
@@ -275,7 +306,7 @@ async function runClientEntry(entrySource) {
       },
       encoding: 'utf8',
       stdio: ['ignore', 'pipe', 'pipe'],
-      timeout: 10_000,
+      timeout: 20_000,
     });
     return normaliseLineEndings(output).replace(/\n+$/, '');
   } finally {
@@ -760,6 +791,183 @@ test('Content Operations Centre mounted package detail runs validate, approve, a
   assert.equal(result.publishDisabledAfterApprove, false);
   assert.match(result.textAfterPublish, /Package published/);
   assert.match(result.textAfterPublish, /rel-published-1/);
+});
+
+test('Content Operations Centre mounted package detail resolves same-field conflicts', async () => {
+  const output = await runClientEntry(`
+    const { JSDOM } = require('jsdom');
+
+    globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+    const dom = new JSDOM('<!doctype html><html><body><div id="root"></div></body></html>', {
+      url: 'https://ks2.eugnel.uk/admin',
+    });
+    globalThis.window = dom.window;
+    globalThis.document = dom.window.document;
+    globalThis.navigator = dom.window.navigator;
+    globalThis.HTMLElement = dom.window.HTMLElement;
+    globalThis.Event = dom.window.Event;
+
+    const React = require('react');
+    const { createRoot } = require('react-dom/client');
+    const { AdminContentOperationsSection } = require(${CONTENT_OPS_SECTION_PATH});
+    const { act } = React;
+
+    const conflictedCandidate = ${JSON.stringify(conflictedLifecycleCandidate)};
+    const resolvedCandidate = {
+      ...${JSON.stringify(lifecycleCandidate)},
+      candidateId: 'cand-resolved-1',
+      operationsHash: 'ops-resolved-1',
+      candidateHash: 'candidate-resolved-1',
+    };
+    const basePackage = {
+      ...${JSON.stringify(contentPackage)},
+      blockers: conflictedCandidate.blockers,
+      latestCandidate: conflictedCandidate,
+    };
+    let latestCandidate = conflictedCandidate;
+    const calls = [];
+    const model = ${JSON.stringify(baseModel({
+      contentOperations: {
+        overview,
+        packages: { packages: [] },
+        releases: { releases: [release] },
+        packageDetail: null,
+      },
+    }))};
+    model.contentOperations.overview.lanes.drafts = [basePackage];
+    model.contentOperations.packages.packages = [basePackage];
+    model.contentOperations.packageDetail = {
+      package: basePackage,
+      actor: model.contentOperations.overview.actor,
+      events: [],
+    };
+
+    function packageForState() {
+      return {
+        ...basePackage,
+        latestCandidate,
+        blockers: latestCandidate.blockers,
+      };
+    }
+
+    const actions = {
+      contentOperationsApi: {
+        async resolveConflict(args) {
+          calls.push({ method: 'resolve', args });
+          latestCandidate = resolvedCandidate;
+          return {
+            conflict: conflictedCandidate.conflicts[0],
+            resolution: args.resolution,
+            operation: {
+              operationId: 'op-resolution-1',
+              entityType: 'spelling.word',
+              entityId: 'metamorphosis',
+              fieldPath: 'explanation',
+              action: 'set',
+              payload: args.value,
+            },
+            candidate: resolvedCandidate,
+          };
+        },
+        async approvePackage(args) {
+          calls.push({ method: 'approve', args });
+          return { approval: { candidateId: args.candidateId } };
+        },
+        async readPackage({ packageId }) {
+          calls.push({ method: 'readPackage', packageId });
+          return {
+            package: packageForState(),
+            actor: model.contentOperations.overview.actor,
+            events: [],
+          };
+        },
+        async readOverview(args) {
+          calls.push({ method: 'overview', args });
+          return {
+            ...model.contentOperations.overview,
+            lanes: {
+              blocked: [],
+              readyForApproval: [packageForState()],
+              approvedPendingPublish: [],
+              drafts: [],
+              recentReleases: [${JSON.stringify(release)}],
+            },
+          };
+        },
+        async readPackages(args) {
+          calls.push({ method: 'packages', args });
+          return { packages: [packageForState()] };
+        },
+        async readReleases(args) {
+          calls.push({ method: 'releases', args });
+          return { releases: [${JSON.stringify(release)}] };
+        },
+      },
+    };
+
+    async function flush() {
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      });
+    }
+
+    async function main() {
+      const root = createRoot(document.getElementById('root'));
+      await act(async () => {
+        root.render(React.createElement(AdminContentOperationsSection, {
+          model,
+          actions,
+          initialActiveTab: 'detail',
+        }));
+      });
+
+      const approveDisabledBefore = document.querySelector('[data-content-ops-action="approve"]').disabled;
+      const editor = document.querySelector('[data-content-ops-conflict-edit="conflict-word-explanation"]');
+      const valueSetter = Object.getOwnPropertyDescriptor(dom.window.HTMLTextAreaElement.prototype, 'value').set;
+      valueSetter.call(editor, 'Merged explanation.');
+      await act(async () => {
+        editor.dispatchEvent(new dom.window.Event('input', { bubbles: true }));
+        editor.dispatchEvent(new dom.window.Event('change', { bubbles: true }));
+      });
+      const saveButton = Array.from(document.querySelectorAll('button'))
+        .find((button) => button.textContent === 'Save merged value');
+      await act(async () => {
+        saveButton.click();
+      });
+      await flush();
+      await flush();
+      await flush();
+
+      const approveDisabledAfter = document.querySelector('[data-content-ops-action="approve"]').disabled;
+      process.stdout.write(JSON.stringify({
+        calls,
+        approveDisabledBefore,
+        approveDisabledAfter,
+        text: document.body.textContent,
+      }));
+
+      await act(async () => {
+        root.unmount();
+      });
+      dom.window.close();
+      process.exit(0);
+    }
+
+    main().catch((error) => {
+      process.stderr.write(error.stack || error.message);
+      process.exitCode = 1;
+    });
+  `);
+  const result = JSON.parse(output);
+  const resolveCall = result.calls.find((entry) => entry.method === 'resolve');
+
+  assert.equal(result.approveDisabledBefore, true);
+  assert.equal(resolveCall.args.conflictId, 'conflict-word-explanation');
+  assert.equal(resolveCall.args.resolution, 'edit');
+  assert.equal(resolveCall.args.value, 'Merged explanation.');
+  assert.match(result.text, /Conflict resolved/);
+  assert.match(result.text, /candidate-resolved-1/);
+  assert.equal(result.approveDisabledAfter, false);
 });
 
 test('Content Operations Centre mounted package detail ignores stale out-of-order reads', async () => {

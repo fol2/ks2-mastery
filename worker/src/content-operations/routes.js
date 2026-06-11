@@ -390,7 +390,7 @@ export async function handleContentOperationsAdminRequest({
   }
 
   {
-    const actionMatch = /^\/packages\/([^/]+)\/(validate|approve|publish|rebase|scan-audio|generate-audio|upload-monster-asset|create-revert)$/.exec(relativePath);
+    const actionMatch = /^\/packages\/([^/]+)\/(validate|approve|publish|resolve-conflict|rebase|scan-audio|generate-audio|upload-monster-asset|create-revert)$/.exec(relativePath);
     if (request.method === 'POST' && actionMatch) {
       const packageId = decodePathSegment(actionMatch[1], 'package_id');
       const action = actionMatch[2];
@@ -429,6 +429,35 @@ export async function handleContentOperationsAdminRequest({
           ok: true,
           actor: serialiseContentOperationActor(actor),
           candidate: serialiseContentOperationCandidate(candidate, {
+            includeSnapshot: includeSnapshot(url, body),
+          }),
+        });
+      }
+
+      if (action === 'resolve-conflict') {
+        let result;
+        try {
+          const resolveRequest = {
+            conflictId: body.conflictId,
+            conflict: body.conflict,
+            resolution: body.resolution,
+          };
+          if (Object.prototype.hasOwnProperty.call(body, 'value')) {
+            resolveRequest.value = body.value;
+          }
+          result = await repository.resolveContentOperationConflict(packageId, resolveRequest, {
+            actorAccountId: actor.id,
+          });
+        } catch (error) {
+          badContentOperation(error);
+        }
+        return json({
+          ok: true,
+          actor: serialiseContentOperationActor(actor),
+          conflict: result.conflict,
+          resolution: result.resolution,
+          operation: serialiseContentOperation(result.operation),
+          candidate: serialiseContentOperationCandidate(result.candidate, {
             includeSnapshot: includeSnapshot(url, body),
           }),
         });

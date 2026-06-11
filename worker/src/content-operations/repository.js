@@ -1,10 +1,14 @@
 import { uid } from '../../../src/platform/core/utils.js';
+import { cloneSerialisable } from '../../../src/platform/core/repositories/helpers.js';
 import {
   buildSpellingContentOperationCandidate,
   CONTENT_OPERATION_PACKAGE_STATES,
   CONTENT_OPERATION_SUBJECT_ID,
   contentOperationHash,
+  contentOperationValueHash,
+  detectContentOperationConflicts,
   normaliseContentOperation,
+  readContentOperationField,
 } from '../../../src/subjects/spelling/content/operations-model.js';
 import {
   buildSpellingContentSummary,
@@ -371,6 +375,95 @@ function releaseDriftConflict(packageRow, currentReleaseRow, baseReleaseRow) {
   }
 
   return null;
+}
+
+async function listReleaseOperationsAfterBase(db, subjectId, baseReleaseId, currentReleaseId) {
+  if (!currentReleaseId || baseReleaseId === currentReleaseId) {
+    return { complete: true, operations: [], releases: [] };
+  }
+  const releaseRows = await all(db, `
+    SELECT release_id, package_id, published_at, created_at, rowid AS release_rowid
+    FROM content_operation_releases
+    WHERE subject_id = ? AND status = 'published'
+    ORDER BY published_at ASC, created_at ASC, rowid ASC
+  `, [subjectId]);
+  const currentIndex = releaseRows.findIndex((row) => row.release_id === currentReleaseId);
+  if (currentIndex < 0) {
+    return {
+      complete: false,
+      operations: [],
+      releases: [],
+      reason: 'current_release_missing',
+    };
+  }
+  const baseIndex = baseReleaseId
+    ? releaseRows.findIndex((row) => row.release_id === baseReleaseId)
+    : -1;
+  if (baseReleaseId && baseIndex < 0) {
+    return {
+      complete: false,
+      operations: [],
+      releases: [],
+      reason: 'base_release_missing',
+    };
+  }
+  const driftRows = releaseRows.slice(baseIndex + 1, currentIndex + 1);
+  const operations = [];
+  for (const releaseRow of driftRows) {
+    if (!releaseRow.package_id) {
+      return {
+        complete: false,
+        operations,
+        releases: driftRows,
+        reason: 'release_without_package_operations',
+        releaseId: releaseRow.release_id,
+      };
+    }
+    const releasePackageOperations = await listPackageOperations(db, releaseRow.package_id);
+    operations.push(...releasePackageOperations.map((operation) => ({
+      ...operation,
+      releaseId: releaseRow.release_id,
+    })));
+  }
+  return {
+    complete: true,
+    operations,
+    releases: driftRows,
+  };
+}
+
+function conflictFieldValue(bundle, operation) {
+  if (!operation) return null;
+  if (!operation.fieldPath || operation.fieldPath === '$') {
+    return cloneSerialisable(operation.payload ?? null);
+  }
+  if (!bundle) return null;
+  const value = readContentOperationField(bundle, operation);
+  return cloneSerialisable(value === undefined ? null : value);
+}
+
+function enrichReleaseConflicts(conflicts, {
+  packageOperations = [],
+  releaseOperations = [],
+  baseSnapshot = null,
+  currentSnapshot = null,
+  candidateSnapshot = null,
+} = {}) {
+  const packageById = new Map(packageOperations.map((operation) => [operation.operationId, operation]));
+  const releaseById = new Map(releaseOperations.map((operation) => [operation.operationId, operation]));
+  return conflicts.map((conflict) => {
+    const packageOperation = packageById.get(conflict.leftOperationId) || null;
+    const currentOperation = releaseById.get(conflict.rightOperationId) || null;
+    const fieldOperation = packageOperation || currentOperation || conflict;
+    return {
+      ...conflict,
+      packageOperation,
+      currentOperation,
+      baseValue: conflictFieldValue(baseSnapshot, fieldOperation),
+      packageValue: conflictFieldValue(candidateSnapshot, fieldOperation),
+      currentValue: conflictFieldValue(currentSnapshot, fieldOperation),
+    };
+  });
 }
 
 function packageOperationsHash(operations = []) {
@@ -850,10 +943,60 @@ export function createContentOperationsRepository({ db, now }) {
       const baseSnapshot = baseRelease?.snapshot
         ? baseRelease.snapshot
         : await readSeededSpellingContentBundle();
-      const candidate = buildSpellingContentOperationCandidate(baseSnapshot, operations);
+      const currentRelease = await releaseRowToRecordAsync(currentReleaseRow, { includeSnapshot: true });
+      const currentSnapshot = currentRelease?.snapshot || baseSnapshot;
+      const packageBaseReleaseId = packageRow.base_release_id || null;
+      const currentReleaseId = currentReleaseRow?.release_id || null;
+      const releaseChanged = (
+        packageBaseReleaseId !== currentReleaseId
+        || (packageRow.base_release_hash || null) !== (currentReleaseRow?.snapshot_hash || null)
+      );
+      let candidateBaseSnapshot = baseSnapshot;
+      let releaseOperations = [];
+      let releaseConflicts = [];
+      let driftConflict = null;
+      let detectedReleaseConflicts = [];
+      if (releaseChanged && currentReleaseRow) {
+        const drift = await listReleaseOperationsAfterBase(
+          db,
+          packageRow.subject_id,
+          packageBaseReleaseId,
+          currentReleaseId,
+        );
+        if (drift.complete) {
+          releaseOperations = drift.operations;
+          detectedReleaseConflicts = detectContentOperationConflicts(operations, releaseOperations);
+          const hasStructuralReleaseConflict = detectedReleaseConflicts.some((conflict) => (
+            conflict.code === 'structural_conflict'
+            || !conflict.fieldPath
+            || conflict.fieldPath === '$'
+          ));
+          candidateBaseSnapshot = hasStructuralReleaseConflict ? baseSnapshot : currentSnapshot;
+        } else {
+          driftConflict = {
+            ...releaseDriftConflict(packageRow, currentReleaseRow, baseReleaseRow),
+            reason: drift.reason || 'release_drift_unresolved',
+            releaseId: drift.releaseId || null,
+          };
+        }
+      }
+      const candidate = buildSpellingContentOperationCandidate(candidateBaseSnapshot, operations);
+      if (releaseOperations.length) {
+        releaseConflicts = enrichReleaseConflicts(
+          detectedReleaseConflicts,
+          {
+            packageOperations: operations,
+            releaseOperations,
+            baseSnapshot,
+            currentSnapshot,
+            candidateSnapshot: candidate.candidate,
+          },
+        );
+      }
       const conflicts = [
         ...(candidate.conflicts || []),
-        releaseDriftConflict(packageRow, currentReleaseRow, baseReleaseRow),
+        ...releaseConflicts,
+        driftConflict,
       ].filter(Boolean);
       const candidateId = uid('cocand');
       const nowTs = Number(nowFactory());
@@ -929,6 +1072,110 @@ export function createContentOperationsRepository({ db, now }) {
         validation: validationSummary,
         conflicts,
         createdAt: nowTs,
+      };
+    },
+
+    async resolveContentOperationConflict(packageId, request = {}, { actorAccountId } = {}) {
+      const {
+        conflictId = '',
+        conflict = null,
+        resolution = '',
+        value = undefined,
+      } = request && typeof request === 'object' && !Array.isArray(request) ? request : {};
+      const actor = normaliseString(actorAccountId);
+      if (!actor) throw new BadRequestError('Content operation conflict resolution requires an actor account id.');
+      const requestedResolution = normaliseString(resolution).toLowerCase();
+      if (!['package', 'current', 'edit'].includes(requestedResolution)) {
+        throw new BadRequestError('Content operation conflict resolution is invalid.', {
+          code: 'content_operation_conflict_resolution_invalid',
+          resolution,
+        });
+      }
+      const requestedConflict = conflict && typeof conflict === 'object' && !Array.isArray(conflict)
+        ? conflict
+        : {};
+      const requestedConflictId = normaliseString(conflictId || requestedConflict.conflictId);
+      const candidateBefore = await this.buildContentOperationCandidate(packageId, {
+        actorAccountId: actor,
+      });
+      const match = requestedConflictId
+        ? candidateBefore.conflicts.find((entry) => entry.conflictId === requestedConflictId)
+        : candidateBefore.conflicts.find((entry) => (
+          entry.entityType === requestedConflict.entityType
+            && entry.entityId === requestedConflict.entityId
+            && (entry.fieldPath || '$') === (requestedConflict.fieldPath || '$')
+        ));
+      if (!match) {
+        throw new NotFoundError('Content operation conflict was not found.', {
+          code: 'content_operation_conflict_not_found',
+          packageId,
+          conflictId: requestedConflictId,
+        });
+      }
+      if (!match.fieldPath || match.fieldPath === '$' || match.code === 'structural_conflict') {
+        throw new BadRequestError('Only same-field content operation conflicts can be resolved in this workflow.', {
+          code: 'content_operation_conflict_not_resolvable',
+          packageId,
+          conflictId: match.conflictId,
+          conflictCode: match.code,
+        });
+      }
+
+      const hasExplicitValue = Object.prototype.hasOwnProperty.call(request || {}, 'value');
+      let payload;
+      if (requestedResolution === 'package') {
+        payload = cloneSerialisable(match.packageValue);
+      } else if (requestedResolution === 'current') {
+        payload = cloneSerialisable(match.currentValue);
+      } else {
+        if (!hasExplicitValue) {
+          throw new BadRequestError('Edited content operation conflict resolution requires a value.', {
+            code: 'content_operation_conflict_resolution_value_required',
+            packageId,
+            conflictId: match.conflictId,
+          });
+        }
+        payload = cloneSerialisable(value);
+      }
+
+      const operation = await this.appendContentOperation(packageId, {
+        entityType: match.entityType,
+        entityId: match.entityId,
+        fieldPath: match.fieldPath,
+        action: 'set',
+        payload,
+        beforeHash: contentOperationValueHash(match.currentValue),
+        afterHash: contentOperationValueHash(payload),
+      }, {
+        actorAccountId: actor,
+      });
+      const nowTs = Number(nowFactory());
+      await insertContentOperationEvent(db, {
+        packageId,
+        subjectId: CONTENT_OPERATION_SUBJECT_ID,
+        eventType: 'conflict.resolved',
+        actorAccountId: actor,
+        event: {
+          conflictId: match.conflictId,
+          resolution: requestedResolution,
+          operationId: operation.operationId,
+          entityType: match.entityType,
+          entityId: match.entityId,
+          fieldPath: match.fieldPath,
+          currentValueHash: contentOperationValueHash(match.currentValue),
+          resolvedValueHash: contentOperationValueHash(payload),
+        },
+        createdAt: nowTs,
+      });
+      const candidate = await this.buildContentOperationCandidate(packageId, {
+        actorAccountId: actor,
+      });
+      return {
+        packageId,
+        conflict: match,
+        operation,
+        candidate,
+        resolution: requestedResolution,
       };
     },
 
@@ -1260,6 +1507,7 @@ export function createContentOperationsRepository({ db, now }) {
         status: 'published',
         snapshotHash,
         snapshot: candidate.candidate,
+        baseReleaseId: candidate.currentReleaseId || packageRow.base_release_id || null,
         publishedAt: nowTs,
         publishedByAccountId: actor,
         proof,

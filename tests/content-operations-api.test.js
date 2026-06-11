@@ -105,6 +105,36 @@ async function approvePackage(server, packageId, candidateId) {
   return readPayload(response);
 }
 
+async function publishPackage(server, packageId, body = {}) {
+  const response = await server.fetchAs(
+    ADMIN_ID,
+    `${BASE_URL}/api/admin/content-operations/packages/${packageId}/publish`,
+    jsonInit('POST', {
+      ...body,
+      includeSnapshot: body.includeSnapshot ?? false,
+      proof: { source: 'content-operations-api-test', ...body.proof },
+    }),
+    adminHeaders(),
+  );
+  assert.equal(response.status, 200);
+  return readPayload(response);
+}
+
+async function resolveConflictResponse(server, packageId, body = {}) {
+  return server.fetchAs(
+    ADMIN_ID,
+    `${BASE_URL}/api/admin/content-operations/packages/${packageId}/resolve-conflict`,
+    jsonInit('POST', body),
+    adminHeaders(),
+  );
+}
+
+async function resolveConflict(server, packageId, body = {}) {
+  const response = await resolveConflictResponse(server, packageId, body);
+  assert.equal(response.status, 200);
+  return readPayload(response);
+}
+
 test('content operations API requires the admin platform role', async () => {
   const server = createWorkerRepositoryServer({ now: () => NOW });
   try {
@@ -294,6 +324,115 @@ test('content operations API supports admin package lifecycle through separate a
     assert.equal(overview.overview.latestRelease.releaseId, published.release.releaseId);
     assert.equal(overview.overview.actor.capabilities['content_operations.approve'], true);
     assert.equal(overview.overview.actor.capabilities['content_operations.publish'], true);
+  } finally {
+    server.close();
+  }
+});
+
+test('content operations API resolves same-field package conflicts before approval', async () => {
+  const server = createWorkerRepositoryServer({ now: () => NOW });
+  try {
+    seedAdultAccount(server.DB, { accountId: ADMIN_ID, platformRole: 'admin' });
+    const repository = createWorkerRepository({
+      env: server.env,
+      now: () => NOW,
+    });
+    await repository.seedFirstContentOperationRelease({
+      seededByAccountId: ADMIN_ID,
+      proof: { source: 'content-operations-api-conflict-test' },
+    });
+    const seeded = await readSeededSpellingContentBundle();
+    const word = seeded.draft.words[0];
+    const packageValue = `API package explanation for ${word.word}.`;
+    const currentValue = `API current explanation for ${word.word}.`;
+    const mergedValue = `API merged explanation for ${word.word}.`;
+
+    const conflicted = await createPackage(server, { title: 'API conflicted package' });
+    await appendWordExplanationOperation(server, conflicted.package.packageId, word, packageValue);
+
+    const current = await createPackage(server, { title: 'API current package' });
+    await appendWordExplanationOperation(server, current.package.packageId, word, currentValue);
+    const currentCandidate = await validatePackage(server, current.package.packageId);
+    await approvePackage(server, current.package.packageId, currentCandidate.candidate.candidateId);
+    await publishPackage(server, current.package.packageId);
+
+    const conflictedCandidate = await validatePackage(server, conflicted.package.packageId);
+    assert.equal(conflictedCandidate.candidate.conflicts.length, 1);
+    assert.equal(conflictedCandidate.candidate.conflicts[0].packageValue, packageValue);
+    assert.equal(conflictedCandidate.candidate.conflicts[0].currentValue, currentValue);
+
+    const resolved = await resolveConflict(server, conflicted.package.packageId, {
+      conflictId: conflictedCandidate.candidate.conflicts[0].conflictId,
+      resolution: 'edit',
+      value: mergedValue,
+    });
+    assert.equal(resolved.operation.payload, mergedValue);
+    assert.equal(resolved.candidate.conflicts.length, 0);
+    assert.notEqual(resolved.candidate.candidateHash, conflictedCandidate.candidate.candidateHash);
+
+    await approvePackage(server, conflicted.package.packageId, resolved.candidate.candidateId);
+    const published = await publishPackage(server, conflicted.package.packageId, {
+      includeSnapshot: true,
+      proof: { source: 'content-operations-api-conflict-resolution-test' },
+    });
+    assert.equal(published.release.snapshot.draft.words.find((entry) => entry.slug === word.slug).explanation, mergedValue);
+  } finally {
+    server.close();
+  }
+});
+
+test('content operations API rejects missing and stale conflict resolution requests', async () => {
+  const server = createWorkerRepositoryServer({ now: () => NOW });
+  try {
+    seedAdultAccount(server.DB, { accountId: ADMIN_ID, platformRole: 'admin' });
+    const repository = createWorkerRepository({
+      env: server.env,
+      now: () => NOW,
+    });
+    await repository.seedFirstContentOperationRelease({
+      seededByAccountId: ADMIN_ID,
+      proof: { source: 'content-operations-api-stale-conflict-test' },
+    });
+    const seeded = await readSeededSpellingContentBundle();
+    const word = seeded.draft.words[0];
+
+    const conflicted = await createPackage(server, { title: 'API stale conflicted package' });
+    await appendWordExplanationOperation(server, conflicted.package.packageId, word, `Stale package value for ${word.word}.`);
+
+    const current = await createPackage(server, { title: 'API first current package' });
+    await appendWordExplanationOperation(server, current.package.packageId, word, `First current value for ${word.word}.`);
+    const currentCandidate = await validatePackage(server, current.package.packageId);
+    await approvePackage(server, current.package.packageId, currentCandidate.candidate.candidateId);
+    await publishPackage(server, current.package.packageId);
+
+    const conflictedCandidate = await validatePackage(server, conflicted.package.packageId);
+    const oldConflict = conflictedCandidate.candidate.conflicts[0];
+    assert.ok(oldConflict.conflictId);
+
+    const missingValueResponse = await resolveConflictResponse(server, conflicted.package.packageId, {
+      conflictId: oldConflict.conflictId,
+      resolution: 'edit',
+    });
+    const missingValue = await readPayload(missingValueResponse);
+    assert.equal(missingValueResponse.status, 400);
+    assert.equal(missingValue.code, 'content_operation_conflict_resolution_value_required');
+
+    const newer = await createPackage(server, { title: 'API second current package' });
+    await appendWordExplanationOperation(server, newer.package.packageId, word, `Second current value for ${word.word}.`);
+    const newerCandidate = await validatePackage(server, newer.package.packageId);
+    await approvePackage(server, newer.package.packageId, newerCandidate.candidate.candidateId);
+    await publishPackage(server, newer.package.packageId);
+
+    const staleResponse = await resolveConflictResponse(server, conflicted.package.packageId, {
+      conflictId: oldConflict.conflictId,
+      conflict: oldConflict,
+      resolution: 'edit',
+      value: `Stale merged value for ${word.word}.`,
+    });
+    const stalePayload = await readPayload(staleResponse);
+    assert.equal(staleResponse.status, 404);
+    assert.equal(stalePayload.code, 'content_operation_conflict_not_found');
+    assert.equal(stalePayload.conflictId, oldConflict.conflictId);
   } finally {
     server.close();
   }
