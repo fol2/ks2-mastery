@@ -22,6 +22,9 @@ import {
   maskEmail,
   maskId,
 } from '../src/platform/hubs/admin-safe-copy.js';
+import {
+  buildContentOperationBlockerEnvelope,
+} from '../worker/src/content-operations/serialisers.js';
 
 // ---------------------------------------------------------------------------
 // 1. admin_only — full passthrough (minus auth tokens + request bodies)
@@ -47,6 +50,42 @@ test('admin_only audience passes full bundle JSON through', () => {
   assert.equal(parsed.internalNotes, 'Some internal note');
   // Stack preserved for admin.
   assert.equal(parsed.stack, 'Error\n  at fn (/path/file.js:10:5)');
+});
+
+test('admin_only audience preserves content operations blocker envelopes', () => {
+  const blockers = buildContentOperationBlockerEnvelope({
+    validation: {
+      ok: false,
+      errors: [{ code: 'word_family_missing', wordSlug: 'accommodate' }],
+      warnings: [],
+    },
+    conflicts: [{ code: 'same_field_conflict', entityId: 'accommodate' }],
+    audio: {
+      status: 'blocked',
+      blockers: ['word_audio_missing'],
+      warnings: [],
+    },
+  });
+  const result = prepareSafeCopy({
+    title: 'Content operations package blockers',
+    blockers,
+  }, COPY_AUDIENCE.ADMIN_ONLY);
+
+  assert.equal(result.ok, true);
+  const parsed = JSON.parse(result.text);
+  assert.deepEqual(Object.keys(parsed.blockers), [
+    'validation',
+    'conflicts',
+    'audio',
+    'assets',
+    'rewards',
+    'visibility',
+    'exposure',
+    'publishReadiness',
+  ]);
+  assert.equal(parsed.blockers.validation.status, 'blocked');
+  assert.equal(parsed.blockers.conflicts.count, 1);
+  assert.deepEqual(parsed.blockers.audio.blockers, ['word_audio_missing']);
 });
 
 // ---------------------------------------------------------------------------

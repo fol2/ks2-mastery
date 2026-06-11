@@ -46,6 +46,7 @@ import { consumeRateLimit, rateLimitResponse, rateLimitSubject } from './rate-li
 import { getReadModelDerivedWriteBreaker } from './circuit-breaker-server.js';
 import { isResetableBreakerName } from '../../src/platform/core/circuit-breaker.js';
 import { handleHeroReadModel } from './hero/routes.js';
+import { handleContentOperationsAdminRequest } from './content-operations/routes.js';
 import { resolveHeroStartTaskCommand } from './hero/launch.js';
 import { resolveHeroClaimCommand } from './hero/claim.js';
 import { resolveHeroCampCommand } from './hero/camp.js';
@@ -2381,6 +2382,15 @@ export function createWorkerApp({
           });
           return json({ ok: true, ...result });
         }
+
+        const contentOperationsResponse = await handleContentOperationsAdminRequest({
+          url,
+          request,
+          env,
+          session,
+          repository,
+        });
+        if (contentOperationsResponse) return contentOperationsResponse;
 
         // P6 U8: Generic asset CAS routes — delegate to asset-specific handlers
         // keyed by assetId. Currently supports 'monster-visual-config'; additional
