@@ -267,3 +267,204 @@ export function normaliseContentOperationsPackageDetail(payload = null) {
     actor: normaliseContentOperationActor(safe.actor),
   };
 }
+
+function normaliseAudioReadiness(value = null) {
+  const safe = isPlainObject(value) ? value : {};
+  return {
+    status: asString(safe.status, 'not_scanned'),
+    profiles: asArray(safe.profiles),
+    wordProfiles: asArray(safe.wordProfiles),
+    sentenceProfiles: asArray(safe.sentenceProfiles),
+    wordAudioRequired: Number(safe.wordAudioRequired) || 0,
+    sentenceAudioRequired: Number(safe.sentenceAudioRequired) || 0,
+    totalRequired: Number(safe.totalRequired) || 0,
+  };
+}
+
+function normaliseRewardImpact(value = null) {
+  const safe = isPlainObject(value) ? value : {};
+  return {
+    status: asString(safe.status, 'not_mapped'),
+    spellingPool: asString(safe.spellingPool, 'core'),
+    coverageTier: asString(safe.coverageTier),
+    familySize: Number(safe.familySize) || 0,
+    wordListId: asString(safe.wordListId),
+    monsterBinding: isPlainObject(safe.monsterBinding) ? { ...safe.monsterBinding } : null,
+  };
+}
+
+function normaliseSpellingBrowseWord(row = null) {
+  const safe = isPlainObject(row) ? row : {};
+  return {
+    slug: asString(safe.slug),
+    word: asString(safe.word),
+    family: asString(safe.family),
+    listId: asString(safe.listId),
+    listTitle: asString(safe.listTitle),
+    spellingPool: asString(safe.spellingPool, 'core'),
+    coverageTier: asString(safe.coverageTier),
+    yearGroups: asArray(safe.yearGroups),
+    tags: asArray(safe.tags),
+    patternIds: asArray(safe.patternIds),
+    acceptedCount: Number(safe.acceptedCount) || 0,
+    sentenceCount: Number(safe.sentenceCount) || 0,
+    variantCount: Number(safe.variantCount) || 0,
+    variantSentenceCount: Number(safe.variantSentenceCount) || 0,
+    variantWords: asArray(safe.variantWords),
+    variantAccepted: asArray(safe.variantAccepted),
+    familySize: Number(safe.familySize) || 0,
+    draftState: asString(safe.draftState, 'unchanged'),
+    validationState: normaliseBlockerSection(safe.validationState),
+    hasCurrent: safe.hasCurrent !== false,
+    hasPackageDraft: Boolean(safe.hasPackageDraft),
+    audioReadiness: normaliseAudioReadiness(safe.audioReadiness),
+    rewardImpact: normaliseRewardImpact(safe.rewardImpact),
+  };
+}
+
+function normaliseSpellingWordList(row = null) {
+  const safe = isPlainObject(row) ? row : {};
+  return {
+    id: asString(safe.id),
+    title: asString(safe.title),
+    spellingPool: asString(safe.spellingPool, 'core'),
+    coverageTier: asString(safe.coverageTier),
+    yearGroups: asArray(safe.yearGroups),
+    wordCount: Number(safe.wordCount) || 0,
+    draftState: asString(safe.draftState, 'unchanged'),
+  };
+}
+
+function normaliseSpellingPoolSummary(row = null) {
+  const safe = isPlainObject(row) ? row : {};
+  return {
+    pool: asString(safe.pool, 'core'),
+    wordCount: Number(safe.wordCount) || 0,
+    sentenceCount: Number(safe.sentenceCount) || 0,
+    variantCount: Number(safe.variantCount) || 0,
+    draftStateCounts: isPlainObject(safe.draftStateCounts) ? { ...safe.draftStateCounts } : {},
+  };
+}
+
+function normaliseSpellingPackageDraft(value = null) {
+  const safe = isPlainObject(value) ? value : {};
+  return {
+    active: Boolean(safe.active),
+    status: asString(safe.status, 'inactive'),
+    packageId: asString(safe.packageId),
+    packageTitle: asString(safe.packageTitle),
+    packageState: asString(safe.packageState),
+    candidateId: asString(safe.candidateId),
+    candidateHash: asString(safe.candidateHash),
+    staleReasons: asArray(safe.staleReasons),
+    latestReleaseId: asString(safe.latestReleaseId),
+    expectedOperationsHash: asString(safe.expectedOperationsHash),
+    validation: normaliseBlockerSection(safe.validation),
+  };
+}
+
+export function normaliseContentOperationsSpellingBrowse(payload = null) {
+  const browse = isPlainObject(payload?.browse) ? payload.browse : payload;
+  const safe = isPlainObject(browse) ? browse : {};
+  const filters = isPlainObject(safe.filters) ? safe.filters : {};
+  const totals = isPlainObject(safe.totals) ? safe.totals : {};
+  const release = isPlainObject(safe.release) ? safe.release : {};
+  return {
+    subjectId: asString(safe.subjectId, 'spelling'),
+    release: {
+      releaseId: asString(release.releaseId),
+      snapshotHash: asString(release.snapshotHash),
+      publishedAt: asTs(release.publishedAt),
+      source: asString(release.source, 'seeded_fallback'),
+    },
+    packageDraft: normaliseSpellingPackageDraft(safe.packageDraft),
+    filters: {
+      query: asString(filters.query),
+      pool: asString(filters.pool, 'all'),
+      listId: asString(filters.listId),
+      limit: Number(filters.limit) || 75,
+    },
+    totals: {
+      words: Number(totals.words) || 0,
+      displayedWords: Number(totals.displayedWords) || 0,
+      matchedWords: Number(totals.matchedWords) || 0,
+      wordLists: Number(totals.wordLists) || 0,
+      sentences: Number(totals.sentences) || 0,
+      variants: Number(totals.variants) || 0,
+      families: Number(totals.families) || 0,
+    },
+    draftStateCounts: isPlainObject(safe.draftStateCounts) ? { ...safe.draftStateCounts } : {},
+    pools: asArray(safe.pools).map(normaliseSpellingPoolSummary),
+    wordLists: asArray(safe.wordLists).map(normaliseSpellingWordList),
+    words: asArray(safe.words).map(normaliseSpellingBrowseWord),
+    actor: normaliseContentOperationActor(payload?.actor),
+  };
+}
+
+function normaliseSpellingSentence(sentence = null) {
+  const safe = isPlainObject(sentence) ? sentence : {};
+  return {
+    id: asString(safe.id),
+    wordSlug: asString(safe.wordSlug),
+    text: asString(safe.text),
+    variantLabel: asString(safe.variantLabel),
+    tags: asArray(safe.tags),
+    word: isPlainObject(safe.word) ? { ...safe.word } : null,
+  };
+}
+
+function normaliseSpellingSentenceValue(sentence = null) {
+  return isPlainObject(sentence) ? normaliseSpellingSentence(sentence) : null;
+}
+
+function normaliseSpellingWordDetailValue(value = null) {
+  const safe = isPlainObject(value) ? value : null;
+  if (!safe) return null;
+  return {
+    slug: asString(safe.slug),
+    word: asString(safe.word),
+    family: asString(safe.family),
+    list: isPlainObject(safe.list) ? normaliseSpellingWordList(safe.list) : null,
+    spellingPool: asString(safe.spellingPool, 'core'),
+    coverageTier: asString(safe.coverageTier),
+    yearGroups: asArray(safe.yearGroups),
+    tags: asArray(safe.tags),
+    patternIds: asArray(safe.patternIds),
+    accepted: asArray(safe.accepted),
+    explanation: asString(safe.explanation),
+    sentenceEntryIds: asArray(safe.sentenceEntryIds),
+    sentences: asArray(safe.sentences).map(normaliseSpellingSentence),
+    variants: asArray(safe.variants),
+    familyMembers: asArray(safe.familyMembers),
+    audioReadiness: normaliseAudioReadiness(safe.audioReadiness),
+    rewardImpact: normaliseRewardImpact(safe.rewardImpact),
+  };
+}
+
+export function normaliseContentOperationsSpellingItemDetail(payload = null) {
+  const detail = isPlainObject(payload?.detail) ? payload.detail : payload;
+  const safe = isPlainObject(detail) ? detail : {};
+  const release = isPlainObject(safe.release) ? safe.release : {};
+  return {
+    type: asString(safe.type),
+    slug: asString(safe.slug),
+    sentenceId: asString(safe.sentenceId),
+    found: Boolean(safe.found),
+    draftState: asString(safe.draftState, 'unchanged'),
+    release: {
+      releaseId: asString(release.releaseId),
+      snapshotHash: asString(release.snapshotHash),
+      publishedAt: asTs(release.publishedAt),
+      source: asString(release.source, 'seeded_fallback'),
+    },
+    packageDraft: normaliseSpellingPackageDraft(safe.packageDraft),
+    validationState: normaliseBlockerSection(safe.validationState),
+    current: safe.type === 'sentence'
+      ? normaliseSpellingSentenceValue(safe.current)
+      : normaliseSpellingWordDetailValue(safe.current),
+    packageValue: safe.type === 'sentence'
+      ? normaliseSpellingSentenceValue(safe.packageValue)
+      : normaliseSpellingWordDetailValue(safe.packageValue),
+    actor: normaliseContentOperationActor(payload?.actor),
+  };
+}

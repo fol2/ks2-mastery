@@ -160,6 +160,145 @@ test('content operations API requires the admin platform role', async () => {
   }
 });
 
+test('content operations API exposes spelling browse and item detail with package draft overlays', async () => {
+  const server = createWorkerRepositoryServer({ now: () => NOW });
+  try {
+    seedAdultAccount(server.DB, { accountId: ADMIN_ID, platformRole: 'admin' });
+    const repository = createWorkerRepository({
+      env: server.env,
+      now: () => NOW,
+    });
+    await repository.seedFirstContentOperationRelease({
+      seededByAccountId: ADMIN_ID,
+      proof: { source: 'content-operations-api-browse-test' },
+    });
+    const seeded = await readSeededSpellingContentBundle();
+    const word = seeded.draft.words[0];
+    const sentenceId = word.sentenceEntryIds[0];
+    const explanation = `Browse package explanation for ${word.word}.`;
+
+    const created = await createPackage(server, { title: 'Browse package' });
+    const packageId = created.package.packageId;
+
+    const candidateRequiredResponse = await server.fetchAs(
+      ADMIN_ID,
+      `${BASE_URL}/api/admin/content-operations/subjects/spelling/browse?packageId=${packageId}&query=${word.slug}&limit=10`,
+      { method: 'GET', headers: { 'sec-fetch-site': 'same-origin' } },
+      adminHeaders(),
+    );
+    const candidateRequiredPayload = await readPayload(candidateRequiredResponse);
+    assert.equal(candidateRequiredResponse.status, 200);
+    assert.equal(candidateRequiredPayload.browse.packageDraft.status, 'candidate_required');
+    assert.equal(candidateRequiredPayload.browse.packageDraft.validation.status, 'candidate_required');
+    assert.equal(candidateRequiredPayload.browse.packageDraft.validation.ok, false);
+    const candidateRequiredRow = candidateRequiredPayload.browse.words.find((entry) => entry.slug === word.slug);
+    assert.equal(candidateRequiredRow.validationState.status, 'candidate_required');
+    assert.equal(candidateRequiredRow.validationState.ok, false);
+
+    await appendWordExplanationOperation(server, packageId, word, explanation);
+    const validated = await validatePackage(server, packageId);
+
+    const browseResponse = await server.fetchAs(
+      ADMIN_ID,
+      `${BASE_URL}/api/admin/content-operations/subjects/spelling/browse?packageId=${packageId}&query=${word.slug}&limit=10`,
+      { method: 'GET', headers: { 'sec-fetch-site': 'same-origin' } },
+      adminHeaders(),
+    );
+    const browsePayload = await readPayload(browseResponse);
+    assert.equal(browseResponse.status, 200);
+    assert.equal(browsePayload.actor.capabilities['content_operations.view'], true);
+    assert.equal(browsePayload.browse.packageDraft.status, 'available');
+    assert.equal(browsePayload.browse.packageDraft.candidateId, validated.candidate.candidateId);
+    const row = browsePayload.browse.words.find((entry) => entry.slug === word.slug);
+    assert.equal(row.draftState, 'modified');
+    assert.equal(row.family, word.family);
+    assert.ok(row.audioReadiness.totalRequired >= 8);
+    assert.equal(Object.prototype.hasOwnProperty.call(browsePayload.browse, 'snapshot'), false);
+
+    const wordResponse = await server.fetchAs(
+      ADMIN_ID,
+      `${BASE_URL}/api/admin/content-operations/subjects/spelling/words/${word.slug}?packageId=${packageId}`,
+      { method: 'GET', headers: { 'sec-fetch-site': 'same-origin' } },
+      adminHeaders(),
+    );
+    const wordPayload = await readPayload(wordResponse);
+    assert.equal(wordResponse.status, 200);
+    assert.equal(wordPayload.detail.current.slug, word.slug);
+    assert.equal(wordPayload.detail.packageValue.explanation, explanation);
+    assert.equal(wordPayload.detail.draftState, 'modified');
+
+    const sentenceResponse = await server.fetchAs(
+      ADMIN_ID,
+      `${BASE_URL}/api/admin/content-operations/subjects/spelling/sentences/${sentenceId}?packageId=${packageId}`,
+      { method: 'GET', headers: { 'sec-fetch-site': 'same-origin' } },
+      adminHeaders(),
+    );
+    const sentencePayload = await readPayload(sentenceResponse);
+    assert.equal(sentenceResponse.status, 200);
+    assert.equal(sentencePayload.detail.type, 'sentence');
+    assert.equal(sentencePayload.detail.current.id, sentenceId);
+    assert.equal(sentencePayload.detail.packageValue.id, sentenceId);
+
+    await appendWordExplanationOperation(
+      server,
+      packageId,
+      word,
+      `A newer operation after validation for ${word.word}.`,
+    );
+
+    const staleBrowseResponse = await server.fetchAs(
+      ADMIN_ID,
+      `${BASE_URL}/api/admin/content-operations/subjects/spelling/browse?packageId=${packageId}&query=${word.slug}&limit=10`,
+      { method: 'GET', headers: { 'sec-fetch-site': 'same-origin' } },
+      adminHeaders(),
+    );
+    const staleBrowsePayload = await readPayload(staleBrowseResponse);
+    assert.equal(staleBrowseResponse.status, 200);
+    assert.equal(staleBrowsePayload.browse.packageDraft.status, 'stale_candidate');
+    assert.deepEqual(staleBrowsePayload.browse.packageDraft.staleReasons, ['operations_stale']);
+    const staleRow = staleBrowsePayload.browse.words.find((entry) => entry.slug === word.slug);
+    assert.equal(staleRow.draftState, 'unchanged');
+    assert.equal(staleRow.hasPackageDraft, false);
+    assert.equal(staleRow.validationState.status, 'stale_candidate');
+
+    const staleWordResponse = await server.fetchAs(
+      ADMIN_ID,
+      `${BASE_URL}/api/admin/content-operations/subjects/spelling/words/${word.slug}?packageId=${packageId}`,
+      { method: 'GET', headers: { 'sec-fetch-site': 'same-origin' } },
+      adminHeaders(),
+    );
+    const staleWordPayload = await readPayload(staleWordResponse);
+    assert.equal(staleWordResponse.status, 200);
+    assert.equal(staleWordPayload.detail.packageDraft.status, 'stale_candidate');
+    assert.equal(staleWordPayload.detail.packageValue, null);
+    assert.equal(staleWordPayload.detail.draftState, 'unchanged');
+
+    const missingWordResponse = await server.fetchAs(
+      ADMIN_ID,
+      `${BASE_URL}/api/admin/content-operations/subjects/spelling/words/not-a-real-word?packageId=${packageId}`,
+      { method: 'GET', headers: { 'sec-fetch-site': 'same-origin' } },
+      adminHeaders(),
+    );
+    const missingWordPayload = await readPayload(missingWordResponse);
+    assert.equal(missingWordResponse.status, 404);
+    assert.equal(missingWordPayload.code, 'spelling_content_word_not_found');
+    assert.equal(missingWordPayload.message, 'Spelling content word was not found.');
+
+    const missingSentenceResponse = await server.fetchAs(
+      ADMIN_ID,
+      `${BASE_URL}/api/admin/content-operations/subjects/spelling/sentences/not-a-real-sentence?packageId=${packageId}`,
+      { method: 'GET', headers: { 'sec-fetch-site': 'same-origin' } },
+      adminHeaders(),
+    );
+    const missingSentencePayload = await readPayload(missingSentenceResponse);
+    assert.equal(missingSentenceResponse.status, 404);
+    assert.equal(missingSentencePayload.code, 'spelling_content_sentence_not_found');
+    assert.equal(missingSentencePayload.message, 'Spelling content sentence was not found.');
+  } finally {
+    server.close();
+  }
+});
+
 test('content operations API supports admin package lifecycle through separate approve and publish actions', async () => {
   const server = createWorkerRepositoryServer({ now: () => NOW });
   try {

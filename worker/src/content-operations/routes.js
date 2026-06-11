@@ -17,6 +17,11 @@ import {
   serialiseContentOperationRelease,
   serialiseContentOperationStub,
 } from './serialisers.js';
+import {
+  readSpellingContentBrowseModel,
+  readSpellingContentSentenceDetailModel,
+  readSpellingContentWordDetailModel,
+} from './read-models.js';
 
 const CONTENT_OPERATIONS_ROUTE_PREFIX = '/api/admin/content-operations';
 const CONTENT_OPERATIONS_SUBJECT_ID = 'spelling';
@@ -49,6 +54,11 @@ function normaliseLimit(value, fallback, maximum) {
 function includeSnapshot(url, body = {}) {
   const value = url.searchParams.get('includeSnapshot') ?? body.includeSnapshot;
   return value === true || value === 'true' || value === '1';
+}
+
+function optionalQueryString(url, key) {
+  const value = url.searchParams.get(key);
+  return typeof value === 'string' && value.trim() ? value.trim() : '';
 }
 
 function decodePathSegment(value, label) {
@@ -199,6 +209,98 @@ export async function handleContentOperationsAdminRequest({
         actor,
       }),
     });
+  }
+
+  if (request.method === 'GET' && relativePath === '/subjects/spelling/browse') {
+    const actor = await requireRouteActor({
+      repository,
+      session,
+      request,
+      env,
+      capability: CONTENT_OPERATION_CAPABILITIES.VIEW,
+    });
+    const browse = await readSpellingContentBrowseModel({
+      repository,
+      subjectId: CONTENT_OPERATIONS_SUBJECT_ID,
+      packageId: optionalQueryString(url, 'packageId'),
+      filters: {
+        query: optionalQueryString(url, 'query') || optionalQueryString(url, 'q'),
+        pool: optionalQueryString(url, 'pool'),
+        listId: optionalQueryString(url, 'listId'),
+        limit: normaliseLimit(url.searchParams.get('limit'), 75, 250),
+      },
+    });
+    return json({
+      ok: true,
+      actor: serialiseContentOperationActor(actor),
+      browse,
+    });
+  }
+
+  {
+    const wordDetailMatch = /^\/subjects\/spelling\/words\/([^/]+)$/.exec(relativePath);
+    if (request.method === 'GET' && wordDetailMatch) {
+      const actor = await requireRouteActor({
+        repository,
+        session,
+        request,
+        env,
+        capability: CONTENT_OPERATION_CAPABILITIES.VIEW,
+      });
+      const slug = decodePathSegment(wordDetailMatch[1], 'word_slug');
+      const detail = await readSpellingContentWordDetailModel({
+        repository,
+        subjectId: CONTENT_OPERATIONS_SUBJECT_ID,
+        packageId: optionalQueryString(url, 'packageId'),
+        slug,
+      });
+      if (!detail.found) {
+        return json({
+          ok: false,
+          code: 'spelling_content_word_not_found',
+          message: 'Spelling content word was not found.',
+          slug,
+        }, 404);
+      }
+      return json({
+        ok: true,
+        actor: serialiseContentOperationActor(actor),
+        detail,
+      });
+    }
+  }
+
+  {
+    const sentenceDetailMatch = /^\/subjects\/spelling\/sentences\/([^/]+)$/.exec(relativePath);
+    if (request.method === 'GET' && sentenceDetailMatch) {
+      const actor = await requireRouteActor({
+        repository,
+        session,
+        request,
+        env,
+        capability: CONTENT_OPERATION_CAPABILITIES.VIEW,
+      });
+      const sentenceId = decodePathSegment(sentenceDetailMatch[1], 'sentence_id');
+      const detail = await readSpellingContentSentenceDetailModel({
+        repository,
+        subjectId: CONTENT_OPERATIONS_SUBJECT_ID,
+        packageId: optionalQueryString(url, 'packageId'),
+        sentenceId,
+      });
+      if (!detail.found) {
+        return json({
+          ok: false,
+          code: 'spelling_content_sentence_not_found',
+          message: 'Spelling content sentence was not found.',
+          sentenceId,
+        }, 404);
+      }
+      return json({
+        ok: true,
+        actor: serialiseContentOperationActor(actor),
+        detail,
+      });
+    }
   }
 
   if (request.method === 'GET' && relativePath === '/subjects/spelling/releases') {

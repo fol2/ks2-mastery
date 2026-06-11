@@ -151,6 +151,111 @@ const overview = {
   },
 };
 
+const spellingBrowse = {
+  browse: {
+    subjectId: 'spelling',
+    release,
+    packageDraft: {
+      active: true,
+      status: 'available',
+      packageId: 'pkg-draft-1',
+      packageTitle: 'Word family update',
+      packageState: 'draft',
+      candidateId: 'cand-ready-1',
+      candidateHash: 'candidate-ready-1',
+      validation: { status: 'passed', ok: true, errorCount: 0, warningCount: 0, errors: [], warnings: [] },
+    },
+    filters: { query: '', pool: 'all', listId: '', limit: 75 },
+    totals: { words: 1, displayedWords: 1, matchedWords: 1, wordLists: 1, sentences: 2, variants: 1, families: 1 },
+    draftStateCounts: { added: 0, modified: 1, removed: 0, unchanged: 0 },
+    pools: [{ pool: 'extra', wordCount: 1, sentenceCount: 2, variantCount: 1, draftStateCounts: { modified: 1 } }],
+    wordLists: [{
+      id: 'extra-greek',
+      title: 'Extra Greek roots',
+      spellingPool: 'extra',
+      coverageTier: 'enrichment-extra',
+      yearGroups: [],
+      wordCount: 1,
+      draftState: 'unchanged',
+    }],
+    words: [{
+      slug: 'metamorphosis',
+      word: 'metamorphosis',
+      family: 'shape-change',
+      listId: 'extra-greek',
+      listTitle: 'Extra Greek roots',
+      spellingPool: 'extra',
+      coverageTier: 'enrichment-extra',
+      yearGroups: [],
+      tags: [],
+      patternIds: [],
+      acceptedCount: 1,
+      sentenceCount: 1,
+      variantCount: 1,
+      variantSentenceCount: 1,
+      familySize: 1,
+      draftState: 'modified',
+      hasCurrent: true,
+      hasPackageDraft: true,
+      audioReadiness: {
+        status: 'not_scanned',
+        wordProfiles: ['male.natural', 'female.natural'],
+        sentenceProfiles: ['male.normal', 'male.slow', 'female.normal', 'female.slow'],
+        wordAudioRequired: 4,
+        sentenceAudioRequired: 8,
+        totalRequired: 12,
+      },
+      validationState: { status: 'passed', ok: true, errorCount: 0, warningCount: 0, errors: [], warnings: [] },
+      rewardImpact: {
+        status: 'not_mapped',
+        spellingPool: 'extra',
+        coverageTier: 'enrichment-extra',
+        familySize: 1,
+        wordListId: 'extra-greek',
+        monsterBinding: { mode: 'pool', poolId: 'extra', assignment: 'unresolved' },
+      },
+    }],
+  },
+};
+
+const spellingWordDetail = {
+  detail: {
+    type: 'word',
+    slug: 'metamorphosis',
+    found: true,
+    draftState: 'modified',
+    release,
+    packageDraft: spellingBrowse.browse.packageDraft,
+    validationState: { status: 'passed', ok: true, errorCount: 0, warningCount: 0, errors: [], warnings: [] },
+    current: {
+      slug: 'metamorphosis',
+      word: 'metamorphosis',
+      family: 'shape-change',
+      spellingPool: 'extra',
+      coverageTier: 'enrichment-extra',
+      explanation: 'Current release explanation.',
+      sentences: [{ id: 'meta-s1', wordSlug: 'metamorphosis', text: 'The tadpole changes.', tags: [] }],
+      variants: [{ word: 'metamorphic', sentenceCount: 1 }],
+      familyMembers: [{ slug: 'metamorphosis', word: 'metamorphosis' }],
+      audioReadiness: spellingBrowse.browse.words[0].audioReadiness,
+      rewardImpact: spellingBrowse.browse.words[0].rewardImpact,
+    },
+    packageValue: {
+      slug: 'metamorphosis',
+      word: 'metamorphosis',
+      family: 'shape-change',
+      spellingPool: 'extra',
+      coverageTier: 'enrichment-extra',
+      explanation: 'Package draft explanation.',
+      sentences: [{ id: 'meta-s1', wordSlug: 'metamorphosis', text: 'The tadpole changes completely.', tags: [] }],
+      variants: [{ word: 'metamorphic', sentenceCount: 1 }],
+      familyMembers: [{ slug: 'metamorphosis', word: 'metamorphosis' }],
+      audioReadiness: spellingBrowse.browse.words[0].audioReadiness,
+      rewardImpact: spellingBrowse.browse.words[0].rewardImpact,
+    },
+  },
+};
+
 function baseActions() {
   return `{ dispatch() {}, navigateHome() {}, openSubject() {} }`;
 }
@@ -562,6 +667,265 @@ test('Content Operations Centre mounted shell loads API data without implicit pa
   assert.match(result.overviewText, /rel-global-1/);
   assert.match(result.packageTableText, /Pending/);
   assert.equal(result.selectedRows, 0);
+});
+
+test('Content Operations Centre spelling tab browses words and loads package draft detail', async () => {
+  const output = await runClientEntry(`
+    const { JSDOM } = require('jsdom');
+
+    globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+    const dom = new JSDOM('<!doctype html><html><body><div id="root"></div></body></html>', {
+      url: 'https://ks2.eugnel.uk/admin',
+    });
+    globalThis.window = dom.window;
+    globalThis.document = dom.window.document;
+    globalThis.navigator = dom.window.navigator;
+    globalThis.HTMLElement = dom.window.HTMLElement;
+    globalThis.Event = dom.window.Event;
+
+    const React = require('react');
+    const { createRoot } = require('react-dom/client');
+    const { AdminContentOperationsSection } = require(${CONTENT_OPS_SECTION_PATH});
+    const { act } = React;
+
+    const calls = [];
+    const model = ${JSON.stringify(baseModel({
+      contentOperations: {
+        overview,
+        packages: { packages: [contentPackage] },
+        releases: { releases: [release] },
+        spellingBrowse,
+        spellingItemDetail: null,
+      },
+    }))};
+    const actions = {
+      contentOperationsApi: {
+        async readSpellingWord(args) {
+          calls.push({ method: 'readSpellingWord', args });
+          return ${JSON.stringify(spellingWordDetail)};
+        },
+      },
+    };
+
+    async function flush() {
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      });
+    }
+
+    async function main() {
+      const root = createRoot(document.getElementById('root'));
+      await act(async () => {
+        root.render(React.createElement(AdminContentOperationsSection, {
+          model,
+          actions,
+          initialActiveTab: 'spelling',
+          initialSelectedPackageId: 'pkg-draft-1',
+        }));
+      });
+      await flush();
+
+      const beforeClickText = document.body.textContent;
+      const wordButton = document.querySelector('[data-content-ops-spelling-word="metamorphosis"]');
+      await act(async () => {
+        wordButton.click();
+      });
+      await flush();
+      const afterClickText = document.body.textContent;
+      process.stdout.write(JSON.stringify({ calls, beforeClickText, afterClickText }));
+
+      await act(async () => {
+        root.unmount();
+      });
+      dom.window.close();
+      process.exit(0);
+    }
+
+    main().catch((error) => {
+      process.stderr.write(error.stack || error.message);
+      process.exitCode = 1;
+    });
+  `);
+  const result = JSON.parse(output);
+
+  assert.match(result.beforeClickText, /Spelling browse/);
+  assert.match(result.beforeClickText, /Extra Greek roots/);
+  assert.match(result.beforeClickText, /Package draft available/);
+  assert.deepEqual(result.calls, [
+    { method: 'readSpellingWord', args: { slug: 'metamorphosis', packageId: 'pkg-draft-1' } },
+  ]);
+  assert.match(result.afterClickText, /Package draft explanation/);
+  assert.match(result.afterClickText, /The tadpole changes/);
+});
+
+test('Content Operations Centre spelling tab reloads browse data after package selection changes', async () => {
+  const packageB = {
+    ...contentPackage,
+    packageId: 'pkg-draft-2',
+    title: 'Second word package',
+    operations: [{ operationId: 'op-b', entityType: 'spelling.word', entityId: 'beta', action: 'set' }],
+    operationCount: 1,
+  };
+  const spellingBrowseB = {
+    browse: {
+      ...spellingBrowse.browse,
+      packageDraft: {
+        ...spellingBrowse.browse.packageDraft,
+        packageId: 'pkg-draft-2',
+        packageTitle: 'Second word package',
+        candidateId: 'cand-ready-2',
+        candidateHash: 'candidate-ready-2',
+      },
+      totals: { words: 1, displayedWords: 1, matchedWords: 1, wordLists: 1, sentences: 1, variants: 0, families: 1 },
+      draftStateCounts: { added: 0, modified: 1, removed: 0, unchanged: 0 },
+      pools: [{ pool: 'core', wordCount: 1, sentenceCount: 1, variantCount: 0, draftStateCounts: { modified: 1 } }],
+      wordLists: [{
+        id: 'core-y34',
+        title: 'Second core list',
+        spellingPool: 'core',
+        coverageTier: 'statutory-core',
+        yearGroups: ['Y3', 'Y4'],
+        wordCount: 1,
+        draftState: 'unchanged',
+      }],
+      words: [{
+        ...spellingBrowse.browse.words[0],
+        slug: 'beta',
+        word: 'beta',
+        family: 'greek-root',
+        listId: 'core-y34',
+        listTitle: 'Second core list',
+        spellingPool: 'core',
+        coverageTier: 'statutory-core',
+        variantCount: 0,
+        variantSentenceCount: 0,
+        audioReadiness: {
+          status: 'not_scanned',
+          wordProfiles: ['male.natural', 'female.natural'],
+          sentenceProfiles: ['male.normal', 'male.slow', 'female.normal', 'female.slow'],
+          wordAudioRequired: 2,
+          sentenceAudioRequired: 4,
+          totalRequired: 6,
+        },
+      }],
+    },
+  };
+  const output = await runClientEntry(`
+    const { JSDOM } = require('jsdom');
+
+    globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+    const dom = new JSDOM('<!doctype html><html><body><div id="root"></div></body></html>', {
+      url: 'https://ks2.eugnel.uk/admin',
+    });
+    globalThis.window = dom.window;
+    globalThis.document = dom.window.document;
+    globalThis.navigator = dom.window.navigator;
+    globalThis.HTMLElement = dom.window.HTMLElement;
+    globalThis.Event = dom.window.Event;
+
+    const React = require('react');
+    const { createRoot } = require('react-dom/client');
+    const { AdminContentOperationsSection } = require(${CONTENT_OPS_SECTION_PATH});
+    const { act } = React;
+
+    const packageB = ${JSON.stringify(packageB)};
+    const spellingBrowseB = ${JSON.stringify(spellingBrowseB)};
+    const calls = [];
+    const model = ${JSON.stringify(baseModel({
+      contentOperations: {
+        overview: {
+          ...overview,
+          lanes: {
+            blocked: [],
+            readyForApproval: [],
+            approvedPendingPublish: [],
+            drafts: [contentPackage, packageB],
+            recentReleases: [release],
+          },
+        },
+        packages: { packages: [contentPackage, packageB] },
+        releases: { releases: [release] },
+        packageDetail: null,
+        spellingBrowse,
+        spellingItemDetail: null,
+      },
+    }))};
+    const actions = {
+      contentOperationsApi: {
+        async readPackage({ packageId }) {
+          calls.push({ method: 'readPackage', packageId });
+          return { package: packageB, events: [] };
+        },
+        async readSpellingBrowse(args) {
+          calls.push({ method: 'readSpellingBrowse', args });
+          return spellingBrowseB;
+        },
+      },
+    };
+
+    async function flush() {
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      });
+    }
+
+    async function main() {
+      const root = createRoot(document.getElementById('root'));
+      await act(async () => {
+        root.render(React.createElement(AdminContentOperationsSection, {
+          model,
+          actions,
+          initialActiveTab: 'spelling',
+          initialSelectedPackageId: 'pkg-draft-1',
+        }));
+      });
+      const packageTab = Array.from(document.querySelectorAll('[role="tab"]'))
+        .find((entry) => entry.textContent === 'Packages');
+      await act(async () => {
+        packageTab.click();
+      });
+      const packageButton = Array.from(document.querySelectorAll('.content-ops-row-button'))
+        .find((entry) => entry.textContent === 'Second word package');
+      await act(async () => {
+        packageButton.click();
+      });
+      await flush();
+      const spellingTab = Array.from(document.querySelectorAll('[role="tab"]'))
+        .find((entry) => entry.textContent === 'Spelling');
+      await act(async () => {
+        spellingTab.click();
+      });
+      await flush();
+      await flush();
+      process.stdout.write(JSON.stringify({
+        calls,
+        text: document.body.textContent,
+      }));
+
+      await act(async () => {
+        root.unmount();
+      });
+      dom.window.close();
+      process.exit(0);
+    }
+
+    main().catch((error) => {
+      process.stderr.write(error.stack || error.message);
+      process.exitCode = 1;
+    });
+  `);
+  const result = JSON.parse(output);
+
+  assert.deepEqual(result.calls, [
+    { method: 'readPackage', packageId: 'pkg-draft-2' },
+    {
+      method: 'readSpellingBrowse',
+      args: { packageId: 'pkg-draft-2', query: '', pool: null, listId: null, limit: 75 },
+    },
+  ]);
+  assert.match(result.text, /Second core list/);
+  assert.match(result.text, /Package draft available/);
+  assert.doesNotMatch(result.text, /Extra Greek roots/);
 });
 
 test('Content Operations Centre mounted package detail runs validate, approve, and publish actions', async () => {
