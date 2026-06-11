@@ -334,7 +334,7 @@ test('production bootstrap keeps high-history public payloads bounded and redact
   // changed. PR799 follow-up 2026-04-30 bumped 3 -> 4 because the
   // Grammar public read-model representation changed and cached v3
   // revisions must miss the notModified probe.
-  assert.equal(payload.meta.capacity.bootstrapCapacity.version, 4);
+  assert.equal(payload.meta.capacity.bootstrapCapacity.version, 5);
   assert.equal(payload.meta.capacity.bootstrapCapacity.mode, 'public-bounded');
   assert.equal('bootstrapPhaseTimings' in payload.meta.capacity, false, 'phase timings stay out of child-facing meta.capacity.');
 
@@ -386,8 +386,8 @@ test('P7 public demo bootstrap reuses authenticated account snapshot and ratchet
     assert.equal(response.status, 200);
     assert.equal(payload.ok, true);
     assert.equal(payload.meta?.capacity?.bootstrapMode, 'selected-learner-bounded');
-    assert.equal(payload.meta?.capacity?.queryCount, 9,
-      'P7 removes the duplicate bootstrap account read and demo-active guard read from the 11-query P6 shape.');
+    assert.equal(payload.meta?.capacity?.queryCount, 10,
+      'Content Operations release revision tracking adds one bounded lookup while preserving the P7 account-read reduction.');
     assert.equal(payload.meta.capacity.d1RowsWritten, 0);
     assert.ok(payload.bootstrapCapacity, 'bootstrap capacity metadata remains present');
     assert.equal(payload.bootstrapCapacity.mode, 'public-bounded');

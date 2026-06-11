@@ -11,6 +11,10 @@ import {
   validateSpellingContentBundle,
 } from '../../../src/subjects/spelling/content/model.js';
 import {
+  decodeContentOperationSnapshot,
+  encodeContentOperationSnapshot,
+} from '../../../src/subjects/spelling/content/release-snapshot-codec.js';
+import {
   readSeededSpellingContentBundle,
 } from '../generated-spelling-content-seed.js';
 import {
@@ -111,6 +115,16 @@ function candidateRowToRecord(row, { includeSnapshot = false } = {}) {
   };
 }
 
+async function candidateRowToRecordAsync(row, { includeSnapshot = false } = {}) {
+  const record = candidateRowToRecord(row, { includeSnapshot: false });
+  if (!record || !includeSnapshot) return record;
+  const snapshotJson = await decodeContentOperationSnapshot(row.candidate_snapshot_json);
+  return {
+    ...record,
+    candidate: parseJson(snapshotJson, null),
+  };
+}
+
 function releaseRowToRecord(row, { includeSnapshot = false } = {}) {
   if (!row) return null;
   return {
@@ -127,6 +141,36 @@ function releaseRowToRecord(row, { includeSnapshot = false } = {}) {
     proof: parseJson(row.proof_json, null),
     createdAt: Number(row.created_at) || 0,
   };
+}
+
+async function releaseRowToRecordAsync(row, { includeSnapshot = false } = {}) {
+  const record = releaseRowToRecord(row, { includeSnapshot: false });
+  if (!record || !includeSnapshot) return record;
+  const snapshotJson = await decodeContentOperationSnapshot(row.snapshot_json);
+  return {
+    ...record,
+    snapshot: parseJson(snapshotJson, null),
+  };
+}
+
+function validationSummary(validation) {
+  return {
+    ok: Boolean(validation?.ok),
+    errorCount: Array.isArray(validation?.errors) ? validation.errors.length : 0,
+    warningCount: Array.isArray(validation?.warnings) ? validation.warnings.length : 0,
+    errors: Array.isArray(validation?.errors) ? validation.errors : [],
+    warnings: Array.isArray(validation?.warnings) ? validation.warnings : [],
+  };
+}
+
+function latestPublishedReleaseIdSql() {
+  return `
+    SELECT release_id
+    FROM content_operation_releases
+    WHERE subject_id = ? AND status = 'published'
+    ORDER BY published_at DESC, created_at DESC, rowid DESC
+    LIMIT 1
+  `;
 }
 
 function approvalRowToRecord(row) {
@@ -217,6 +261,27 @@ async function readReleaseRowById(db, subjectId, releaseId, { includeSnapshot = 
   `, [subjectId, releaseId]);
 }
 
+async function readLegacySubjectContentBundle(db, subjectId) {
+  const row = await first(db, `
+    SELECT account_id, subject_id, content_json, updated_at, updated_by_account_id
+    FROM account_subject_content
+    WHERE subject_id = ?
+    ORDER BY updated_at DESC
+    LIMIT 1
+  `, [subjectId]);
+  const bundle = parseJson(row?.content_json, null);
+  if (!bundle) return null;
+  return {
+    bundle,
+    source: {
+      type: 'account_subject_content',
+      accountId: row.account_id || null,
+      updatedAt: Number(row.updated_at) || 0,
+      updatedByAccountId: row.updated_by_account_id || null,
+    },
+  };
+}
+
 async function requirePackage(db, packageId) {
   const row = await first(db, `
     SELECT *
@@ -294,6 +359,134 @@ export function createContentOperationsRepository({ db, now }) {
   const nowFactory = typeof now === 'function' ? now : () => Date.now();
 
   return {
+    async seedFirstContentOperationRelease({
+      subjectId = CONTENT_OPERATION_SUBJECT_ID,
+      seededByAccountId = null,
+      proof = null,
+    } = {}) {
+      const resolvedSubjectId = normaliseSubjectId(subjectId);
+      const existing = await readLatestReleaseRow(db, resolvedSubjectId, { includeSnapshot: true });
+      if (existing) {
+        return {
+          ...await releaseRowToRecordAsync(existing, { includeSnapshot: true }),
+          seeded: false,
+          source: { type: 'existing_release' },
+        };
+      }
+
+      const nowTs = Number(nowFactory());
+      const legacy = await readLegacySubjectContentBundle(db, resolvedSubjectId);
+      const seededBundle = legacy?.bundle || await readSeededSpellingContentBundle();
+      const validation = validateSpellingContentBundle(seededBundle);
+      if (!validation.ok) {
+        throw new BadRequestError('First content operation release seed source is invalid.', {
+          code: 'content_operation_seed_invalid',
+          subjectId: resolvedSubjectId,
+          validation: validationSummary(validation),
+        });
+      }
+
+      const summary = buildSpellingContentSummary(validation.bundle);
+      const releaseId = uid('corel');
+      const publishedAt = nowTs;
+      const snapshotHash = contentOperationHash(validation.bundle, 'release');
+      const encodedSnapshot = await encodeContentOperationSnapshot(validation.bundle);
+      const actor = normaliseString(seededByAccountId) || legacy?.source?.updatedByAccountId || null;
+      const source = legacy?.source || { type: 'bundled_fallback' };
+      const releaseProof = {
+        ...(proof && typeof proof === 'object' && !Array.isArray(proof) ? proof : {}),
+        seed: {
+          source,
+          summary,
+        },
+      };
+
+      const seedResults = await batch(db, [
+        bindStatement(db, `
+          INSERT INTO content_operation_releases (
+            release_id, subject_id, status, snapshot_json, snapshot_hash,
+            base_release_id, package_id, published_at, published_by_account_id,
+            rollback_of_release_id, proof_json, created_at
+          )
+          SELECT ?, ?, 'published', ?, ?, NULL, NULL, ?, ?, NULL, ?, ?
+          WHERE NOT EXISTS (
+            SELECT 1
+            FROM content_operation_releases
+            WHERE subject_id = ? AND status = 'published'
+          )
+        `, [
+          releaseId,
+          resolvedSubjectId,
+          encodedSnapshot,
+          snapshotHash,
+          publishedAt,
+          actor,
+          JSON.stringify(releaseProof),
+          nowTs,
+          resolvedSubjectId,
+        ]),
+        bindStatement(db, `
+          INSERT INTO content_operation_events (
+            event_id, package_id, release_id, subject_id, event_type,
+            actor_account_id, event_json, created_at
+          )
+          SELECT ?, NULL, ?, ?, ?, ?, ?, ?
+          WHERE EXISTS (
+            SELECT 1
+            FROM content_operation_releases
+            WHERE release_id = ?
+          )
+          AND NOT EXISTS (
+            SELECT 1
+            FROM content_operation_releases
+            WHERE subject_id = ? AND status = 'published' AND release_id <> ?
+          )
+        `, [
+          uid('coevt'),
+          releaseId,
+          resolvedSubjectId,
+          'release.seeded',
+          actor,
+          JSON.stringify({
+            releaseId,
+            snapshotHash,
+            source,
+            summary,
+          }),
+          nowTs,
+          releaseId,
+          resolvedSubjectId,
+          releaseId,
+        ]),
+      ]);
+
+      if (mutationChangeCount(seedResults[0]) < 1) {
+        const winner = await readLatestReleaseRow(db, resolvedSubjectId, { includeSnapshot: true });
+        return {
+          ...await releaseRowToRecordAsync(winner, { includeSnapshot: true }),
+          seeded: false,
+          source: { type: 'existing_release' },
+        };
+      }
+
+      return {
+        releaseId,
+        subjectId: resolvedSubjectId,
+        status: 'published',
+        snapshotHash,
+        snapshot: validation.bundle,
+        baseReleaseId: null,
+        packageId: null,
+        publishedAt,
+        publishedByAccountId: actor,
+        rollbackOfReleaseId: null,
+        proof: releaseProof,
+        createdAt: nowTs,
+        seeded: true,
+        source,
+      };
+    },
+
     async createContentOperationPackage({
       subjectId = CONTENT_OPERATION_SUBJECT_ID,
       templateId = 'general',
@@ -484,8 +677,9 @@ export function createContentOperationsRepository({ db, now }) {
         packageRow.base_release_id,
         { includeSnapshot: true },
       );
-      const baseSnapshot = baseReleaseRow?.snapshot_json
-        ? parseJson(baseReleaseRow.snapshot_json, null)
+      const baseRelease = await releaseRowToRecordAsync(baseReleaseRow, { includeSnapshot: true });
+      const baseSnapshot = baseRelease?.snapshot
+        ? baseRelease.snapshot
         : await readSeededSpellingContentBundle();
       const candidate = buildSpellingContentOperationCandidate(baseSnapshot, operations);
       const conflicts = [
@@ -501,6 +695,7 @@ export function createContentOperationsRepository({ db, now }) {
         errors: candidate.validation.errors,
         warnings: candidate.validation.warnings,
       };
+      const encodedCandidateSnapshot = await encodeContentOperationSnapshot(candidate.candidate);
 
       await batch(db, [
         bindStatement(db, `
@@ -518,7 +713,7 @@ export function createContentOperationsRepository({ db, now }) {
           currentReleaseRow?.release_id || null,
           candidate.operationsHash,
           candidate.candidateHash,
-          JSON.stringify(candidate.candidate),
+          encodedCandidateSnapshot,
           JSON.stringify(validationSummary),
           JSON.stringify(conflicts),
           nowTs,
@@ -731,7 +926,7 @@ export function createContentOperationsRepository({ db, now }) {
         FROM content_operation_package_candidates
         WHERE package_id = ? AND candidate_id = ?
       `, [packageId, approval.candidateId]);
-      const candidate = candidateRowToRecord(candidateRow, { includeSnapshot: true });
+      const candidate = await candidateRowToRecordAsync(candidateRow, { includeSnapshot: true });
       if (!candidate || candidate.candidateHash !== approval.candidateHash) {
         throw new ConflictError('Content operation approval does not match the candidate hash.', {
           code: 'content_operation_approval_hash_mismatch',
@@ -739,6 +934,13 @@ export function createContentOperationsRepository({ db, now }) {
         });
       }
       const currentReleaseRow = await readLatestReleaseRow(db, packageRow.subject_id);
+      if (!currentReleaseRow) {
+        throw new ConflictError('First global content operation release must be seeded before package publish.', {
+          code: 'content_operation_first_release_required',
+          packageId,
+          subjectId: packageRow.subject_id,
+        });
+      }
       if ((candidate.currentReleaseId || null) !== (currentReleaseRow?.release_id || null)) {
         throw new ConflictError('A newer content operation release was published after approval.', {
           code: 'content_operation_release_drift',
@@ -758,6 +960,7 @@ export function createContentOperationsRepository({ db, now }) {
       const releaseId = uid('corel');
       const nowTs = Number(nowFactory());
       const snapshotHash = contentOperationHash(candidate.candidate, 'release');
+      const encodedSnapshot = await encodeContentOperationSnapshot(candidate.candidate);
 
       let publishResults = [];
       try {
@@ -774,10 +977,11 @@ export function createContentOperationsRepository({ db, now }) {
               FROM content_operation_packages
               WHERE package_id = ? AND state = ?
             )
+            AND ? = (${latestPublishedReleaseIdSql()})
           `, [
             releaseId,
             packageRow.subject_id,
-            JSON.stringify(candidate.candidate),
+            encodedSnapshot,
             snapshotHash,
             candidate.currentReleaseId || packageRow.base_release_id || null,
             packageId,
@@ -787,6 +991,8 @@ export function createContentOperationsRepository({ db, now }) {
             nowTs,
             packageId,
             CONTENT_OPERATION_PACKAGE_STATES.APPROVED,
+            currentReleaseRow.release_id,
+            packageRow.subject_id,
           ]),
           bindStatement(db, `
             UPDATE content_operation_packages
@@ -854,6 +1060,15 @@ export function createContentOperationsRepository({ db, now }) {
             packageId,
           });
         }
+        if (latestPackageRow.state === CONTENT_OPERATION_PACKAGE_STATES.APPROVED) {
+          const latestReleaseRow = await readLatestReleaseRow(db, packageRow.subject_id);
+          throw new ConflictError('A newer content operation release was published before this package could publish.', {
+            code: 'content_operation_release_drift',
+            packageId,
+            candidateCurrentReleaseId: candidate.currentReleaseId || null,
+            currentReleaseId: latestReleaseRow?.release_id || null,
+          });
+        }
         throw new ConflictError('Content operation package must be approved before publish.', {
           code: 'content_operation_package_not_approved',
           packageId,
@@ -874,16 +1089,136 @@ export function createContentOperationsRepository({ db, now }) {
       };
     },
 
+    async rollbackContentOperationRelease(subjectId = CONTENT_OPERATION_SUBJECT_ID, releaseId, {
+      rolledBackByAccountId,
+      proof = null,
+    } = {}) {
+      const resolvedSubjectId = normaliseSubjectId(subjectId);
+      const actor = normaliseString(rolledBackByAccountId);
+      if (!actor) throw new BadRequestError('Content operation rollback requires an actor account id.');
+      const targetRow = await readReleaseRowById(db, resolvedSubjectId, normaliseString(releaseId), {
+        includeSnapshot: true,
+      });
+      const target = await releaseRowToRecordAsync(targetRow, { includeSnapshot: true });
+      if (!target) {
+        throw new NotFoundError('Content operation rollback target release was not found.', {
+          code: 'content_operation_release_not_found',
+          subjectId: resolvedSubjectId,
+          releaseId,
+        });
+      }
+      const currentRow = await readLatestReleaseRow(db, resolvedSubjectId);
+      const validation = validateSpellingContentBundle(target.snapshot);
+      if (!validation.ok) {
+        throw new ConflictError('Rollback target no longer validates.', {
+          code: 'content_operation_rollback_target_invalid',
+          subjectId: resolvedSubjectId,
+          releaseId,
+          validation: validationSummary(validation),
+        });
+      }
+
+      const nowTs = Number(nowFactory());
+      const rollbackReleaseId = uid('corel');
+      const snapshotHash = contentOperationHash(validation.bundle, 'release');
+      const encodedSnapshot = await encodeContentOperationSnapshot(validation.bundle);
+      const rollbackProof = {
+        ...(proof && typeof proof === 'object' && !Array.isArray(proof) ? proof : {}),
+        rollback: {
+          targetReleaseId: target.releaseId,
+          targetSnapshotHash: target.snapshotHash,
+          previousLatestReleaseId: currentRow?.release_id || null,
+        },
+      };
+
+      const rollbackResults = await batch(db, [
+        bindStatement(db, `
+          INSERT INTO content_operation_releases (
+            release_id, subject_id, status, snapshot_json, snapshot_hash,
+            base_release_id, package_id, published_at, published_by_account_id,
+            rollback_of_release_id, proof_json, created_at
+          )
+          SELECT ?, ?, 'published', ?, ?, ?, NULL, ?, ?, ?, ?, ?
+          WHERE ? = (${latestPublishedReleaseIdSql()})
+        `, [
+          rollbackReleaseId,
+          resolvedSubjectId,
+          encodedSnapshot,
+          snapshotHash,
+          currentRow?.release_id || null,
+          nowTs,
+          actor,
+          target.releaseId,
+          JSON.stringify(rollbackProof),
+          nowTs,
+          currentRow?.release_id || null,
+          resolvedSubjectId,
+        ]),
+        bindStatement(db, `
+          INSERT INTO content_operation_events (
+            event_id, package_id, release_id, subject_id, event_type,
+            actor_account_id, event_json, created_at
+          )
+          SELECT ?, NULL, ?, ?, ?, ?, ?, ?
+          WHERE EXISTS (
+            SELECT 1
+            FROM content_operation_releases
+            WHERE release_id = ?
+          )
+        `, [
+          uid('coevt'),
+          rollbackReleaseId,
+          resolvedSubjectId,
+          'release.rollback',
+          actor,
+          JSON.stringify({
+            releaseId: rollbackReleaseId,
+            rollbackOfReleaseId: target.releaseId,
+            previousLatestReleaseId: currentRow?.release_id || null,
+            snapshotHash,
+          }),
+          nowTs,
+          rollbackReleaseId,
+        ]),
+      ]);
+
+      if (mutationChangeCount(rollbackResults[0]) < 1) {
+        const latestReleaseRow = await readLatestReleaseRow(db, resolvedSubjectId);
+        throw new ConflictError('A newer content operation release was published before rollback could complete.', {
+          code: 'content_operation_release_drift',
+          subjectId: resolvedSubjectId,
+          rollbackTargetReleaseId: target.releaseId,
+          previousLatestReleaseId: currentRow?.release_id || null,
+          currentReleaseId: latestReleaseRow?.release_id || null,
+        });
+      }
+
+      return {
+        releaseId: rollbackReleaseId,
+        subjectId: resolvedSubjectId,
+        status: 'published',
+        snapshotHash,
+        snapshot: validation.bundle,
+        baseReleaseId: currentRow?.release_id || null,
+        packageId: null,
+        publishedAt: nowTs,
+        publishedByAccountId: actor,
+        rollbackOfReleaseId: target.releaseId,
+        proof: rollbackProof,
+        createdAt: nowTs,
+      };
+    },
+
     async readLatestContentOperationRelease(subjectId = CONTENT_OPERATION_SUBJECT_ID, { includeSnapshot = false } = {}) {
       const row = await readLatestReleaseRow(db, normaliseSubjectId(subjectId), { includeSnapshot });
-      return releaseRowToRecord(row, { includeSnapshot });
+      return releaseRowToRecordAsync(row, { includeSnapshot });
     },
 
     async readContentOperationRelease(subjectId = CONTENT_OPERATION_SUBJECT_ID, releaseId, { includeSnapshot = false } = {}) {
       const row = await readReleaseRowById(db, normaliseSubjectId(subjectId), normaliseString(releaseId), {
         includeSnapshot,
       });
-      return releaseRowToRecord(row, { includeSnapshot });
+      return releaseRowToRecordAsync(row, { includeSnapshot });
     },
 
     async listContentOperationReleases({ subjectId = CONTENT_OPERATION_SUBJECT_ID, includeSnapshot = false, limit = 20 } = {}) {
@@ -899,7 +1234,7 @@ export function createContentOperationsRepository({ db, now }) {
         ORDER BY published_at DESC, created_at DESC, rowid DESC
         LIMIT ?
       `, [normaliseSubjectId(subjectId), safeLimit]);
-      return rows.map((row) => releaseRowToRecord(row, { includeSnapshot }));
+      return Promise.all(rows.map((row) => releaseRowToRecordAsync(row, { includeSnapshot })));
     },
 
     async listContentOperationEvents({ packageId = null, releaseId = null, subjectId = CONTENT_OPERATION_SUBJECT_ID, limit = 50 } = {}) {

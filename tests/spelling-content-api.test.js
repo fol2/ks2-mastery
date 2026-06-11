@@ -5,6 +5,7 @@ import { readFile } from 'node:fs/promises';
 import {
   createApiPlatformRepositories,
 } from '../src/platform/core/repositories/index.js';
+import { createWorkerRepository } from '../worker/src/repository.js';
 import { cloneSerialisable } from '../src/platform/core/repositories/helpers.js';
 import {
   SPELLING_CONTENT_MODEL_VERSION,
@@ -63,6 +64,31 @@ function seedAccountLearner(DB, { accountId = 'adult-a', learnerId = 'learner-a'
     VALUES (?, ?, 'owner', 0, ?, ?)
     ON CONFLICT(account_id, learner_id) DO UPDATE SET role = excluded.role
   `).run(accountId, learnerId, now, now);
+}
+
+function seedAdultAccount(DB, { accountId = 'adult-a', platformRole = 'admin' } = {}) {
+  const now = Date.UTC(2026, 0, 1);
+  DB.db.prepare(`
+    INSERT INTO adult_accounts (id, email, display_name, platform_role, selected_learner_id, created_at, updated_at, repo_revision)
+    VALUES (?, ?, ?, ?, NULL, ?, ?, 0)
+    ON CONFLICT(id) DO UPDATE SET platform_role = excluded.platform_role
+  `).run(accountId, `${accountId}@example.test`, accountId, platformRole, now, now);
+}
+
+function writeLegacySpellingContent(DB, {
+  accountId = 'adult-a',
+  bundle,
+  updatedAt,
+  updatedByAccountId = 'admin-a',
+} = {}) {
+  DB.db.prepare(`
+    INSERT INTO account_subject_content (account_id, subject_id, content_json, updated_at, updated_by_account_id)
+    VALUES (?, 'spelling', ?, ?, ?)
+    ON CONFLICT(account_id, subject_id) DO UPDATE SET
+      content_json = excluded.content_json,
+      updated_at = excluded.updated_at,
+      updated_by_account_id = excluded.updated_by_account_id
+  `).run(accountId, JSON.stringify(bundle), updatedAt, updatedByAccountId);
 }
 
 function adminAuthSession(server, accountId = 'adult-a') {
@@ -131,6 +157,51 @@ function addExtraWordList(bundle) {
     sortIndex: 9999,
   });
   return next;
+}
+
+async function seedGlobalReleaseThenOverwriteStaleLegacy(server, {
+  accountId = 'adult-a',
+  updatedByAccountId = 'admin-a',
+} = {}) {
+  const seedTime = Date.UTC(2026, 4, 17);
+  const globalSource = publishSpellingContentBundle(addExtraWordList(SEEDED_SPELLING_CONTENT_BUNDLE), {
+    title: 'Global release cutover test',
+    notes: 'Publishes an extra word so stale legacy rows are detectable.',
+    publishedAt: seedTime,
+  });
+  writeLegacySpellingContent(server.DB, {
+    accountId,
+    bundle: globalSource,
+    updatedAt: seedTime,
+    updatedByAccountId,
+  });
+
+  const repository = createWorkerRepository({
+    env: server.env,
+    now: () => seedTime + 1,
+  });
+  const seedRelease = await repository.seedFirstContentOperationRelease({
+    seededByAccountId: updatedByAccountId,
+    proof: { source: 'stale-legacy-cutover-regression' },
+  });
+
+  const staleLegacy = cloneSerialisable(SEEDED_SPELLING_CONTENT_BUNDLE);
+  staleLegacy.draft.notes = 'Stale account_subject_content must not drive post-cutover reads.';
+  writeLegacySpellingContent(server.DB, {
+    accountId,
+    bundle: staleLegacy,
+    updatedAt: seedTime + 2,
+    updatedByAccountId,
+  });
+
+  const publishedSnapshot = seedRelease.snapshot.releases.at(-1).snapshot;
+  return {
+    seedRelease,
+    staleLegacy,
+    expectedWordCount: publishedSnapshot.words.length,
+    expectedCoreCount: publishedSnapshot.words.filter(isStatutoryCoreWord).length,
+    expectedPublishedVersion: String(Number(seedRelease.snapshot.publication.publishedVersion) || 0),
+  };
 }
 
 test('api spelling content repository hydrates the seeded published bundle and persists valid content changes', async () => {
@@ -236,6 +307,149 @@ test('worker spelling content route accepts valid Extra pool content without sta
     const reloadedResponse = await fetchAdmin(server, 'https://repo.test/api/content/spelling');
     const reloaded = await reloadedResponse.json();
     assert.equal(reloaded.content.draft.words.find((word) => word.slug === 'cephalopod').spellingPool, 'extra');
+  } finally {
+    server.close();
+  }
+});
+
+test('worker spelling content legacy write route is frozen after global release cutover', async () => {
+  const server = createWorkerRepositoryServer();
+  try {
+    const repository = createWorkerRepository({
+      env: server.env,
+      now: () => Date.UTC(2026, 4, 17),
+    });
+    const seedRelease = await repository.seedFirstContentOperationRelease({
+      seededByAccountId: 'admin-a',
+      proof: { source: 'legacy-write-cutover-test' },
+    });
+
+    const initialResponse = await fetchAdmin(server, 'https://repo.test/api/content/spelling');
+    const initial = await initialResponse.json();
+    const updated = cloneSerialisable(initial.content);
+    updated.draft.notes = 'This legacy write should be blocked after cutover.';
+
+    const response = await fetchAdmin(server, 'https://repo.test/api/content/spelling', {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        content: updated,
+        mutation: {
+          requestId: 'content-legacy-cutover-blocked-1',
+          correlationId: 'content-legacy-cutover-blocked-1',
+          expectedAccountRevision: initial.mutation.accountRevision,
+        },
+      }),
+    });
+    const payload = await response.json();
+
+    assert.equal(response.status, 409);
+    assert.equal(payload.code, 'subject_content_legacy_write_cutover');
+    assert.equal(payload.releaseId, seedRelease.releaseId);
+  } finally {
+    server.close();
+  }
+});
+
+test('worker spelling content legacy GET exports the global release after cutover', async () => {
+  const server = createWorkerRepositoryServer();
+  try {
+    const repository = createWorkerRepository({
+      env: server.env,
+      now: () => Date.UTC(2026, 4, 17),
+    });
+    const seedRelease = await repository.seedFirstContentOperationRelease({
+      seededByAccountId: 'admin-a',
+      proof: { source: 'legacy-get-cutover-test' },
+    });
+    seedAdultAccount(server.DB, { accountId: 'adult-a' });
+    seedAdultAccount(server.DB, { accountId: 'admin-a' });
+    const staleLegacy = cloneSerialisable(seedRelease.snapshot);
+    staleLegacy.draft.notes = 'Stale account_subject_content should not be exported after cutover.';
+    server.DB.db.prepare(`
+      INSERT INTO account_subject_content (account_id, subject_id, content_json, updated_at, updated_by_account_id)
+      VALUES ('adult-a', 'spelling', ?, ?, 'admin-a')
+      ON CONFLICT(account_id, subject_id) DO UPDATE SET
+        content_json = excluded.content_json,
+        updated_at = excluded.updated_at,
+        updated_by_account_id = excluded.updated_by_account_id
+    `).run(JSON.stringify(staleLegacy), Date.UTC(2026, 4, 17) + 1);
+
+    const response = await fetchAdmin(server, 'https://repo.test/api/content/spelling');
+    const payload = await response.json();
+
+    assert.equal(response.status, 200);
+    assert.equal(payload.compatibility?.source, 'content_operation_release');
+    assert.equal(payload.compatibility?.releaseId, seedRelease.releaseId);
+    assert.equal(payload.compatibility?.legacyWriteDisabled, true);
+    assert.notEqual(payload.content.draft.notes, staleLegacy.draft.notes);
+    assert.deepEqual(payload.content, seedRelease.snapshot);
+  } finally {
+    server.close();
+  }
+});
+
+test('parent and admin hubs derive spelling snapshots from the global release after cutover', async () => {
+  const server = createWorkerRepositoryServer();
+  try {
+    seedAccountLearner(server.DB, { accountId: 'adult-a', learnerId: 'learner-a' });
+    seedAdultAccount(server.DB, { accountId: 'admin-a', platformRole: 'admin' });
+    const { expectedWordCount } = await seedGlobalReleaseThenOverwriteStaleLegacy(server);
+
+    const parentResponse = await server.fetchAs(
+      'adult-a',
+      'https://repo.test/api/hubs/parent?learnerId=learner-a',
+      {},
+      { 'x-ks2-dev-platform-role': 'parent' },
+    );
+    const parentPayload = await parentResponse.json();
+    const parentSpelling = parentPayload.parentHub.progressSnapshots
+      .find((entry) => entry.subjectId === 'spelling');
+
+    assert.equal(parentResponse.status, 200);
+    assert.equal(parentSpelling.totalPublishedWords, expectedWordCount);
+
+    const adminResponse = await server.fetchAs(
+      'admin-a',
+      'https://repo.test/api/hubs/admin',
+      {},
+      { 'x-ks2-dev-platform-role': 'admin' },
+    );
+    const adminPayload = await adminResponse.json();
+
+    assert.equal(adminResponse.status, 200);
+    assert.equal(adminPayload.adminHub.contentReleaseStatus.runtimeWordCount, expectedWordCount);
+  } finally {
+    server.close();
+  }
+});
+
+test('admin ops spelling metrics use the global release after cutover', async () => {
+  const server = createWorkerRepositoryServer();
+  try {
+    seedAdultAccount(server.DB, { accountId: 'adult-a', platformRole: 'admin' });
+    seedAdultAccount(server.DB, { accountId: 'admin-a', platformRole: 'admin' });
+    const {
+      expectedWordCount,
+      expectedCoreCount,
+      expectedPublishedVersion,
+    } = await seedGlobalReleaseThenOverwriteStaleLegacy(server);
+
+    const overviewResponse = await fetchAdmin(server, 'https://repo.test/api/admin/ops/content-overview');
+    const overviewPayload = await overviewResponse.json();
+    const overviewSpelling = overviewPayload.subjects.find((entry) => entry.subjectKey === 'spelling');
+
+    assert.equal(overviewResponse.status, 200);
+    assert.equal(overviewSpelling.releaseVersion, expectedPublishedVersion);
+
+    const signalsResponse = await fetchAdmin(server, 'https://repo.test/api/admin/ops/content-quality-signals');
+    const signalsPayload = await signalsResponse.json();
+    const spelling = signalsPayload.subjectSignals.find((entry) => entry.subjectKey === 'spelling');
+
+    assert.equal(signalsResponse.status, 200);
+    assert.equal(spelling.signals.itemCoverage.status, 'available');
+    assert.equal(spelling.signals.itemCoverage.total, expectedWordCount);
+    assert.equal(spelling.signals.itemCoverage.value, expectedCoreCount);
   } finally {
     server.close();
   }

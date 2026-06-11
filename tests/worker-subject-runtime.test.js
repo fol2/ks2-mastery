@@ -55,6 +55,10 @@ async function publishSpellingWordEdit(repository, word, {
   action = 'set',
   payload = `Runtime content explanation for ${word?.word || 'word'}.`,
 } = {}) {
+  await repository.seedFirstContentOperationRelease({
+    seededByAccountId: actorAccountId,
+    proof: { source: 'worker-subject-runtime-test-helper' },
+  });
   const contentPackage = await repository.createContentOperationPackage({
     templateId: 'edit-spelling-word',
     title,
@@ -218,6 +222,10 @@ test('repository serves spelling runtime from the global content operations rele
   const repository = createWorkerRepository({ env: { DB }, now: () => 1_777_000_000_000 });
   try {
     const seeded = await readSeededSpellingContentBundle();
+    await repository.seedFirstContentOperationRelease({
+      seededByAccountId: 'admin-a',
+      proof: { source: 'worker-subject-runtime-global-release-test' },
+    });
     const word = seeded.draft.words[0];
     const explanation = `A global-release learner-facing explanation for ${word.word}.`;
     const contentPackage = await repository.createContentOperationPackage({
@@ -253,6 +261,41 @@ test('repository serves spelling runtime from the global content operations rele
     assert.equal(runtime.content.draft.words[0].explanation, explanation);
     assert.equal(runtime.content.draft.words.length, seeded.draft.words.length);
     assert.equal(runtime.summary.runtimeWordCount, seeded.releases.at(-1).snapshot.words.length);
+    assert.equal(accountContentReads.length, 0);
+  } finally {
+    DB.close();
+  }
+});
+
+test('repository runtime uses global release ahead of legacy account content after cutover', async () => {
+  const DB = createMigratedSqliteD1Database();
+  const repository = createWorkerRepository({ env: { DB }, now: () => 1_777_000_000_000 });
+  try {
+    const seeded = await readSeededSpellingContentBundle();
+    const word = seeded.draft.words[0];
+    const globalExplanation = `Global cutover explanation for ${word.word}.`;
+    const legacyExplanation = `Legacy account content explanation for ${word.word}.`;
+    await publishSpellingWordEdit(repository, word, {
+      title: 'Global release should win over legacy content',
+      payload: globalExplanation,
+    });
+
+    const legacyContent = JSON.parse(JSON.stringify(seeded));
+    legacyContent.draft.words[0].explanation = legacyExplanation;
+    DB.db.prepare(`
+      INSERT INTO adult_accounts (id, email, display_name, platform_role, selected_learner_id, created_at, updated_at, repo_revision)
+      VALUES ('adult-a', 'adult-a@example.test', 'Adult A', 'admin', NULL, ?, ?, 0)
+    `).run(1_777_000_000_000, 1_777_000_000_000);
+    DB.db.prepare(`
+      INSERT INTO account_subject_content (account_id, subject_id, content_json, updated_at, updated_by_account_id)
+      VALUES ('adult-a', 'spelling', ?, ?, 'adult-a')
+    `).run(JSON.stringify(legacyContent), 1_777_000_000_100);
+
+    DB.clearQueryLog();
+    const runtime = await repository.readSpellingRuntimeContent('adult-a', 'spelling');
+    const accountContentReads = accountContentQueries(DB);
+
+    assert.equal(runtime.content.draft.words[0].explanation, globalExplanation);
     assert.equal(accountContentReads.length, 0);
   } finally {
     DB.close();

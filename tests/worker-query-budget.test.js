@@ -30,16 +30,17 @@ import { createApiPlatformRepositories } from '../src/platform/core/repositories
 // child_subject_state unbounded + game_state + practice_sessions +
 // event_log + spelling content). P7 removed the duplicate account point read.
 // May 2026 hotfix removed the spelling content table read from bootstrap
-// public read-model hydration, so the measured runtime path is now 9.
-// Content Operations Centre restored learner-visible global release checks
-// without returning to account_subject_content, so the measured path is 11.
+// public read-model hydration, lowering the path to 9. Content Operations
+// Centre adds one bounded global release revision lookup, so the measured path
+// is back to 10 without returning to account_subject_content.
 // Headroom +1.
-const MEASURED_BOOTSTRAP_MULTI_LEARNER = 11;
+const MEASURED_BOOTSTRAP_MULTI_LEARNER = 10;
 const BUDGET_BOOTSTRAP_MULTI_LEARNER = MEASURED_BOOTSTRAP_MULTI_LEARNER + 1;
 
 // Measured: 5 queries for the notModified probe (ops_status JOIN +
-// ensureAccount upsert + account select + membership list +
-// list_revision). Short-circuit before any learner data is loaded.
+// ensureAccount upsert + membership list + list_revision +
+// content-operation release revision). Short-circuit before any learner data
+// is loaded.
 const BUDGET_BOOTSTRAP_NOT_MODIFIED = 6;
 
 // U6 established: projection hit path — zero event_log reads. Measured:
@@ -60,10 +61,11 @@ const BUDGET_PARENT_RECENT_SESSIONS = 7;
 // P7 measured: 10 queries for GET bootstrap full bundle. May 2026 hotfix
 // removed the spelling content table read from public read-model hydration,
 // leaving the route-level account snapshot reuse and 9 measured queries.
-// Content Operations Centre restored learner-visible global release checks
-// without returning to account_subject_content, so the measured path is 11.
+// Content Operations Centre adds one bounded global release revision lookup,
+// so the measured path is back to 10 without returning to
+// account_subject_content.
 // Headroom +1.
-const MEASURED_BOOTSTRAP_GET_FULL = 11;
+const MEASURED_BOOTSTRAP_GET_FULL = 10;
 const BUDGET_BOOTSTRAP_GET_FULL = MEASURED_BOOTSTRAP_GET_FULL + 1;
 const MEASURED_BOOTSTRAP_GET_WITH_CACHED_MONSTER_POINTER = MEASURED_BOOTSTRAP_GET_FULL - 1;
 

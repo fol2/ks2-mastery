@@ -6,6 +6,9 @@ import { createMigratedSqliteD1Database } from './helpers/sqlite-d1.js';
 import {
   readSeededSpellingContentBundle,
 } from '../worker/src/generated-spelling-content-seed.js';
+import {
+  isEncodedContentOperationSnapshot,
+} from '../src/subjects/spelling/content/release-snapshot-codec.js';
 
 async function publishWordEdit(repository, word, {
   actorAccountId = 'admin-a',
@@ -13,6 +16,10 @@ async function publishWordEdit(repository, word, {
   fieldPath = 'explanation',
   payload = `Published learner-facing explanation for ${word?.word || 'word'}.`,
 } = {}) {
+  await repository.seedFirstContentOperationRelease({
+    seededByAccountId: actorAccountId,
+    proof: { source: 'repository-test-helper' },
+  });
   const contentPackage = await repository.createContentOperationPackage({
     templateId: 'edit-spelling-word',
     title,
@@ -39,6 +46,135 @@ async function publishWordEdit(repository, word, {
   return { contentPackage, candidate, release };
 }
 
+test('content operations repository blocks normal package publish before first global release seed', async () => {
+  const DB = createMigratedSqliteD1Database();
+  const repository = createWorkerRepository({
+    env: { DB },
+    now: () => 1_777_000_000_000,
+  });
+
+  try {
+    const seeded = await readSeededSpellingContentBundle();
+    const word = seeded.draft.words[0];
+    const contentPackage = await repository.createContentOperationPackage({
+      templateId: 'edit-spelling-word',
+      title: 'Publish before cutover seed',
+      createdByAccountId: 'admin-a',
+    });
+    await repository.appendContentOperation(contentPackage.packageId, {
+      entityType: 'spelling.word',
+      entityId: word.slug,
+      fieldPath: 'explanation',
+      action: 'set',
+      payload: `Unseeded package explanation for ${word.word}.`,
+    }, {
+      actorAccountId: 'admin-a',
+    });
+    const candidate = await repository.buildContentOperationCandidate(contentPackage.packageId, {
+      actorAccountId: 'admin-a',
+    });
+    await repository.approveContentOperationCandidate(contentPackage.packageId, candidate.candidateId, {
+      approvedByAccountId: 'admin-a',
+    });
+
+    await assert.rejects(
+      () => repository.publishContentOperationPackage(contentPackage.packageId, {
+        publishedByAccountId: 'admin-a',
+      }),
+      (error) => {
+        assert.equal(error.extra?.code, 'content_operation_first_release_required');
+        assert.equal(error.extra?.packageId, contentPackage.packageId);
+        return true;
+      },
+    );
+  } finally {
+    DB.close();
+  }
+});
+
+test('content operations repository seeds the first global release idempotently from bundled content', async () => {
+  const DB = createMigratedSqliteD1Database();
+  const repository = createWorkerRepository({
+    env: { DB },
+    now: () => 1_777_000_000_000,
+  });
+
+  try {
+    const seeded = await readSeededSpellingContentBundle();
+    const first = await repository.seedFirstContentOperationRelease({
+      seededByAccountId: 'admin-a',
+      proof: { source: 'seed-idempotency-test' },
+    });
+    const second = await repository.seedFirstContentOperationRelease({
+      seededByAccountId: 'admin-a',
+      proof: { source: 'seed-idempotency-test-repeat' },
+    });
+
+    assert.equal(first.seeded, true);
+    assert.equal(first.source.type, 'bundled_fallback');
+    assert.equal(first.snapshot.publication.currentReleaseId, seeded.publication.currentReleaseId);
+    assert.equal(second.seeded, false);
+    assert.equal(second.releaseId, first.releaseId);
+    assert.deepEqual(second.snapshot, first.snapshot);
+
+    const rows = DB.db.prepare(`
+      SELECT release_id, snapshot_json
+      FROM content_operation_releases
+      WHERE subject_id = 'spelling'
+    `).all();
+    assert.equal(rows.length, 1);
+    assert.equal(isEncodedContentOperationSnapshot(rows[0].snapshot_json), true);
+    assert.ok(Buffer.byteLength(rows[0].snapshot_json, 'utf8') < 2_000_000);
+  } finally {
+    DB.close();
+  }
+});
+
+test('content operations repository rollback writes a new latest release pointing at the target', async () => {
+  const DB = createMigratedSqliteD1Database();
+  const repository = createWorkerRepository({
+    env: { DB },
+    now: () => 1_777_000_000_000,
+  });
+
+  try {
+    const seeded = await readSeededSpellingContentBundle();
+    const seedRelease = await repository.seedFirstContentOperationRelease({
+      seededByAccountId: 'admin-a',
+      proof: { source: 'rollback-test-seed' },
+    });
+    const word = seeded.draft.words[0];
+    const changed = await publishWordEdit(repository, word, {
+      title: 'Release to roll back',
+      payload: `Temporary rollback test explanation for ${word.word}.`,
+    });
+
+    assert.notEqual(changed.release.snapshotHash, seedRelease.snapshotHash);
+
+    const rollback = await repository.rollbackContentOperationRelease('spelling', seedRelease.releaseId, {
+      rolledBackByAccountId: 'admin-a',
+      proof: { source: 'rollback-test' },
+    });
+    const latest = await repository.readLatestContentOperationRelease('spelling', {
+      includeSnapshot: true,
+    });
+
+    assert.equal(rollback.rollbackOfReleaseId, seedRelease.releaseId);
+    assert.equal(rollback.baseReleaseId, changed.release.releaseId);
+    assert.equal(rollback.snapshotHash, seedRelease.snapshotHash);
+    assert.deepEqual(rollback.snapshot, seedRelease.snapshot);
+    assert.equal(latest.releaseId, rollback.releaseId);
+    assert.equal(latest.rollbackOfReleaseId, seedRelease.releaseId);
+
+    const events = await repository.listContentOperationEvents({
+      releaseId: rollback.releaseId,
+    });
+    assert.ok(events.some((event) => event.eventType === 'release.rollback'));
+  } finally {
+    DB.close();
+  }
+});
+
 test('content operations repository publishes an approved package as a global release', async () => {
   const DB = createMigratedSqliteD1Database();
   const repository = createWorkerRepository({
@@ -48,6 +184,10 @@ test('content operations repository publishes an approved package as a global re
 
   try {
     const seeded = await readSeededSpellingContentBundle();
+    const seedRelease = await repository.seedFirstContentOperationRelease({
+      seededByAccountId: 'admin-a',
+      proof: { source: 'repository-lifecycle-test' },
+    });
     const word = seeded.draft.words[0];
     const explanation = `A package-approved learner-facing explanation for ${word.word}.`;
 
@@ -60,8 +200,8 @@ test('content operations repository publishes an approved package as a global re
     });
 
     assert.equal(contentPackage.state, 'draft');
-    assert.equal(contentPackage.baseReleaseId, null);
-    assert.equal(contentPackage.baseReleaseHash, null);
+    assert.equal(contentPackage.baseReleaseId, seedRelease.releaseId);
+    assert.equal(contentPackage.baseReleaseHash, seedRelease.snapshotHash);
 
     const operation = await repository.appendContentOperation(contentPackage.packageId, {
       entityType: 'spelling.word',
@@ -84,6 +224,13 @@ test('content operations repository publishes an approved package as a global re
     assert.equal(candidate.validation.ok, true);
     assert.equal(candidate.candidate.draft.words[0].explanation, explanation);
     assert.match(candidate.candidateHash, /^candidate-/);
+    const candidateStorage = DB.db.prepare(`
+      SELECT candidate_snapshot_json
+      FROM content_operation_package_candidates
+      WHERE candidate_id = ?
+    `).get(candidate.candidateId);
+    assert.equal(isEncodedContentOperationSnapshot(candidateStorage.candidate_snapshot_json), true);
+    assert.ok(Buffer.byteLength(candidateStorage.candidate_snapshot_json, 'utf8') < 2_000_000);
 
     const approval = await repository.approveContentOperationCandidate(
       contentPackage.packageId,
@@ -105,6 +252,13 @@ test('content operations repository publishes an approved package as a global re
     assert.equal(release.status, 'published');
     assert.equal(release.packageId, contentPackage.packageId);
     assert.equal(release.snapshot.draft.words[0].explanation, explanation);
+    const releaseStorage = DB.db.prepare(`
+      SELECT snapshot_json
+      FROM content_operation_releases
+      WHERE release_id = ?
+    `).get(release.releaseId);
+    assert.equal(isEncodedContentOperationSnapshot(releaseStorage.snapshot_json), true);
+    assert.ok(Buffer.byteLength(releaseStorage.snapshot_json, 'utf8') < 2_000_000);
 
     const latest = await repository.readLatestContentOperationRelease('spelling', {
       includeSnapshot: true,
@@ -268,6 +422,10 @@ test('content operations repository blocks approving a candidate after release d
 
   try {
     const seeded = await readSeededSpellingContentBundle();
+    const seedRelease = await repository.seedFirstContentOperationRelease({
+      seededByAccountId: 'admin-a',
+      proof: { source: 'repository-release-drift-test' },
+    });
     const firstWord = seeded.draft.words[0];
     const secondWord = seeded.draft.words[1];
 
@@ -319,7 +477,7 @@ test('content operations repository blocks approving a candidate after release d
       }),
       (error) => {
         assert.equal(error.extra?.code, 'content_operation_candidate_release_drift');
-        assert.equal(error.extra?.candidateCurrentReleaseId, null);
+        assert.equal(error.extra?.candidateCurrentReleaseId, seedRelease.releaseId);
         assert.equal(error.extra?.currentReleaseId, newerRelease.releaseId);
         return true;
       },
@@ -338,6 +496,10 @@ test('content operations repository keeps published packages immutable', async (
 
   try {
     const seeded = await readSeededSpellingContentBundle();
+    await repository.seedFirstContentOperationRelease({
+      seededByAccountId: 'admin-a',
+      proof: { source: 'repository-immutability-test' },
+    });
     const word = seeded.draft.words[0];
     const contentPackage = await repository.createContentOperationPackage({
       templateId: 'edit-spelling-word',
@@ -400,6 +562,10 @@ test('content operations repository blocks stale package approval after release 
 
   try {
     const seeded = await readSeededSpellingContentBundle();
+    const seedRelease = await repository.seedFirstContentOperationRelease({
+      seededByAccountId: 'admin-a',
+      proof: { source: 'repository-stale-package-test' },
+    });
     const firstWord = seeded.draft.words[0];
     const secondWord = seeded.draft.words[1];
 
@@ -449,7 +615,7 @@ test('content operations repository blocks stale package approval after release 
     assert.equal(staleCandidate.currentReleaseId, newerRelease.releaseId);
     assert.equal(staleCandidate.conflicts.length, 1);
     assert.equal(staleCandidate.conflicts[0].code, 'base_release_changed');
-    assert.equal(staleCandidate.conflicts[0].packageBaseReleaseId, null);
+    assert.equal(staleCandidate.conflicts[0].packageBaseReleaseId, seedRelease.releaseId);
     assert.equal(staleCandidate.conflicts[0].currentReleaseId, newerRelease.releaseId);
 
     await assert.rejects(
@@ -472,6 +638,10 @@ test('content operations repository blocks publish when approval becomes stale',
 
   try {
     const seeded = await readSeededSpellingContentBundle();
+    const seedRelease = await repository.seedFirstContentOperationRelease({
+      seededByAccountId: 'admin-a',
+      proof: { source: 'repository-stale-publish-test' },
+    });
     const firstWord = seeded.draft.words[0];
     const secondWord = seeded.draft.words[1];
 
@@ -526,7 +696,7 @@ test('content operations repository blocks publish when approval becomes stale',
       }),
       (error) => {
         assert.equal(error.extra?.code, 'content_operation_release_drift');
-        assert.equal(error.extra?.candidateCurrentReleaseId, null);
+        assert.equal(error.extra?.candidateCurrentReleaseId, seedRelease.releaseId);
         assert.equal(error.extra?.currentReleaseId, newerRelease.releaseId);
         return true;
       },
