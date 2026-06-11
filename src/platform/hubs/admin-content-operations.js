@@ -145,6 +145,26 @@ export function normaliseContentOperationActor(actor = null) {
   };
 }
 
+export function normaliseContentOperationCandidate(entry = null) {
+  const safe = isPlainObject(entry) ? entry : {};
+  const validation = normaliseBlockerSection(safe.validation);
+  if (!safe.validation?.status && typeof safe.validation?.ok === 'boolean') {
+    validation.status = safe.validation.ok ? 'passed' : 'blocked';
+  }
+  return {
+    candidateId: asString(safe.candidateId),
+    packageId: asString(safe.packageId),
+    baseReleaseId: asNullableString(safe.baseReleaseId),
+    currentReleaseId: asNullableString(safe.currentReleaseId),
+    operationsHash: asString(safe.operationsHash),
+    candidateHash: asString(safe.candidateHash),
+    validation,
+    blockers: normaliseContentOperationBlockers(safe.blockers),
+    conflicts: asArray(safe.conflicts),
+    createdAt: asTs(safe.createdAt),
+  };
+}
+
 export function normaliseContentOperationPackage(entry = null) {
   const safe = isPlainObject(entry) ? entry : {};
   const state = asString(safe.state, 'draft');
@@ -174,6 +194,7 @@ export function normaliseContentOperationPackage(entry = null) {
     supersededByPackageId: asNullableString(safe.supersededByPackageId),
     operationCount,
     operations,
+    latestCandidate: safe.latestCandidate ? normaliseContentOperationCandidate(safe.latestCandidate) : null,
     blockers: normaliseContentOperationBlockers(safe.blockers),
   };
 }

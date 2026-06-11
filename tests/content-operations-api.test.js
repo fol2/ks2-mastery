@@ -274,7 +274,13 @@ test('content operations API supports admin package lifecycle through separate a
     const detail = await readPayload(detailResponse);
     assert.equal(detailResponse.status, 200);
     assert.equal(detail.package.state, 'published');
+    assert.equal(detail.package.latestCandidate.candidateId, validated.candidate.candidateId);
+    assert.equal(detail.package.latestCandidate.candidateHash, validated.candidate.candidateHash);
     assert.ok(detail.events.some((event) => event.eventType === 'package.approved'));
+    assert.ok(detail.events.some((event) => (
+      event.eventType === 'package.approved'
+        && event.event.candidateHash === validated.candidate.candidateHash
+    )));
     assert.ok(detail.events.some((event) => event.eventType === 'package.published'));
 
     const overviewResponse = await server.fetchAs(

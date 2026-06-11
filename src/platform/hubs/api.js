@@ -283,6 +283,62 @@ export function createHubApi({
       const url = buildRequestUrl(baseUrl, `/api/admin/content-operations/packages/${safePackageId}`);
       return fetchHubJson(fetch, url, { method: 'GET' }, authSession);
     },
+    async validateContentOperationPackage({ packageId, includeSnapshot = false, mutation } = {}) {
+      if (!packageId) throw new TypeError('Content operation package id is required.');
+      const safePackageId = encodeURIComponent(String(packageId));
+      const url = buildRequestUrl(baseUrl, `/api/admin/content-operations/packages/${safePackageId}/validate`);
+      return fetchHubJson(fetch, url, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          includeSnapshot: Boolean(includeSnapshot),
+          mutation,
+        }),
+      }, authSession);
+    },
+    async approveContentOperationPackage({
+      packageId,
+      candidateId,
+      notes = '',
+      audioFallback = null,
+      assetSummary = null,
+      mutation,
+    } = {}) {
+      if (!packageId) throw new TypeError('Content operation package id is required.');
+      if (!candidateId) throw new TypeError('Content operation candidate id is required.');
+      const safePackageId = encodeURIComponent(String(packageId));
+      const url = buildRequestUrl(baseUrl, `/api/admin/content-operations/packages/${safePackageId}/approve`);
+      return fetchHubJson(fetch, url, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          candidateId,
+          notes,
+          audioFallback,
+          assetSummary,
+          mutation,
+        }),
+      }, authSession);
+    },
+    async publishContentOperationPackage({
+      packageId,
+      proof = null,
+      includeSnapshot = false,
+      mutation,
+    } = {}) {
+      if (!packageId) throw new TypeError('Content operation package id is required.');
+      const safePackageId = encodeURIComponent(String(packageId));
+      const url = buildRequestUrl(baseUrl, `/api/admin/content-operations/packages/${safePackageId}/publish`);
+      return fetchHubJson(fetch, url, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          proof,
+          includeSnapshot: Boolean(includeSnapshot),
+          mutation,
+        }),
+      }, authSession);
+    },
     async readContentOperationReleases({ limit = 20, includeSnapshot = false } = {}) {
       const url = buildRequestUrl(
         baseUrl,

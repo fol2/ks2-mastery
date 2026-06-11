@@ -1042,7 +1042,15 @@ export function createContentOperationsRepository({ db, now }) {
           packageRow.subject_id,
           'package.approved',
           actor,
-          JSON.stringify({ approvalId, candidateId, candidateHash: candidate.candidateHash }),
+          JSON.stringify({
+            approvalId,
+            candidateId,
+            candidateHash: candidate.candidateHash,
+            notes: normaliseString(notes),
+            validationSummary: candidate.validation,
+            audioFallback,
+            assetSummary,
+          }),
           nowTs,
         ]),
       ]);

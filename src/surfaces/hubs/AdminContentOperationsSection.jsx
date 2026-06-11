@@ -4,6 +4,7 @@ import { formatTimestamp } from './hub-utils.js';
 import {
   CONTENT_OPERATION_DETAIL_TABS,
   CONTENT_OPERATION_LANES,
+  normaliseContentOperationCandidate,
   normaliseContentOperationPackage,
   normaliseContentOperationsOverview,
   normaliseContentOperationsPackageDetail,
@@ -30,6 +31,31 @@ const DETAIL_TAB_BLOCKER_SECTIONS = Object.freeze({
   monstersAssets: 'assets',
   heroCodex: 'exposure',
 });
+
+const CONTENT_OPERATION_CAPABILITIES = Object.freeze({
+  EDIT: 'content_operations.edit',
+  APPROVE: 'content_operations.approve',
+  PUBLISH: 'content_operations.publish',
+});
+
+function actorCan(actor, capability) {
+  return Boolean(actor?.capabilities?.[capability]);
+}
+
+function contentOperationMutation(action, packageId) {
+  const safeAction = String(action || 'mutation').replace(/[^a-z0-9_-]/gi, '-').toLowerCase();
+  const safePackageId = String(packageId || 'package').replace(/[^a-z0-9_-]/gi, '-').toLowerCase();
+  return {
+    requestId: `content-ops-${safeAction}-${safePackageId}-${Date.now()}`,
+  };
+}
+
+function actionMessage(action) {
+  if (action === 'validate') return 'Candidate validated.';
+  if (action === 'approve') return 'Candidate approved.';
+  if (action === 'publish') return 'Package published.';
+  return 'Package action completed.';
+}
 
 function collectLanePackages(overview) {
   const seen = new Set();
@@ -86,6 +112,46 @@ function blockerSectionHasSignals(section) {
 function hasAudioOrAssetSignals(contentPackage) {
   return blockerSectionHasSignals(contentPackage.blockers?.audio)
     || blockerSectionHasSignals(contentPackage.blockers?.assets);
+}
+
+function latestCandidateForPackage(contentPackage, lifecycleState) {
+  if (
+    lifecycleState?.candidate
+    && lifecycleState.packageId === contentPackage.packageId
+  ) {
+    return normaliseContentOperationCandidate(lifecycleState.candidate);
+  }
+  return contentPackage.latestCandidate || null;
+}
+
+function candidateHasApprovalBlockers(candidate) {
+  if (!candidate) return true;
+  return candidate.blockers.blockingSections
+    .filter((section) => section !== 'publishReadiness')
+    .length > 0;
+}
+
+function formatCompactJson(value) {
+  if (value == null) return '';
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return String(value);
+  }
+}
+
+function eventDetailText(event) {
+  const payload = event?.event && typeof event.event === 'object' && !Array.isArray(event.event)
+    ? event.event
+    : null;
+  if (!payload) return '';
+  const parts = [
+    payload.candidateHash ? `candidate ${payload.candidateHash}` : '',
+    payload.snapshotHash ? `snapshot ${payload.snapshotHash}` : '',
+    payload.releaseId ? `release ${payload.releaseId}` : '',
+    payload.notes ? `notes: ${payload.notes}` : '',
+  ].filter(Boolean);
+  return parts.length ? parts.join(' - ') : formatCompactJson(payload);
 }
 
 function PackageStateChip({ contentPackage }) {
@@ -340,6 +406,147 @@ function PublishedAreaPanel({ activeTab, latestRelease, selectedPackageId, selec
   );
 }
 
+function PackageLifecyclePanel({
+  contentPackage,
+  actor,
+  lifecycleState,
+  actionAvailability = {},
+  onRunAction,
+}) {
+  const [notes, setNotes] = React.useState('');
+  const candidate = latestCandidateForPackage(contentPackage, lifecycleState);
+  const canEdit = actorCan(actor, CONTENT_OPERATION_CAPABILITIES.EDIT);
+  const canApprove = actorCan(actor, CONTENT_OPERATION_CAPABILITIES.APPROVE);
+  const canPublish = actorCan(actor, CONTENT_OPERATION_CAPABILITIES.PUBLISH);
+  const isRunning = Boolean(
+    lifecycleState?.running
+      && lifecycleState.packageId === contentPackage.packageId
+  );
+  const activeAction = isRunning ? lifecycleState.action : '';
+  const actionError = lifecycleState?.packageId === contentPackage.packageId
+    ? lifecycleState.error
+    : null;
+  const actionMessageText = lifecycleState?.packageId === contentPackage.packageId
+    ? lifecycleState.message
+    : '';
+  const approvalBlocked = candidateHasApprovalBlockers(candidate);
+  const validateDisabled = !actionAvailability.validate || !canEdit || isRunning || contentPackage.state === 'published';
+  const approveDisabled = !canApprove
+    || !actionAvailability.approve
+    || isRunning
+    || !candidate?.candidateId
+    || approvalBlocked
+    || contentPackage.state === 'published';
+  const publishDisabled = !canPublish
+    || !actionAvailability.publish
+    || isRunning
+    || contentPackage.state !== 'approved';
+
+  const run = (action) => {
+    if (!onRunAction) return;
+    onRunAction(action, {
+      packageId: contentPackage.packageId,
+      candidateId: candidate?.candidateId || '',
+      candidateHash: candidate?.candidateHash || '',
+      notes,
+    });
+  };
+
+  return (
+    <section className="content-ops-lifecycle" aria-label="Package lifecycle">
+      <div className="content-ops-lifecycle-header">
+        <div>
+          <div className="eyebrow">Lifecycle</div>
+          <h5>Validate, approve, publish</h5>
+        </div>
+        <div className="chip-row content-ops-chip-wrap">
+          <span className="chip">Edit {canEdit ? 'allowed' : 'locked'}</span>
+          <span className="chip">Approve {canApprove ? 'allowed' : 'locked'}</span>
+          <span className="chip">Publish {canPublish ? 'allowed' : 'locked'}</span>
+        </div>
+      </div>
+      <div className="content-ops-candidate-grid">
+        <MetricTile
+          label="Candidate"
+          value={candidate?.candidateId || 'Not built'}
+          detail={candidate?.createdAt ? formatTimestamp(candidate.createdAt) : 'Run validation first'}
+        />
+        <MetricTile
+          label="Candidate hash"
+          value={candidate?.candidateHash || 'Pending'}
+          detail={candidate?.operationsHash ? `Operations ${candidate.operationsHash}` : 'Operations hash pending'}
+        />
+        <MetricTile
+          label="Release base"
+          value={candidate?.baseReleaseId || contentPackage.baseReleaseId || 'First release'}
+          detail={`Current ${candidate?.currentReleaseId || 'bundled fallback'}`}
+        />
+        <MetricTile
+          label="Validation"
+          value={candidate?.validation?.status || contentPackage.blockers.validation.status}
+          detail={`${String(candidate?.validation?.errorCount || 0)} errors, ${String(candidate?.validation?.warningCount || 0)} warnings`}
+        />
+      </div>
+      <div className="content-ops-lifecycle-controls">
+        <label className="content-ops-notes-field">
+          <span className="small muted">Approval notes</span>
+          <textarea
+            value={notes}
+            onChange={(event) => setNotes(event.target.value)}
+            rows={3}
+            data-content-ops-approval-notes="true"
+          />
+        </label>
+        <div className="actions content-ops-lifecycle-actions">
+          <button
+            type="button"
+            className="btn secondary"
+            disabled={validateDisabled}
+            aria-busy={activeAction === 'validate' ? 'true' : undefined}
+            data-content-ops-action="validate"
+            onClick={() => run('validate')}
+          >
+            Validate candidate
+          </button>
+          <button
+            type="button"
+            className="btn secondary"
+            disabled={approveDisabled}
+            aria-busy={activeAction === 'approve' ? 'true' : undefined}
+            data-content-ops-action="approve"
+            onClick={() => run('approve')}
+          >
+            Approve candidate
+          </button>
+          <button
+            type="button"
+            className="btn primary"
+            disabled={publishDisabled}
+            aria-busy={activeAction === 'publish' ? 'true' : undefined}
+            data-content-ops-action="publish"
+            onClick={() => run('publish')}
+          >
+            Publish package
+          </button>
+        </div>
+      </div>
+      {approvalBlocked && candidate ? (
+        <BlockerSummary blockers={candidate.blockers} sectionKey="validation" />
+      ) : null}
+      {actionError ? (
+        <div className="feedback warn admin-note-spaced" data-content-ops-action-error="true">
+          <strong>{actionError.code}</strong>
+          <div>{actionError.message}</div>
+        </div>
+      ) : actionMessageText ? (
+        <div className="feedback good admin-note-spaced" data-content-ops-action-message="true">
+          {actionMessageText}
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
 function PackageDetailBody({ contentPackage, activeTab, events }) {
   if (activeTab === 'spelling') {
     return (
@@ -383,6 +590,10 @@ function PackageDetailBody({ contentPackage, activeTab, events }) {
               <li key={event.eventId}>
                 <strong>{event.eventType}</strong>
                 <span className="small muted"> - {formatTimestamp(event.createdAt)}</span>
+                {event.actorAccountId ? <span className="small muted"> - {event.actorAccountId}</span> : null}
+                {eventDetailText(event) ? (
+                  <div className="small muted content-ops-event-detail">{eventDetailText(event)}</div>
+                ) : null}
               </li>
             ))}
           </ul>
@@ -413,6 +624,10 @@ function PackageDetail({
   detailErrorId,
   activeTab,
   onSelectTab,
+  actor,
+  lifecycleState,
+  lifecycleActionAvailability,
+  onRunLifecycleAction,
 }) {
   const contentPackage = detail?.package || null;
   if (!selectedPackageId) {
@@ -456,6 +671,13 @@ function PackageDetail({
           ) : null}
         </div>
       </div>
+      <PackageLifecyclePanel
+        contentPackage={contentPackage}
+        actor={actor}
+        lifecycleState={lifecycleState}
+        actionAvailability={lifecycleActionAvailability}
+        onRunAction={onRunLifecycleAction}
+      />
       <DetailTabNav activeTab={activeTab} onSelect={onSelectTab} />
       <div className="content-ops-detail-body" role="tabpanel">
         <PackageDetailBody
@@ -545,6 +767,16 @@ export function AdminContentOperationsSection({
   const [detailErrorId, setDetailErrorId] = React.useState('');
   const [refreshError, setRefreshError] = React.useState(null);
   const [refreshedAt, setRefreshedAt] = React.useState(hasSeedData ? Date.now() : null);
+  const [lifecycleState, setLifecycleState] = React.useState({
+    packageId: '',
+    action: '',
+    running: false,
+    message: '',
+    error: null,
+    candidate: null,
+    approval: null,
+    release: null,
+  });
   const detailRequestRef = React.useRef({ id: '', seq: 0 });
   const refreshRequestRef = React.useRef(0);
   const api = actions?.contentOperationsApi || null;
@@ -657,6 +889,84 @@ export function AdminContentOperationsSection({
     selectedPackageId,
   ]);
 
+  const runLifecycleAction = React.useCallback(async (action, {
+    packageId,
+    candidateId = '',
+    candidateHash = '',
+    notes = '',
+  } = {}) => {
+    if (!api || !packageId) return;
+    setLifecycleState((current) => ({
+      ...current,
+      packageId,
+      action,
+      running: true,
+      message: '',
+      error: null,
+    }));
+    try {
+      let payload = null;
+      if (action === 'validate') {
+        if (!api.validatePackage) throw new Error('Validate action is not available.');
+        payload = await api.validatePackage({
+          packageId,
+          includeSnapshot: false,
+          mutation: contentOperationMutation(action, packageId),
+        });
+      } else if (action === 'approve') {
+        if (!api.approvePackage) throw new Error('Approve action is not available.');
+        payload = await api.approvePackage({
+          packageId,
+          candidateId,
+          notes,
+          mutation: contentOperationMutation(action, packageId),
+        });
+      } else if (action === 'publish') {
+        if (!api.publishPackage) throw new Error('Publish action is not available.');
+        payload = await api.publishPackage({
+          packageId,
+          proof: {
+            source: 'content-operations-centre',
+            packageId,
+            candidateId: candidateId || null,
+            candidateHash: candidateHash || null,
+            approvalNotes: notes || null,
+          },
+          mutation: contentOperationMutation(action, packageId),
+        });
+      }
+      const nextCandidate = payload?.candidate
+        ? normaliseContentOperationCandidate(payload.candidate)
+        : null;
+      setLifecycleState((current) => ({
+        ...current,
+        packageId,
+        action,
+        running: false,
+        message: actionMessage(action),
+        error: null,
+        candidate: nextCandidate || (current.packageId === packageId ? current.candidate : null),
+        approval: payload?.approval || null,
+        release: payload?.release || null,
+      }));
+      if (api.readPackage) {
+        await loadPackageDetail(packageId);
+      }
+      if (action !== 'validate' && api.readOverview) {
+        await refresh();
+      }
+    } catch (error) {
+      setLifecycleState((current) => ({
+        ...current,
+        packageId,
+        action,
+        running: false,
+        message: '',
+        error: errorEnvelope(error, `content_operations_${action}_failed`),
+      }));
+    }
+  }, [api, loadPackageDetail, refresh]);
+
   const latestRelease = overview.latestRelease;
   const primaryData = overview.openPackageCount || packages.length || releases.length || latestRelease ? {
     overview,
@@ -672,6 +982,12 @@ export function AdminContentOperationsSection({
       ? { package: normaliseContentOperationPackage(selectedSummary), events: [] }
       : { package: null, events: [] });
   const warningSectionCount = packages.reduce((sum, entry) => sum + entry.blockers.warningCount, 0);
+  const detailActor = safeDetail.actor?.accountId ? safeDetail.actor : overview.actor;
+  const lifecycleActionAvailability = {
+    validate: Boolean(api?.validatePackage),
+    approve: Boolean(api?.approvePackage),
+    publish: Boolean(api?.publishPackage),
+  };
 
   return (
     <AdminPanelFrame
@@ -731,6 +1047,10 @@ export function AdminContentOperationsSection({
           detailErrorId={detailErrorId}
           activeTab={activeDetailTab}
           onSelectTab={setActiveDetailTab}
+          actor={detailActor}
+          lifecycleState={lifecycleState}
+          lifecycleActionAvailability={lifecycleActionAvailability}
+          onRunLifecycleAction={runLifecycleAction}
         />
       ) : null}
 

@@ -65,6 +65,30 @@ const contentPackage = {
   },
 };
 
+const cleanLifecycleBlockers = {
+  validation: { status: 'passed', errorCount: 0, warningCount: 0, errors: [], warnings: [] },
+  conflicts: { status: 'passed', count: 0, items: [] },
+  audio: { status: 'passed', blockers: [], warnings: [] },
+  assets: { status: 'passed', blockers: [], warnings: [] },
+  rewards: { status: 'passed', blockers: [], warnings: [] },
+  visibility: { status: 'passed', blockers: [], warnings: [] },
+  exposure: { status: 'passed', blockers: [], warnings: [] },
+  publishReadiness: { status: 'not_ready', blockers: ['approval_required'], warnings: [] },
+};
+
+const lifecycleCandidate = {
+  candidateId: 'cand-ready-1',
+  packageId: 'pkg-draft-1',
+  baseReleaseId: 'rel-global-1',
+  currentReleaseId: 'rel-global-1',
+  operationsHash: 'ops-ready-1',
+  candidateHash: 'candidate-ready-1',
+  validation: { ok: true, errorCount: 0, warningCount: 0, errors: [], warnings: [] },
+  blockers: cleanLifecycleBlockers,
+  conflicts: [],
+  createdAt: Date.UTC(2026, 5, 11, 10, 5, 0),
+};
+
 const release = {
   releaseId: 'rel-global-1',
   subjectId: 'spelling',
@@ -507,6 +531,235 @@ test('Content Operations Centre mounted shell loads API data without implicit pa
   assert.match(result.overviewText, /rel-global-1/);
   assert.match(result.packageTableText, /Pending/);
   assert.equal(result.selectedRows, 0);
+});
+
+test('Content Operations Centre mounted package detail runs validate, approve, and publish actions', async () => {
+  const output = await runClientEntry(`
+    const { JSDOM } = require('jsdom');
+
+    globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+    const dom = new JSDOM('<!doctype html><html><body><div id="root"></div></body></html>', {
+      url: 'https://ks2.eugnel.uk/admin',
+    });
+    globalThis.window = dom.window;
+    globalThis.document = dom.window.document;
+    globalThis.navigator = dom.window.navigator;
+    globalThis.HTMLElement = dom.window.HTMLElement;
+    globalThis.Event = dom.window.Event;
+
+    const React = require('react');
+    const { createRoot } = require('react-dom/client');
+    const { AdminContentOperationsSection } = require(${CONTENT_OPS_SECTION_PATH});
+    const { act } = React;
+
+    const candidate = ${JSON.stringify(lifecycleCandidate)};
+    const cleanBlockers = ${JSON.stringify(cleanLifecycleBlockers)};
+    const release = ${JSON.stringify(release)};
+    const basePackage = {
+      ...${JSON.stringify(contentPackage)},
+      blockers: cleanBlockers,
+      latestCandidate: null,
+    };
+    let packageState = 'draft';
+    let latestCandidate = null;
+    const calls = [];
+
+    function packageForState() {
+      return {
+        ...basePackage,
+        state: packageState,
+        latestCandidate,
+        approvedAt: packageState === 'approved' || packageState === 'published'
+          ? ${Date.UTC(2026, 5, 11, 10, 10, 0)}
+          : null,
+        publishedAt: packageState === 'published'
+          ? ${Date.UTC(2026, 5, 11, 10, 20, 0)}
+          : null,
+        blockers: {
+          ...cleanBlockers,
+          publishReadiness: packageState === 'approved'
+            ? { status: 'ready', blockers: [], warnings: [] }
+            : cleanBlockers.publishReadiness,
+        },
+      };
+    }
+
+    const model = ${JSON.stringify(baseModel({
+      contentOperations: {
+        overview: {
+          ...overview,
+          lanes: {
+            blocked: [],
+            readyForApproval: [],
+            approvedPendingPublish: [],
+            drafts: [],
+            recentReleases: [],
+          },
+        },
+        packages: { packages: [] },
+        releases: { releases: [] },
+        packageDetail: null,
+      },
+    }))};
+    model.contentOperations.overview.lanes.drafts = [basePackage];
+    model.contentOperations.packages.packages = [basePackage];
+    model.contentOperations.releases.releases = [release];
+    model.contentOperations.packageDetail = {
+      package: basePackage,
+      actor: model.contentOperations.overview.actor,
+      events: [{ eventId: 'event-created', eventType: 'package.created', createdAt: ${Date.UTC(2026, 5, 11, 10, 0, 0)}, event: {} }],
+    };
+
+    const actions = {
+      contentOperationsApi: {
+        async validatePackage(args) {
+          calls.push({ method: 'validate', args });
+          latestCandidate = candidate;
+          return { candidate };
+        },
+        async approvePackage(args) {
+          calls.push({ method: 'approve', args });
+          packageState = 'approved';
+          return {
+            approval: {
+              approvalId: 'approval-1',
+              packageId: basePackage.packageId,
+              candidateId: candidate.candidateId,
+              candidateHash: candidate.candidateHash,
+              approvedAt: ${Date.UTC(2026, 5, 11, 10, 10, 0)},
+              notes: args.notes,
+            },
+          };
+        },
+        async publishPackage(args) {
+          calls.push({ method: 'publish', args });
+          packageState = 'published';
+          return {
+            release: {
+              ...release,
+              releaseId: 'rel-published-1',
+              packageId: basePackage.packageId,
+              proof: args.proof,
+            },
+          };
+        },
+        async readPackage({ packageId }) {
+          calls.push({ method: 'readPackage', packageId, state: packageState });
+          return {
+            package: packageForState(),
+            actor: model.contentOperations.overview.actor,
+            events: [
+              { eventId: 'event-created', eventType: 'package.created', createdAt: ${Date.UTC(2026, 5, 11, 10, 0, 0)}, event: {} },
+              { eventId: 'event-approved', eventType: 'package.approved', actorAccountId: 'admin-a', createdAt: ${Date.UTC(2026, 5, 11, 10, 10, 0)}, event: { candidateHash: candidate.candidateHash, notes: 'Ready to publish.' } },
+            ],
+          };
+        },
+        async readOverview(args) {
+          calls.push({ method: 'overview', args, state: packageState });
+          const packageEntry = packageForState();
+          return {
+            ...model.contentOperations.overview,
+            latestRelease: packageState === 'published' ? { ...release, releaseId: 'rel-published-1' } : release,
+            lanes: {
+              blocked: [],
+              readyForApproval: [],
+              approvedPendingPublish: packageState === 'approved' ? [packageEntry] : [],
+              drafts: packageState === 'draft' ? [packageEntry] : [],
+              recentReleases: packageState === 'published' ? [{ ...release, releaseId: 'rel-published-1' }] : [],
+            },
+          };
+        },
+        async readPackages(args) {
+          calls.push({ method: 'packages', args, state: packageState });
+          return { packages: [packageForState()] };
+        },
+        async readReleases(args) {
+          calls.push({ method: 'releases', args, state: packageState });
+          return { releases: packageState === 'published' ? [{ ...release, releaseId: 'rel-published-1' }] : [release] };
+        },
+      },
+    };
+
+    async function flush() {
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      });
+    }
+
+    async function clickAction(action) {
+      const button = document.querySelector('[data-content-ops-action="' + action + '"]');
+      await act(async () => {
+        button.click();
+      });
+      await flush();
+      await flush();
+      await flush();
+    }
+
+    async function main() {
+      const root = createRoot(document.getElementById('root'));
+      await act(async () => {
+        root.render(React.createElement(AdminContentOperationsSection, {
+          model,
+          actions,
+          initialActiveTab: 'detail',
+        }));
+      });
+
+      const notes = document.querySelector('[data-content-ops-approval-notes="true"]');
+      const valueSetter = Object.getOwnPropertyDescriptor(dom.window.HTMLTextAreaElement.prototype, 'value').set;
+      valueSetter.call(notes, 'Ready to publish.');
+      await act(async () => {
+        notes.dispatchEvent(new dom.window.Event('input', { bubbles: true }));
+        notes.dispatchEvent(new dom.window.Event('change', { bubbles: true }));
+      });
+
+      await clickAction('validate');
+      const textAfterValidate = document.body.textContent;
+      const approveDisabledAfterValidate = document.querySelector('[data-content-ops-action="approve"]').disabled;
+
+      await clickAction('approve');
+      const textAfterApprove = document.body.textContent;
+      const publishDisabledAfterApprove = document.querySelector('[data-content-ops-action="publish"]').disabled;
+
+      await clickAction('publish');
+      const textAfterPublish = document.body.textContent;
+
+      process.stdout.write(JSON.stringify({
+        calls,
+        textAfterValidate,
+        approveDisabledAfterValidate,
+        textAfterApprove,
+        publishDisabledAfterApprove,
+        textAfterPublish,
+      }));
+
+      await act(async () => {
+        root.unmount();
+      });
+      dom.window.close();
+      process.exit(0);
+    }
+
+    main().catch((error) => {
+      process.stderr.write(error.stack || error.message);
+      process.exitCode = 1;
+    });
+  `);
+  const result = JSON.parse(output);
+  const lifecycleCalls = result.calls.filter((entry) => ['validate', 'approve', 'publish'].includes(entry.method));
+
+  assert.deepEqual(lifecycleCalls.map((entry) => entry.method), ['validate', 'approve', 'publish']);
+  assert.equal(lifecycleCalls[0].args.packageId, 'pkg-draft-1');
+  assert.equal(lifecycleCalls[1].args.candidateId, 'cand-ready-1');
+  assert.equal(lifecycleCalls[1].args.notes, 'Ready to publish.');
+  assert.equal(lifecycleCalls[2].args.proof.candidateHash, 'candidate-ready-1');
+  assert.match(result.textAfterValidate, /candidate-ready-1/);
+  assert.equal(result.approveDisabledAfterValidate, false);
+  assert.match(result.textAfterApprove, /Candidate approved/);
+  assert.equal(result.publishDisabledAfterApprove, false);
+  assert.match(result.textAfterPublish, /Package published/);
+  assert.match(result.textAfterPublish, /rel-published-1/);
 });
 
 test('Content Operations Centre mounted package detail ignores stale out-of-order reads', async () => {
