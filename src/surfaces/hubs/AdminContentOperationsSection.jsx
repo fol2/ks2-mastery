@@ -52,6 +52,7 @@ function contentOperationMutation(action, packageId) {
 
 function actionMessage(action) {
   if (action === 'validate') return 'Candidate validated.';
+  if (action === 'resolve-conflict') return 'Conflict resolved.';
   if (action === 'approve') return 'Candidate approved.';
   if (action === 'publish') return 'Package published.';
   return 'Package action completed.';
@@ -137,6 +138,32 @@ function formatCompactJson(value) {
     return JSON.stringify(value);
   } catch {
     return String(value);
+  }
+}
+
+function conflictKey(conflict, index = 0) {
+  return conflict?.conflictId
+    || `${conflict?.entityType || 'entity'}:${conflict?.entityId || 'id'}:${conflict?.fieldPath || '$'}:${index}`;
+}
+
+function formatConflictValue(value) {
+  if (value == null) return '';
+  if (typeof value === 'string') return value;
+  try {
+    return JSON.stringify(value, null, 2);
+  } catch {
+    return String(value);
+  }
+}
+
+function parseConflictEditValue(text, conflict) {
+  const structured = [conflict?.packageValue, conflict?.currentValue, conflict?.baseValue]
+    .some((value) => value && typeof value === 'object');
+  if (!structured) return text;
+  try {
+    return JSON.parse(text);
+  } catch {
+    return text;
   }
 }
 
@@ -406,6 +433,95 @@ function PublishedAreaPanel({ activeTab, latestRelease, selectedPackageId, selec
   );
 }
 
+function ConflictResolverPanel({
+  conflicts,
+  disabled,
+  active,
+  onResolve,
+}) {
+  const [edits, setEdits] = React.useState({});
+  if (!conflicts.length) return null;
+
+  return (
+    <div className="content-ops-conflict-resolver" data-content-ops-conflict-resolver="true">
+      <div className="content-ops-conflict-header">
+        <div>
+          <div className="eyebrow">Conflict resolver</div>
+          <strong>{String(conflicts.length)} unresolved field {conflicts.length === 1 ? 'conflict' : 'conflicts'}</strong>
+        </div>
+        <span className="chip bad">Publish blocked</span>
+      </div>
+      {conflicts.map((conflict, index) => {
+        const key = conflictKey(conflict, index);
+        const editValue = Object.prototype.hasOwnProperty.call(edits, key)
+          ? edits[key]
+          : formatConflictValue(conflict.packageValue);
+        const resolve = (resolution, rawValue = undefined) => {
+          if (!onResolve) return;
+          onResolve(conflict, resolution, rawValue);
+        };
+        return (
+          <article className="content-ops-conflict-card" key={key} data-conflict-id={key}>
+            <div className="content-ops-conflict-meta">
+              <span className="chip bad">{conflict.code || 'conflict'}</span>
+              <strong>{conflict.entityType} / {conflict.entityId}</strong>
+              <code>{conflict.fieldPath || '$'}</code>
+            </div>
+            <div className="content-ops-conflict-values">
+              <div>
+                <span className="small muted">Package value</span>
+                <pre>{formatConflictValue(conflict.packageValue) || 'Empty'}</pre>
+              </div>
+              <div>
+                <span className="small muted">Current release value</span>
+                <pre>{formatConflictValue(conflict.currentValue) || 'Empty'}</pre>
+              </div>
+            </div>
+            <label className="content-ops-notes-field">
+              <span className="small muted">Merged value</span>
+              <textarea
+                value={editValue}
+                onChange={(event) => setEdits((current) => ({
+                  ...current,
+                  [key]: event.target.value,
+                }))}
+                rows={4}
+                data-content-ops-conflict-edit={key}
+              />
+            </label>
+            <div className="actions content-ops-lifecycle-actions">
+              <button
+                type="button"
+                className="btn secondary"
+                disabled={disabled || active}
+                onClick={() => resolve('package')}
+              >
+                Keep package value
+              </button>
+              <button
+                type="button"
+                className="btn secondary"
+                disabled={disabled || active}
+                onClick={() => resolve('current')}
+              >
+                Keep current value
+              </button>
+              <button
+                type="button"
+                className="btn primary"
+                disabled={disabled || active}
+                onClick={() => resolve('edit', parseConflictEditValue(editValue, conflict))}
+              >
+                Save merged value
+              </button>
+            </div>
+          </article>
+        );
+      })}
+    </div>
+  );
+}
+
 function PackageLifecyclePanel({
   contentPackage,
   actor,
@@ -418,6 +534,7 @@ function PackageLifecyclePanel({
   const canEdit = actorCan(actor, CONTENT_OPERATION_CAPABILITIES.EDIT);
   const canApprove = actorCan(actor, CONTENT_OPERATION_CAPABILITIES.APPROVE);
   const canPublish = actorCan(actor, CONTENT_OPERATION_CAPABILITIES.PUBLISH);
+  const conflicts = candidate?.conflicts || [];
   const isRunning = Boolean(
     lifecycleState?.running
       && lifecycleState.packageId === contentPackage.packageId
@@ -441,6 +558,10 @@ function PackageLifecyclePanel({
     || !actionAvailability.publish
     || isRunning
     || contentPackage.state !== 'approved';
+  const resolveDisabled = !canEdit
+    || !actionAvailability.resolveConflict
+    || isRunning
+    || contentPackage.state === 'published';
 
   const run = (action) => {
     if (!onRunAction) return;
@@ -449,6 +570,16 @@ function PackageLifecyclePanel({
       candidateId: candidate?.candidateId || '',
       candidateHash: candidate?.candidateHash || '',
       notes,
+    });
+  };
+  const resolveConflict = (conflict, resolution, value) => {
+    if (!onRunAction) return;
+    onRunAction('resolve-conflict', {
+      packageId: contentPackage.packageId,
+      conflictId: conflict?.conflictId || '',
+      conflict,
+      resolution,
+      value,
     });
   };
 
@@ -487,6 +618,12 @@ function PackageLifecyclePanel({
           detail={`${String(candidate?.validation?.errorCount || 0)} errors, ${String(candidate?.validation?.warningCount || 0)} warnings`}
         />
       </div>
+      <ConflictResolverPanel
+        conflicts={conflicts}
+        disabled={resolveDisabled}
+        active={activeAction === 'resolve-conflict'}
+        onResolve={resolveConflict}
+      />
       <div className="content-ops-lifecycle-controls">
         <label className="content-ops-notes-field">
           <span className="small muted">Approval notes</span>
@@ -893,6 +1030,10 @@ export function AdminContentOperationsSection({
     packageId,
     candidateId = '',
     candidateHash = '',
+    conflictId = '',
+    conflict = null,
+    resolution = '',
+    value = undefined,
     notes = '',
   } = {}) => {
     if (!api || !packageId) return;
@@ -910,6 +1051,17 @@ export function AdminContentOperationsSection({
         if (!api.validatePackage) throw new Error('Validate action is not available.');
         payload = await api.validatePackage({
           packageId,
+          includeSnapshot: false,
+          mutation: contentOperationMutation(action, packageId),
+        });
+      } else if (action === 'resolve-conflict') {
+        if (!api.resolveConflict) throw new Error('Resolve conflict action is not available.');
+        payload = await api.resolveConflict({
+          packageId,
+          conflictId,
+          conflict,
+          resolution,
+          value,
           includeSnapshot: false,
           mutation: contentOperationMutation(action, packageId),
         });
@@ -985,6 +1137,7 @@ export function AdminContentOperationsSection({
   const detailActor = safeDetail.actor?.accountId ? safeDetail.actor : overview.actor;
   const lifecycleActionAvailability = {
     validate: Boolean(api?.validatePackage),
+    resolveConflict: Boolean(api?.resolveConflict),
     approve: Boolean(api?.approvePackage),
     publish: Boolean(api?.publishPackage),
   };

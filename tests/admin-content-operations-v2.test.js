@@ -640,15 +640,26 @@ describe('Content Operations Centre hub API client', () => {
       proof: { source: 'test' },
       mutation: { requestId: 'publish-1' },
     });
+    await api.resolveContentOperationConflict({
+      packageId: 'pkg/with/slash',
+      conflictId: 'conflict/with/slash',
+      resolution: 'edit',
+      value: 'Merged value.',
+      mutation: { requestId: 'resolve-1' },
+    });
 
     assert.equal(new URL(calls[0].url).pathname, '/api/admin/content-operations/packages/pkg%2Fwith%2Fslash/validate');
     assert.equal(new URL(calls[1].url).pathname, '/api/admin/content-operations/packages/pkg%2Fwith%2Fslash/approve');
     assert.equal(new URL(calls[2].url).pathname, '/api/admin/content-operations/packages/pkg%2Fwith%2Fslash/publish');
-    assert.deepEqual(calls.map((call) => call.method), ['POST', 'POST', 'POST']);
+    assert.equal(new URL(calls[3].url).pathname, '/api/admin/content-operations/packages/pkg%2Fwith%2Fslash/resolve-conflict');
+    assert.deepEqual(calls.map((call) => call.method), ['POST', 'POST', 'POST', 'POST']);
     assert.equal(calls[0].body.includeSnapshot, true);
     assert.equal(calls[1].body.candidateId, 'cand/with/slash');
     assert.equal(calls[1].body.notes, 'Reviewed candidate.');
     assert.equal(calls[2].body.proof.source, 'test');
+    assert.equal(calls[3].body.conflictId, 'conflict/with/slash');
+    assert.equal(calls[3].body.resolution, 'edit');
+    assert.equal(calls[3].body.value, 'Merged value.');
   });
 
   it('rejects package and release detail reads without explicit ids', async () => {
@@ -676,6 +687,14 @@ describe('Content Operations Centre hub API client', () => {
     await assert.rejects(
       () => api.publishContentOperationPackage({ packageId: '' }),
       /Content operation package id is required/,
+    );
+    await assert.rejects(
+      () => api.resolveContentOperationConflict({ packageId: '', resolution: 'edit' }),
+      /Content operation package id is required/,
+    );
+    await assert.rejects(
+      () => api.resolveContentOperationConflict({ packageId: 'pkg-1', resolution: '' }),
+      /Content operation conflict resolution is required/,
     );
   });
 });

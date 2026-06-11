@@ -62,6 +62,10 @@ function hashPayload(value, prefix = 'co') {
   return `${prefix}-${stableHash(stableStringify(value)).toString(36)}`;
 }
 
+function operationValueHash(operation) {
+  return normaliseString(operation?.afterHash || operation?.after_hash, contentOperationValueHash(operation?.payload));
+}
+
 function splitFieldPath(fieldPath) {
   return normaliseString(fieldPath)
     .split('.')
@@ -186,6 +190,10 @@ export function contentOperationHash(value, prefix = 'co') {
   return hashPayload(value, prefix);
 }
 
+export function contentOperationValueHash(value) {
+  return hashPayload(value === undefined ? null : value, 'after');
+}
+
 export function normaliseContentOperation(rawValue = {}, {
   actorAccountId = '',
   now = null,
@@ -221,7 +229,7 @@ export function normaliseContentOperation(rawValue = {}, {
     actorAccountId,
   );
   const beforeHash = normaliseString(raw.beforeHash || raw.before_hash);
-  const afterHash = normaliseString(raw.afterHash || raw.after_hash, hashPayload(payload, 'after'));
+  const afterHash = normaliseString(raw.afterHash || raw.after_hash, contentOperationValueHash(payload));
 
   return {
     operationId: normaliseString(raw.operationId || raw.operation_id, operationId),
@@ -242,10 +250,21 @@ export function operationConflictKey(operation) {
   return `${normalised.entityType}::${normalised.entityId}::${normalised.fieldPath || '$'}`;
 }
 
+export function effectiveContentOperations(operations = []) {
+  const order = [];
+  const byKey = new Map();
+  for (const rawOperation of operations) {
+    const operation = normaliseContentOperation(rawOperation, { now: () => 0 });
+    const key = operationConflictKey(operation);
+    if (!byKey.has(key)) order.push(key);
+    byKey.set(key, operation);
+  }
+  return order.map((key) => byKey.get(key));
+}
+
 export function detectContentOperationConflicts(leftOperations = [], rightOperations = []) {
-  const normaliseForComparison = (operation) => normaliseContentOperation(operation, { now: () => 0 });
-  const left = leftOperations.map(normaliseForComparison);
-  const right = rightOperations.map(normaliseForComparison);
+  const left = effectiveContentOperations(leftOperations);
+  const right = effectiveContentOperations(rightOperations);
   const conflicts = [];
 
   for (const leftOperation of left) {
@@ -260,7 +279,21 @@ export function detectContentOperationConflicts(leftOperations = [], rightOperat
       const structural = isStructuralOperation(leftOperation) || isStructuralOperation(rightOperation);
       if (!sameField && !structural) continue;
       if (contentOperationHash(leftOperation) === contentOperationHash(rightOperation)) continue;
+      const leftValueHash = operationValueHash(leftOperation);
+      const rightValueHash = operationValueHash(rightOperation);
+      if (!structural && leftValueHash && rightValueHash && leftValueHash === rightValueHash) continue;
+      if (!structural && leftOperation.beforeHash && rightValueHash && leftOperation.beforeHash === rightValueHash) continue;
       conflicts.push({
+        conflictId: contentOperationHash({
+          code: conflictCodeFor(leftOperation, rightOperation),
+          entityType: leftOperation.entityType,
+          entityId: leftOperation.entityId,
+          fieldPath: sameField ? (leftOperation.fieldPath || rightOperation.fieldPath || '$') : '$',
+          leftOperationId: leftOperation.operationId,
+          rightOperationId: rightOperation.operationId,
+          leftValueHash,
+          rightValueHash,
+        }, 'conflict'),
         code: conflictCodeFor(leftOperation, rightOperation),
         entityType: leftOperation.entityType,
         entityId: leftOperation.entityId,
@@ -296,10 +329,11 @@ export function buildSpellingContentOperationCandidate(baseBundle, operations = 
   const normalisedOperations = operations.map((operation) => normaliseContentOperation(operation, { now: () => 0 }));
   const candidate = applyContentOperationsToSpellingContent(baseBundle, normalisedOperations);
   const validation = validateSpellingContentBundle(candidate);
+  const operationsHash = hashPayload(normalisedOperations, 'ops');
   return {
     baseHash: hashPayload(normaliseSpellingContentBundle(baseBundle), 'base'),
-    operationsHash: hashPayload(normalisedOperations, 'ops'),
-    candidateHash: hashPayload(candidate, 'candidate'),
+    operationsHash,
+    candidateHash: hashPayload({ snapshot: candidate, operationsHash }, 'candidate'),
     candidate,
     validation,
     conflicts: [],
