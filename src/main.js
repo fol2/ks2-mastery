@@ -2713,8 +2713,16 @@ function buildCodexModel(appState, context) {
 }
 
 function buildSurfaceActions() {
+  const contentOperationsApi = hubApi ? {
+    readOverview: hubApi.readContentOperationsOverview?.bind(hubApi),
+    readPackages: hubApi.readContentOperationPackages?.bind(hubApi),
+    readPackage: hubApi.readContentOperationPackage?.bind(hubApi),
+    readReleases: hubApi.readContentOperationReleases?.bind(hubApi),
+    readRelease: hubApi.readContentOperationRelease?.bind(hubApi),
+  } : null;
   return {
     dispatch: dispatchAction,
+    contentOperationsApi,
     flushSpellingDeferredAudio: () => controller.flushDeferredAudio(),
     toggleTheme: () => dispatchAction('toggle-theme'),
     selectLearner: (value) => dispatchAction('learner-select', { value }),

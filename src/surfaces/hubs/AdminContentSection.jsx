@@ -1,5 +1,6 @@
 import React from 'react';
 import { formatTimestamp, isBlocked } from './hub-utils.js';
+import { AdminContentOperationsSection } from './AdminContentOperationsSection.jsx';
 import { MonsterVisualConfigPanel } from './MonsterVisualConfigPanel.jsx';
 import { AdminConfirmAction } from './AdminConfirmAction.jsx';
 import { AdultConfidenceChip } from '../../subjects/grammar/components/AdultConfidenceChip.jsx';
@@ -1187,6 +1188,7 @@ export function AdminContentSection({ model, appState, accessContext, actions })
       <ContentQualitySummaryPanel model={model} />
       <ContentQualitySignalsPanel model={model} />
       <ContentReleaseAndImport model={model} accessContext={accessContext} actions={actions} />
+      <AdminContentOperationsSection model={model} actions={actions} />
       <PostMegaSpellingDebugPanel debug={model.postMasteryDebug} />
       <PostMegaSeedHarnessPanel model={model} actions={actions} />
       <GrammarConceptConfidencePanel evidence={selectedGrammarEvidence} />

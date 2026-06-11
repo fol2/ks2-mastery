@@ -27,6 +27,18 @@ import {
   normaliseSubjectStatus,
 } from '../src/platform/hubs/admin-content-overview.js';
 
+import { createHubApi } from '../src/platform/hubs/api.js';
+
+import {
+  CONTENT_OPERATION_DETAIL_TABS,
+  CONTENT_OPERATION_LANES,
+  normaliseContentOperationPackage,
+  normaliseContentOperationsOverview,
+  normaliseContentOperationsPackageDetail,
+  normaliseContentOperationsPackageList,
+  normaliseContentOperationsReleaseList,
+} from '../src/platform/hubs/admin-content-operations.js';
+
 // ─── Fixtures ────────────────────────────────────────────────────────────────
 
 const LIVE_SPELLING_WITH_BLOCKERS = {
@@ -383,5 +395,199 @@ describe('RELEASE_READINESS enum', () => {
     assert.equal(RELEASE_READINESS.BLOCKED, 'blocked');
     assert.equal(RELEASE_READINESS.WARNINGS_ONLY, 'warnings_only');
     assert.equal(RELEASE_READINESS.NOT_APPLICABLE, 'not_applicable');
+  });
+});
+
+// --- Content Operations Centre shell contract ------------------------------
+
+const CONTENT_OPS_PACKAGE = {
+  packageId: 'pkg-draft-1',
+  subjectId: 'spelling',
+  templateId: 'word-family',
+  title: 'Word family update',
+  state: 'draft',
+  operationCount: 2,
+  updatedAt: Date.UTC(2026, 5, 11, 10, 0, 0),
+  operations: [
+    {
+      operationId: 'op-1',
+      entityType: 'spelling.word',
+      entityId: 'metamorphosis',
+      fieldPath: 'explanation',
+      action: 'set',
+    },
+  ],
+  blockers: {
+    validation: { status: 'passed', errorCount: 0, warningCount: 0, errors: [], warnings: [] },
+    audio: { status: 'blocked', blockers: ['word_audio_missing'], warnings: [] },
+    assets: { status: 'not_scanned', blockers: [], warnings: ['asset_scan_pending'] },
+    rewards: { status: 'passed', blockers: [], warnings: [] },
+    visibility: { status: 'passed', blockers: [], warnings: [] },
+    exposure: { status: 'passed', blockers: [], warnings: [] },
+    publishReadiness: { status: 'not_ready', blockers: ['approval_required'], warnings: [] },
+  },
+};
+
+const CONTENT_OPS_OVERVIEW = {
+  ok: true,
+  overview: {
+    subjectId: 'spelling',
+    latestRelease: {
+      releaseId: 'rel-global-1',
+      subjectId: 'spelling',
+      status: 'published',
+      snapshotHash: 'hash-1',
+      publishedAt: Date.UTC(2026, 5, 11, 9, 0, 0),
+      proof: { source: 'test' },
+    },
+    packageCounts: { draft: 1, blocked: 1, approved: 1 },
+    lanes: {
+      blocked: [{ ...CONTENT_OPS_PACKAGE, packageId: 'pkg-blocked-1', title: 'Blocked pool edit', state: 'blocked' }],
+      readyForApproval: [{ ...CONTENT_OPS_PACKAGE, packageId: 'pkg-ready-1', title: 'Ready word edit', state: 'ready_for_approval' }],
+      approvedPendingPublish: [{ ...CONTENT_OPS_PACKAGE, packageId: 'pkg-approved-1', title: 'Approved audio edit', state: 'approved' }],
+      drafts: [CONTENT_OPS_PACKAGE],
+      recentReleases: [
+        {
+          releaseId: 'rel-global-1',
+          subjectId: 'spelling',
+          status: 'published',
+          snapshotHash: 'hash-1',
+          publishedAt: Date.UTC(2026, 5, 11, 9, 0, 0),
+          proof: { source: 'test' },
+        },
+      ],
+    },
+    actor: {
+      accountId: 'admin-a',
+      platformRole: 'admin',
+      capabilities: {
+        'content_operations.edit': true,
+        'content_operations.approve': true,
+        'content_operations.publish': true,
+      },
+    },
+  },
+};
+
+function jsonResponse(payload, status = 200) {
+  return new Response(JSON.stringify(payload), {
+    status,
+    headers: { 'content-type': 'application/json' },
+  });
+}
+
+describe('Content Operations Centre normalisers', () => {
+  it('pins the required home lanes and package detail domain tabs', () => {
+    assert.deepEqual(CONTENT_OPERATION_LANES.map((lane) => lane.label), [
+      'Blocked',
+      'Ready for approval',
+      'Approved pending publish',
+      'Open drafts',
+    ]);
+    assert.deepEqual(CONTENT_OPERATION_DETAIL_TABS.map((tab) => tab.label), [
+      'Spelling',
+      'Audio',
+      'Pools & Rewards',
+      'Monsters & Assets',
+      'Hero / Codex',
+      'Approvals',
+      'Audit',
+    ]);
+  });
+
+  it('normalises overview lanes, warning sections, releases, and actor capabilities', () => {
+    const overview = normaliseContentOperationsOverview(CONTENT_OPS_OVERVIEW);
+
+    assert.equal(overview.subjectId, 'spelling');
+    assert.equal(overview.latestRelease.releaseId, 'rel-global-1');
+    assert.equal(overview.openPackageCount, 4);
+    assert.equal(overview.laneCounts.blocked, 1);
+    assert.equal(overview.laneCounts.readyForApproval, 1);
+    assert.equal(overview.laneCounts.approvedPendingPublish, 1);
+    assert.equal(overview.laneCounts.drafts, 1);
+    assert.equal(overview.lanes.drafts[0].stateLabel, 'Draft');
+    assert.equal(overview.lanes.drafts[0].blockers.warningCount, 1);
+    assert.equal(overview.recentReleases[0].proof.source, 'test');
+    assert.equal(overview.actor.capabilities['content_operations.approve'], true);
+  });
+
+  it('normalises package lists, release lists, and package detail array payloads', () => {
+    const packages = normaliseContentOperationsPackageList([CONTENT_OPS_PACKAGE]);
+    const releases = normaliseContentOperationsReleaseList({
+      releases: CONTENT_OPS_OVERVIEW.overview.lanes.recentReleases,
+    });
+    const detail = normaliseContentOperationsPackageDetail({
+      package: CONTENT_OPS_PACKAGE,
+      events: [{ eventId: 'event-1', eventType: 'package.created', createdAt: Date.UTC(2026, 5, 11) }],
+    });
+
+    assert.equal(packages[0].packageId, 'pkg-draft-1');
+    assert.equal(packages[0].blockers.blockingSections.includes('audio'), true);
+    assert.equal(releases[0].releaseId, 'rel-global-1');
+    assert.equal(detail.package.operations[0].fieldPath, 'explanation');
+    assert.equal(detail.events[0].eventType, 'package.created');
+  });
+
+  it('keeps compact package operation counts unknown instead of inventing zero', () => {
+    const missingCountPackage = normaliseContentOperationPackage({
+      packageId: 'pkg-summary-only',
+      title: 'Summary only package',
+      state: 'draft',
+    });
+    const nullCountPackage = normaliseContentOperationPackage({
+      packageId: 'pkg-summary-null',
+      title: 'Summary null package',
+      state: 'draft',
+      operationCount: null,
+    });
+
+    assert.equal(missingCountPackage.operationCount, null);
+    assert.equal(nullCountPackage.operationCount, null);
+  });
+});
+
+describe('Content Operations Centre hub API client', () => {
+  it('calls read-only Content Operations Centre endpoints with compact queries', async () => {
+    const calls = [];
+    const api = createHubApi({
+      baseUrl: 'https://repo.test',
+      fetch: async (url, init = {}) => {
+        calls.push({ url: String(url), method: init.method });
+        return jsonResponse({ ok: true });
+      },
+    });
+
+    await api.readContentOperationsOverview({ limit: 7 });
+    await api.readContentOperationPackages({ state: 'draft', limit: 11 });
+    await api.readContentOperationPackage({ packageId: 'pkg/with/slash' });
+    await api.readContentOperationReleases({ limit: 5, includeSnapshot: true });
+    await api.readContentOperationRelease({ releaseId: 'rel/with/slash', includeSnapshot: true });
+
+    assert.equal(new URL(calls[0].url).pathname, '/api/admin/content-operations/subjects/spelling/overview');
+    assert.equal(new URL(calls[0].url).searchParams.get('limit'), '7');
+    assert.equal(new URL(calls[1].url).pathname, '/api/admin/content-operations/packages');
+    assert.equal(new URL(calls[1].url).searchParams.get('state'), 'draft');
+    assert.equal(new URL(calls[2].url).pathname, '/api/admin/content-operations/packages/pkg%2Fwith%2Fslash');
+    assert.equal(new URL(calls[3].url).pathname, '/api/admin/content-operations/subjects/spelling/releases');
+    assert.equal(new URL(calls[3].url).searchParams.get('includeSnapshot'), 'true');
+    assert.equal(new URL(calls[4].url).pathname, '/api/admin/content-operations/subjects/spelling/releases/rel%2Fwith%2Fslash');
+    assert.equal(new URL(calls[4].url).searchParams.get('includeSnapshot'), 'true');
+    assert.deepEqual(calls.map((call) => call.method), ['GET', 'GET', 'GET', 'GET', 'GET']);
+  });
+
+  it('rejects package and release detail reads without explicit ids', async () => {
+    const api = createHubApi({
+      baseUrl: 'https://repo.test',
+      fetch: async () => jsonResponse({ ok: true }),
+    });
+
+    await assert.rejects(
+      () => api.readContentOperationPackage({ packageId: '' }),
+      /Content operation package id is required/,
+    );
+    await assert.rejects(
+      () => api.readContentOperationRelease({ releaseId: '' }),
+      /Content operation release id is required/,
+    );
   });
 });

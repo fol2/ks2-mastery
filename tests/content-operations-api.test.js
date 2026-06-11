@@ -190,10 +190,54 @@ test('content operations API supports admin package lifecycle through separate a
     const validated = await validatePackage(server, packageId);
     assert.equal(validated.candidate.validation.status, 'passed');
     assert.equal(validated.candidate.blockers.publishReadiness.status, 'not_ready');
+    server.DB.db.prepare(`
+      UPDATE content_operation_package_candidates
+      SET audio_scan_json = ?, asset_scan_json = ?
+      WHERE candidate_id = ?
+    `).run(
+      JSON.stringify({
+        status: 'blocked',
+        blockers: ['word_audio_missing'],
+        warnings: ['slow_sentence_missing'],
+      }),
+      JSON.stringify({
+        status: 'warning',
+        blockers: [],
+        warnings: ['monster_asset_pending'],
+      }),
+      validated.candidate.candidateId,
+    );
+
+    const packageListResponse = await server.fetchAs(
+      ADMIN_ID,
+      `${BASE_URL}/api/admin/content-operations/packages`,
+      { method: 'GET', headers: { 'sec-fetch-site': 'same-origin' } },
+      adminHeaders(),
+    );
+    const packageList = await readPayload(packageListResponse);
+    assert.equal(packageListResponse.status, 200);
+    const packageSummary = packageList.packages.find((entry) => entry.packageId === packageId);
+    assert.deepEqual(packageSummary.blockers.audio.blockers, ['word_audio_missing']);
+    assert.deepEqual(packageSummary.blockers.audio.warnings, ['slow_sentence_missing']);
+    assert.deepEqual(packageSummary.blockers.assets.warnings, ['monster_asset_pending']);
 
     const approved = await approvePackage(server, packageId, validated.candidate.candidateId);
     assert.equal(approved.approval.candidateId, validated.candidate.candidateId);
     assert.equal(approved.approval.approvedByAccountId, ADMIN_ID);
+
+    const prePublishOverviewResponse = await server.fetchAs(
+      ADMIN_ID,
+      `${BASE_URL}/api/admin/content-operations/subjects/spelling/overview`,
+      { method: 'GET', headers: { 'sec-fetch-site': 'same-origin' } },
+      adminHeaders(),
+    );
+    const prePublishOverview = await readPayload(prePublishOverviewResponse);
+    assert.equal(prePublishOverviewResponse.status, 200);
+    const approvedSummary = prePublishOverview.overview.lanes.approvedPendingPublish.find(
+      (entry) => entry.packageId === packageId,
+    );
+    assert.deepEqual(approvedSummary.blockers.audio.blockers, ['word_audio_missing']);
+    assert.deepEqual(approvedSummary.blockers.assets.warnings, ['monster_asset_pending']);
 
     const publishResponse = await server.fetchAs(
       ADMIN_ID,

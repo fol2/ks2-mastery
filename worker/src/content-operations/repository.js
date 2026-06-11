@@ -125,6 +125,40 @@ async function candidateRowToRecordAsync(row, { includeSnapshot = false } = {}) 
   };
 }
 
+async function readLatestCandidateForPackage(db, packageId) {
+  const row = await first(db, `
+    SELECT *
+    FROM content_operation_package_candidates
+    WHERE package_id = ?
+    ORDER BY created_at DESC, candidate_id DESC
+    LIMIT 1
+  `, [packageId]);
+  return candidateRowToRecord(row);
+}
+
+async function attachLatestCandidatesToPackages(db, packages = []) {
+  if (!packages.length) return packages;
+  const packageIds = packages.map((contentPackage) => contentPackage.packageId).filter(Boolean);
+  if (!packageIds.length) return packages;
+  const placeholders = packageIds.map(() => '?').join(', ');
+  const rows = await all(db, `
+    SELECT *
+    FROM content_operation_package_candidates
+    WHERE package_id IN (${placeholders})
+    ORDER BY package_id ASC, created_at DESC, candidate_id DESC
+  `, packageIds);
+  const latestByPackageId = new Map();
+  for (const row of rows) {
+    if (!latestByPackageId.has(row.package_id)) {
+      latestByPackageId.set(row.package_id, candidateRowToRecord(row));
+    }
+  }
+  return packages.map((contentPackage) => ({
+    ...contentPackage,
+    latestCandidate: latestByPackageId.get(contentPackage.packageId) || null,
+  }));
+}
+
 function releaseRowToRecord(row, { includeSnapshot = false } = {}) {
   if (!row) return null;
   return {
@@ -560,6 +594,7 @@ export function createContentOperationsRepository({ db, now }) {
     async readContentOperationPackage(packageId, { includeOperations = true } = {}) {
       const row = await requirePackage(db, packageId);
       const record = packageRowToRecord(row);
+      record.latestCandidate = await readLatestCandidateForPackage(db, packageId);
       if (includeOperations) {
         record.operations = await listPackageOperations(db, packageId);
       }
@@ -647,7 +682,7 @@ export function createContentOperationsRepository({ db, now }) {
         ORDER BY updated_at DESC
         LIMIT ?
       `, params);
-      return rows.map(packageRowToRecord);
+      return attachLatestCandidatesToPackages(db, rows.map(packageRowToRecord));
     },
 
     async appendContentOperation(packageId, rawOperation, { actorAccountId } = {}) {
