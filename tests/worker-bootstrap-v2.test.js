@@ -24,7 +24,14 @@ import {
   BOOTSTRAP_V2_ENVELOPE_SHAPE,
   computeBootstrapRevisionHash,
   computeWritableLearnerStatesDigest,
+  createWorkerRepository,
 } from '../worker/src/repository.js';
+import {
+  readSeededSpellingContentBundle,
+} from '../worker/src/generated-spelling-content-seed.js';
+import {
+  isStatutoryCoreWord,
+} from '../src/subjects/spelling/content/taxonomy.js';
 import { createWorkerRepositoryServer } from './helpers/worker-server.js';
 
 const BASE_URL = 'https://repo.test';
@@ -154,6 +161,38 @@ function guardAgainstBootstrapSpellingContentRead(server) {
     }
     return originalPrepare(sql);
   };
+}
+
+async function publishSpellingWordEdit(repository, word, {
+  actorAccountId = 'admin-a',
+  title = 'Bootstrap content package',
+  fieldPath = 'explanation',
+  action = 'set',
+  payload = `Bootstrap content explanation for ${word?.word || 'word'}.`,
+} = {}) {
+  const contentPackage = await repository.createContentOperationPackage({
+    templateId: 'edit-spelling-word',
+    title,
+    createdByAccountId: actorAccountId,
+  });
+  await repository.appendContentOperation(contentPackage.packageId, {
+    entityType: 'spelling.word',
+    entityId: word.slug,
+    fieldPath,
+    action,
+    payload,
+  }, {
+    actorAccountId,
+  });
+  const candidate = await repository.buildContentOperationCandidate(contentPackage.packageId, {
+    actorAccountId,
+  });
+  await repository.approveContentOperationCandidate(contentPackage.packageId, candidate.candidateId, {
+    approvedByAccountId: actorAccountId,
+  });
+  return repository.publishContentOperationPackage(contentPackage.packageId, {
+    publishedByAccountId: actorAccountId,
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -1079,6 +1118,40 @@ test('public bootstrap does not touch account spelling content rows', async () =
     assert.equal(payload.ok, true);
     assert.equal(payload.subjectStates?.['learner-a::spelling']?.ui?.subjectId, 'spelling');
     assert.deepEqual(payload.subjectStates?.['learner-a::spelling']?.data, {});
+  } finally {
+    server.close();
+  }
+});
+
+test('public bootstrap uses the published global content operations release without account content rows', async () => {
+  const server = createServer();
+  try {
+    const repository = createWorkerRepository({ env: server.env, now: () => NOW });
+    const seeded = await readSeededSpellingContentBundle();
+    const word = seeded.draft.words.find((entry) => entry.spellingPool !== 'extra') || seeded.draft.words[0];
+    await publishSpellingWordEdit(repository, word, {
+      title: 'Bootstrap public read-model content release',
+      fieldPath: '',
+      action: 'retire',
+      payload: { reason: 'Bootstrap visibility regression test.' },
+    });
+    insertLearner(server, 'adult-u7', { id: 'learner-a', name: 'Alpha', sortIndex: 0, selected: true });
+    insertSubjectStateFor(server, 'adult-u7', 'learner-a', 'spelling');
+    insertLargeSpellingContentRow(server, 'adult-u7');
+    guardAgainstBootstrapSpellingContentRead(server);
+
+    const runtime = await repository.readSpellingRuntimeContent('adult-u7', 'spelling', {
+      includeAccountContent: false,
+    });
+    const expectedCoreWordCount = runtime.snapshot.words.filter(isStatutoryCoreWord).length;
+    const response = await getBootstrap(server);
+    assert.equal(response.status, 200);
+    const payload = await readJsonBody(response);
+    assert.equal(payload.ok, true);
+
+    const spelling = payload.subjectStates?.['learner-a::spelling'];
+    assert.ok(spelling, 'fresh bootstrap includes spelling subject state');
+    assert.equal(spelling.ui?.stats?.all?.total, expectedCoreWordCount);
   } finally {
     server.close();
   }
