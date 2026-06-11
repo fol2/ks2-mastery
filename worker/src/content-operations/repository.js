@@ -566,6 +566,70 @@ export function createContentOperationsRepository({ db, now }) {
       return record;
     },
 
+    async updateContentOperationPackage(packageId, {
+      templateId = undefined,
+      title = undefined,
+      description = undefined,
+    } = {}, { actorAccountId } = {}) {
+      const packageRow = await requirePackage(db, packageId);
+      assertPackageIsNotPublished(packageRow, packageId);
+      const actor = normaliseString(actorAccountId);
+      if (!actor) throw new BadRequestError('Content operation package updates require an actor account id.');
+      const nowTs = Number(nowFactory());
+      const nextTemplateId = templateId === undefined
+        ? packageRow.template_id
+        : normaliseString(templateId, packageRow.template_id);
+      const nextTitle = title === undefined
+        ? packageRow.title
+        : normaliseString(title, packageRow.title || 'Untitled content package');
+      const nextDescription = description === undefined
+        ? (packageRow.description || '')
+        : normaliseString(description);
+
+      await batch(db, [
+        bindStatement(db, `
+          DELETE FROM content_operation_package_approvals
+          WHERE package_id = ?
+        `, [packageId]),
+        bindStatement(db, `
+          UPDATE content_operation_packages
+          SET template_id = ?, title = ?, description = ?,
+              state = ?, approved_at = NULL,
+              updated_by_account_id = ?, updated_at = ?
+          WHERE package_id = ?
+        `, [
+          nextTemplateId,
+          nextTitle,
+          nextDescription,
+          CONTENT_OPERATION_PACKAGE_STATES.DRAFT,
+          actor,
+          nowTs,
+          packageId,
+        ]),
+        bindStatement(db, `
+          INSERT INTO content_operation_events (
+            event_id, package_id, release_id, subject_id, event_type,
+            actor_account_id, event_json, created_at
+          )
+          VALUES (?, ?, NULL, ?, ?, ?, ?, ?)
+        `, [
+          uid('coevt'),
+          packageId,
+          packageRow.subject_id,
+          'package.updated',
+          actor,
+          JSON.stringify({
+            templateId: nextTemplateId,
+            title: nextTitle,
+            description: nextDescription,
+          }),
+          nowTs,
+        ]),
+      ]);
+
+      return packageRowToRecord(await requirePackage(db, packageId));
+    },
+
     async listContentOperationPackages({ subjectId = CONTENT_OPERATION_SUBJECT_ID, state = null, limit = 50 } = {}) {
       const resolvedSubjectId = normaliseSubjectId(subjectId);
       const safeLimit = Math.max(1, Math.min(100, Number(limit) || 50));
@@ -664,6 +728,76 @@ export function createContentOperationsRepository({ db, now }) {
       ]);
 
       return { ...operation, packageId, operationOrder: nextOrder };
+    },
+
+    async deleteContentOperation(packageId, operationId, { actorAccountId } = {}) {
+      const packageRow = await requirePackage(db, packageId);
+      assertPackageIsNotPublished(packageRow, packageId);
+      const actor = normaliseString(actorAccountId);
+      if (!actor) throw new BadRequestError('Content operation deletes require an actor account id.');
+      const operationRow = await first(db, `
+        SELECT *
+        FROM content_operation_package_operations
+        WHERE package_id = ? AND operation_id = ?
+      `, [packageId, operationId]);
+      if (!operationRow) {
+        throw new NotFoundError('Content operation was not found.', {
+          code: 'content_operation_not_found',
+          packageId,
+          operationId,
+        });
+      }
+      const operation = operationRowToRecord(operationRow);
+      const nowTs = Number(nowFactory());
+
+      await batch(db, [
+        bindStatement(db, `
+          DELETE FROM content_operation_package_operations
+          WHERE package_id = ? AND operation_id = ?
+        `, [packageId, operationId]),
+        bindStatement(db, `
+          DELETE FROM content_operation_package_approvals
+          WHERE package_id = ?
+        `, [packageId]),
+        bindStatement(db, `
+          UPDATE content_operation_packages
+          SET state = ?, approved_at = NULL, updated_by_account_id = ?, updated_at = ?
+          WHERE package_id = ?
+        `, [
+          CONTENT_OPERATION_PACKAGE_STATES.DRAFT,
+          actor,
+          nowTs,
+          packageId,
+        ]),
+        bindStatement(db, `
+          INSERT INTO content_operation_events (
+            event_id, package_id, release_id, subject_id, event_type,
+            actor_account_id, event_json, created_at
+          )
+          VALUES (?, ?, NULL, ?, ?, ?, ?, ?)
+        `, [
+          uid('coevt'),
+          packageId,
+          packageRow.subject_id,
+          'operation.deleted',
+          actor,
+          JSON.stringify({
+            operationId: operation.operationId,
+            entityType: operation.entityType,
+            entityId: operation.entityId,
+            fieldPath: operation.fieldPath,
+            action: operation.action,
+          }),
+          nowTs,
+        ]),
+      ]);
+
+      return {
+        packageId,
+        operationId,
+        deleted: true,
+        operation,
+      };
     },
 
     async buildContentOperationCandidate(packageId, { actorAccountId = null } = {}) {
