@@ -37,10 +37,14 @@ export const PUBLIC_BOOTSTRAP_RECENT_EVENT_LIMIT_PER_LEARNER = 50;
 // The response's top-level keys did not change, but the cached
 // `subjectStates.*.ui` representation did; keeping v3 would let stable
 // accounts honour `notModified` forever and keep the stale raw Grammar cache.
+// Content Operations Centre T5A: bumped 4 -> 5 when the revision hash started
+// including the active spelling content-operation release token. Without this,
+// a published spelling content release could leave stable accounts on the
+// notModified short-circuit with stale public read-model stats.
 // Any additive required field on the bootstrap envelope MUST bump this in
 // the same PR. `tests/worker-bootstrap-v2.test.js` has a snapshot test that
 // fails if the envelope shape changes without a version bump (scenario 15).
-export const PUBLIC_BOOTSTRAP_CAPACITY_VERSION = 4;
+export const PUBLIC_BOOTSTRAP_CAPACITY_VERSION = 5;
 export const BOOTSTRAP_CAPACITY_VERSION = PUBLIC_BOOTSTRAP_CAPACITY_VERSION;
 
 // U7: closed union for `meta.capacity.bootstrapMode` when the public
@@ -121,7 +125,7 @@ export const BOOTSTRAP_V2_ENVELOPE_SHAPE = Object.freeze({
 // Changing this input format (or the truncation length) is equivalent to
 // bumping `BOOTSTRAP_CAPACITY_VERSION` — stale clients will silently
 // reject `notModified` responses via the schema check. The version bumps
-// from 2 -> 3 and 3 -> 4 force stale clients to miss once and re-bind.
+// from 2 -> 3, 3 -> 4, and 4 -> 5 force stale clients to miss once and re-bind.
 export async function computeBootstrapRevisionHash({
   accountId,
   accountRevision,
@@ -135,6 +139,10 @@ export async function computeBootstrapRevisionHash({
   // format still includes the `writableLearnerStatesDigest:` slot, so
   // callers get a deterministic value without reverting to a 4-input form.
   writableLearnerStatesDigest = '',
+  // Content Operations Centre T5A: public Spelling read-models are derived
+  // from the active content-operation release. Include that release token so
+  // content-only publishes invalidate the notModified short-circuit.
+  spellingContentRevision = '',
 }) {
   const input = [
     `accountId:${String(accountId || '')}`,
@@ -143,6 +151,7 @@ export async function computeBootstrapRevisionHash({
     `bootstrapCapacityVersion:${Number(bootstrapCapacityVersion) || 0}`,
     `accountLearnerListRevision:${Number(accountLearnerListRevision) || 0}`,
     `writableLearnerStatesDigest:${String(writableLearnerStatesDigest || '')}`,
+    `spellingContentRevision:${String(spellingContentRevision || '')}`,
   ].join(';');
   const bytes = new TextEncoder().encode(input);
   const digest = await globalThis.crypto.subtle.digest('SHA-256', bytes);

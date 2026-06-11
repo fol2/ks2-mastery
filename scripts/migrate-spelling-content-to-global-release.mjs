@@ -13,6 +13,9 @@ import {
   contentOperationHash,
 } from '../src/subjects/spelling/content/operations-model.js';
 import {
+  encodeContentOperationSnapshot,
+} from '../src/subjects/spelling/content/release-snapshot-codec.js';
+import {
   readSeededSpellingContentBundle,
 } from '../worker/src/generated-spelling-content-seed.js';
 
@@ -38,13 +41,66 @@ function sqlInteger(value) {
   return String(Math.trunc(number));
 }
 
+function parseWranglerJsonOutput(stdout) {
+  const text = String(stdout || '').trim();
+  if (!text) throw new Error('Wrangler returned no JSON output.');
+  const start = text.indexOf('[');
+  const end = text.lastIndexOf(']');
+  if (start === -1 || end === -1 || end < start) {
+    throw new Error('Wrangler output did not contain a JSON array.');
+  }
+  return JSON.parse(text.slice(start, end + 1));
+}
+
+function parseJson(value, fallback = null) {
+  if (value == null || value === '') return fallback;
+  if (typeof value !== 'string') return value;
+  try {
+    return JSON.parse(value);
+  } catch {
+    return fallback;
+  }
+}
+
+function chunkString(value, chunkSize = 80_000) {
+  const chunks = [];
+  const text = String(value || '');
+  for (let index = 0; index < text.length; index += chunkSize) {
+    chunks.push(text.slice(index, index + chunkSize));
+  }
+  return chunks.length ? chunks : [''];
+}
+
+function snapshotSqlExpression(snapshotValue) {
+  const chunks = chunkString(snapshotValue);
+  if (chunks.length === 1 && chunks[0].length < 80_000) {
+    return {
+      setupSql: [],
+      valueExpression: sqlString(chunks[0]),
+      teardownSql: [],
+      chunkCount: chunks.length,
+    };
+  }
+  return {
+    setupSql: [
+      'CREATE TEMP TABLE _content_operation_seed_snapshot_chunks (chunk_index INTEGER PRIMARY KEY, chunk_value TEXT NOT NULL);',
+      ...chunks.map((chunk, index) => (
+        `INSERT INTO _content_operation_seed_snapshot_chunks (chunk_index, chunk_value) VALUES (${sqlInteger(index)}, ${sqlString(chunk)});`
+      )),
+    ],
+    valueExpression: "(SELECT group_concat(chunk_value, '') FROM (SELECT chunk_value FROM _content_operation_seed_snapshot_chunks ORDER BY chunk_index ASC))",
+    teardownSql: ['DROP TABLE _content_operation_seed_snapshot_chunks;'],
+    chunkCount: chunks.length,
+  };
+}
+
 function usage() {
   return [
     'Usage: node scripts/migrate-spelling-content-to-global-release.mjs [--dry-run|--apply] [--local|--remote] [options]',
     '',
     'Options:',
-    '  --dry-run             Validate the bundled seed and print the planned release (default).',
-    '  --apply               Apply the idempotent seed SQL through scripts/wrangler-oauth.mjs.',
+    '  --dry-run             Validate and print the planned release (default; add --local or --remote to inspect D1 legacy content).',
+    '  --apply               Apply the idempotent seed SQL through scripts/wrangler-oauth.mjs after reading current D1 legacy content.',
     '  --local               Target the local D1 database (default for --apply).',
     '  --remote              Target the remote D1 database. Requires KS2_CONFIRM_CONTENT_OPERATION_SEED=seed-first-global-release.',
     '  --actor <account-id>  Account id recorded as the seed actor.',
@@ -114,14 +170,64 @@ export function parseArgs(argv = process.argv.slice(2)) {
   return options;
 }
 
+function runWranglerD1Json(command, options) {
+  const args = [
+    path.join(rootDir, 'scripts', 'wrangler-oauth.mjs'),
+    'd1',
+    'execute',
+    'ks2-mastery-db',
+    options.remote ? '--remote' : '--local',
+    '--json',
+    '--command',
+    command,
+  ];
+  const result = spawnSync(process.execPath, args, {
+    cwd: rootDir,
+    encoding: 'utf8',
+    maxBuffer: 32 * 1024 * 1024,
+    env: { ...process.env },
+  });
+  if (result.error) throw result.error;
+  if ((result.status ?? 1) !== 0) {
+    const stderr = String(result.stderr || '').trim();
+    throw new Error(`Wrangler D1 query exited with status ${result.status ?? 1}.${stderr ? `\n${stderr}` : ''}`);
+  }
+  return parseWranglerJsonOutput(result.stdout);
+}
+
+function readLatestLegacyContentSource(options) {
+  const resultSets = runWranglerD1Json(`
+    SELECT account_id, subject_id, content_json, updated_at, updated_by_account_id
+    FROM account_subject_content
+    WHERE subject_id = 'spelling'
+    ORDER BY updated_at DESC
+    LIMIT 1
+  `, options);
+  const row = resultSets.flatMap((entry) => Array.isArray(entry?.results) ? entry.results : [])[0] || null;
+  const bundle = parseJson(row?.content_json, null);
+  if (!bundle) return null;
+  return {
+    bundle,
+    source: {
+      type: 'account_subject_content',
+      accountId: row.account_id || null,
+      updatedAt: Number(row.updated_at) || 0,
+      updatedByAccountId: row.updated_by_account_id || null,
+      script: scriptRelativePath,
+    },
+  };
+}
+
 export async function buildFirstGlobalReleaseSeedPlan({
   now = () => Date.now(),
   releaseId = uid('corel'),
   eventId = uid('coevt'),
   actorAccountId = 'content-operations-seed-script',
+  sourceBundle = null,
+  source = null,
 } = {}) {
   const nowTs = Number(now());
-  const bundle = await readSeededSpellingContentBundle();
+  const bundle = sourceBundle || await readSeededSpellingContentBundle();
   const validation = validateSpellingContentBundle(bundle);
   if (!validation.ok) {
     const errors = validation.errors
@@ -132,35 +238,38 @@ export async function buildFirstGlobalReleaseSeedPlan({
 
   const summary = buildSpellingContentSummary(validation.bundle);
   const snapshotHash = contentOperationHash(validation.bundle, 'release');
-  const source = {
+  const seedSource = source || {
     type: 'bundled_fallback',
     script: scriptRelativePath,
   };
   const proof = {
     seed: {
-      source,
+      source: seedSource,
       summary,
     },
   };
-  const snapshotJson = JSON.stringify(validation.bundle);
+  const snapshotJson = await encodeContentOperationSnapshot(validation.bundle);
   const proofJson = JSON.stringify(proof);
   const eventJson = JSON.stringify({
     releaseId,
     snapshotHash,
-    source,
+    source: seedSource,
     summary,
   });
+  const snapshotSql = snapshotSqlExpression(snapshotJson);
 
   const sql = [
     'BEGIN TRANSACTION;',
     '',
+    ...snapshotSql.setupSql,
+    ...(snapshotSql.setupSql.length ? [''] : []),
     'INSERT INTO content_operation_releases (',
     '  release_id, subject_id, status, snapshot_json, snapshot_hash,',
     '  base_release_id, package_id, published_at, published_by_account_id,',
     '  rollback_of_release_id, proof_json, created_at',
     ')',
     'SELECT',
-    `  ${sqlString(releaseId)}, 'spelling', 'published', ${sqlString(snapshotJson)}, ${sqlString(snapshotHash)},`,
+    `  ${sqlString(releaseId)}, 'spelling', 'published', ${snapshotSql.valueExpression}, ${sqlString(snapshotHash)},`,
     `  NULL, NULL, ${sqlInteger(nowTs)}, ${sqlString(actorAccountId)},`,
     `  NULL, ${sqlString(proofJson)}, ${sqlInteger(nowTs)}`,
     'WHERE NOT EXISTS (',
@@ -184,6 +293,8 @@ export async function buildFirstGlobalReleaseSeedPlan({
     `  SELECT 1 FROM content_operation_events WHERE event_id = ${sqlString(eventId)}`,
     ');',
     '',
+    ...snapshotSql.teardownSql,
+    ...(snapshotSql.teardownSql.length ? [''] : []),
     'COMMIT;',
     '',
   ].join('\n');
@@ -198,6 +309,12 @@ export async function buildFirstGlobalReleaseSeedPlan({
     },
     summary,
     proof,
+    source: seedSource,
+    snapshotStorage: {
+      encoding: 'gzip-base64',
+      byteLength: Buffer.byteLength(snapshotJson, 'utf8'),
+      sqlChunkCount: snapshotSql.chunkCount,
+    },
     sql,
   };
 }
@@ -242,9 +359,18 @@ async function runCli(argv = process.argv.slice(2)) {
     console.log(usage());
     return;
   }
+  if (options.apply && options.remote && process.env.KS2_CONFIRM_CONTENT_OPERATION_SEED !== remoteConfirmation) {
+    throw new Error(`Refusing remote seed. Set KS2_CONFIRM_CONTENT_OPERATION_SEED=${remoteConfirmation} after taking a D1 backup.`);
+  }
+
+  const legacySource = (options.apply || options.local || options.remote)
+    ? readLatestLegacyContentSource(options)
+    : null;
 
   const plan = await buildFirstGlobalReleaseSeedPlan({
     actorAccountId: options.actorAccountId,
+    sourceBundle: legacySource?.bundle || null,
+    source: legacySource?.source || null,
   });
 
   if (options.outFile) {
@@ -258,6 +384,8 @@ async function runCli(argv = process.argv.slice(2)) {
     target: options.remote ? 'remote' : 'local',
     release: plan.release,
     summary: plan.summary,
+    source: plan.source,
+    snapshotStorage: plan.snapshotStorage,
     sqlFile: options.outFile,
     remoteConfirmation: options.remote && options.apply ? remoteConfirmation : null,
   }, null, 2));

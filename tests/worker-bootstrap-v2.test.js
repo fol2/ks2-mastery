@@ -215,8 +215,11 @@ test('U7 scenario 15: envelope shape snapshot matches BOOTSTRAP_CAPACITY_VERSION
   // public read-model. The version is part of the revision hash, so a
   // deployed read-model representation change must invalidate cached v3
   // `lastKnownRevision` values even when learner revisions are stable.
-  assert.equal(BOOTSTRAP_CAPACITY_VERSION, 4,
-    'PR799 follow-up: bumps BOOTSTRAP_CAPACITY_VERSION 3->4 so stale Grammar public read-model caches miss the notModified probe.');
+  //
+  // Content Operations Centre T5A: bumped 4 -> 5 when spelling public
+  // read-model revision hashes started including the active content release.
+  assert.equal(BOOTSTRAP_CAPACITY_VERSION, 5,
+    'Content Operations Centre T5A bumps BOOTSTRAP_CAPACITY_VERSION 4->5 so spelling content release changes miss the notModified probe.');
   // Closed union for meta.capacity.bootstrapMode (canonical U7 enum).
   assert.deepEqual(
     [...BOOTSTRAP_MODES].sort(),
@@ -1161,6 +1164,45 @@ test('public bootstrap uses the published global content operations release with
   }
 });
 
+test('public bootstrap notModified misses after a spelling content-operation release changes', async () => {
+  const server = createServer();
+  try {
+    insertLearner(server, 'adult-u7', { id: 'learner-a', name: 'Alpha', sortIndex: 0, selected: true });
+    insertSubjectStateFor(server, 'adult-u7', 'learner-a', 'spelling');
+
+    const firstResponse = await getBootstrap(server);
+    assert.equal(firstResponse.status, 200);
+    const firstPayload = await readJsonBody(firstResponse);
+    const firstHash = firstPayload.revision?.hash;
+    assert.match(firstHash, /^[0-9a-f]{32}$/);
+
+    const repository = createWorkerRepository({ env: server.env, now: () => NOW });
+    const seeded = await readSeededSpellingContentBundle();
+    const word = seeded.draft.words.find((entry) => entry.spellingPool !== 'extra') || seeded.draft.words[0];
+    await publishSpellingWordEdit(repository, word, {
+      title: 'Bootstrap notModified content release',
+      fieldPath: '',
+      action: 'retire',
+      payload: { reason: 'Bootstrap notModified regression test.' },
+    });
+
+    const runtime = await repository.readSpellingRuntimeContent('adult-u7', 'spelling', {
+      includeAccountContent: false,
+    });
+    const expectedCoreWordCount = runtime.snapshot.words.filter(isStatutoryCoreWord).length;
+
+    const response = await postBootstrap(server, { lastKnownRevision: firstHash });
+    assert.equal(response.status, 200);
+    const payload = await readJsonBody(response);
+    assert.notEqual(payload.notModified, true,
+      'content-only spelling release changes must invalidate the bootstrap notModified probe');
+    assert.notEqual(payload.revision?.hash, firstHash);
+    assert.equal(payload.subjectStates?.['learner-a::spelling']?.ui?.stats?.all?.total, expectedCoreWordCount);
+  } finally {
+    server.close();
+  }
+});
+
 test('fresh bootstrap hydrates Punctuation and Grammar public stats from stored subject state', async () => {
   const server = createServer();
   try {
@@ -1233,7 +1275,7 @@ test('PR799 follow-up: stale v3 Grammar hydration cache misses notModified after
       'stale v3 revision must not keep a raw pre-PR799 Grammar cache alive');
     assert.equal(payload.revision?.bootstrapCapacityVersion, BOOTSTRAP_CAPACITY_VERSION);
     assert.notEqual(payload.revision?.hash, staleV3Revision,
-      'server emits a fresh v4 hash after the read-model projection bump');
+      'server emits a fresh v5 hash after the read-model projection bump');
 
     const grammar = payload.subjectStates?.['learner-a::grammar'];
     assert.ok(grammar, 'full bundle includes grammar subject state after probe miss');

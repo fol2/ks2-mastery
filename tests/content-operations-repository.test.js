@@ -6,6 +6,9 @@ import { createMigratedSqliteD1Database } from './helpers/sqlite-d1.js';
 import {
   readSeededSpellingContentBundle,
 } from '../worker/src/generated-spelling-content-seed.js';
+import {
+  isEncodedContentOperationSnapshot,
+} from '../src/subjects/spelling/content/release-snapshot-codec.js';
 
 async function publishWordEdit(repository, word, {
   actorAccountId = 'admin-a',
@@ -115,11 +118,13 @@ test('content operations repository seeds the first global release idempotently 
     assert.deepEqual(second.snapshot, first.snapshot);
 
     const rows = DB.db.prepare(`
-      SELECT release_id
+      SELECT release_id, snapshot_json
       FROM content_operation_releases
       WHERE subject_id = 'spelling'
     `).all();
     assert.equal(rows.length, 1);
+    assert.equal(isEncodedContentOperationSnapshot(rows[0].snapshot_json), true);
+    assert.ok(Buffer.byteLength(rows[0].snapshot_json, 'utf8') < 2_000_000);
   } finally {
     DB.close();
   }
@@ -219,6 +224,13 @@ test('content operations repository publishes an approved package as a global re
     assert.equal(candidate.validation.ok, true);
     assert.equal(candidate.candidate.draft.words[0].explanation, explanation);
     assert.match(candidate.candidateHash, /^candidate-/);
+    const candidateStorage = DB.db.prepare(`
+      SELECT candidate_snapshot_json
+      FROM content_operation_package_candidates
+      WHERE candidate_id = ?
+    `).get(candidate.candidateId);
+    assert.equal(isEncodedContentOperationSnapshot(candidateStorage.candidate_snapshot_json), true);
+    assert.ok(Buffer.byteLength(candidateStorage.candidate_snapshot_json, 'utf8') < 2_000_000);
 
     const approval = await repository.approveContentOperationCandidate(
       contentPackage.packageId,
@@ -240,6 +252,13 @@ test('content operations repository publishes an approved package as a global re
     assert.equal(release.status, 'published');
     assert.equal(release.packageId, contentPackage.packageId);
     assert.equal(release.snapshot.draft.words[0].explanation, explanation);
+    const releaseStorage = DB.db.prepare(`
+      SELECT snapshot_json
+      FROM content_operation_releases
+      WHERE release_id = ?
+    `).get(release.releaseId);
+    assert.equal(isEncodedContentOperationSnapshot(releaseStorage.snapshot_json), true);
+    assert.ok(Buffer.byteLength(releaseStorage.snapshot_json, 'utf8') < 2_000_000);
 
     const latest = await repository.readLatestContentOperationRelease('spelling', {
       includeSnapshot: true,

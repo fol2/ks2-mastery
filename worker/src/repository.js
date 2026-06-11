@@ -20,6 +20,9 @@ import {
   validateSpellingContentBundle,
 } from '../../src/subjects/spelling/content/model.js';
 import {
+  decodeContentOperationSnapshot,
+} from '../../src/subjects/spelling/content/release-snapshot-codec.js';
+import {
   SEEDED_SPELLING_CONTENT_SUMMARY,
   readSeededSpellingContentBundle,
   readSeededSpellingPublishedSnapshot,
@@ -609,19 +612,91 @@ async function readActiveContentOperationOverrideReleaseRow(db, accountId, subje
   }
 }
 
+async function readResolvedContentOperationReleaseRow(db, accountId, subjectId = 'spelling', {
+  includeSnapshot = false,
+} = {}) {
+  try {
+    return await first(db, `
+      SELECT
+        release_id,
+        subject_id,
+        status,
+        snapshot_hash,
+        snapshot_json,
+        published_at,
+        created_at,
+        release_source
+      FROM (
+        SELECT
+          r.release_id,
+          r.subject_id,
+          r.status,
+          r.snapshot_hash,
+          ${includeSnapshot ? 'r.snapshot_json' : 'NULL'} AS snapshot_json,
+          r.published_at,
+          r.created_at,
+          'override' AS release_source,
+          0 AS precedence_rank,
+          o.created_at AS precedence_created_at,
+          r.rowid AS release_rowid
+        FROM content_operation_account_overrides o
+        JOIN content_operation_releases r
+          ON r.release_id = o.release_id
+         AND r.subject_id = o.subject_id
+         AND r.status = 'published'
+        WHERE o.account_id = ?
+          AND o.subject_id = ?
+          AND o.active = 1
+        UNION ALL
+        SELECT
+          r.release_id,
+          r.subject_id,
+          r.status,
+          r.snapshot_hash,
+          ${includeSnapshot ? 'r.snapshot_json' : 'NULL'} AS snapshot_json,
+          r.published_at,
+          r.created_at,
+          'global' AS release_source,
+          1 AS precedence_rank,
+          r.published_at AS precedence_created_at,
+          r.rowid AS release_rowid
+        FROM content_operation_releases r
+        WHERE r.subject_id = ?
+          AND r.status = 'published'
+      )
+      ORDER BY precedence_rank ASC, precedence_created_at DESC, published_at DESC, created_at DESC, release_rowid DESC
+      LIMIT 1
+    `, [accountId, subjectId, subjectId]);
+  } catch (error) {
+    if (
+      isMissingTableError(error, 'content_operation_account_overrides')
+      || isMissingTableError(error, 'content_operation_releases')
+    ) {
+      return null;
+    }
+    throw error;
+  }
+}
+
+function contentOperationReleaseRevisionToken(row) {
+  if (!row) return 'bundled';
+  return [
+    row.release_source === 'override' ? 'override' : 'global',
+    row.release_id || '',
+    row.snapshot_hash || '',
+    Number(row.published_at) || 0,
+  ].join(':');
+}
+
 async function readSpellingRuntimeContentBundle(db, accountId, subjectId = 'spelling', {
   includeAccountContent = true,
   includeGlobalContent = true,
 } = {}) {
   if (includeGlobalContent) {
-    const overrideRow = await readActiveContentOperationOverrideReleaseRow(db, accountId, subjectId);
-    if (overrideRow) {
-      return readSpellingRuntimeContentReleaseBundle(db, subjectId, overrideRow, 'override');
-    }
-
-    const releaseRow = await readPublishedContentOperationReleaseRow(db, subjectId);
+    const releaseRow = await readResolvedContentOperationReleaseRow(db, accountId, subjectId);
     if (releaseRow) {
-      return readSpellingRuntimeContentReleaseBundle(db, subjectId, releaseRow);
+      const cachePrefix = releaseRow.release_source === 'override' ? 'override' : 'release';
+      return readSpellingRuntimeContentReleaseBundle(db, subjectId, releaseRow, cachePrefix);
     }
   }
 
@@ -928,7 +1003,8 @@ async function buildSpellingRuntimeContentFromRelease(row, subjectId) {
 
   try {
     const seededBundle = await readSeededSpellingContentBundle();
-    const content = normaliseSpellingContentBundle(JSON.parse(row.snapshot_json));
+    const snapshotJson = await decodeContentOperationSnapshot(row.snapshot_json);
+    const content = normaliseSpellingContentBundle(JSON.parse(snapshotJson));
     const snapshot = runtimeSnapshotForBundle(content, seededBundle);
     return {
       subjectId,
@@ -7442,6 +7518,11 @@ async function bootstrapBundle(db, accountId, {
   // triggers a Worker command. See docs/superpowers/specs/2026-04-26-
   // bootstrap-learner-stats-hotfix-design.md.
   const subjectStateLearnerIds = learnerIds;
+  const spellingContentReleaseRow = publicReadModels
+    ? await measureBootstrapPhase(capacity, BOOTSTRAP_PHASE_TIMING.readModel, () => (
+      readResolvedContentOperationReleaseRow(db, accountId, 'spelling')
+    ))
+    : null;
 
   // U7: precompute the revision-envelope ingredients so that both the
   // empty and non-empty branches can stamp them consistently. These
@@ -7462,6 +7543,9 @@ async function bootstrapBundle(db, accountId, {
     const writableLearnerStatesDigest = revisionEnvelope
       ? await computeWritableLearnerStatesDigest(membershipRows)
       : '';
+    const spellingContentRevision = revisionEnvelope && publicReadModels
+      ? contentOperationReleaseRevisionToken(spellingContentReleaseRow)
+      : '';
     const nextRevisionHash = revisionEnvelope
       ? await computeBootstrapRevisionHash({
         accountId,
@@ -7470,6 +7554,7 @@ async function bootstrapBundle(db, accountId, {
         bootstrapCapacityVersion: PUBLIC_BOOTSTRAP_CAPACITY_VERSION,
         accountLearnerListRevision: nextAccountLearnerListRevision,
         writableLearnerStatesDigest,
+        spellingContentRevision,
       })
       : null;
     return {
@@ -7623,10 +7708,14 @@ async function bootstrapBundle(db, accountId, {
   ));
   const publicSpellingContent = await measureBootstrapPhase(capacity, BOOTSTRAP_PHASE_TIMING.readModel, () => (
     publicReadModels && subjectRows.some((row) => row.subject_id === 'spelling')
-      ? readSpellingRuntimeContentBundle(db, accountId, 'spelling', {
-        includeAccountContent: false,
-        includeGlobalContent: true,
-      })
+      ? (spellingContentReleaseRow
+        ? readSpellingRuntimeContentReleaseBundle(
+          db,
+          'spelling',
+          spellingContentReleaseRow,
+          spellingContentReleaseRow.release_source === 'override' ? 'override' : 'release',
+        )
+        : readSeededSpellingRuntimeContentBundle('spelling'))
       : null
   ));
   const publicReadModelNow = Date.now();
@@ -7719,6 +7808,7 @@ async function bootstrapBundle(db, accountId, {
 async function bootstrapNotModifiedProbe(db, accountId, {
   lastKnownRevision,
   preferredLearnerId = null,
+  publicReadModels = false,
   accountSnapshot = null,
   capacity = null,
 }) {
@@ -7746,6 +7836,9 @@ async function bootstrapNotModifiedProbe(db, accountId, {
     // { writableOnly: true })`) for deterministic agreement between the
     // probe and the full-bundle hash.
     const writableLearnerStatesDigest = await computeWritableLearnerStatesDigest(membershipRows);
+    const spellingContentReleaseRow = publicReadModels
+      ? await readResolvedContentOperationReleaseRow(db, accountId, 'spelling')
+      : null;
     const serverHash = await computeBootstrapRevisionHash({
       accountId,
       accountRevision: accountRevisionValue,
@@ -7753,6 +7846,9 @@ async function bootstrapNotModifiedProbe(db, accountId, {
       bootstrapCapacityVersion: PUBLIC_BOOTSTRAP_CAPACITY_VERSION,
       accountLearnerListRevision,
       writableLearnerStatesDigest,
+      spellingContentRevision: publicReadModels
+        ? contentOperationReleaseRevisionToken(spellingContentReleaseRow)
+        : '',
     });
     if (serverHash !== lastKnownRevision) return null;
     return {
@@ -9078,6 +9174,7 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
         const probe = await bootstrapNotModifiedProbe(db, accountId, {
           lastKnownRevision,
           preferredLearnerId,
+          publicReadModels,
           accountSnapshot,
           capacity,
         });
@@ -9538,6 +9635,28 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
     async exportSubjectContent(accountId, subjectId = 'spelling') {
       const account = await first(db, 'SELECT id, repo_revision, platform_role FROM adult_accounts WHERE id = ?', [accountId]);
       requireSubjectContentExportAccess(account);
+      const globalRelease = await readPublishedContentOperationReleaseRow(db, subjectId, { includeSnapshot: true });
+      if (globalRelease) {
+        const releaseBundle = await buildSpellingRuntimeContentFromRelease(globalRelease, subjectId);
+        const content = releaseBundle.content || await readSeededSpellingContentBundle();
+        return {
+          subjectId,
+          content,
+          summary: buildSpellingContentSummary(content),
+          compatibility: {
+            source: 'content_operation_release',
+            releaseId: globalRelease.release_id,
+            snapshotHash: globalRelease.snapshot_hash,
+            legacyWriteDisabled: true,
+          },
+          mutation: {
+            policyVersion: MUTATION_POLICY_VERSION,
+            scopeType: 'account',
+            scopeId: accountId,
+            accountRevision: Number(account?.repo_revision) || 0,
+          },
+        };
+      }
       const content = await readSubjectContentBundle(db, accountId, subjectId);
       return {
         subjectId,

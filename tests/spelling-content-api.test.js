@@ -66,6 +66,15 @@ function seedAccountLearner(DB, { accountId = 'adult-a', learnerId = 'learner-a'
   `).run(accountId, learnerId, now, now);
 }
 
+function seedAdultAccount(DB, { accountId = 'adult-a', platformRole = 'admin' } = {}) {
+  const now = Date.UTC(2026, 0, 1);
+  DB.db.prepare(`
+    INSERT INTO adult_accounts (id, email, display_name, platform_role, selected_learner_id, created_at, updated_at, repo_revision)
+    VALUES (?, ?, ?, ?, NULL, ?, ?, 0)
+    ON CONFLICT(id) DO UPDATE SET platform_role = excluded.platform_role
+  `).run(accountId, `${accountId}@example.test`, accountId, platformRole, now, now);
+}
+
 function adminAuthSession(server, accountId = 'adult-a') {
   return server.authSessionFor(accountId, { platformRole: 'admin' });
 }
@@ -276,6 +285,44 @@ test('worker spelling content legacy write route is frozen after global release 
     assert.equal(response.status, 409);
     assert.equal(payload.code, 'subject_content_legacy_write_cutover');
     assert.equal(payload.releaseId, seedRelease.releaseId);
+  } finally {
+    server.close();
+  }
+});
+
+test('worker spelling content legacy GET exports the global release after cutover', async () => {
+  const server = createWorkerRepositoryServer();
+  try {
+    const repository = createWorkerRepository({
+      env: server.env,
+      now: () => Date.UTC(2026, 4, 17),
+    });
+    const seedRelease = await repository.seedFirstContentOperationRelease({
+      seededByAccountId: 'admin-a',
+      proof: { source: 'legacy-get-cutover-test' },
+    });
+    seedAdultAccount(server.DB, { accountId: 'adult-a' });
+    seedAdultAccount(server.DB, { accountId: 'admin-a' });
+    const staleLegacy = cloneSerialisable(seedRelease.snapshot);
+    staleLegacy.draft.notes = 'Stale account_subject_content should not be exported after cutover.';
+    server.DB.db.prepare(`
+      INSERT INTO account_subject_content (account_id, subject_id, content_json, updated_at, updated_by_account_id)
+      VALUES ('adult-a', 'spelling', ?, ?, 'admin-a')
+      ON CONFLICT(account_id, subject_id) DO UPDATE SET
+        content_json = excluded.content_json,
+        updated_at = excluded.updated_at,
+        updated_by_account_id = excluded.updated_by_account_id
+    `).run(JSON.stringify(staleLegacy), Date.UTC(2026, 4, 17) + 1);
+
+    const response = await fetchAdmin(server, 'https://repo.test/api/content/spelling');
+    const payload = await response.json();
+
+    assert.equal(response.status, 200);
+    assert.equal(payload.compatibility?.source, 'content_operation_release');
+    assert.equal(payload.compatibility?.releaseId, seedRelease.releaseId);
+    assert.equal(payload.compatibility?.legacyWriteDisabled, true);
+    assert.notEqual(payload.content.draft.notes, staleLegacy.draft.notes);
+    assert.deepEqual(payload.content, seedRelease.snapshot);
   } finally {
     server.close();
   }
