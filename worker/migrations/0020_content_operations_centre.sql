@@ -19,6 +19,10 @@ CREATE INDEX IF NOT EXISTS idx_content_operation_releases_subject_status
 CREATE INDEX IF NOT EXISTS idx_content_operation_releases_package
   ON content_operation_releases(package_id);
 
+CREATE UNIQUE INDEX IF NOT EXISTS idx_content_operation_releases_package_once
+  ON content_operation_releases(package_id)
+  WHERE package_id IS NOT NULL;
+
 CREATE TABLE IF NOT EXISTS content_operation_packages (
   package_id TEXT PRIMARY KEY,
   subject_id TEXT NOT NULL,

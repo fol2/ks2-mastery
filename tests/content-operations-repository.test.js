@@ -7,6 +7,38 @@ import {
   readSeededSpellingContentBundle,
 } from '../worker/src/generated-spelling-content-seed.js';
 
+async function publishWordEdit(repository, word, {
+  actorAccountId = 'admin-a',
+  title = 'Repository helper package',
+  fieldPath = 'explanation',
+  payload = `Published learner-facing explanation for ${word?.word || 'word'}.`,
+} = {}) {
+  const contentPackage = await repository.createContentOperationPackage({
+    templateId: 'edit-spelling-word',
+    title,
+    createdByAccountId: actorAccountId,
+  });
+  await repository.appendContentOperation(contentPackage.packageId, {
+    entityType: 'spelling.word',
+    entityId: word.slug,
+    fieldPath,
+    action: 'set',
+    payload,
+  }, {
+    actorAccountId,
+  });
+  const candidate = await repository.buildContentOperationCandidate(contentPackage.packageId, {
+    actorAccountId,
+  });
+  await repository.approveContentOperationCandidate(contentPackage.packageId, candidate.candidateId, {
+    approvedByAccountId: actorAccountId,
+  });
+  const release = await repository.publishContentOperationPackage(contentPackage.packageId, {
+    publishedByAccountId: actorAccountId,
+  });
+  return { contentPackage, candidate, release };
+}
+
 test('content operations repository publishes an approved package as a global release', async () => {
   const DB = createMigratedSqliteD1Database();
   const repository = createWorkerRepository({
@@ -79,6 +111,12 @@ test('content operations repository publishes an approved package as a global re
     });
     assert.equal(latest.releaseId, release.releaseId);
     assert.equal(latest.snapshot.draft.words[0].explanation, explanation);
+
+    const detail = await repository.readContentOperationRelease('spelling', release.releaseId, {
+      includeSnapshot: true,
+    });
+    assert.equal(detail.releaseId, release.releaseId);
+    assert.equal(detail.snapshot.draft.words[0].explanation, explanation);
 
     const packages = await repository.listContentOperationPackages({ subjectId: 'spelling' });
     assert.equal(packages.length, 1);
@@ -156,6 +194,198 @@ test('content operations repository invalidates approval after package mutation'
       }),
       /approved before publish/,
     );
+  } finally {
+    DB.close();
+  }
+});
+
+test('content operations repository blocks approving a candidate after package operations change', async () => {
+  const DB = createMigratedSqliteD1Database();
+  const repository = createWorkerRepository({
+    env: { DB },
+    now: () => 1_777_000_000_000,
+  });
+
+  try {
+    const seeded = await readSeededSpellingContentBundle();
+    const word = seeded.draft.words[0];
+    const contentPackage = await repository.createContentOperationPackage({
+      templateId: 'edit-spelling-word',
+      title: 'Stale candidate operations package',
+      createdByAccountId: 'admin-a',
+    });
+
+    await repository.appendContentOperation(contentPackage.packageId, {
+      entityType: 'spelling.word',
+      entityId: word.slug,
+      fieldPath: 'explanation',
+      action: 'set',
+      payload: `Candidate explanation for ${word.word}.`,
+    }, {
+      actorAccountId: 'admin-a',
+    });
+    const staleCandidate = await repository.buildContentOperationCandidate(contentPackage.packageId, {
+      actorAccountId: 'admin-a',
+    });
+
+    await repository.appendContentOperation(contentPackage.packageId, {
+      entityType: 'spelling.word',
+      entityId: word.slug,
+      fieldPath: 'sourceNote',
+      action: 'set',
+      payload: 'Operation added after candidate build.',
+    }, {
+      actorAccountId: 'admin-a',
+    });
+
+    await assert.rejects(
+      () => repository.approveContentOperationCandidate(contentPackage.packageId, staleCandidate.candidateId, {
+        approvedByAccountId: 'admin-a',
+      }),
+      (error) => {
+        assert.equal(error.extra?.code, 'content_operation_candidate_operations_stale');
+        assert.equal(error.extra?.candidateId, staleCandidate.candidateId);
+        return true;
+      },
+    );
+
+    const updated = await repository.readContentOperationPackage(contentPackage.packageId, {
+      includeOperations: false,
+    });
+    assert.equal(updated.state, 'draft');
+    assert.equal(updated.approvedAt, null);
+  } finally {
+    DB.close();
+  }
+});
+
+test('content operations repository blocks approving a candidate after release drift', async () => {
+  const DB = createMigratedSqliteD1Database();
+  const repository = createWorkerRepository({
+    env: { DB },
+    now: () => 1_777_000_000_000,
+  });
+
+  try {
+    const seeded = await readSeededSpellingContentBundle();
+    const firstWord = seeded.draft.words[0];
+    const secondWord = seeded.draft.words[1];
+
+    const stalePackage = await repository.createContentOperationPackage({
+      templateId: 'edit-spelling-word',
+      title: 'Candidate built before release drift',
+      createdByAccountId: 'admin-a',
+    });
+    await repository.appendContentOperation(stalePackage.packageId, {
+      entityType: 'spelling.word',
+      entityId: firstWord.slug,
+      fieldPath: 'explanation',
+      action: 'set',
+      payload: `Stale candidate explanation for ${firstWord.word}.`,
+    }, {
+      actorAccountId: 'admin-a',
+    });
+    const staleCandidate = await repository.buildContentOperationCandidate(stalePackage.packageId, {
+      actorAccountId: 'admin-a',
+    });
+
+    const newerPackage = await repository.createContentOperationPackage({
+      templateId: 'edit-spelling-word',
+      title: 'Release that creates drift before approval',
+      createdByAccountId: 'admin-b',
+    });
+    await repository.appendContentOperation(newerPackage.packageId, {
+      entityType: 'spelling.word',
+      entityId: secondWord.slug,
+      fieldPath: 'sourceNote',
+      action: 'set',
+      payload: `Drift package note for ${secondWord.word}.`,
+    }, {
+      actorAccountId: 'admin-b',
+    });
+    const newerCandidate = await repository.buildContentOperationCandidate(newerPackage.packageId, {
+      actorAccountId: 'admin-b',
+    });
+    await repository.approveContentOperationCandidate(newerPackage.packageId, newerCandidate.candidateId, {
+      approvedByAccountId: 'admin-b',
+    });
+    const newerRelease = await repository.publishContentOperationPackage(newerPackage.packageId, {
+      publishedByAccountId: 'admin-b',
+    });
+
+    await assert.rejects(
+      () => repository.approveContentOperationCandidate(stalePackage.packageId, staleCandidate.candidateId, {
+        approvedByAccountId: 'admin-a',
+      }),
+      (error) => {
+        assert.equal(error.extra?.code, 'content_operation_candidate_release_drift');
+        assert.equal(error.extra?.candidateCurrentReleaseId, null);
+        assert.equal(error.extra?.currentReleaseId, newerRelease.releaseId);
+        return true;
+      },
+    );
+  } finally {
+    DB.close();
+  }
+});
+
+test('content operations repository keeps published packages immutable', async () => {
+  const DB = createMigratedSqliteD1Database();
+  const repository = createWorkerRepository({
+    env: { DB },
+    now: () => 1_777_000_000_000,
+  });
+
+  try {
+    const seeded = await readSeededSpellingContentBundle();
+    const word = seeded.draft.words[0];
+    const contentPackage = await repository.createContentOperationPackage({
+      templateId: 'edit-spelling-word',
+      title: 'Published package immutability package',
+      createdByAccountId: 'admin-a',
+    });
+    await repository.appendContentOperation(contentPackage.packageId, {
+      entityType: 'spelling.word',
+      entityId: word.slug,
+      fieldPath: 'explanation',
+      action: 'set',
+      payload: `Published package explanation for ${word.word}.`,
+    }, {
+      actorAccountId: 'admin-a',
+    });
+    const candidate = await repository.buildContentOperationCandidate(contentPackage.packageId, {
+      actorAccountId: 'admin-a',
+    });
+    await repository.approveContentOperationCandidate(contentPackage.packageId, candidate.candidateId, {
+      approvedByAccountId: 'admin-a',
+    });
+    await repository.publishContentOperationPackage(contentPackage.packageId, {
+      publishedByAccountId: 'admin-a',
+    });
+
+    await assert.rejects(
+      () => repository.buildContentOperationCandidate(contentPackage.packageId, {
+        actorAccountId: 'admin-a',
+      }),
+      (error) => {
+        assert.equal(error.extra?.code, 'content_operation_package_published');
+        return true;
+      },
+    );
+    await assert.rejects(
+      () => repository.approveContentOperationCandidate(contentPackage.packageId, candidate.candidateId, {
+        approvedByAccountId: 'admin-a',
+      }),
+      (error) => {
+        assert.equal(error.extra?.code, 'content_operation_package_published');
+        return true;
+      },
+    );
+
+    const updated = await repository.readContentOperationPackage(contentPackage.packageId, {
+      includeOperations: false,
+    });
+    assert.equal(updated.state, 'published');
   } finally {
     DB.close();
   }
@@ -300,6 +530,106 @@ test('content operations repository blocks publish when approval becomes stale',
         assert.equal(error.extra?.currentReleaseId, newerRelease.releaseId);
         return true;
       },
+    );
+  } finally {
+    DB.close();
+  }
+});
+
+test('content operations repository keeps publish idempotent for the same package', async () => {
+  const DB = createMigratedSqliteD1Database();
+  const repository = createWorkerRepository({
+    env: { DB },
+    now: () => 1_777_000_000_000,
+  });
+
+  try {
+    const seeded = await readSeededSpellingContentBundle();
+    const word = seeded.draft.words[0];
+    const { contentPackage, release } = await publishWordEdit(repository, word, {
+      title: 'Duplicate publish guard package',
+      payload: `Duplicate publish guard explanation for ${word.word}.`,
+    });
+
+    await assert.rejects(
+      () => repository.publishContentOperationPackage(contentPackage.packageId, {
+        publishedByAccountId: 'admin-a',
+      }),
+      (error) => {
+        assert.equal(error.extra?.code, 'content_operation_package_published');
+        return true;
+      },
+    );
+
+    DB.db.prepare(`
+      UPDATE content_operation_packages
+      SET state = 'approved'
+      WHERE package_id = ?
+    `).run(contentPackage.packageId);
+    DB.db.prepare(`
+      UPDATE content_operation_package_candidates
+      SET current_release_id = ?
+      WHERE package_id = ?
+    `).run(release.releaseId, contentPackage.packageId);
+
+    await assert.rejects(
+      () => repository.publishContentOperationPackage(contentPackage.packageId, {
+        publishedByAccountId: 'admin-a',
+      }),
+      (error) => {
+        assert.equal(error.extra?.code, 'content_operation_package_published');
+        return true;
+      },
+    );
+
+    const releaseRows = DB.db.prepare(`
+      SELECT release_id
+      FROM content_operation_releases
+      WHERE package_id = ?
+    `).all(contentPackage.packageId);
+    assert.equal(releaseRows.length, 1);
+  } finally {
+    DB.close();
+  }
+});
+
+test('content operations repository orders latest releases deterministically on timestamp ties', async () => {
+  const DB = createMigratedSqliteD1Database();
+  const repository = createWorkerRepository({
+    env: { DB },
+    now: () => 1_777_000_000_000,
+  });
+
+  try {
+    const seeded = await readSeededSpellingContentBundle();
+    const firstWord = seeded.draft.words[0];
+    const secondWord = seeded.draft.words[1];
+
+    const first = await publishWordEdit(repository, firstWord, {
+      title: 'First same-timestamp package',
+      payload: `First same-timestamp explanation for ${firstWord.word}.`,
+    });
+    const second = await publishWordEdit(repository, secondWord, {
+      actorAccountId: 'admin-b',
+      title: 'Second same-timestamp package',
+      payload: `Second same-timestamp explanation for ${secondWord.word}.`,
+    });
+
+    assert.equal(first.release.publishedAt, second.release.publishedAt);
+
+    const latest = await repository.readLatestContentOperationRelease('spelling', {
+      includeSnapshot: true,
+    });
+    assert.equal(latest.releaseId, second.release.releaseId);
+    assert.equal(latest.snapshot.draft.words[1].explanation, `Second same-timestamp explanation for ${secondWord.word}.`);
+
+    const releases = await repository.listContentOperationReleases({
+      subjectId: 'spelling',
+      limit: 2,
+    });
+    assert.deepEqual(
+      releases.map((release) => release.releaseId),
+      [second.release.releaseId, first.release.releaseId],
     );
   } finally {
     DB.close();

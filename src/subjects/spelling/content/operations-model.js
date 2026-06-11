@@ -20,16 +20,8 @@ export const CONTENT_OPERATION_PACKAGE_STATES = Object.freeze({
 
 export const CONTENT_OPERATION_ENTITY_TYPES = Object.freeze([
   'spelling.word',
-  'spelling.wordVariant',
   'spelling.sentenceEntry',
   'spelling.wordList',
-  'spelling.pool',
-  'spelling.audioRequirementProfile',
-  'spelling.rewardTrack',
-  'spelling.monsterBinding',
-  'spelling.monsterAsset',
-  'spelling.heroExposure',
-  'spelling.visibilityRule',
 ]);
 
 export const CONTENT_OPERATION_ACTIONS = Object.freeze([

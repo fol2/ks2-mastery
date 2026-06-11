@@ -103,14 +103,14 @@ flowchart TB
   - **Actors:** A1, A6, A7, A9
   - **Steps:** The system computes missing audio by lane, voice, pace, slug, and sentence id, then allows selected generation, batch generation, or approved override through the TTS service.
   - **Outcome:** R2 audio readiness is visible and traceable before approval, with no manual audio upload path.
-  - **Covered by:** R20, R21, R22, R23, R24, R25, R26, R27, R28
+  - **Covered by:** R29, R30, R31, R32, R33, R34, R35, R36, R37, R38, R39, R40
 
 - F4. Configure pools, rewards, monsters, and Hero exposure
   - **Trigger:** A package creates a pool, changes a reward rule, binds a monster, uploads assets, or changes Hero / Codex visibility.
   - **Actors:** A1, A5, A8, A9
   - **Steps:** The admin configures pool metadata, reward tracks, progression mode, thresholds, monster bindings, image assets, and staged visibility in one package.
   - **Outcome:** A learner-visible pool cannot ship without complete reward, asset, and exposure configuration unless the package explicitly approves an exception.
-  - **Covered by:** R29, R30, R31, R32, R33, R34, R35, R36, R37, R38, R39, R40, R41, R42, R43, R44, R45, R46
+  - **Covered by:** R41, R42, R43, R44, R45, R46, R47, R48, R49, R50, R51, R52, R53, R54, R55, R56, R57, R58, R59, R60, R61
 
 - F5. Rebase, resolve conflicts, approve, and publish
   - **Trigger:** An admin submits a package for approval or attempts to publish after the global release has changed.
@@ -131,7 +131,7 @@ flowchart TB
   - **Actors:** A1, A2, A5, A7, A9
   - **Steps:** Whole-release rollback restores a prior global release after approval; package revert creates an inverse package that goes through validation, approval, and publish.
   - **Outcome:** Recovery is available without deleting R2 audio or losing package audit history.
-  - **Covered by:** R47, R48, R49
+  - **Covered by:** R74, R75, R76, R77, R78
 
 ---
 
@@ -177,7 +177,7 @@ flowchart TB
 **Audio Operations**
 
 - R29. Each package must have an `audioRequirementProfile` that defines required voices and paces by audio lane.
-- R30. The default word lane must require male and female natural or normal pace audio.
+- R30. The default word lane must require male and female natural pace audio.
 - R31. The default sentence dictation lane must require male and female normal and slow pace audio.
 - R32. Audio readiness scans must report missing, present, stale, generated, failed, skipped, and override-requested states by lane, voice, pace, slug, sentence id, model, and content key.
 - R33. Admins must be able to generate selected audio, batch generate a package scope, and regenerate existing audio through an explicit override action.

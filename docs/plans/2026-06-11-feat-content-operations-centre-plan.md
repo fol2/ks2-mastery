@@ -98,7 +98,7 @@ Out of scope:
 
 6. **Audio is generated through TTS only.** The admin centre can scan, queue, generate, regenerate, and override TTS audio. It must not provide audio file upload. R2 keys and provenance should remain content-addressed and must include lane, voice, pace, model, prompt/profile version, and source identity.
 
-7. **Audio requirements are profile-driven.** Do not hard-code four audio outputs for every entity. Store `audioRequirementProfile` by lane. Default word lane is male/female natural or normal pace. Default sentence dictation lane is male/female normal and slow pace.
+7. **Audio requirements are profile-driven.** Do not hard-code four audio outputs for every entity. Store `audioRequirementProfile` by lane. Default word lane is male/female natural pace. Default sentence dictation lane is male/female normal and slow pace.
 
 8. **Reward tracks are separate from monsters.** Pools bind to zero or more reward tracks. Each reward track binds to one monster and defines progression mode, threshold template, optional overrides, active state, and labels. Hero / Codex exposure reads reward tracks and monsters; it does not create a second creature model.
 
@@ -132,7 +132,7 @@ Proposed tables:
 - `content_operation_releases`
   - Immutable global releases.
   - Fields: `release_id`, `subject_id`, `status`, `snapshot_json`, `snapshot_hash`, `base_release_id`, `package_id`, `published_at`, `published_by_account_id`, `rollback_of_release_id`, `proof_json`, `created_at`.
-  - Current published release is the latest `status = 'published'` row per subject, unless a rollback marks another release as active.
+  - V1 active release is the latest `status = 'published'` row per subject with deterministic ordering. Whole-release rollback creates a new published release whose snapshot equals the target release and whose `rollback_of_release_id` points to that target; V1 does not use a mutable active pointer.
 
 - `content_operation_packages`
   - Draft-to-publish package lifecycle.
@@ -258,13 +258,13 @@ Whole-release rollback is an approved high-risk operation that marks a prior rel
 | Epic | Tickets | Outcome |
 | --- | --- | --- |
 | E1. Global Content Operations Foundation | T1-T4 | D1 schema, operation model, repository layer, runtime resolution bridge |
-| E2. Package Workflow and Admin Shell | T5-T8 | Admin package list/detail, lifecycle API, validation, approval, publish, audit |
+| E2. Package Workflow and Admin Shell | T5A-T8 | First global release cutover, admin package list/detail, lifecycle API, validation, approval, publish, audit |
 | E3. Spelling Editorial Manager | T9-T12 | UI and APIs for words, word-family variants, sentence entries, lists, pools, retirements |
 | E4. Audio Operations | T13-T16 | Requirement profiles, audio scan, TTS generation, R2 provenance, fallback warnings |
 | E5. Pools, Reward Tracks, Hero Exposure | T17-T20 | Pool reward-track model, monster bindings, Hero / Codex exposure, learner-history safety |
 | E6. Monster Image Assets | T21-T23 | Monster image upload, validation, preview, package publish integration |
 | E7. Release Safety and Recovery | T24-T27 | release history, visibility proof, rollback, package-level revert |
-| E8. Hardening, Migration, Documentation | T28-T31 | compatibility, capacity, security, production runbooks, live verification |
+| E8. Hardening, Migration, Documentation | T28-T31 | compatibility decommission, capacity, security, production runbooks, live verification |
 
 ## Implementation Units
 
@@ -384,6 +384,37 @@ Whole-release rollback is an approved high-risk operation that marks a prior rel
 
 ### E2. Package Workflow and Admin Shell
 
+#### T5A. Seed first global release and lock active-release semantics
+
+**Goal:** Complete the first global release cutover before learner-visible admin publish is enabled.
+
+**Covers:** R9, R62-R65, R74-R78, AE13, AE14.
+
+**Primary files:**
+
+- `scripts/migrate-spelling-content-to-global-release.mjs`
+- `worker/src/content-operations/routes.js`
+- `worker/src/repository.js`
+- `tests/spelling-content-api.test.js`
+- `tests/worker-subject-runtime.test.js`
+- `tests/content-operations-rollback.test.js`
+
+**Approach:**
+
+- Seed the first global release from the current published spelling content or bundled fallback before E2 publish routes are enabled.
+- Freeze the legacy `/api/content/spelling` publish path or route it through a compatibility package so it cannot bypass approval after cutover.
+- Define V1 active release as the latest published release with deterministic ordering.
+- Implement rollback as a new published release whose snapshot equals the target release and whose `rollback_of_release_id` points to that target.
+- Make normal publish and rollback share the same release writer and runtime resolution invariant.
+- Add parity proof that learner runtime before and after first global release seed is identical.
+
+**Exit criteria:**
+
+- API publish cannot run before the first global release seed/cutover gate is satisfied.
+- Legacy publish cannot bypass package approval after cutover.
+- Rollback can be exercised through the release writer before learner-visible admin publish is enabled.
+- Spelling runtime parity is proven before and after the first global release.
+
 #### T5. Add admin content operations API routes
 
 **Goal:** Expose the package, candidate, validation, approval, publish, and release-history API under `/api/admin/content-operations`.
@@ -402,9 +433,13 @@ Whole-release rollback is an approved high-risk operation that marks a prior rel
 
 - Gate all routes behind the existing admin session and role checks.
 - Keep edit, approve, and publish capability names separate in code while mapping all three to the current `admin` role.
+- Add typed operation request/response schemas, serialiser fixtures, and a client SDK surface for the entity types used by E3-E6.
+- Add route stubs for later pool, reward, monster asset, audio, visibility, rollback, and revert operations so downstream tickets extend a stable contract instead of inventing new shapes.
+- Return a stable blocker envelope with `validation`, `conflicts`, `audio`, `assets`, `rewards`, `visibility`, `exposure`, and `publishReadiness` sections.
 - Return compact summaries for list pages.
 - Require explicit package ids for mutations.
 - Return structured conflict, validation, audio, asset, reward, and exposure blockers.
+- Make publish routes depend on the T5A first-release cutover and active-release invariant.
 
 **Exit criteria:**
 
@@ -654,7 +689,10 @@ Whole-release rollback is an approved high-risk operation that marks a prior rel
 **Approach:**
 
 - Add a service boundary that can generate selected package audio, batch-generate package audio, or regenerate with override.
-- Persist `content_operation_audio_jobs` rows for generation requests and provenance.
+- Treat `content_operation_audio_jobs` as the authoritative admin audio job ledger, not a passive audit mirror.
+- Claim and update jobs by idempotency key so Worker-triggered generation and local operator scripts reconcile to the same rows.
+- Require any script-generated R2 object to reconcile into `content_operation_audio_jobs` before readiness can move to present/generated.
+- Define per-request batch limits, queue concurrency, provider rate-limit handling, retry state, and failed-job visibility before the UI triggers large batches.
 - Continue storing generated audio in R2 through the approved path.
 - Keep local operator script compatibility for large batch runs if Worker-triggered generation is not suitable for every run.
 
@@ -763,10 +801,11 @@ Whole-release rollback is an approved high-risk operation that marks a prior rel
 
 **Approach:**
 
-- Create a compatibility projection from existing spelling progress and monster state into the new reward-track model.
-- Keep current progress keys stable.
-- Add migrations or seed release data that represents current pool/monster behaviour as reward tracks.
-- Avoid writing learner-progress migrations unless tests prove they are needed.
+- First characterise existing spelling monster, Hero, Codex, and learner-history behaviour with focused tests.
+- Add a projection adapter from existing spelling progress and monster state into the new reward-track model while keeping current progress keys stable.
+- Rehearse seed release data that represents current pool/monster behaviour as reward tracks before runtime cutover.
+- Add cutover proof that existing learner monster progress still appears through Hero and Codex after the adapter is enabled.
+- Avoid writing learner-progress migrations unless the characterisation tests prove they are needed.
 
 **Exit criteria:**
 
@@ -870,8 +909,6 @@ Whole-release rollback is an approved high-risk operation that marks a prior rel
 
 - `src/surfaces/hubs/AdminContentOperationsSection.jsx`
 - `src/platform/game/monster-visual-config.js`
-- `src/platform/game/monster-asset-manifest.js`
-- `scripts/generate-monster-assets.mjs`
 - `tests/admin-asset-registry-v1.test.js`
 - `tests/build-public.test.js`
 
@@ -880,7 +917,9 @@ Whole-release rollback is an approved high-risk operation that marks a prior rel
 - Extend the asset registry pattern beyond `monster-visual-config` to package monster image assets.
 - Add preview cards for stage, branch, and target renderer contexts.
 - Store package operations that reference validated asset upload ids.
-- On publish, promote package asset references into the global release snapshot or published asset manifest reference.
+- On publish, promote package asset references into a published asset-reference manifest inside the content release snapshot.
+- Do not write uploaded R2 assets back into the bundled `monster-asset-manifest.js`; that manifest remains a generated fallback and compatibility fixture.
+- Define responsive derivative policy, retention period, rollback availability, and cleanup ownership before learner runtime reads remote assets.
 
 **Exit criteria:**
 
@@ -898,7 +937,7 @@ Whole-release rollback is an approved high-risk operation that marks a prior rel
 
 - `worker/src/repository.js`
 - `src/platform/game/monster-visual-config.js`
-- `src/platform/game/monster-asset-manifest.js`
+- `src/platform/game/monster-asset-manifest.js` for fallback compatibility only.
 - `tests/admin-asset-registry-characterisation.test.js`
 - `tests/hero-contracts.test.js`
 
@@ -907,6 +946,7 @@ Whole-release rollback is an approved high-risk operation that marks a prior rel
 - Resolve monster asset references from published global release first, then bundled/generated fallback.
 - Ensure asset changes do not mutate reward thresholds or progress state unless package operations include those changes.
 - Keep old published assets available while new package assets are draft or while rollback is possible.
+- Keep rollback non-destructive: old R2 asset references must remain available until retention cleanup runs separately.
 
 **Exit criteria:**
 
@@ -944,7 +984,7 @@ Whole-release rollback is an approved high-risk operation that marks a prior rel
 
 **Goal:** Provide emergency recovery by restoring a previous global release.
 
-**Covers:** R47, R75, R77, AE14.
+**Covers:** R75, R77, AE14.
 
 **Primary files:**
 
@@ -957,7 +997,7 @@ Whole-release rollback is an approved high-risk operation that marks a prior rel
 
 - Add approved high-risk rollback action.
 - Record rollback target, reason, approver, publisher, and proof requirement.
-- Mark active release atomically.
+- Publish a rollback release atomically using the same release writer as normal publish.
 - Do not delete R2 audio or draft assets.
 
 **Exit criteria:**
@@ -970,7 +1010,7 @@ Whole-release rollback is an approved high-risk operation that marks a prior rel
 
 **Goal:** Allow ordinary recovery from a specific package without rolling back unrelated later releases.
 
-**Covers:** R48, R76-R77, AE14.
+**Covers:** R76-R77, AE14.
 
 **Primary files:**
 
@@ -995,7 +1035,7 @@ Whole-release rollback is an approved high-risk operation that marks a prior rel
 
 **Goal:** Separate publishing content from making it learner-visible, while still proving learner-facing changes.
 
-**Covers:** R44-R46, R58-R61, R78.
+**Covers:** R58-R61, R78.
 
 **Primary files:**
 
@@ -1019,9 +1059,9 @@ Whole-release rollback is an approved high-risk operation that marks a prior rel
 
 ### E8. Hardening, Migration, Documentation
 
-#### T28. Add compatibility and migration path
+#### T28. Decommission compatibility paths and harden migration
 
-**Goal:** Move current spelling content into the new global release model without breaking existing admin or runtime paths.
+**Goal:** Retire or harden legacy spelling content paths after T5A has seeded the first global release and locked the publish invariant.
 
 **Covers:** R62-R65, R72.
 
@@ -1035,14 +1075,14 @@ Whole-release rollback is an approved high-risk operation that marks a prior rel
 
 **Approach:**
 
-- Seed the first global release from current published spelling content or bundled fallback.
-- Keep existing import/export/publish controls working until fully replaced.
-- Make legacy admin publish either disabled with migration guidance or mapped into a compatibility package.
-- Document the cutover clearly.
+- Verify the T5A first global release seed remains current and idempotent in production.
+- Remove, disable, or explicitly map remaining legacy admin publish controls into compatibility packages.
+- Keep legacy read/export compatibility only where it is still needed for diagnostics or safe rollback.
+- Document the post-cutover state clearly, including which old paths are read-only and which are removed.
 
 **Exit criteria:**
 
-- Production can be migrated to a first global release.
+- Production remains on a seeded global release after legacy compatibility cleanup.
 - Existing learners continue to receive the same content before and after migration.
 - Legacy admin tools cannot silently bypass package approval after cutover.
 
@@ -1117,6 +1157,7 @@ Whole-release rollback is an approved high-risk operation that marks a prior rel
 
 **Approach:**
 
+- From T5A onwards, run a minimal content-operations smoke for any deploy touching admin publish or learner runtime resolution.
 - Add a production smoke script for admin release metadata and public runtime snapshots.
 - Verify Spelling setup, Word Bank, Hero / Codex, and monster rendering surfaces after learner-facing visibility changes.
 - Keep logged-in browser verification for UI flows that need session state.
@@ -1135,15 +1176,20 @@ flowchart LR
   T1["T1 schema"] --> T2["T2 operations"]
   T2 --> T3["T3 repository"]
   T3 --> T4["T4 runtime bridge"]
-  T3 --> T5["T5 API routes"]
+  T4 --> T5A["T5A first release cutover"]
+  T3 --> T5A
+  T5A --> T5["T5 API routes"]
   T5 --> T6["T6 admin shell"]
   T5 --> T7["T7 approval UX"]
+  T5A --> T7
   T2 --> T8["T8 conflict resolver"]
   T6 --> T9["T9 spelling browse"]
   T9 --> T10["T10 word editor"]
   T9 --> T11["T11 sentence editor"]
   T9 --> T12["T12 pool editorial"]
   T2 --> T13["T13 audio scanner"]
+  T9 --> T13
+  T11 --> T13
   T13 --> T14["T14 TTS package service"]
   T14 --> T15["T15 override/fallback"]
   T15 --> T16["T16 audio UI"]
@@ -1151,14 +1197,18 @@ flowchart LR
   T17 --> T18["T18 existing monster mapping"]
   T18 --> T19["T19 pools/rewards UI"]
   T18 --> T20["T20 Hero exposure"]
+  T18 --> T21["T21 asset upload"]
+  T20 --> T21
+  T20 --> T22["T22 asset preview"]
   T5 --> T21["T21 asset upload"]
   T21 --> T22["T22 asset preview"]
   T22 --> T23["T23 asset publish/fallback"]
   T7 --> T24["T24 release history/proof"]
   T24 --> T25["T25 rollback"]
   T24 --> T26["T26 package revert"]
+  T23 --> T25
   T20 --> T27["T27 visibility proof"]
-  T4 --> T28["T28 migration"]
+  T5A --> T28["T28 compatibility cleanup"]
   T28 --> T29["T29 hardening"]
   T29 --> T30["T30 docs"]
   T30 --> T31["T31 production verification"]
@@ -1211,6 +1261,7 @@ Per-ticket targeted tests:
 Release gates:
 
 - Run relevant targeted tests for each ticket.
+- From T5A onwards, run a minimal admin release metadata and learner runtime smoke for any deploy touching content operations publish or runtime resolution.
 - Run `npm test` and `npm run check` before deployment.
 - When working from a fresh worktree, run `node scripts/worktree-setup.mjs` before test/check commands.
 - After deployment, verify `https://ks2.eugnel.uk` with a logged-in admin session when the change affects Admin Console or learner-facing visibility.

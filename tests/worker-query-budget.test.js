@@ -31,8 +31,10 @@ import { createApiPlatformRepositories } from '../src/platform/core/repositories
 // event_log + spelling content). P7 removed the duplicate account point read.
 // May 2026 hotfix removed the spelling content table read from bootstrap
 // public read-model hydration, so the measured runtime path is now 9.
+// Content Operations Centre restored learner-visible global release checks
+// without returning to account_subject_content, so the measured path is 11.
 // Headroom +1.
-const MEASURED_BOOTSTRAP_MULTI_LEARNER = 9;
+const MEASURED_BOOTSTRAP_MULTI_LEARNER = 11;
 const BUDGET_BOOTSTRAP_MULTI_LEARNER = MEASURED_BOOTSTRAP_MULTI_LEARNER + 1;
 
 // Measured: 5 queries for the notModified probe (ops_status JOIN +
@@ -45,7 +47,10 @@ const BUDGET_BOOTSTRAP_NOT_MODIFIED = 6;
 // ensureAccount + membership + learner+account revision + subject_state +
 // active_session + spelling_content + projection read-model + 5 batch
 // writes). Phase D / U14 added the account_ops_metadata JOIN.
-const BUDGET_COMMAND_HOT_PATH = 13;
+// Content Operations Centre moved spelling runtime reads through the
+// override/global release precedence checks; the command hot path now carries
+// two release lookups while still avoiding account_subject_content.
+const BUDGET_COMMAND_HOT_PATH = 15;
 
 // Measured: 6 queries for parent hub recent-sessions (ops_status JOIN +
 // ensureAccount upsert + account select + membership list + learner
@@ -55,15 +60,18 @@ const BUDGET_PARENT_RECENT_SESSIONS = 7;
 // P7 measured: 10 queries for GET bootstrap full bundle. May 2026 hotfix
 // removed the spelling content table read from public read-model hydration,
 // leaving the route-level account snapshot reuse and 9 measured queries.
+// Content Operations Centre restored learner-visible global release checks
+// without returning to account_subject_content, so the measured path is 11.
 // Headroom +1.
-const MEASURED_BOOTSTRAP_GET_FULL = 9;
+const MEASURED_BOOTSTRAP_GET_FULL = 11;
 const BUDGET_BOOTSTRAP_GET_FULL = MEASURED_BOOTSTRAP_GET_FULL + 1;
 const MEASURED_BOOTSTRAP_GET_WITH_CACHED_MONSTER_POINTER = MEASURED_BOOTSTRAP_GET_FULL - 1;
 
-// Measured: 4 queries for Hero read-model GET (ops_status JOIN +
+// Measured: 6 queries for Hero read-model GET (ops_status JOIN +
 // ensureAccount upsert + membership learner-access check +
-// child_subject_state read). Headroom +1.
-const BUDGET_HERO_READ_MODEL = 5;
+// child_subject_state read + content-operation override/global release
+// checks). Headroom +1.
+const BUDGET_HERO_READ_MODEL = 7;
 
 // Measured: 20 queries for Admin Ops KPI dashboard (ops_status JOIN +
 // ensureAccount upsert + assertAdminHubActor SELECT + 14 COUNT(*)
@@ -82,18 +90,18 @@ const BUDGET_ADMIN_ACCOUNTS_SEARCH = 5;
 const BUDGET_ADMIN_DEBUG_BUNDLE = 11;
 const MIN_ADMIN_DEBUG_BUNDLE_TRACKED_QUERIES = 10;
 
-// Measured: 19 queries for Hero command POST start-task (ops_status JOIN +
+// Measured: 22 queries for Hero command POST start-task (ops_status JOIN +
 // ensureAccount upsert + requireLearnerReadAccess + readHeroSubjectReadModels
 // [1st child_subject_state read for server-side quest recomputation] +
 // requireLearnerReadAccess [2nd, within runSubjectCommand] + learner+account
 // revision CAS + child_subject_state [2nd read for subject dispatch] +
-// active_session scan + spelling_content + projection read-model +
-// child_game_state + event_log + sqlite_master + 6 batch writes).
+// active_session scan + content-operation release checks + projection
+// read-model + child_game_state + event_log + sqlite_master + 6 batch writes).
 // The 2x child_subject_state reads are inherent to the Hero launch
 // architecture: resolveHeroStartTaskCommand recomputes the quest from
 // live subject state, then runSubjectCommand re-reads it for dispatch.
 // Headroom +1.
-const BUDGET_HERO_COMMAND = 20;
+const BUDGET_HERO_COMMAND = 23;
 
 // Measured: 5 queries for Admin Ops error-events (ops_status JOIN +
 // ensureAccount upsert + assertAdminHubActor SELECT + totals GROUP BY

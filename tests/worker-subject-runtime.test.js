@@ -16,6 +16,9 @@ import {
   readSeededSpellingContentBundle,
   readSeededSpellingPublishedSnapshot,
 } from '../worker/src/generated-spelling-content-seed.js';
+import {
+  isStatutoryCoreWord,
+} from '../src/subjects/spelling/content/taxonomy.js';
 import { createWorkerRepositoryServer } from './helpers/worker-server.js';
 import { createMigratedSqliteD1Database } from './helpers/sqlite-d1.js';
 
@@ -42,6 +45,38 @@ async function postJson(server, path, body = {}, headers = {}) {
       ...headers,
     },
     body: JSON.stringify(body),
+  });
+}
+
+async function publishSpellingWordEdit(repository, word, {
+  actorAccountId = 'admin-a',
+  title = 'Runtime content package',
+  fieldPath = 'explanation',
+  action = 'set',
+  payload = `Runtime content explanation for ${word?.word || 'word'}.`,
+} = {}) {
+  const contentPackage = await repository.createContentOperationPackage({
+    templateId: 'edit-spelling-word',
+    title,
+    createdByAccountId: actorAccountId,
+  });
+  await repository.appendContentOperation(contentPackage.packageId, {
+    entityType: 'spelling.word',
+    entityId: word.slug,
+    fieldPath,
+    action,
+    payload,
+  }, {
+    actorAccountId,
+  });
+  const candidate = await repository.buildContentOperationCandidate(contentPackage.packageId, {
+    actorAccountId,
+  });
+  await repository.approveContentOperationCandidate(contentPackage.packageId, candidate.candidateId, {
+    approvedByAccountId: actorAccountId,
+  });
+  return repository.publishContentOperationPackage(contentPackage.packageId, {
+    publishedByAccountId: actorAccountId,
   });
 }
 
@@ -219,6 +254,94 @@ test('repository serves spelling runtime from the global content operations rele
     assert.equal(runtime.content.draft.words.length, seeded.draft.words.length);
     assert.equal(runtime.summary.runtimeWordCount, seeded.releases.at(-1).snapshot.words.length);
     assert.equal(accountContentReads.length, 0);
+  } finally {
+    DB.close();
+  }
+});
+
+test('repository runtime keeps account overrides ahead of global releases without reading account content rows', async () => {
+  const DB = createMigratedSqliteD1Database();
+  const repository = createWorkerRepository({ env: { DB }, now: () => 1_777_000_000_000 });
+  try {
+    const seeded = await readSeededSpellingContentBundle();
+    const firstWord = seeded.draft.words[0];
+    const secondWord = seeded.draft.words[1];
+    const overrideExplanation = `Override release explanation for ${firstWord.word}.`;
+    const globalExplanation = `Latest global explanation for ${secondWord.word}.`;
+
+    const overrideRelease = await publishSpellingWordEdit(repository, firstWord, {
+      title: 'Account override source release',
+      payload: overrideExplanation,
+    });
+    await publishSpellingWordEdit(repository, secondWord, {
+      actorAccountId: 'admin-b',
+      title: 'Latest global source release',
+      payload: globalExplanation,
+    });
+    DB.db.prepare(`
+      INSERT INTO content_operation_account_overrides (
+        override_id, account_id, subject_id, release_id, reason, active,
+        created_by_account_id, created_at, ended_at
+      )
+      VALUES ('override-runtime-a', 'adult-a', 'spelling', ?, 'Runtime test override', 1, 'admin-a', ?, NULL)
+    `).run(overrideRelease.releaseId, 1_777_000_000_001);
+
+    DB.clearQueryLog();
+    const overridden = await repository.readSpellingRuntimeContent('adult-a', 'spelling', {
+      includeAccountContent: false,
+    });
+    const latest = await repository.readSpellingRuntimeContent('adult-b', 'spelling', {
+      includeAccountContent: false,
+    });
+    const accountContentReads = accountContentQueries(DB);
+
+    assert.equal(overridden.content.draft.words[0].explanation, overrideExplanation);
+    assert.equal(latest.content.draft.words[1].explanation, globalExplanation);
+    assert.equal(accountContentReads.length, 0);
+  } finally {
+    DB.close();
+  }
+});
+
+test('Hero spelling read-model uses the published global content operations release', async () => {
+  const DB = createMigratedSqliteD1Database();
+  const repository = createWorkerRepository({ env: { DB }, now: () => 1_777_000_000_000 });
+  try {
+    const seeded = await readSeededSpellingContentBundle();
+    const word = seeded.draft.words.find((entry) => entry.spellingPool !== 'extra') || seeded.draft.words[0];
+    await publishSpellingWordEdit(repository, word, {
+      title: 'Hero public read-model content release',
+      fieldPath: '',
+      action: 'retire',
+      payload: { reason: 'Hero read-model visibility regression test.' },
+    });
+    DB.db.prepare(`
+      INSERT INTO adult_accounts (id, email, display_name, platform_role, selected_learner_id, created_at, updated_at, repo_revision)
+      VALUES ('adult-a', 'adult-a@example.test', 'Adult A', 'parent', NULL, ?, ?, 0)
+    `).run(1_777_000_000_000, 1_777_000_000_000);
+    DB.db.prepare(`
+      INSERT INTO learner_profiles (id, name, year_group, avatar_color, goal, daily_minutes, created_at, updated_at, state_revision)
+      VALUES ('learner-hero', 'Hero Learner', 'Y5', '#3E6FA8', 'sats', 15, ?, ?, 0)
+    `).run(1_777_000_000_000, 1_777_000_000_000);
+    DB.db.prepare(`
+      INSERT INTO child_subject_state (learner_id, subject_id, ui_json, data_json, updated_at, updated_by_account_id)
+      VALUES ('learner-hero', 'spelling', ?, ?, ?, 'adult-a')
+    `).run(
+      JSON.stringify({ phase: 'dashboard' }),
+      JSON.stringify({ prefs: { mode: 'smart' } }),
+      1_777_000_000_000,
+    );
+
+    const runtime = await repository.readSpellingRuntimeContent('adult-a', 'spelling', {
+      includeAccountContent: false,
+    });
+    const expectedCoreWordCount = runtime.snapshot.words.filter(isStatutoryCoreWord).length;
+    const heroModels = await repository.readHeroSubjectReadModels('learner-hero', {
+      accountId: 'adult-a',
+      now: 1_777_000_000_000,
+    });
+
+    assert.equal(heroModels.spelling.ui.stats.all.total, expectedCoreWordCount);
   } finally {
     DB.close();
   }

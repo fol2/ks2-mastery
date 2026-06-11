@@ -32,6 +32,18 @@ test('content operations produce stable hashes and normalised field edits', () =
   assert.equal(contentOperationHash(operation), contentOperationHash({ ...operation }));
 });
 
+test('content operations reject entity contracts that the candidate builder cannot apply yet', () => {
+  assert.throws(
+    () => normaliseContentOperation({
+      entityType: 'spelling.pool',
+      entityId: 'core-y5',
+      action: 'upsert',
+      payload: { id: 'core-y5', title: 'Core Year 5' },
+    }),
+    /Unsupported content operation entity type "spelling\.pool"/,
+  );
+});
+
 test('content operations detect same-field conflicts without blocking unrelated fields', () => {
   const left = [{
     operationId: 'left-op',

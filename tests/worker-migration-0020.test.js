@@ -64,6 +64,7 @@ test('migration 0020 creates the Content Operations Centre tables and indexes', 
       'idx_content_operation_packages_base_release',
       'idx_content_operation_packages_subject_state',
       'idx_content_operation_releases_package',
+      'idx_content_operation_releases_package_once',
       'idx_content_operation_releases_subject_status',
     ]);
   } finally {

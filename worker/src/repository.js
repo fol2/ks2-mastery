@@ -533,6 +533,18 @@ async function readSeededSpellingRuntimeContentBundle(subjectId = 'spelling') {
     || rememberSpellingRuntimeContent(key, await buildSeededSpellingRuntimeContent(subjectId));
 }
 
+async function readSpellingRuntimeContentReleaseBundle(db, subjectId, releaseRow, cachePrefix = 'release') {
+  if (!releaseRow) return readSeededSpellingRuntimeContentBundle(subjectId);
+  const key = spellingRuntimeContentReleaseKey(releaseRow, subjectId, cachePrefix);
+  const cached = readCachedSpellingRuntimeContent(key);
+  if (cached) return cached;
+  const fullReleaseRow = await readPublishedContentOperationReleaseRow(db, subjectId, {
+    includeSnapshot: true,
+    releaseId: releaseRow.release_id,
+  });
+  return rememberSpellingRuntimeContent(key, await buildSpellingRuntimeContentFromRelease(fullReleaseRow, subjectId));
+}
+
 async function readPublishedContentOperationReleaseRow(db, subjectId = 'spelling', {
   includeSnapshot = false,
   releaseId = null,
@@ -553,7 +565,7 @@ async function readPublishedContentOperationReleaseRow(db, subjectId = 'spelling
         created_at
       FROM content_operation_releases
       WHERE ${releaseFilter}
-      ORDER BY published_at DESC, created_at DESC
+      ORDER BY published_at DESC, created_at DESC, rowid DESC
       LIMIT 1
     `, params);
   } catch (error) {
@@ -601,30 +613,17 @@ async function readSpellingRuntimeContentBundle(db, accountId, subjectId = 'spel
   includeAccountContent = true,
   includeGlobalContent = true,
 } = {}) {
+  if (includeGlobalContent) {
+    const overrideRow = await readActiveContentOperationOverrideReleaseRow(db, accountId, subjectId);
+    if (overrideRow) {
+      return readSpellingRuntimeContentReleaseBundle(db, subjectId, overrideRow, 'override');
+    }
+  }
+
   if (!includeAccountContent) {
     if (!includeGlobalContent) return readSeededSpellingRuntimeContentBundle(subjectId);
     const releaseRow = await readPublishedContentOperationReleaseRow(db, subjectId);
-    if (!releaseRow) return readSeededSpellingRuntimeContentBundle(subjectId);
-    const key = spellingRuntimeContentReleaseKey(releaseRow, subjectId);
-    const cached = readCachedSpellingRuntimeContent(key);
-    if (cached) return cached;
-    const fullReleaseRow = await readPublishedContentOperationReleaseRow(db, subjectId, {
-      includeSnapshot: true,
-      releaseId: releaseRow.release_id,
-    });
-    return rememberSpellingRuntimeContent(key, await buildSpellingRuntimeContentFromRelease(fullReleaseRow, subjectId));
-  }
-
-  const overrideRow = await readActiveContentOperationOverrideReleaseRow(db, accountId, subjectId);
-  if (overrideRow) {
-    const key = spellingRuntimeContentReleaseKey(overrideRow, subjectId, 'override');
-    const cached = readCachedSpellingRuntimeContent(key);
-    if (cached) return cached;
-    const fullOverrideRow = await readPublishedContentOperationReleaseRow(db, subjectId, {
-      includeSnapshot: true,
-      releaseId: overrideRow.release_id,
-    });
-    return rememberSpellingRuntimeContent(key, await buildSpellingRuntimeContentFromRelease(fullOverrideRow, subjectId));
+    return readSpellingRuntimeContentReleaseBundle(db, subjectId, releaseRow);
   }
 
   const accountRow = await first(db, `
@@ -659,14 +658,7 @@ async function readSpellingRuntimeContentBundle(db, accountId, subjectId = 'spel
   if (includeGlobalContent) {
     const releaseRow = await readPublishedContentOperationReleaseRow(db, subjectId);
     if (releaseRow) {
-      const key = spellingRuntimeContentReleaseKey(releaseRow, subjectId);
-      const cached = readCachedSpellingRuntimeContent(key);
-      if (cached) return cached;
-      const fullReleaseRow = await readPublishedContentOperationReleaseRow(db, subjectId, {
-        includeSnapshot: true,
-        releaseId: releaseRow.release_id,
-      });
-      return rememberSpellingRuntimeContent(key, await buildSpellingRuntimeContentFromRelease(fullReleaseRow, subjectId));
+      return readSpellingRuntimeContentReleaseBundle(db, subjectId, releaseRow);
     }
   }
 
@@ -7630,7 +7622,7 @@ async function bootstrapBundle(db, accountId, {
     publicReadModels && subjectRows.some((row) => row.subject_id === 'spelling')
       ? readSpellingRuntimeContentBundle(db, accountId, 'spelling', {
         includeAccountContent: false,
-        includeGlobalContent: false,
+        includeGlobalContent: true,
       })
       : null
   ));
@@ -10184,7 +10176,7 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
       const spellingContent = accountId && rows.some((row) => row.subject_id === 'spelling')
         ? await readSpellingRuntimeContentBundle(db, accountId, 'spelling', {
           includeAccountContent: false,
-          includeGlobalContent: false,
+          includeGlobalContent: true,
         })
         : null;
       for (const row of rows) {
