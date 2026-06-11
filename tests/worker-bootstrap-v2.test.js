@@ -170,6 +170,10 @@ async function publishSpellingWordEdit(repository, word, {
   action = 'set',
   payload = `Bootstrap content explanation for ${word?.word || 'word'}.`,
 } = {}) {
+  await repository.seedFirstContentOperationRelease({
+    seededByAccountId: actorAccountId,
+    proof: { source: 'worker-bootstrap-v2-test-helper' },
+  });
   const contentPackage = await repository.createContentOperationPackage({
     templateId: 'edit-spelling-word',
     title,

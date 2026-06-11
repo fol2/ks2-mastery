@@ -129,6 +129,16 @@ function releaseRowToRecord(row, { includeSnapshot = false } = {}) {
   };
 }
 
+function validationSummary(validation) {
+  return {
+    ok: Boolean(validation?.ok),
+    errorCount: Array.isArray(validation?.errors) ? validation.errors.length : 0,
+    warningCount: Array.isArray(validation?.warnings) ? validation.warnings.length : 0,
+    errors: Array.isArray(validation?.errors) ? validation.errors : [],
+    warnings: Array.isArray(validation?.warnings) ? validation.warnings : [],
+  };
+}
+
 function approvalRowToRecord(row) {
   if (!row) return null;
   return {
@@ -217,6 +227,27 @@ async function readReleaseRowById(db, subjectId, releaseId, { includeSnapshot = 
   `, [subjectId, releaseId]);
 }
 
+async function readLegacySubjectContentBundle(db, subjectId) {
+  const row = await first(db, `
+    SELECT account_id, subject_id, content_json, updated_at, updated_by_account_id
+    FROM account_subject_content
+    WHERE subject_id = ?
+    ORDER BY updated_at DESC
+    LIMIT 1
+  `, [subjectId]);
+  const bundle = parseJson(row?.content_json, null);
+  if (!bundle) return null;
+  return {
+    bundle,
+    source: {
+      type: 'account_subject_content',
+      accountId: row.account_id || null,
+      updatedAt: Number(row.updated_at) || 0,
+      updatedByAccountId: row.updated_by_account_id || null,
+    },
+  };
+}
+
 async function requirePackage(db, packageId) {
   const row = await first(db, `
     SELECT *
@@ -294,6 +325,105 @@ export function createContentOperationsRepository({ db, now }) {
   const nowFactory = typeof now === 'function' ? now : () => Date.now();
 
   return {
+    async seedFirstContentOperationRelease({
+      subjectId = CONTENT_OPERATION_SUBJECT_ID,
+      seededByAccountId = null,
+      proof = null,
+    } = {}) {
+      const resolvedSubjectId = normaliseSubjectId(subjectId);
+      const existing = await readLatestReleaseRow(db, resolvedSubjectId, { includeSnapshot: true });
+      if (existing) {
+        return {
+          ...releaseRowToRecord(existing, { includeSnapshot: true }),
+          seeded: false,
+          source: { type: 'existing_release' },
+        };
+      }
+
+      const nowTs = Number(nowFactory());
+      const legacy = await readLegacySubjectContentBundle(db, resolvedSubjectId);
+      const seededBundle = legacy?.bundle || await readSeededSpellingContentBundle();
+      const validation = validateSpellingContentBundle(seededBundle);
+      if (!validation.ok) {
+        throw new BadRequestError('First content operation release seed source is invalid.', {
+          code: 'content_operation_seed_invalid',
+          subjectId: resolvedSubjectId,
+          validation: validationSummary(validation),
+        });
+      }
+
+      const summary = buildSpellingContentSummary(validation.bundle);
+      const releaseId = uid('corel');
+      const publishedAt = nowTs;
+      const snapshotHash = contentOperationHash(validation.bundle, 'release');
+      const actor = normaliseString(seededByAccountId) || legacy?.source?.updatedByAccountId || null;
+      const source = legacy?.source || { type: 'bundled_fallback' };
+      const releaseProof = {
+        ...(proof && typeof proof === 'object' && !Array.isArray(proof) ? proof : {}),
+        seed: {
+          source,
+          summary,
+        },
+      };
+
+      await batch(db, [
+        bindStatement(db, `
+          INSERT INTO content_operation_releases (
+            release_id, subject_id, status, snapshot_json, snapshot_hash,
+            base_release_id, package_id, published_at, published_by_account_id,
+            rollback_of_release_id, proof_json, created_at
+          )
+          VALUES (?, ?, 'published', ?, ?, NULL, NULL, ?, ?, NULL, ?, ?)
+        `, [
+          releaseId,
+          resolvedSubjectId,
+          JSON.stringify(validation.bundle),
+          snapshotHash,
+          publishedAt,
+          actor,
+          JSON.stringify(releaseProof),
+          nowTs,
+        ]),
+        bindStatement(db, `
+          INSERT INTO content_operation_events (
+            event_id, package_id, release_id, subject_id, event_type,
+            actor_account_id, event_json, created_at
+          )
+          VALUES (?, NULL, ?, ?, ?, ?, ?, ?)
+        `, [
+          uid('coevt'),
+          releaseId,
+          resolvedSubjectId,
+          'release.seeded',
+          actor,
+          JSON.stringify({
+            releaseId,
+            snapshotHash,
+            source,
+            summary,
+          }),
+          nowTs,
+        ]),
+      ]);
+
+      return {
+        releaseId,
+        subjectId: resolvedSubjectId,
+        status: 'published',
+        snapshotHash,
+        snapshot: validation.bundle,
+        baseReleaseId: null,
+        packageId: null,
+        publishedAt,
+        publishedByAccountId: actor,
+        rollbackOfReleaseId: null,
+        proof: releaseProof,
+        createdAt: nowTs,
+        seeded: true,
+        source,
+      };
+    },
+
     async createContentOperationPackage({
       subjectId = CONTENT_OPERATION_SUBJECT_ID,
       templateId = 'general',
@@ -739,6 +869,13 @@ export function createContentOperationsRepository({ db, now }) {
         });
       }
       const currentReleaseRow = await readLatestReleaseRow(db, packageRow.subject_id);
+      if (!currentReleaseRow) {
+        throw new ConflictError('First global content operation release must be seeded before package publish.', {
+          code: 'content_operation_first_release_required',
+          packageId,
+          subjectId: packageRow.subject_id,
+        });
+      }
       if ((candidate.currentReleaseId || null) !== (currentReleaseRow?.release_id || null)) {
         throw new ConflictError('A newer content operation release was published after approval.', {
           code: 'content_operation_release_drift',
@@ -871,6 +1008,105 @@ export function createContentOperationsRepository({ db, now }) {
         publishedAt: nowTs,
         publishedByAccountId: actor,
         proof,
+      };
+    },
+
+    async rollbackContentOperationRelease(subjectId = CONTENT_OPERATION_SUBJECT_ID, releaseId, {
+      rolledBackByAccountId,
+      proof = null,
+    } = {}) {
+      const resolvedSubjectId = normaliseSubjectId(subjectId);
+      const actor = normaliseString(rolledBackByAccountId);
+      if (!actor) throw new BadRequestError('Content operation rollback requires an actor account id.');
+      const targetRow = await readReleaseRowById(db, resolvedSubjectId, normaliseString(releaseId), {
+        includeSnapshot: true,
+      });
+      const target = releaseRowToRecord(targetRow, { includeSnapshot: true });
+      if (!target) {
+        throw new NotFoundError('Content operation rollback target release was not found.', {
+          code: 'content_operation_release_not_found',
+          subjectId: resolvedSubjectId,
+          releaseId,
+        });
+      }
+      const currentRow = await readLatestReleaseRow(db, resolvedSubjectId);
+      const validation = validateSpellingContentBundle(target.snapshot);
+      if (!validation.ok) {
+        throw new ConflictError('Rollback target no longer validates.', {
+          code: 'content_operation_rollback_target_invalid',
+          subjectId: resolvedSubjectId,
+          releaseId,
+          validation: validationSummary(validation),
+        });
+      }
+
+      const nowTs = Number(nowFactory());
+      const rollbackReleaseId = uid('corel');
+      const snapshotHash = contentOperationHash(validation.bundle, 'release');
+      const rollbackProof = {
+        ...(proof && typeof proof === 'object' && !Array.isArray(proof) ? proof : {}),
+        rollback: {
+          targetReleaseId: target.releaseId,
+          targetSnapshotHash: target.snapshotHash,
+          previousLatestReleaseId: currentRow?.release_id || null,
+        },
+      };
+
+      await batch(db, [
+        bindStatement(db, `
+          INSERT INTO content_operation_releases (
+            release_id, subject_id, status, snapshot_json, snapshot_hash,
+            base_release_id, package_id, published_at, published_by_account_id,
+            rollback_of_release_id, proof_json, created_at
+          )
+          VALUES (?, ?, 'published', ?, ?, ?, NULL, ?, ?, ?, ?, ?)
+        `, [
+          rollbackReleaseId,
+          resolvedSubjectId,
+          JSON.stringify(validation.bundle),
+          snapshotHash,
+          currentRow?.release_id || null,
+          nowTs,
+          actor,
+          target.releaseId,
+          JSON.stringify(rollbackProof),
+          nowTs,
+        ]),
+        bindStatement(db, `
+          INSERT INTO content_operation_events (
+            event_id, package_id, release_id, subject_id, event_type,
+            actor_account_id, event_json, created_at
+          )
+          VALUES (?, NULL, ?, ?, ?, ?, ?, ?)
+        `, [
+          uid('coevt'),
+          rollbackReleaseId,
+          resolvedSubjectId,
+          'release.rollback',
+          actor,
+          JSON.stringify({
+            releaseId: rollbackReleaseId,
+            rollbackOfReleaseId: target.releaseId,
+            previousLatestReleaseId: currentRow?.release_id || null,
+            snapshotHash,
+          }),
+          nowTs,
+        ]),
+      ]);
+
+      return {
+        releaseId: rollbackReleaseId,
+        subjectId: resolvedSubjectId,
+        status: 'published',
+        snapshotHash,
+        snapshot: validation.bundle,
+        baseReleaseId: currentRow?.release_id || null,
+        packageId: null,
+        publishedAt: nowTs,
+        publishedByAccountId: actor,
+        rollbackOfReleaseId: target.releaseId,
+        proof: rollbackProof,
+        createdAt: nowTs,
       };
     },
 

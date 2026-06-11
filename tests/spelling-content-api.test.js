@@ -5,6 +5,7 @@ import { readFile } from 'node:fs/promises';
 import {
   createApiPlatformRepositories,
 } from '../src/platform/core/repositories/index.js';
+import { createWorkerRepository } from '../worker/src/repository.js';
 import { cloneSerialisable } from '../src/platform/core/repositories/helpers.js';
 import {
   SPELLING_CONTENT_MODEL_VERSION,
@@ -236,6 +237,45 @@ test('worker spelling content route accepts valid Extra pool content without sta
     const reloadedResponse = await fetchAdmin(server, 'https://repo.test/api/content/spelling');
     const reloaded = await reloadedResponse.json();
     assert.equal(reloaded.content.draft.words.find((word) => word.slug === 'cephalopod').spellingPool, 'extra');
+  } finally {
+    server.close();
+  }
+});
+
+test('worker spelling content legacy write route is frozen after global release cutover', async () => {
+  const server = createWorkerRepositoryServer();
+  try {
+    const repository = createWorkerRepository({
+      env: server.env,
+      now: () => Date.UTC(2026, 4, 17),
+    });
+    const seedRelease = await repository.seedFirstContentOperationRelease({
+      seededByAccountId: 'admin-a',
+      proof: { source: 'legacy-write-cutover-test' },
+    });
+
+    const initialResponse = await fetchAdmin(server, 'https://repo.test/api/content/spelling');
+    const initial = await initialResponse.json();
+    const updated = cloneSerialisable(initial.content);
+    updated.draft.notes = 'This legacy write should be blocked after cutover.';
+
+    const response = await fetchAdmin(server, 'https://repo.test/api/content/spelling', {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        content: updated,
+        mutation: {
+          requestId: 'content-legacy-cutover-blocked-1',
+          correlationId: 'content-legacy-cutover-blocked-1',
+          expectedAccountRevision: initial.mutation.accountRevision,
+        },
+      }),
+    });
+    const payload = await response.json();
+
+    assert.equal(response.status, 409);
+    assert.equal(payload.code, 'subject_content_legacy_write_cutover');
+    assert.equal(payload.releaseId, seedRelease.releaseId);
   } finally {
     server.close();
   }

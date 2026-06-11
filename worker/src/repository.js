@@ -618,12 +618,15 @@ async function readSpellingRuntimeContentBundle(db, accountId, subjectId = 'spel
     if (overrideRow) {
       return readSpellingRuntimeContentReleaseBundle(db, subjectId, overrideRow, 'override');
     }
+
+    const releaseRow = await readPublishedContentOperationReleaseRow(db, subjectId);
+    if (releaseRow) {
+      return readSpellingRuntimeContentReleaseBundle(db, subjectId, releaseRow);
+    }
   }
 
   if (!includeAccountContent) {
-    if (!includeGlobalContent) return readSeededSpellingRuntimeContentBundle(subjectId);
-    const releaseRow = await readPublishedContentOperationReleaseRow(db, subjectId);
-    return readSpellingRuntimeContentReleaseBundle(db, subjectId, releaseRow);
+    return readSeededSpellingRuntimeContentBundle(subjectId);
   }
 
   const accountRow = await first(db, `
@@ -9633,6 +9636,14 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
       const nowTs = nowFactory();
       const account = await first(db, 'SELECT id, platform_role FROM adult_accounts WHERE id = ?', [accountId]);
       requireSubjectContentWriteAccess(account);
+      const globalRelease = await readPublishedContentOperationReleaseRow(db, subjectId);
+      if (globalRelease) {
+        throw new ConflictError('Legacy spelling content writes are disabled after the global content operations cutover.', {
+          code: 'subject_content_legacy_write_cutover',
+          subjectId,
+          releaseId: globalRelease.release_id,
+        });
+      }
       const seededBundle = await readSeededSpellingContentBundle();
       const content = backfillSpellingWordExplanations(rawContent, seededBundle);
       const validation = validateSpellingContentBundle(content);
