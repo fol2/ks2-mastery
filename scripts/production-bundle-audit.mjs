@@ -572,8 +572,9 @@ function extractSameOriginJsImports(code) {
   return Array.from(results);
 }
 
-async function fetchText(url) {
-  const response = await fetch(url, { headers: { accept: 'text/html,application/javascript,*/*' } });
+async function fetchText(url, { accept = null } = {}) {
+  const init = accept ? { headers: { accept } } : undefined;
+  const response = await fetch(url, init);
   const text = await response.text().catch(() => '');
   return {
     url,
@@ -663,7 +664,7 @@ async function auditProduction(origin) {
     if (visitedChunks.has(key)) continue;
     visitedChunks.add(key);
 
-    const bundle = await fetchText(bundleUrl.href);
+    const bundle = await fetchText(bundleUrl.href, { accept: 'application/javascript,*/*' });
     if (bundle.status < 200 || bundle.status >= 300) {
       failures.push(`Production bundle fetch failed: ${bundle.status} ${bundleUrl.href}`);
       continue;
