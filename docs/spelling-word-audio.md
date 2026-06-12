@@ -24,28 +24,49 @@ Use this runbook when any of the triggers in **§1 When to regenerate**
 fire. Maintained by whoever currently owns the spelling subject; see
 the institutional learning entry for the contract-level details.
 
+## Content Operations TTS generation
+
+For new editorial changes, generate audio through the Content Operations Centre package workflow rather than by uploading audio files. Audio upload is not a supported admin path; approved spelling audio assets must be generated from TTS and stored in R2 with package provenance.
+
+The package action is `generate-audio` on `/api/admin/content-operations/packages/<packageId>/actions`. It builds the latest candidate snapshot, scans package-scoped audio requirements, and generates the requested missing or overridden items through `generateBufferedSpellingAudio`.
+
+Default generated profiles:
+
+- word audio: `male.natural` and `female.natural`
+- sentence audio: `male.normal`, `male.slow`, `female.normal`, and `female.slow`
+
+The generator also handles any extra configured variants from the package candidate. Jobs are recorded in `content_operation_audio_jobs` and R2 provenance includes package id, candidate id, profile, voice, pace, content key, and R2 key. The source identity is `content-operations-tts`.
+
+Operational guardrails:
+
+- default package generation limit: 5 items
+- maximum package generation limit: 25 items
+- account-level rate limit: 4 `generate-audio` actions per minute
+- `override: true` can regenerate already-present or stale audio, but it requires an override reason and invalidates an existing package approval
+
 ---
 
 ## 1. When to regenerate
 
 Trigger a regeneration whenever any of the following changes:
 
-1. **Word list change** — any edit to `WORDS` in
+1. **Content Operations package change** - any package operation that adds or changes a word, word-family variant, sentence entry, word list, pool audio requirement profile, or published snapshot reference. Build the package candidate, run the audio scan, and generate the missing word and sentence profiles before approval.
+2. **Word list change** — any edit to `WORDS` in
    `src/subjects/spelling/data/word-data.js` (additions, removals, or
    text changes to existing entries). The `contentKey` is content-addressed,
    so a different `word` text produces a different R2 path; the old object
    becomes orphaned and the new path is empty until regenerated.
-2. **Cache key contract version bump** — any change to
+3. **Cache key contract version bump** — any change to
    `SPELLING_AUDIO_VERSION` (`shared/spelling-audio.js:4`),
    `SPELLING_AUDIO_ROOT_PREFIX` (`shared/spelling-audio.js:6`),
    `SPELLING_AUDIO_MODEL`, or the contentKey hash input shape
    (`'spelling-audio-word-v1' | slug | word`). Any of these invalidates
    every existing object under the new key shape.
-3. **R2 bucket migration** — any change to the binding
+4. **R2 bucket migration** — any change to the binding
    `SPELLING_AUDIO_BUCKET` or the physical bucket
    (`ks2-spelling-buffers`) in `wrangler.jsonc` `r2_buckets[0]`. New
    bucket starts empty; existing objects must be re-uploaded.
-4. **Published spelling snapshot version bump** — any change to
+5. **Published spelling snapshot version bump** — any change to
    `SEEDED_SPELLING_PUBLISHED_SNAPSHOT.wordBySlug` in
    `src/subjects/spelling/data/content-data.js` that affects
    `(slug, word, sentence)` for any published word. The Worker
@@ -56,8 +77,10 @@ Trigger a regeneration whenever any of the following changes:
    Gemini spend.
 
 > **Sentence audio:** legacy pre-PR-71 sentence files still serve through
-> `legacyBufferedAudioKey`, but new or changed content should be filled
-> through `npm run spelling:audio-cache -- --lane sentence` or `--lane all`.
+> `legacyBufferedAudioKey`, but new or changed editorial content should be
+> filled through Content Operations `generate-audio`. Use
+> `npm run spelling:audio-cache -- --lane sentence` or `--lane all` only for
+> repository-maintained cache backfills and explicit operator repair work.
 
 ---
 

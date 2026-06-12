@@ -13,6 +13,25 @@ The centre publishes a single combined document. One save, one publish, one rest
 
 Since P3 (PR #389), Monster Visual Config is presented through the **Asset & Effect Registry** UI in the Admin Console Content section. The registry provides a structured interface — asset list, effect catalog, per-monster bindings, and celebration tunables — over the existing `platform_monster_visual_config` data model. The underlying schema, publish validation, atomic publish, reviewed state, bundled fallback, and retained version behaviours are unchanged. A future phase may lift the data model into registry-shaped tables; the current UI establishes the registry direction without migration risk.
 
+## Content Operations monster image assets
+
+The Content Operations Centre adds a package-scoped image upload workflow for spelling reward tracks and monsters. Use it when an operator needs to add or replace a monster image asset without changing `assets/monsters` and rebuilding the app.
+
+The upload action is `upload-monster-asset` on `/api/admin/content-operations/packages/<packageId>/actions`. It stores a draft source image in R2 under `content-operations/packages`, records the upload in `content_operation_asset_uploads`, and exposes a private no-store preview route for the package candidate. The uploaded source is not learner-visible until a package operation publishes the related `spelling.monsterAssetReference`.
+
+Upload constraints:
+
+- asset kind: `monster-image`
+- file type: JPEG, PNG, or WebP
+- maximum source file size: 4 MiB
+- dimensions: at least 96 px and at most 4096 px per side
+- maximum aspect ratio: 4:1
+- account-level rate limit: 12 uploads per 10 minutes
+
+Published runtime remains resilient. If a published asset reference is missing, expired, malformed, or not retained, rendering falls back to the bundled monster visual configuration for the selected monster, branch, stage, and context. Draft uploads are retained for 30 days; published references are retained for 180 days and rollback records keep the release reference available while retained.
+
+Reward-track modelling is many-to-one capable. A pool may have zero, one, or many reward tracks, and each reward track may choose its own monster id, exposure state, and asset references. Do not assume one spelling pool exactly equals one monster.
+
 ## Operator workflow
 
 Open the **Admin Console** Content section with platform role `admin`.
@@ -130,7 +149,7 @@ Self-centred peripheral elements (`.monster-celebration-halo`, `.monster-celebra
 
 ## Asset changes
 
-Monster assets live under:
+Code-bundled monster assets still live under:
 
 ```txt
 assets/monsters/<monster>/<branch>/<monster>-<branch>-<stage>.<size>.webp
@@ -143,6 +162,8 @@ npm run assets:monster-visual-manifest
 ```
 
 The normal bundle build also runs the manifest generator before building the app bundle. `scripts/assert-build-public.mjs` compares the generated manifest with `assets/monsters` and fails clearly if the manifest is stale.
+
+Use the Content Operations upload path for package-scoped spelling monster image assets that should be managed operationally. Do not add those uploaded sources to `assets/monsters`; they are persisted in R2 and become live only through a published content operations release.
 
 Use the package scripts for Cloudflare work:
 
