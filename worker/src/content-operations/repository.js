@@ -224,6 +224,7 @@ function releaseRowToRecord(row, { includeSnapshot = false } = {}) {
     audioFallback: audioProof.audioFallback,
     audioWarnings: audioProof.audioWarnings,
     assetSummary: assetProof.assetSummary,
+    assetReferenceManifest: assetProof.assetReferenceManifest,
     createdAt: Number(row.created_at) || 0,
   };
 }
@@ -554,6 +555,7 @@ function buildReleaseProof(proof = null, approval = null, audioScan = null, asse
       ...(releaseProof || {}),
       [RELEASE_ASSET_PROOF_KEY]: {
         assetSummary: cloneSerialisable(assetScan),
+        assetReferenceManifest: cloneSerialisable(assetScan.assetReferenceManifest || null),
       },
     };
   }
@@ -566,6 +568,7 @@ function releaseAssetProofFromProof(proof = null) {
     : null;
   return {
     assetSummary: isPlainObject(metadata?.assetSummary) ? metadata.assetSummary : null,
+    assetReferenceManifest: isPlainObject(metadata?.assetReferenceManifest) ? metadata.assetReferenceManifest : null,
   };
 }
 
@@ -583,6 +586,7 @@ function assetEventSummary(assetScan = null) {
     uploadCount: Number(assetScan.uploadCount) || 0,
     itemCount: Number(assetScan.itemCount) || 0,
     targetCount: Number(assetScan.targetCount) || 0,
+    referenceCount: Number(assetScan.assetReferenceManifest?.referenceCount) || 0,
   };
 }
 
@@ -2066,6 +2070,7 @@ export function createContentOperationsRepository({ db, env = {}, now }) {
         audioFallback: releaseAudioProof.audioFallback,
         audioWarnings: releaseAudioProof.audioWarnings,
         assetSummary: releaseAssetProof.assetSummary,
+        assetReferenceManifest: releaseAssetProof.assetReferenceManifest,
       };
     },
 

@@ -5,8 +5,10 @@ import {
 } from '../../../src/platform/game/monsters.js';
 import {
   CONTENT_OPERATION_PACKAGE_STATES,
+  CONTENT_OPERATION_MONSTER_ASSET_REFERENCE_ENTITY_TYPE,
   CONTENT_OPERATION_SUBJECT_ID,
   contentOperationHash,
+  contentOperationValueHash,
 } from '../../../src/subjects/spelling/content/operations-model.js';
 import {
   all,
@@ -34,6 +36,27 @@ const MAX_RENDERER_ASPECT_RATIO = 4;
 const VALID_STAGE_IDS = new Set(['0', '1', '2', '3', '4']);
 const VALID_BRANCH_IDS = new Set(MONSTER_BRANCHES);
 const VALID_MONSTER_IDS = new Set(Object.keys(MONSTERS));
+const ASSET_REFERENCE_MANIFEST_SCHEMA_VERSION = 1;
+const ASSET_REFERENCE_RENDERER_CONTEXTS = Object.freeze([
+  'hero-camp',
+  'hero-codex',
+  'reward-track',
+  'subject-setup',
+]);
+const ASSET_REFERENCE_RESPONSIVE_DERIVATIVE_POLICY = Object.freeze({
+  mode: 'source_image_until_runtime_derivatives',
+  sourceRequired: true,
+  generatedDerivatives: [],
+  plannedWidths: [320, 640, 960, 1280],
+  owner: 'content-operations',
+});
+const ASSET_REFERENCE_RETENTION_POLICY = Object.freeze({
+  draftRetentionDays: 30,
+  publishedRetentionDays: 180,
+  rollbackAvailability: 'release-reference-retained',
+  cleanupOwner: 'content-operations',
+  runtimeCleanupBlockedUntil: 'remote-monster-asset-runtime-reader',
+});
 const SUPPORTED_IMAGE_TYPES = Object.freeze({
   'image/jpeg': 'jpg',
   'image/png': 'png',
@@ -761,10 +784,162 @@ function previewUrlForUpload({ packageId, assetUploadId }) {
   return `/api/admin/content-operations/packages/${encodeURIComponent(packageId)}/monster-assets/${encodeURIComponent(assetUploadId)}/preview`;
 }
 
+export function contentOperationMonsterAssetReferenceEntityId({
+  monsterId,
+  branchId,
+  stageId,
+} = {}) {
+  return [
+    normaliseString(monsterId),
+    normaliseString(branchId),
+    normaliseString(stageId),
+  ].filter(Boolean).join(':');
+}
+
+function assetReferenceId(item = {}) {
+  return `monster-image:${contentOperationMonsterAssetReferenceEntityId(item)}`;
+}
+
+function safePreviewForReference(preview = {}, contentType = '') {
+  return {
+    kind: normaliseString(preview.kind, 'admin-api-handle'),
+    url: normaliseString(preview.url) || null,
+    contentType: normaliseString(preview.contentType, contentType),
+  };
+}
+
+function monsterAssetReferencePayloadFromUpload({
+  packageId,
+  assetUploadId,
+  monsterId,
+  branchId,
+  stageId,
+  contentType,
+  byteSize,
+  dimensions,
+  preview,
+  validation,
+  createdAt,
+}) {
+  const target = { monsterId, branchId, stageId };
+  const renderer = validation?.renderer && typeof validation.renderer === 'object'
+    ? validation.renderer
+    : { contexts: ASSET_REFERENCE_RENDERER_CONTEXTS };
+  return {
+    schemaVersion: ASSET_REFERENCE_MANIFEST_SCHEMA_VERSION,
+    referenceId: assetReferenceId(target),
+    assetKind: CONTENT_OPERATION_MONSTER_ASSET_KIND,
+    assetUploadId,
+    packageId,
+    target,
+    preview: safePreviewForReference(preview, contentType),
+    content: {
+      contentType,
+      byteSize: Number(byteSize) || 0,
+      dimensions: {
+        width: Number(dimensions?.width) || null,
+        height: Number(dimensions?.height) || null,
+      },
+    },
+    validation: {
+      status: normaliseString(validation?.status, validation?.ok ? 'passed' : 'blocked'),
+      ok: validation?.ok === true,
+      warnings: Array.isArray(validation?.warnings) ? validation.warnings : [],
+      errors: Array.isArray(validation?.errors) ? validation.errors : [],
+    },
+    renderer: {
+      contexts: Array.isArray(renderer.contexts) && renderer.contexts.length
+        ? renderer.contexts
+        : ASSET_REFERENCE_RENDERER_CONTEXTS,
+      minDimension: Number(renderer.minDimension) || MIN_RENDERER_DIMENSION,
+      maxDimension: Number(renderer.maxDimension) || MAX_RENDERER_DIMENSION,
+      maxAspectRatio: Number(renderer.maxAspectRatio) || MAX_RENDERER_ASPECT_RATIO,
+    },
+    policy: {
+      responsiveDerivatives: ASSET_REFERENCE_RESPONSIVE_DERIVATIVE_POLICY,
+      retention: ASSET_REFERENCE_RETENTION_POLICY,
+    },
+    createdAt: Number(createdAt) || 0,
+  };
+}
+
+function assetReferenceFromScanItem(item = {}) {
+  return {
+    schemaVersion: ASSET_REFERENCE_MANIFEST_SCHEMA_VERSION,
+    referenceId: assetReferenceId(item),
+    assetKind: item.assetKind || CONTENT_OPERATION_MONSTER_ASSET_KIND,
+    assetUploadId: item.assetUploadId,
+    packageId: item.packageId || null,
+    target: {
+      monsterId: item.monsterId,
+      branchId: item.branchId,
+      stageId: item.stageId,
+    },
+    preview: safePreviewForReference(item.preview, item.contentType),
+    content: {
+      contentType: item.contentType || '',
+      byteSize: Number(item.byteSize) || 0,
+      dimensions: item.dimensions || { width: null, height: null },
+    },
+    validation: {
+      status: item.validationStatus || (item.validationOk ? 'passed' : 'blocked'),
+      ok: item.validationOk === true,
+      errorCodes: Array.isArray(item.errorCodes) ? item.errorCodes : [],
+      warningCodes: Array.isArray(item.warningCodes) ? item.warningCodes : [],
+    },
+    storage: item.storage || { status: 'not_checked', byteSize: null, contentType: '' },
+    renderer: item.renderer || {
+      contexts: ASSET_REFERENCE_RENDERER_CONTEXTS,
+      minDimension: MIN_RENDERER_DIMENSION,
+      maxDimension: MAX_RENDERER_DIMENSION,
+      maxAspectRatio: MAX_RENDERER_ASPECT_RATIO,
+    },
+    policy: {
+      responsiveDerivatives: ASSET_REFERENCE_RESPONSIVE_DERIVATIVE_POLICY,
+      retention: ASSET_REFERENCE_RETENTION_POLICY,
+    },
+    createdAt: Number(item.createdAt) || 0,
+  };
+}
+
+export function buildContentOperationAssetReferenceManifest({
+  packageId,
+  status = 'not_scanned',
+  hash = '',
+  items = [],
+} = {}) {
+  const references = items.map((item) => assetReferenceFromScanItem({
+    ...item,
+    packageId,
+  }));
+  return {
+    schemaVersion: ASSET_REFERENCE_MANIFEST_SCHEMA_VERSION,
+    assetKind: CONTENT_OPERATION_MONSTER_ASSET_KIND,
+    packageId: normaliseString(packageId),
+    status: normaliseString(status, 'not_scanned'),
+    hash: normaliseString(hash),
+    referenceCount: references.length,
+    references,
+    policy: {
+      responsiveDerivatives: ASSET_REFERENCE_RESPONSIVE_DERIVATIVE_POLICY,
+      retention: ASSET_REFERENCE_RETENTION_POLICY,
+      runtimeReadable: false,
+      runtimeReadableFromTicket: 'T23',
+      bundledManifestWriteBack: false,
+    },
+  };
+}
+
 function assetUploadScanItem(upload, storage = null) {
   const validation = upload.validation && typeof upload.validation === 'object' && !Array.isArray(upload.validation)
     ? upload.validation
     : { ok: false, status: 'blocked', errors: [], warnings: [] };
+  const preview = upload.preview && typeof upload.preview === 'object' && !Array.isArray(upload.preview)
+    ? upload.preview
+    : {};
+  const renderer = validation.renderer && typeof validation.renderer === 'object' && !Array.isArray(validation.renderer)
+    ? validation.renderer
+    : null;
   const storageErrors = Array.isArray(storage?.errors) ? storage.errors : [];
   return {
     assetUploadId: upload.assetUploadId,
@@ -787,6 +962,18 @@ function assetUploadScanItem(upload, storage = null) {
     dimensions: {
       width: upload.width == null ? null : Number(upload.width),
       height: upload.height == null ? null : Number(upload.height),
+    },
+    preview: safePreviewForReference(preview, upload.contentType),
+    renderer: renderer ? {
+      contexts: Array.isArray(renderer.contexts) ? renderer.contexts : ASSET_REFERENCE_RENDERER_CONTEXTS,
+      minDimension: Number(renderer.minDimension) || MIN_RENDERER_DIMENSION,
+      maxDimension: Number(renderer.maxDimension) || MAX_RENDERER_DIMENSION,
+      maxAspectRatio: Number(renderer.maxAspectRatio) || MAX_RENDERER_ASPECT_RATIO,
+    } : {
+      contexts: ASSET_REFERENCE_RENDERER_CONTEXTS,
+      minDimension: MIN_RENDERER_DIMENSION,
+      maxDimension: MAX_RENDERER_DIMENSION,
+      maxAspectRatio: MAX_RENDERER_ASPECT_RATIO,
     },
     createdAt: Number(upload.createdAt) || 0,
     storage: storage ? {
@@ -966,15 +1153,22 @@ export async function buildContentOperationAssetScan(db, {
     items,
   };
   const status = blockers.length ? 'blocked' : (warnings.length ? 'warning' : 'passed');
+  const hash = contentOperationHash(fingerprint, 'coassets');
   return {
     status,
-    hash: contentOperationHash(fingerprint, 'coassets'),
+    hash,
     blockers,
     warnings,
     uploadCount: items.length,
     itemCount: items.length,
     targetCount: targetCounts.size,
     items,
+    assetReferenceManifest: buildContentOperationAssetReferenceManifest({
+      packageId: safePackageId,
+      status,
+      hash,
+      items,
+    }),
   };
 }
 
@@ -1121,6 +1315,21 @@ export async function uploadContentOperationMonsterAsset({
     url: previewUrl,
     contentType,
   };
+  const assetReferencePayload = monsterAssetReferencePayloadFromUpload({
+    packageId: packageRow.package_id,
+    assetUploadId,
+    monsterId,
+    branchId,
+    stageId,
+    contentType,
+    byteSize,
+    dimensions,
+    preview,
+    validation,
+    createdAt: nowTs,
+  });
+  const assetReferenceOperationId = uid('coop');
+  const assetReferenceEntityId = contentOperationMonsterAssetReferenceEntityId({ monsterId, branchId, stageId });
 
   let r2Written = false;
   try {
@@ -1193,6 +1402,51 @@ export async function uploadContentOperationMonsterAsset({
         assetUploadId,
       ]),
       bindStatement(db, `
+        DELETE FROM content_operation_package_operations
+        WHERE package_id = ?
+          AND entity_type = ?
+          AND entity_id = ?
+          AND EXISTS (
+            SELECT 1
+            FROM content_operation_asset_uploads
+            WHERE asset_upload_id = ?
+          )
+      `, [
+        packageRow.package_id,
+        CONTENT_OPERATION_MONSTER_ASSET_REFERENCE_ENTITY_TYPE,
+        assetReferenceEntityId,
+        assetUploadId,
+      ]),
+      bindStatement(db, `
+        INSERT INTO content_operation_package_operations (
+          operation_id, package_id, operation_order, entity_type, entity_id,
+          field_path, action, before_hash, after_hash, payload_json,
+          created_by_account_id, created_at
+        )
+        SELECT ?, ?, (
+          SELECT COALESCE(MAX(operation_order), 0) + 1
+          FROM content_operation_package_operations
+          WHERE package_id = ?
+        ), ?, ?, '', ?, NULL, ?, ?, ?, ?
+        WHERE EXISTS (
+          SELECT 1
+          FROM content_operation_asset_uploads
+          WHERE asset_upload_id = ?
+        )
+      `, [
+        assetReferenceOperationId,
+        packageRow.package_id,
+        packageRow.package_id,
+        CONTENT_OPERATION_MONSTER_ASSET_REFERENCE_ENTITY_TYPE,
+        assetReferenceEntityId,
+        'replace',
+        contentOperationValueHash(assetReferencePayload),
+        JSON.stringify(assetReferencePayload),
+        actor,
+        nowTs,
+        assetUploadId,
+      ]),
+      bindStatement(db, `
         DELETE FROM content_operation_package_approvals
         WHERE package_id = ?
           AND EXISTS (
@@ -1243,6 +1497,9 @@ export async function uploadContentOperationMonsterAsset({
         JSON.stringify({
           assetUploadId,
           assetKind: CONTENT_OPERATION_MONSTER_ASSET_KIND,
+          operationId: assetReferenceOperationId,
+          entityType: CONTENT_OPERATION_MONSTER_ASSET_REFERENCE_ENTITY_TYPE,
+          entityId: assetReferenceEntityId,
           monsterId,
           branchId,
           stageId,

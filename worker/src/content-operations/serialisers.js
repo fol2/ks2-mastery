@@ -347,6 +347,10 @@ function releaseAssetProofFromProof(proof = null) {
       && metadata.assetSummary && typeof metadata.assetSummary === 'object' && !Array.isArray(metadata.assetSummary)
       ? metadata.assetSummary
       : null,
+    assetReferenceManifest: metadata && typeof metadata === 'object' && !Array.isArray(metadata)
+      && metadata.assetReferenceManifest && typeof metadata.assetReferenceManifest === 'object' && !Array.isArray(metadata.assetReferenceManifest)
+      ? metadata.assetReferenceManifest
+      : null,
   };
 }
 
@@ -377,6 +381,7 @@ export function serialiseContentOperationRelease(release = {}, { includeSnapshot
     audioFallback: release.audioFallback ?? proofAudio.audioFallback,
     audioWarnings: release.audioWarnings ?? proofAudio.audioWarnings,
     assetSummary: release.assetSummary ?? proofAssets.assetSummary,
+    assetReferenceManifest: release.assetReferenceManifest ?? proofAssets.assetReferenceManifest,
     createdAt: Number(release.createdAt) || 0,
     ...(includeSnapshot ? { snapshot: release.snapshot || null } : {}),
   };
