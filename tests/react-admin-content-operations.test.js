@@ -1158,6 +1158,157 @@ test('Content Operations Centre spelling word-list editor appends list upsert op
   assert.match(result.text, /Word list operation saved/);
 });
 
+test('Content Operations Centre spelling pool editor appends pool upsert operations', async () => {
+  const spellingBrowseWithFuturePool = {
+    browse: {
+      ...spellingBrowse.browse,
+      pools: [
+        ...spellingBrowse.browse.pools,
+        {
+          id: 'secure-vocabulary',
+          pool: 'secure-vocabulary',
+          title: 'Secure vocabulary',
+          type: 'extension',
+          visibility: { state: 'hidden', learnerVisible: false },
+          wordCount: 0,
+          totalWordCount: 0,
+          sentenceCount: 0,
+          variantCount: 0,
+          draftStateCounts: {},
+          draftState: 'added',
+        },
+      ],
+    },
+  };
+  const output = await runClientEntry(`
+    const { JSDOM } = require('jsdom');
+
+    globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+    const dom = new JSDOM('<!doctype html><html><body><div id="root"></div></body></html>', {
+      url: 'https://ks2.eugnel.uk/admin',
+    });
+    globalThis.window = dom.window;
+    globalThis.document = dom.window.document;
+    globalThis.navigator = dom.window.navigator;
+    globalThis.HTMLElement = dom.window.HTMLElement;
+    globalThis.Event = dom.window.Event;
+
+    const React = require('react');
+    const { createRoot } = require('react-dom/client');
+    const { AdminContentOperationsSection } = require(${CONTENT_OPS_SECTION_PATH});
+    const { act } = React;
+
+    const calls = [];
+    const model = ${JSON.stringify(baseModel({
+      contentOperations: {
+        overview,
+        packages: { packages: [contentPackage] },
+        releases: { releases: [release] },
+        spellingBrowse: spellingBrowseWithFuturePool,
+        spellingItemDetail: spellingWordDetail,
+      },
+    }))};
+    const actions = {
+      contentOperationsApi: {
+        async readSpellingWord(args) {
+          calls.push({ method: 'readSpellingWord', args });
+          return ${JSON.stringify(spellingWordDetail)};
+        },
+        async appendOperation(args) {
+          calls.push({ method: 'appendOperation', args });
+          return { ok: true, operation: { operationId: 'op-pool-save-1', ...args.operation } };
+        },
+      },
+    };
+
+    async function flush() {
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      });
+    }
+
+    async function setControl(selector, value) {
+      const control = document.querySelector(selector);
+      const prototype = control.tagName === 'TEXTAREA'
+        ? dom.window.HTMLTextAreaElement.prototype
+        : (control.tagName === 'SELECT'
+            ? dom.window.HTMLSelectElement.prototype
+            : dom.window.HTMLInputElement.prototype);
+      const valueSetter = Object.getOwnPropertyDescriptor(prototype, 'value').set;
+      valueSetter.call(control, value);
+      await act(async () => {
+        control.dispatchEvent(new dom.window.Event('input', { bubbles: true }));
+        control.dispatchEvent(new dom.window.Event('change', { bubbles: true }));
+      });
+    }
+
+    async function main() {
+      const root = createRoot(document.getElementById('root'));
+      await act(async () => {
+        root.render(React.createElement(AdminContentOperationsSection, {
+          model,
+          actions,
+          initialActiveTab: 'spelling',
+          initialSelectedPackageId: 'pkg-draft-1',
+        }));
+      });
+      await flush();
+      const optionValues = {
+        browse: Array.from(document.querySelector('[data-content-ops-spelling-pool="true"]').options).map((option) => option.value),
+        word: Array.from(document.querySelector('[data-content-ops-word-field="spellingPool"]').options).map((option) => option.value),
+        wordList: Array.from(document.querySelector('[data-content-ops-word-list-field="spellingPool"]').options).map((option) => option.value),
+      };
+
+      await setControl('[data-content-ops-pool-field="title"]', 'Extra spelling revised');
+      await setControl('[data-content-ops-pool-field="type"]', 'enrichment');
+      await setControl('[data-content-ops-pool-field="visibilityState"]', 'hidden');
+      await setControl('[data-content-ops-pool-field="sourceNote"]', 'Edited in Content Operations Centre.');
+      await setControl('[data-content-ops-pool-field="provenanceSource"]', 'admin-editor');
+      const saveButton = Array.from(document.querySelectorAll('button'))
+        .find((button) => button.textContent === 'Save pool');
+      await act(async () => {
+        saveButton.click();
+      });
+      await flush();
+      await flush();
+
+      process.stdout.write(JSON.stringify({
+        calls,
+        text: document.body.textContent,
+        optionValues,
+      }));
+
+      await act(async () => {
+        root.unmount();
+      });
+      dom.window.close();
+      process.exit(0);
+    }
+
+    main().catch((error) => {
+      process.stderr.write(error.stack || error.message);
+      process.exitCode = 1;
+    });
+  `);
+  const result = JSON.parse(output);
+  const appendCall = result.calls.find((entry) => entry.method === 'appendOperation');
+
+  assert.ok(appendCall, 'pool editor should append an operation');
+  assert.equal(appendCall.args.packageId, 'pkg-draft-1');
+  assert.equal(appendCall.args.operation.entityType, 'spelling.pool');
+  assert.equal(appendCall.args.operation.action, 'upsert');
+  assert.equal(appendCall.args.operation.entityId, 'extra');
+  assert.equal(appendCall.args.operation.payload.title, 'Extra spelling revised');
+  assert.equal(appendCall.args.operation.payload.type, 'enrichment');
+  assert.equal(appendCall.args.operation.payload.visibility.state, 'hidden');
+  assert.equal(appendCall.args.mutation.requestId.startsWith('content-ops-pool-upsert-pkg-draft-1-'), true);
+  assert.match(result.text, /Pool operation saved/);
+  assert.match(result.text, /Secure vocabulary/);
+  assert.ok(result.optionValues.browse.includes('secure-vocabulary'));
+  assert.ok(result.optionValues.word.includes('secure-vocabulary'));
+  assert.ok(result.optionValues.wordList.includes('secure-vocabulary'));
+});
+
 test('Content Operations Centre spelling tab reloads browse data after package selection changes', async () => {
   const packageB = {
     ...contentPackage,

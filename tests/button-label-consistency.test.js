@@ -551,6 +551,9 @@ test('button labels: every statically extractable label is classified', () => {
     'Edit list',
     'New list',
     'Save list',
+    'Edit pool',
+    'New pool',
+    'Save pool',
     // Reasoning launch: delayed SATs-style sets use "Mark set" and "Save
     // answers" to distinguish full-set marking from single-question submit.
     // "Partly worked support" is the child-facing scaffold request, matching

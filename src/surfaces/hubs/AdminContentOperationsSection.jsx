@@ -14,6 +14,8 @@ import {
   normaliseContentOperationsSpellingItemDetail,
 } from '../../platform/hubs/admin-content-operations.js';
 import {
+  buildSpellingPoolDeleteOrRetireOperation,
+  buildSpellingPoolUpsertOperation,
   buildSpellingSentenceDeleteOrRetireOperation,
   buildSpellingSentenceUpsertOperation,
   buildSpellingWordListDeleteOrRetireOperation,
@@ -66,6 +68,33 @@ function csvValue(values) {
 
 function provenanceField(provenance, key) {
   return provenance && typeof provenance === 'object' ? String(provenance[key] || '') : '';
+}
+
+function spellingPoolOptionId(pool) {
+  return String(pool?.id || pool?.pool || '').trim();
+}
+
+function spellingPoolOptionLabel(pool) {
+  const id = spellingPoolOptionId(pool);
+  if (pool?.title) return pool.title;
+  if (id === 'core') return 'Core';
+  if (id === 'extra') return 'Extra';
+  return id || 'Pool';
+}
+
+function spellingPoolOptions(pools = []) {
+  const source = Array.isArray(pools) && pools.length
+    ? pools
+    : [{ id: 'core', title: 'Core' }, { id: 'extra', title: 'Extra' }];
+  const seen = new Set();
+  const output = [];
+  for (const pool of source) {
+    const id = spellingPoolOptionId(pool);
+    if (!id || seen.has(id)) continue;
+    seen.add(id);
+    output.push({ id, label: spellingPoolOptionLabel(pool) });
+  }
+  return output;
 }
 
 function emptyWordEditorForm(wordLists = [], selectedRow = null) {
@@ -258,6 +287,70 @@ function operationInputFromWordListForm(form) {
     provenance: {
       source: form.provenanceSource,
       note: form.provenanceNote,
+    },
+  };
+}
+
+function emptyPoolEditorForm(pools = [], selectedRow = null) {
+  const preferredPool = selectedRow?.spellingPool
+    ? pools.find((entry) => entry.id === selectedRow.spellingPool || entry.pool === selectedRow.spellingPool)
+    : pools[0];
+  const poolId = preferredPool?.id || preferredPool?.pool || selectedRow?.spellingPool || 'extension';
+  return {
+    id: '',
+    title: '',
+    type: poolId === 'extra' ? 'enrichment' : (poolId === 'core' ? 'statutory' : 'extension'),
+    visibilityState: 'hidden',
+    scheduledAt: '',
+    rolloutFlag: '',
+    tags: '',
+    sourceNote: '',
+    provenanceSource: '',
+    provenanceNote: '',
+    noRewardExceptionApproved: false,
+    noRewardExceptionReason: '',
+    retirementReason: '',
+  };
+}
+
+function poolEditorFormFromPool(pool, selectedRow = null, pools = []) {
+  if (!pool) return emptyPoolEditorForm(pools, selectedRow);
+  return {
+    id: pool.id || pool.pool || '',
+    title: pool.title || '',
+    type: pool.type || 'custom',
+    visibilityState: pool.visibility?.state || 'hidden',
+    scheduledAt: pool.visibility?.scheduledAt ? String(pool.visibility.scheduledAt) : '',
+    rolloutFlag: pool.visibility?.rolloutFlag || '',
+    tags: csvValue(pool.tags),
+    sourceNote: pool.sourceNote || '',
+    provenanceSource: provenanceField(pool.provenance, 'source'),
+    provenanceNote: provenanceField(pool.provenance, 'note'),
+    noRewardExceptionApproved: pool.noRewardException?.approved === true,
+    noRewardExceptionReason: pool.noRewardException?.reason || '',
+    retirementReason: '',
+  };
+}
+
+function operationInputFromPoolForm(form) {
+  return {
+    id: form.id,
+    title: form.title,
+    type: form.type,
+    visibility: {
+      state: form.visibilityState,
+      scheduledAt: form.scheduledAt,
+      rolloutFlag: form.rolloutFlag,
+    },
+    tags: form.tags,
+    sourceNote: form.sourceNote,
+    provenance: {
+      source: form.provenanceSource,
+      note: form.provenanceNote,
+    },
+    noRewardException: {
+      approved: Boolean(form.noRewardExceptionApproved),
+      reason: form.noRewardExceptionReason,
     },
   };
 }
@@ -700,6 +793,10 @@ function SpellingBrowsePanel({
   const packageWord = selectedDetail?.packageValue || null;
   const editorSourceWord = packageWord || currentWord || null;
   const selectedList = browse.wordLists.find((list) => list.id === selectedRow?.listId) || browse.wordLists[0] || null;
+  const selectedPool = browse.pools.find((pool) => pool.id === selectedRow?.spellingPool || pool.pool === selectedRow?.spellingPool)
+    || browse.pools[0]
+    || null;
+  const poolOptions = React.useMemo(() => spellingPoolOptions(browse.pools), [browse.pools]);
   const sentenceOptions = React.useMemo(() => {
     const seen = new Set();
     const output = [];
@@ -722,6 +819,8 @@ function SpellingBrowsePanel({
   const [sentenceForm, setSentenceForm] = React.useState(() => emptySentenceEditorForm(selectedRow));
   const [wordListMode, setWordListMode] = React.useState('edit');
   const [wordListForm, setWordListForm] = React.useState(() => emptyWordListEditorForm(browse.wordLists, selectedRow));
+  const [poolMode, setPoolMode] = React.useState('edit');
+  const [poolForm, setPoolForm] = React.useState(() => emptyPoolEditorForm(browse.pools, selectedRow));
   const [formError, setFormError] = React.useState('');
   const formDisabled = !selectedPackageId
     || !canEdit
@@ -773,6 +872,18 @@ function SpellingBrowsePanel({
     wordListMode,
   ]);
 
+  React.useEffect(() => {
+    if (poolMode === 'create') return;
+    setFormError('');
+    setPoolForm(poolEditorFormFromPool(selectedPool, selectedRow, browse.pools));
+  }, [
+    browse.pools,
+    poolMode,
+    selectedPool,
+    selectedRow,
+    selectedRow?.spellingPool,
+  ]);
+
   const updateWordForm = React.useCallback((patch) => {
     setFormError('');
     setWordForm((current) => {
@@ -800,6 +911,18 @@ function SpellingBrowsePanel({
       if (Object.prototype.hasOwnProperty.call(patch, 'spellingPool')) {
         next.coverageTier = patch.spellingPool === 'extra' ? 'enrichment-extra' : 'statutory-core';
         if (patch.spellingPool === 'extra') next.yearGroups = '';
+      }
+      return next;
+    });
+  }, []);
+
+  const updatePoolForm = React.useCallback((patch) => {
+    setFormError('');
+    setPoolForm((current) => {
+      const next = { ...current, ...patch };
+      if (Object.prototype.hasOwnProperty.call(patch, 'type')) {
+        if (patch.type === 'statutory') next.visibilityState = next.id === 'core' ? next.visibilityState : 'hidden';
+        if (patch.type === 'enrichment' && !next.id) next.id = 'extra';
       }
       return next;
     });
@@ -884,6 +1007,19 @@ function SpellingBrowsePanel({
     setWordListForm(wordListEditorFormFromList(selectedList, selectedRow, browse.wordLists));
   }, [browse.wordLists, selectedList, selectedRow]);
 
+  const startCreatePool = React.useCallback(() => {
+    setPoolMode('create');
+    setFormError('');
+    setPoolForm(emptyPoolEditorForm(browse.pools, selectedRow));
+  }, [browse.pools, selectedRow]);
+
+  const startEditPool = React.useCallback((poolId = '') => {
+    const nextPool = browse.pools.find((pool) => pool.id === poolId || pool.pool === poolId) || selectedPool;
+    setPoolMode('edit');
+    setFormError('');
+    setPoolForm(poolEditorFormFromPool(nextPool, selectedRow, browse.pools));
+  }, [browse.pools, selectedPool, selectedRow]);
+
   const submitWordForm = React.useCallback((event) => {
     event?.preventDefault?.();
     if (!onSubmitSpellingOperation) return;
@@ -950,12 +1086,13 @@ function SpellingBrowsePanel({
     try {
       const operation = buildSpellingWordListUpsertOperation(operationInputFromWordListForm(wordListForm), {
         existingWordList: wordListMode === 'edit' ? selectedList : null,
+        pools: browse.pools,
       });
       onSubmitSpellingOperation(operation, { slug: selectedRow?.slug, action: 'word-list-upsert' });
     } catch (submitError) {
       setFormError(submitError?.validation?.errors?.[0]?.message || submitError?.message || 'Word-list operation is invalid.');
     }
-  }, [onSubmitSpellingOperation, selectedList, selectedRow?.slug, wordListForm, wordListMode]);
+  }, [browse.pools, onSubmitSpellingOperation, selectedList, selectedRow?.slug, wordListForm, wordListMode]);
 
   const submitWordListRemoval = React.useCallback(() => {
     if (!onSubmitSpellingOperation || !selectedList) return;
@@ -972,6 +1109,36 @@ function SpellingBrowsePanel({
       setFormError(submitError?.message || 'Word-list operation is invalid.');
     }
   }, [onSubmitSpellingOperation, selectedList, selectedRow?.slug, wordListForm.id, wordListForm.retirementReason]);
+
+  const submitPoolForm = React.useCallback((event) => {
+    event?.preventDefault?.();
+    if (!onSubmitSpellingOperation) return;
+    try {
+      const operation = buildSpellingPoolUpsertOperation(operationInputFromPoolForm(poolForm), {
+        existingPool: poolMode === 'edit' ? selectedPool : null,
+        pools: browse.pools,
+      });
+      onSubmitSpellingOperation(operation, { slug: selectedRow?.slug, action: 'pool-upsert' });
+    } catch (submitError) {
+      setFormError(submitError?.validation?.errors?.[0]?.message || submitError?.message || 'Pool operation is invalid.');
+    }
+  }, [browse.pools, onSubmitSpellingOperation, poolForm, poolMode, selectedPool, selectedRow?.slug]);
+
+  const submitPoolRemoval = React.useCallback(() => {
+    if (!onSubmitSpellingOperation || !selectedPool) return;
+    try {
+      const operation = buildSpellingPoolDeleteOrRetireOperation({
+        id: poolForm.id || selectedPool.id || selectedPool.pool,
+        hasCurrent: selectedPool.draftState !== 'added',
+        reason: poolForm.retirementReason,
+      }, {
+        reason: poolForm.retirementReason,
+      });
+      onSubmitSpellingOperation(operation, { slug: selectedRow?.slug, action: `pool-${operation.action}` });
+    } catch (submitError) {
+      setFormError(submitError?.message || 'Pool operation is invalid.');
+    }
+  }, [onSubmitSpellingOperation, poolForm.id, poolForm.retirementReason, selectedPool, selectedRow?.slug]);
 
   return (
     <div className="content-ops-area-panel" data-content-ops-area="spelling" data-content-ops-spelling-browse="true">
@@ -1006,15 +1173,191 @@ function SpellingBrowsePanel({
       <div className="content-ops-metric-grid content-ops-spelling-metrics">
         {browse.pools.map((pool) => (
           <MetricTile
-            key={pool.pool}
-            label={`${pool.pool === 'extra' ? 'Extra' : 'Core'} pool`}
+            key={pool.id || pool.pool}
+            label={pool.title || `${pool.pool} pool`}
             value={String(pool.wordCount)}
-            detail={`${String(pool.sentenceCount)} sentence audio units`}
+            detail={`${pool.type || 'custom'} - ${pool.visibility?.state || 'hidden'}`}
           />
         ))}
         <MetricTile label="Word lists" value={String(browse.totals.wordLists)} detail={`${String(browse.totals.variants)} variants`} />
         <MetricTile label="Matched" value={String(browse.totals.matchedWords)} detail={`${String(browse.totals.displayedWords)} displayed`} />
       </div>
+
+      <section className="content-ops-editor-panel" data-content-ops-pool-editor="true">
+        <div className="content-ops-word-editor-header">
+          <div>
+            <div className="eyebrow">Pool metadata</div>
+            <strong>{poolMode === 'create' ? 'New pool' : (poolForm.title || selectedPool?.title || 'Pool')}</strong>
+          </div>
+          <div className="chip-row content-ops-chip-wrap">
+            <button type="button" className="btn secondary compact" onClick={() => startEditPool(selectedPool?.id || selectedPool?.pool)} disabled={!selectedPool}>
+              Edit pool
+            </button>
+            <button type="button" className="btn secondary compact" onClick={startCreatePool}>
+              New pool
+            </button>
+          </div>
+        </div>
+        <div className="content-ops-table-scroll">
+          <table className="admin-overview-table content-ops-table" aria-label="Spelling pools">
+            <thead>
+              <tr className="admin-overview-thead-row">
+                <th className="small admin-overview-th-first">Pool</th>
+                <th className="small admin-overview-th">Type</th>
+                <th className="small admin-overview-th">Visibility</th>
+                <th className="small admin-overview-th-right">Words</th>
+                <th className="small admin-overview-th">Draft</th>
+              </tr>
+            </thead>
+            <tbody>
+              {browse.pools.map((pool) => (
+                <tr key={pool.id || pool.pool} className="admin-overview-tbody-row">
+                  <td className="admin-overview-td-first">
+                    <button
+                      type="button"
+                      className="content-ops-row-button"
+                      onClick={() => startEditPool(pool.id || pool.pool)}
+                      data-content-ops-pool-row={pool.id || pool.pool}
+                    >
+                      {pool.title || pool.pool}
+                    </button>
+                    <div className="small muted">{pool.id || pool.pool}</div>
+                  </td>
+                  <td className="admin-overview-td small">{pool.type || 'custom'}</td>
+                  <td className="admin-overview-td">
+                    <span className={`chip ${pool.retired ? 'bad' : (pool.visibility?.state === 'visible' ? 'good' : 'warn')}`}>
+                      {pool.retired ? 'retired' : (pool.visibility?.state || 'hidden')}
+                    </span>
+                  </td>
+                  <td className="admin-overview-td-right small">{String(pool.wordCount)} / {String(pool.totalWordCount)}</td>
+                  <td className="admin-overview-td">
+                    <span className={`chip ${draftStateChipClass(pool.draftState)}`}>
+                      {draftStateLabel(pool.draftState)}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <form className="content-ops-word-editor-grid" onSubmit={submitPoolForm}>
+          <label>
+            <span className="small muted">Pool id</span>
+            <input
+              value={poolForm.id}
+              onChange={(event) => updatePoolForm({ id: event.target.value })}
+              data-content-ops-pool-field="id"
+              disabled={poolMode === 'edit'}
+            />
+          </label>
+          <label>
+            <span className="small muted">Title</span>
+            <input
+              value={poolForm.title}
+              onChange={(event) => updatePoolForm({ title: event.target.value })}
+              data-content-ops-pool-field="title"
+            />
+          </label>
+          <label>
+            <span className="small muted">Type</span>
+            <select
+              value={poolForm.type}
+              onChange={(event) => updatePoolForm({ type: event.target.value })}
+              data-content-ops-pool-field="type"
+            >
+              <option value="statutory">Statutory</option>
+              <option value="enrichment">Enrichment</option>
+              <option value="extension">Extension</option>
+              <option value="custom">Custom</option>
+            </select>
+          </label>
+          <label>
+            <span className="small muted">Visibility</span>
+            <select
+              value={poolForm.visibilityState}
+              onChange={(event) => updatePoolForm({ visibilityState: event.target.value })}
+              data-content-ops-pool-field="visibilityState"
+            >
+              <option value="hidden">Hidden</option>
+              <option value="staged">Staged</option>
+              <option value="visible">Visible</option>
+            </select>
+          </label>
+          <label>
+            <span className="small muted">Scheduled at</span>
+            <input
+              value={poolForm.scheduledAt}
+              onChange={(event) => updatePoolForm({ scheduledAt: event.target.value })}
+              data-content-ops-pool-field="scheduledAt"
+            />
+          </label>
+          <label>
+            <span className="small muted">Rollout flag</span>
+            <input
+              value={poolForm.rolloutFlag}
+              onChange={(event) => updatePoolForm({ rolloutFlag: event.target.value })}
+              data-content-ops-pool-field="rolloutFlag"
+            />
+          </label>
+          <label>
+            <span className="small muted">Tags</span>
+            <input
+              value={poolForm.tags}
+              onChange={(event) => updatePoolForm({ tags: event.target.value })}
+              data-content-ops-pool-field="tags"
+            />
+          </label>
+          <label>
+            <span className="small muted">Source notes</span>
+            <input
+              value={poolForm.sourceNote}
+              onChange={(event) => updatePoolForm({ sourceNote: event.target.value })}
+              data-content-ops-pool-field="sourceNote"
+            />
+          </label>
+          <label>
+            <span className="small muted">Provenance source</span>
+            <input
+              value={poolForm.provenanceSource}
+              onChange={(event) => updatePoolForm({ provenanceSource: event.target.value })}
+              data-content-ops-pool-field="provenanceSource"
+            />
+          </label>
+          <label>
+            <span className="small muted">No-reward exception</span>
+            <input
+              type="checkbox"
+              checked={poolForm.noRewardExceptionApproved}
+              onChange={(event) => updatePoolForm({ noRewardExceptionApproved: event.target.checked })}
+              data-content-ops-pool-field="noRewardExceptionApproved"
+            />
+          </label>
+          <label className="content-ops-editor-wide">
+            <span className="small muted">No-reward reason</span>
+            <textarea
+              value={poolForm.noRewardExceptionReason}
+              onChange={(event) => updatePoolForm({ noRewardExceptionReason: event.target.value })}
+              data-content-ops-pool-field="noRewardExceptionReason"
+            />
+          </label>
+          <label className="content-ops-editor-wide">
+            <span className="small muted">Retirement reason</span>
+            <input
+              value={poolForm.retirementReason}
+              onChange={(event) => updatePoolForm({ retirementReason: event.target.value })}
+              data-content-ops-pool-field="retirementReason"
+            />
+          </label>
+          <div className="content-ops-editor-actions content-ops-editor-wide">
+            <button type="submit" className="btn primary" disabled={formDisabled}>
+              Save pool
+            </button>
+            <button type="button" className="btn secondary" onClick={submitPoolRemoval} disabled={formDisabled || !selectedPool}>
+              {selectedPool?.draftState === 'added' ? 'Delete draft pool' : 'Retire pool'}
+            </button>
+          </div>
+        </form>
+      </section>
 
       <form className="content-ops-browse-toolbar" onSubmit={onApplyFilters}>
         <label>
@@ -1034,8 +1377,9 @@ function SpellingBrowsePanel({
             data-content-ops-spelling-pool="true"
           >
             <option value="all">All</option>
-            <option value="core">Core</option>
-            <option value="extra">Extra</option>
+            {poolOptions.map((pool) => (
+              <option key={pool.id} value={pool.id}>{pool.label}</option>
+            ))}
           </select>
         </label>
         <label>
@@ -1256,8 +1600,9 @@ function SpellingBrowsePanel({
                       disabled={formDisabled}
                       data-content-ops-word-field="spellingPool"
                     >
-                      <option value="core">Core</option>
-                      <option value="extra">Extra</option>
+                      {poolOptions.map((pool) => (
+                        <option key={pool.id} value={pool.id}>{pool.label}</option>
+                      ))}
                     </select>
                   </label>
                   <label>
@@ -1660,8 +2005,9 @@ function SpellingBrowsePanel({
                       disabled={formDisabled}
                       data-content-ops-word-list-field="spellingPool"
                     >
-                      <option value="core">Core</option>
-                      <option value="extra">Extra</option>
+                      {poolOptions.map((pool) => (
+                        <option key={pool.id} value={pool.id}>{pool.label}</option>
+                      ))}
                     </select>
                   </label>
                   <label>
@@ -2444,7 +2790,9 @@ export function AdminContentOperationsSection({
       });
       const noun = operation.entityType === 'spelling.sentenceEntry'
         ? 'Sentence'
-        : (operation.entityType === 'spelling.wordList' ? 'Word list' : 'Word');
+        : (operation.entityType === 'spelling.wordList'
+            ? 'Word list'
+            : (operation.entityType === 'spelling.pool' ? 'Pool' : 'Word'));
       setSpellingOperationState({
         packageId: selectedPackageId,
         action,

@@ -17,16 +17,36 @@ export const SPELLING_CONTENT_SUBJECT_ID = 'spelling';
  * a cached bundle — runtime consumers treat `modelVersion < MODEL_VERSION`
  * as "normalise and rewrite" on next save.
  */
-export const SPELLING_CONTENT_MODEL_VERSION = 6;
+export const SPELLING_CONTENT_MODEL_VERSION = 8;
 export const SPELLING_CONTENT_EXPORT_KIND = 'ks2-spelling-content';
 export const SPELLING_CONTENT_EXPORT_VERSION = 1;
 export const SPELLING_CONTENT_POOLS = Object.freeze(['core', 'extra']);
 
 const VALID_YEAR_GROUPS = new Set(['Y3', 'Y4', 'Y5', 'Y6']);
-const VALID_SPELLING_POOLS = new Set(SPELLING_CONTENT_POOLS);
+const LEGACY_SPELLING_POOLS = new Set(SPELLING_CONTENT_POOLS);
 const VALID_DRAFT_STATES = new Set(['draft']);
 const VALID_RELEASE_STATES = new Set(['published']);
+const VALID_POOL_TYPES = new Set(['statutory', 'enrichment', 'extension', 'custom']);
+const VALID_POOL_VISIBILITY_STATES = new Set(['visible', 'hidden', 'staged']);
+const RESERVED_POOL_IDS = new Set(['all']);
 const MIN_WORD_EXPLANATION_LENGTH = 12;
+
+const DEFAULT_POOL_METADATA = Object.freeze({
+  core: Object.freeze({
+    id: 'core',
+    title: 'Core spelling',
+    type: 'statutory',
+    visibility: Object.freeze({ state: 'visible' }),
+    sourceNote: 'Bundled legacy core spelling pool.',
+  }),
+  extra: Object.freeze({
+    id: 'extra',
+    title: 'Extra spelling',
+    type: 'enrichment',
+    visibility: Object.freeze({ state: 'visible' }),
+    sourceNote: 'Bundled legacy extra spelling pool.',
+  }),
+});
 
 function isPlainObject(value) {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
@@ -36,10 +56,21 @@ function normaliseString(value, fallback = '') {
   return typeof value === 'string' ? value.trim() || fallback : fallback;
 }
 
-function normaliseSpellingPool(value, fallback = 'core') {
-  const safeFallback = VALID_SPELLING_POOLS.has(fallback) ? fallback : 'core';
+function isValidPoolId(value) {
+  return typeof value === 'string'
+    && /^[a-z][a-z0-9-]{1,63}$/.test(value)
+    && !RESERVED_POOL_IDS.has(value);
+}
+
+function normalisePoolIdCandidate(value, fallback = '') {
   const candidate = normaliseString(value).toLowerCase();
-  return VALID_SPELLING_POOLS.has(candidate) ? candidate : safeFallback;
+  return candidate || fallback;
+}
+
+function normaliseSpellingPool(value, fallback = 'core') {
+  const safeFallback = isValidPoolId(fallback) ? fallback : 'core';
+  const candidate = normaliseString(value).toLowerCase();
+  return isValidPoolId(candidate) ? candidate : safeFallback;
 }
 
 function normaliseTimestamp(value, fallback = 0) {
@@ -136,6 +167,88 @@ function normaliseRetirement(rawValue = null) {
   };
 }
 
+function defaultCoverageTierForPool(poolId, pool = null) {
+  if (poolId === 'core') return 'statutory-core';
+  if (poolId === 'extra' || pool?.type === 'enrichment') return 'enrichment-extra';
+  return 'secure-extension';
+}
+
+function normalisePoolVisibility(rawValue = null, fallback = null) {
+  const raw = isPlainObject(rawValue) ? rawValue : {};
+  const safeFallback = isPlainObject(fallback) ? fallback : {};
+  const state = VALID_POOL_VISIBILITY_STATES.has(normaliseString(raw.state).toLowerCase())
+    ? normaliseString(raw.state).toLowerCase()
+    : (VALID_POOL_VISIBILITY_STATES.has(normaliseString(safeFallback.state).toLowerCase())
+        ? normaliseString(safeFallback.state).toLowerCase()
+        : 'hidden');
+  return {
+    state,
+    learnerVisible: state === 'visible',
+    scheduledAt: normaliseTimestamp(raw.scheduledAt ?? safeFallback.scheduledAt, 0),
+    rolloutFlag: normaliseString(raw.rolloutFlag, safeFallback.rolloutFlag || ''),
+  };
+}
+
+function normaliseNoRewardException(rawValue = null) {
+  const raw = isPlainObject(rawValue) ? rawValue : {};
+  return {
+    approved: raw.approved === true,
+    reason: normaliseString(raw.reason),
+    approvedBy: normaliseString(raw.approvedBy),
+    approvedAt: normaliseTimestamp(raw.approvedAt, 0),
+  };
+}
+
+function normaliseRewardTrack(rawValue = null) {
+  const raw = isPlainObject(rawValue) ? rawValue : {};
+  return {
+    id: normaliseString(raw.id || raw.rewardTrackId || raw.trackId),
+    approved: raw.approved === true,
+    source: normaliseString(raw.source),
+    note: normaliseString(raw.note),
+    approvedBy: normaliseString(raw.approvedBy),
+    approvedAt: normaliseTimestamp(raw.approvedAt, 0),
+  };
+}
+
+function normaliseSpellingPoolMetadata(rawValue, index = 0) {
+  const raw = isPlainObject(rawValue) ? rawValue : {};
+  const id = normalisePoolIdCandidate(raw.id || raw.pool || raw.spellingPool, index === 0 ? 'core' : `pool-${index + 1}`);
+  const defaults = DEFAULT_POOL_METADATA[id] || {};
+  const typeCandidate = normaliseString(raw.type || raw.poolType, defaults.type || 'custom').toLowerCase();
+  const type = VALID_POOL_TYPES.has(typeCandidate) ? typeCandidate : 'custom';
+  return {
+    id,
+    title: normaliseString(raw.title, defaults.title || `Pool ${index + 1}`),
+    type,
+    sourceNote: normaliseString(raw.sourceNote, defaults.sourceNote || ''),
+    provenance: normaliseProvenance(raw.provenance, raw.sourceNote || defaults.sourceNote || 'spelling pool'),
+    visibility: normalisePoolVisibility(raw.visibility, defaults.visibility || { state: 'hidden' }),
+    tags: normaliseTags(raw.tags),
+    active: raw.active === false ? false : true,
+    retired: Boolean(raw.retired),
+    ...(raw.retired || raw.active === false || raw.retirement ? { retirement: normaliseRetirement(raw.retirement) } : {}),
+    ...(raw.noRewardException ? { noRewardException: normaliseNoRewardException(raw.noRewardException) } : {}),
+    ...(raw.rewardTrack ? { rewardTrack: normaliseRewardTrack(raw.rewardTrack) } : {}),
+    sortIndex: Number.isInteger(Number(raw.sortIndex)) && Number(raw.sortIndex) >= 0 ? Number(raw.sortIndex) : index,
+  };
+}
+
+function normalisePoolCollection(rawPools) {
+  const sources = [];
+  const seen = new Set();
+  const remember = (entry) => {
+    const rawPool = entry?.id || entry?.pool || entry?.spellingPool;
+    const pool = normalisePoolIdCandidate(rawPool, normaliseSpellingPool(rawPool, sources.length === 0 ? 'core' : `pool-${sources.length + 1}`));
+    if (seen.has(pool)) return;
+    seen.add(pool);
+    sources.push({ ...(DEFAULT_POOL_METADATA[pool] || {}), ...(isPlainObject(entry) ? entry : {}), id: pool });
+  };
+  if (Array.isArray(rawPools)) rawPools.forEach(remember);
+  SPELLING_CONTENT_POOLS.forEach((id) => remember(DEFAULT_POOL_METADATA[id]));
+  return sources.map((entry, index) => normaliseSpellingPoolMetadata(entry, index));
+}
+
 function yearBandFromGroups(yearGroups) {
   const groups = normaliseYearGroups(yearGroups);
   const y34 = groups.filter((entry) => entry === 'Y3' || entry === 'Y4');
@@ -154,14 +267,18 @@ function familyKeyForRuntime(word) {
   return `${word.spellingPool || 'core'}::${coverageTierForWord(word)}::${word.year}::${word.family}`;
 }
 
-function normaliseWordList(rawValue, index = 0) {
+function normaliseWordList(rawValue, index = 0, poolsById = new Map()) {
   const raw = isPlainObject(rawValue) ? rawValue : {};
   const spellingPool = normaliseSpellingPool(raw.spellingPool);
+  const pool = poolsById.get(spellingPool) || null;
   return {
     id: normaliseString(raw.id, `list-${index + 1}`),
     title: normaliseString(raw.title, `Word list ${index + 1}`),
     spellingPool,
-    coverageTier: normaliseCoverageTier(raw.coverageTier, { spellingPool }),
+    coverageTier: normaliseCoverageTier(raw.coverageTier, {
+      spellingPool,
+      fallback: defaultCoverageTierForPool(spellingPool, pool),
+    }),
     yearGroups: normaliseYearGroups(raw.yearGroups),
     tags: normaliseTags(raw.tags),
     wordSlugs: uniqueStrings(raw.wordSlugs, { lowerCase: true }),
@@ -327,7 +444,9 @@ function normalisePublishedSnapshot(rawValue) {
 function normaliseDraft(rawValue) {
   const raw = isPlainObject(rawValue) ? rawValue : {};
   const updatedAt = normaliseTimestamp(raw.updatedAt, 0);
-  const wordLists = (Array.isArray(raw.wordLists) ? raw.wordLists : []).map((entry, index) => normaliseWordList(entry, index));
+  const pools = normalisePoolCollection(raw.pools);
+  const poolsById = new Map(pools.map((pool) => [pool.id, pool]));
+  const wordLists = (Array.isArray(raw.wordLists) ? raw.wordLists : []).map((entry, index) => normaliseWordList(entry, index, poolsById));
   const wordListsById = new Map(wordLists.map((list) => [list.id, list]));
   return {
     id: normaliseString(raw.id, 'main'),
@@ -339,6 +458,7 @@ function normaliseDraft(rawValue) {
     provenance: normaliseProvenance(raw.provenance, raw.sourceNote || 'spelling draft'),
     createdAt: normaliseTimestamp(raw.createdAt, updatedAt),
     updatedAt,
+    pools,
     wordLists,
     words: (Array.isArray(raw.words) ? raw.words : []).map((entry, index) => normaliseWordEntry(entry, index, wordListsById)),
     sentences: (Array.isArray(raw.sentences) ? raw.sentences : []).map((entry, index) => normaliseSentenceEntry(entry, index)),
@@ -440,6 +560,7 @@ export function validateSpellingContentBundle(rawBundle) {
   const errors = [];
   const warnings = [];
   const wordListsById = new Map();
+  const poolsById = new Map();
   const wordsBySlug = new Map();
   const wordTextKeys = new Set();
   const sentencesById = new Map();
@@ -454,9 +575,34 @@ export function validateSpellingContentBundle(rawBundle) {
     errors.push(issue('error', 'invalid_publish_state', 'draft.state', 'Draft content must use the state "draft".'));
   }
 
-  if (!bundle.draft.wordLists.length) {
-    warnings.push(issue('warn', 'missing_word_lists', 'draft.wordLists', 'No word lists are defined in the draft.'));
-  }
+  bundle.draft.pools.forEach((pool, index) => {
+    if (poolsById.has(pool.id)) {
+      errors.push(issue('error', 'duplicate_pool', `draft.pools[${index}]`, `Duplicate pool id "${pool.id}".`));
+      return;
+    }
+    poolsById.set(pool.id, pool);
+    if (!isValidPoolId(pool.id)) {
+      errors.push(issue('error', 'invalid_pool_id', `draft.pools[${index}].id`, `Pool "${pool.id}" must use a stable lowercase id.`));
+    }
+    if (!pool.title) {
+      errors.push(issue('error', 'missing_pool_metadata', `draft.pools[${index}].title`, `Pool "${pool.id}" is missing a title.`));
+    }
+    if (!VALID_POOL_TYPES.has(pool.type)) {
+      errors.push(issue('error', 'missing_pool_metadata', `draft.pools[${index}].type`, `Pool "${pool.id}" is missing a valid type.`));
+    }
+    if (pool.id !== 'core' && pool.type === 'statutory') {
+      errors.push(issue('error', 'pool_type_mismatch', `draft.pools[${index}].type`, `Only the core pool can use statutory type.`));
+    }
+    if (pool.retired && pool.visibility?.state === 'visible') {
+      warnings.push(issue('warn', 'retired_pool_visible', `draft.pools[${index}].visibility.state`, `Retired pool "${pool.id}" keeps visible metadata for history but is hidden from new sessions.`));
+    }
+    const learnerVisible = pool.active !== false && !pool.retired && pool.visibility?.state === 'visible';
+    const noRewardApproved = pool.noRewardException?.approved === true;
+    const rewardTrackApproved = pool.rewardTrack?.approved === true;
+    if (learnerVisible && !LEGACY_SPELLING_POOLS.has(pool.id) && !noRewardApproved && !rewardTrackApproved) {
+      errors.push(issue('error', 'pool_reward_required', `draft.pools[${index}].visibility.state`, `Learner-visible pool "${pool.id}" requires a reward track or approved no-reward exception before publish.`));
+    }
+  });
 
   bundle.draft.wordLists.forEach((list, index) => {
     if (wordListsById.has(list.id)) {
@@ -464,6 +610,12 @@ export function validateSpellingContentBundle(rawBundle) {
       return;
     }
     wordListsById.set(list.id, list);
+    const pool = poolsById.get(list.spellingPool);
+    if (!pool) {
+      errors.push(issue('error', 'missing_pool', `draft.wordLists[${index}].spellingPool`, `Word list "${list.id}" points at missing pool "${list.spellingPool}".`));
+    } else if (pool.active === false || pool.retired) {
+      warnings.push(issue('warn', 'retired_pool_reference', `draft.wordLists[${index}].spellingPool`, `Word list "${list.id}" points at retired pool "${list.spellingPool}" and will be hidden from new sessions.`));
+    }
     if (list.spellingPool === 'core' && !list.yearGroups.length) {
       errors.push(issue('error', 'missing_year_group_metadata', `draft.wordLists[${index}].yearGroups`, `Word list "${list.id}" is missing year-group metadata.`));
     }
@@ -472,6 +624,9 @@ export function validateSpellingContentBundle(rawBundle) {
     }
     if (list.spellingPool === 'core' && list.coverageTier === 'enrichment-extra') {
       errors.push(issue('error', 'coverage_tier_mismatch', `draft.wordLists[${index}].coverageTier`, `Core word list "${list.id}" cannot use the enrichment-extra coverage tier.`));
+    }
+    if (list.spellingPool !== 'core' && list.coverageTier === 'statutory-core') {
+      errors.push(issue('error', 'coverage_tier_mismatch', `draft.wordLists[${index}].coverageTier`, `Non-core word list "${list.id}" cannot use the statutory-core coverage tier.`));
     }
   });
 
@@ -498,6 +653,9 @@ export function validateSpellingContentBundle(rawBundle) {
     }
     if (word.spellingPool === 'core' && word.coverageTier === 'enrichment-extra') {
       errors.push(issue('error', 'coverage_tier_mismatch', `draft.words[${index}].coverageTier`, `Core word "${word.slug}" cannot use the enrichment-extra coverage tier.`));
+    }
+    if (word.spellingPool !== 'core' && word.coverageTier === 'statutory-core') {
+      errors.push(issue('error', 'coverage_tier_mismatch', `draft.words[${index}].coverageTier`, `Non-core word "${word.slug}" cannot use the statutory-core coverage tier.`));
     }
     if (!hasUsableWordExplanation(word.explanation)) {
       errors.push(issue('error', 'missing_word_explanation', `draft.words[${index}].explanation`, `Word "${word.slug}" must include a learner-facing explanation.`));
@@ -728,10 +886,19 @@ function orderedDraftWords(draft) {
 
 export function buildPublishedSnapshotFromDraft(rawDraft, { generatedAt = Date.now() } = {}) {
   const draft = normaliseDraft(rawDraft);
+  const poolById = new Map(draft.pools.map((entry) => [entry.id, entry]));
+  const listById = new Map(draft.wordLists.map((entry) => [entry.id, entry]));
   const sentenceById = new Map(draft.sentences.map((entry) => [entry.id, entry]));
   const familyMap = new Map();
   const orderedWords = orderedDraftWords(draft)
-    .filter((word) => word.active !== false && !word.retired);
+    .filter((word) => {
+      if (word.active === false || word.retired) return false;
+      const pool = poolById.get(word.spellingPool);
+      if (pool && (pool.active === false || pool.retired || pool.visibility?.state !== 'visible')) return false;
+      const list = listById.get(word.listId);
+      if (list && (list.active === false || list.retired)) return false;
+      return true;
+    });
 
   const runtimeWords = orderedWords.map((word, index) => {
     const sentences = word.sentenceEntryIds

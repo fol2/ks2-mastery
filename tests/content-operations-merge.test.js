@@ -32,16 +32,26 @@ test('content operations produce stable hashes and normalised field edits', () =
   assert.equal(contentOperationHash(operation), contentOperationHash({ ...operation }));
 });
 
-test('content operations reject entity contracts that the candidate builder cannot apply yet', () => {
-  assert.throws(
-    () => normaliseContentOperation({
-      entityType: 'spelling.pool',
-      entityId: 'core-y5',
-      action: 'upsert',
-      payload: { id: 'core-y5', title: 'Core Year 5' },
-    }),
-    /Unsupported content operation entity type "spelling\.pool"/,
-  );
+test('content operations apply spelling pool metadata operations', async () => {
+  const bundle = await readSeededSpellingContentBundle();
+  const candidate = buildSpellingContentOperationCandidate(bundle, [{
+    entityType: 'spelling.pool',
+    entityId: 'secure-vocabulary',
+    action: 'upsert',
+    payload: {
+      id: 'secure-vocabulary',
+      title: 'Secure vocabulary',
+      type: 'extension',
+      visibility: { state: 'hidden' },
+      sourceNote: 'Created by content operations merge test.',
+      provenance: { source: 'content-operations-merge-test' },
+    },
+  }]);
+  const pool = candidate.candidate.draft.pools.find((entry) => entry.id === 'secure-vocabulary');
+
+  assert.equal(candidate.validation.ok, true);
+  assert.equal(pool.title, 'Secure vocabulary');
+  assert.equal(pool.visibility.state, 'hidden');
 });
 
 test('content operations detect same-field conflicts without blocking unrelated fields', () => {

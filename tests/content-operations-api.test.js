@@ -372,6 +372,105 @@ test('content operations API publishes linked sentence-entry operations through 
   }
 });
 
+test('content operations API validates package-scoped pool metadata operations', async () => {
+  const server = createWorkerRepositoryServer({ now: () => NOW });
+  try {
+    seedAdultAccount(server.DB, { accountId: ADMIN_ID, platformRole: 'admin' });
+    const repository = createWorkerRepository({
+      env: server.env,
+      now: () => NOW,
+    });
+    await repository.seedFirstContentOperationRelease({
+      seededByAccountId: ADMIN_ID,
+      proof: { source: 'content-operations-api-pool-test' },
+    });
+
+    const hiddenPackage = await createPackage(server, { title: 'Create hidden pool package' });
+    await appendContentOperation(server, hiddenPackage.package.packageId, {
+      entityType: 'spelling.pool',
+      entityId: 'secure-vocabulary',
+      fieldPath: '',
+      action: 'upsert',
+      payload: {
+        id: 'secure-vocabulary',
+        title: 'Secure vocabulary',
+        type: 'extension',
+        visibility: { state: 'hidden' },
+        sourceNote: 'Created by content operations API test.',
+        provenance: { source: 'content-operations-api-test' },
+      },
+    });
+    const hiddenValidated = await validatePackage(server, hiddenPackage.package.packageId, { includeSnapshot: true });
+    const hiddenPool = hiddenValidated.candidate.candidate.draft.pools.find((entry) => entry.id === 'secure-vocabulary');
+    assert.equal(hiddenValidated.candidate.validation.status, 'passed');
+    assert.equal(hiddenPool.type, 'extension');
+    assert.equal(hiddenPool.visibility.state, 'hidden');
+
+    const exceptionPackage = await createPackage(server, { title: 'Create visible no-reward exception pool package' });
+    await appendContentOperation(server, exceptionPackage.package.packageId, {
+      entityType: 'spelling.pool',
+      entityId: 'secure-visible-exception',
+      fieldPath: '',
+      action: 'upsert',
+      payload: {
+        id: 'secure-visible-exception',
+        title: 'Secure visible exception',
+        type: 'extension',
+        visibility: { state: 'visible' },
+        noRewardException: { approved: true, reason: 'Temporary editorial exception.' },
+        sourceNote: 'Created by content operations API test.',
+        provenance: { source: 'content-operations-api-test' },
+      },
+    });
+    const exceptionValidated = await validatePackage(server, exceptionPackage.package.packageId, { includeSnapshot: true });
+    const exceptionPool = exceptionValidated.candidate.candidate.draft.pools.find((entry) => entry.id === 'secure-visible-exception');
+    assert.equal(exceptionValidated.candidate.validation.status, 'passed');
+    assert.equal(exceptionPool.noRewardException.approved, true);
+
+    const rewardPackage = await createPackage(server, { title: 'Create visible rewarded pool package' });
+    await appendContentOperation(server, rewardPackage.package.packageId, {
+      entityType: 'spelling.pool',
+      entityId: 'secure-rewarded',
+      fieldPath: '',
+      action: 'upsert',
+      payload: {
+        id: 'secure-rewarded',
+        title: 'Secure rewarded',
+        type: 'extension',
+        visibility: { state: 'visible' },
+        rewardTrack: { id: 'secure-reward-track', approved: true, source: 'content-operations-api-test' },
+        sourceNote: 'Created by content operations API test.',
+        provenance: { source: 'content-operations-api-test' },
+      },
+    });
+    const rewardValidated = await validatePackage(server, rewardPackage.package.packageId, { includeSnapshot: true });
+    const rewardPool = rewardValidated.candidate.candidate.draft.pools.find((entry) => entry.id === 'secure-rewarded');
+    assert.equal(rewardValidated.candidate.validation.status, 'passed');
+    assert.equal(rewardPool.rewardTrack.approved, true);
+
+    const visiblePackage = await createPackage(server, { title: 'Create visible pool package' });
+    await appendContentOperation(server, visiblePackage.package.packageId, {
+      entityType: 'spelling.pool',
+      entityId: 'secure-visible',
+      fieldPath: '',
+      action: 'upsert',
+      payload: {
+        id: 'secure-visible',
+        title: 'Secure visible',
+        type: 'extension',
+        visibility: { state: 'visible' },
+        sourceNote: 'Created by content operations API test.',
+        provenance: { source: 'content-operations-api-test' },
+      },
+    });
+    const visibleValidated = await validatePackage(server, visiblePackage.package.packageId);
+    assert.equal(visibleValidated.candidate.validation.status, 'blocked');
+    assert.ok(visibleValidated.candidate.validation.errors.some((entry) => entry.code === 'pool_reward_required'));
+  } finally {
+    server.close();
+  }
+});
+
 test('content operations API blocks referenced sentence and active word-list retirements', async () => {
   const server = createWorkerRepositoryServer({ now: () => NOW });
   try {

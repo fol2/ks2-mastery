@@ -19,6 +19,7 @@ export const CONTENT_OPERATION_PACKAGE_STATES = Object.freeze({
 });
 
 export const CONTENT_OPERATION_ENTITY_TYPES = Object.freeze([
+  'spelling.pool',
   'spelling.word',
   'spelling.sentenceEntry',
   'spelling.wordList',
@@ -38,6 +39,7 @@ const ACTION_SET = new Set(CONTENT_OPERATION_ACTIONS);
 const STRUCTURAL_ACTIONS = new Set(['create', 'upsert', 'replace', 'remove', 'retire']);
 
 const EDITABLE_COLLECTIONS = Object.freeze({
+  'spelling.pool': Object.freeze({ collectionPath: ['draft', 'pools'], idField: 'id' }),
   'spelling.word': Object.freeze({ collectionPath: ['draft', 'words'], idField: 'slug' }),
   'spelling.sentenceEntry': Object.freeze({ collectionPath: ['draft', 'sentences'], idField: 'id' }),
   'spelling.wordList': Object.freeze({ collectionPath: ['draft', 'wordLists'], idField: 'id' }),
