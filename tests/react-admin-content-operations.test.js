@@ -271,7 +271,20 @@ const spellingBrowse = {
     filters: { query: '', pool: 'all', listId: '', limit: 75 },
     totals: { words: 1, displayedWords: 1, matchedWords: 1, wordLists: 1, sentences: 2, variants: 1, families: 1 },
     draftStateCounts: { added: 0, modified: 1, removed: 0, unchanged: 0 },
-    pools: [{ pool: 'extra', wordCount: 1, sentenceCount: 2, variantCount: 1, draftStateCounts: { modified: 1 } }],
+    pools: [{
+      id: 'extra',
+      pool: 'extra',
+      title: 'Extra',
+      type: 'enrichment',
+      visibility: { state: 'hidden', learnerVisible: false },
+      rewardTrackIds: ['extra-vellhorn'],
+      wordCount: 1,
+      totalWordCount: 1,
+      sentenceCount: 2,
+      variantCount: 1,
+      draftStateCounts: { modified: 1 },
+      draftState: 'unchanged',
+    }],
     wordLists: [{
       id: 'extra-greek',
       title: 'Extra Greek roots',
@@ -317,6 +330,24 @@ const spellingBrowse = {
         wordListId: 'extra-greek',
         monsterBinding: { mode: 'pool', poolId: 'extra', assignment: 'unresolved' },
       },
+    }],
+    rewardTracks: [{
+      id: 'extra-vellhorn',
+      poolId: 'extra',
+      monsterId: 'vellhorn',
+      progressionMode: 'parallel',
+      thresholdTemplate: 'direct',
+      thresholdOverrides: [1],
+      active: true,
+      progressKey: 'vellhorn',
+      sourceMonsterIds: ['vellhorn'],
+      labels: {
+        title: 'Extra Vellhorn',
+        shortLabel: 'Vellhorn',
+        description: 'Existing Extra spelling reward track.',
+      },
+      sourceNote: 'Seed fixture.',
+      sortIndex: 0,
     }],
   },
 };
@@ -1393,6 +1424,7 @@ test('Content Operations Centre spelling pool editor appends pool upsert operati
       await setControl('[data-content-ops-pool-field="title"]', 'Extra spelling revised');
       await setControl('[data-content-ops-pool-field="type"]', 'enrichment');
       await setControl('[data-content-ops-pool-field="visibilityState"]', 'hidden');
+      await setControl('[data-content-ops-pool-field="rewardTrackIds"]', 'extra-vellhorn, extra-inklet');
       await setControl('[data-content-ops-pool-field="sourceNote"]', 'Edited in Content Operations Centre.');
       await setControl('[data-content-ops-pool-field="provenanceSource"]', 'admin-editor');
       const saveButton = Array.from(document.querySelectorAll('button'))
@@ -1432,12 +1464,475 @@ test('Content Operations Centre spelling pool editor appends pool upsert operati
   assert.equal(appendCall.args.operation.payload.title, 'Extra spelling revised');
   assert.equal(appendCall.args.operation.payload.type, 'enrichment');
   assert.equal(appendCall.args.operation.payload.visibility.state, 'hidden');
+  assert.deepEqual(appendCall.args.operation.payload.rewardTrackIds, ['extra-vellhorn', 'extra-inklet']);
   assert.equal(appendCall.args.mutation.requestId.startsWith('content-ops-pool-upsert-pkg-draft-1-'), true);
   assert.match(result.text, /Pool operation saved/);
   assert.match(result.text, /Secure vocabulary/);
   assert.ok(result.optionValues.browse.includes('secure-vocabulary'));
   assert.ok(result.optionValues.word.includes('secure-vocabulary'));
   assert.ok(result.optionValues.wordList.includes('secure-vocabulary'));
+});
+
+test('Content Operations Centre pools and rewards tab appends reward-track upsert operations', async () => {
+  const spellingBrowseWithRewardCapacity = {
+    browse: {
+      ...spellingBrowse.browse,
+      pools: spellingBrowse.browse.pools.map((pool) => ({
+        ...pool,
+        wordCount: 250,
+        totalWordCount: 250,
+      })),
+    },
+  };
+  const output = await runClientEntry(`
+    const { JSDOM } = require('jsdom');
+
+    globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+    const dom = new JSDOM('<!doctype html><html><body><div id="root"></div></body></html>', {
+      url: 'https://ks2.eugnel.uk/admin',
+    });
+    globalThis.window = dom.window;
+    globalThis.document = dom.window.document;
+    globalThis.navigator = dom.window.navigator;
+    globalThis.HTMLElement = dom.window.HTMLElement;
+    globalThis.Event = dom.window.Event;
+
+    const React = require('react');
+    const { createRoot } = require('react-dom/client');
+    const { AdminContentOperationsSection } = require(${CONTENT_OPS_SECTION_PATH});
+    const { act } = React;
+
+    const calls = [];
+    const model = ${JSON.stringify(baseModel({
+      contentOperations: {
+        overview,
+        packages: { packages: [contentPackage] },
+        releases: { releases: [release] },
+        spellingBrowse: spellingBrowseWithRewardCapacity,
+        spellingItemDetail: spellingWordDetail,
+      },
+    }))};
+    const actions = {
+      contentOperationsApi: {
+        async readSpellingWord(args) {
+          calls.push({ method: 'readSpellingWord', args });
+          return ${JSON.stringify(spellingWordDetail)};
+        },
+        async appendOperation(args) {
+          calls.push({ method: 'appendOperation', args });
+          return { ok: true, operation: { operationId: 'op-reward-save-1', ...args.operation } };
+        },
+      },
+    };
+
+    async function flush() {
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      });
+    }
+
+    async function setControl(selector, value) {
+      const control = document.querySelector(selector);
+      const prototype = control.tagName === 'TEXTAREA'
+        ? dom.window.HTMLTextAreaElement.prototype
+        : (control.tagName === 'SELECT'
+            ? dom.window.HTMLSelectElement.prototype
+            : dom.window.HTMLInputElement.prototype);
+      const valueSetter = Object.getOwnPropertyDescriptor(prototype, 'value').set;
+      valueSetter.call(control, value);
+      await act(async () => {
+        control.dispatchEvent(new dom.window.Event('input', { bubbles: true }));
+        control.dispatchEvent(new dom.window.Event('change', { bubbles: true }));
+      });
+    }
+
+    async function main() {
+      const root = createRoot(document.getElementById('root'));
+      await act(async () => {
+        root.render(React.createElement(AdminContentOperationsSection, {
+          model,
+          actions,
+          initialActiveTab: 'poolsRewards',
+          initialSelectedPackageId: 'pkg-draft-1',
+        }));
+      });
+      await flush();
+
+      const newTrackButton = Array.from(document.querySelectorAll('button'))
+        .find((button) => button.textContent === 'New track');
+      await act(async () => {
+        newTrackButton.click();
+      });
+
+      await setControl('[data-content-ops-reward-field="id"]', 'extra-inklet');
+      await setControl('[data-content-ops-reward-field="poolId"]', 'extra');
+      await setControl('[data-content-ops-reward-field="monsterId"]', 'inklet');
+      await setControl('[data-content-ops-reward-field="progressionMode"]', 'parallel');
+      await setControl('[data-content-ops-reward-field="thresholdTemplate"]', 'direct');
+      await setControl('[data-content-ops-reward-field="thresholdOverrides"]', '');
+      await setControl('[data-content-ops-reward-field="progressKey"]', 'inklet');
+      await setControl('[data-content-ops-reward-field="sourceMonsterIds"]', 'inklet');
+      await setControl('[data-content-ops-reward-field="labelsTitle"]', 'Extra Inklet');
+      await setControl('[data-content-ops-reward-field="labelsShortLabel"]', 'Inklet');
+      await setControl('[data-content-ops-reward-field="sourceNote"]', 'Edited in Content Operations Centre.');
+
+      const saveButton = Array.from(document.querySelectorAll('button'))
+        .find((button) => button.textContent === 'Save reward track');
+      await act(async () => {
+        saveButton.click();
+      });
+      await flush();
+      await flush();
+
+      process.stdout.write(JSON.stringify({
+        calls,
+        text: document.body.textContent,
+        area: document.querySelector('[data-content-ops-area]')?.getAttribute('data-content-ops-area'),
+      }));
+
+      await act(async () => {
+        root.unmount();
+      });
+      dom.window.close();
+      process.exit(0);
+    }
+
+    main().catch((error) => {
+      process.stderr.write(error.stack || error.message);
+      process.exitCode = 1;
+    });
+  `);
+  const result = JSON.parse(output);
+  const appendCall = result.calls.find((entry) => entry.method === 'appendOperation');
+
+  assert.equal(result.area, 'poolsRewards');
+  assert.ok(appendCall, 'reward-track editor should append an operation');
+  assert.equal(appendCall.args.packageId, 'pkg-draft-1');
+  assert.equal(appendCall.args.operation.entityType, 'spelling.rewardTrack');
+  assert.equal(appendCall.args.operation.action, 'upsert');
+  assert.equal(appendCall.args.operation.entityId, 'extra-inklet');
+  assert.equal(appendCall.args.operation.payload.poolId, 'extra');
+  assert.equal(appendCall.args.operation.payload.monsterId, 'inklet');
+  assert.deepEqual(appendCall.args.operation.payload.thresholdOverrides, []);
+  assert.equal(appendCall.args.operation.payload.labels.title, 'Extra Inklet');
+  assert.equal(appendCall.args.mutation.requestId.startsWith('content-ops-reward-track-upsert-pkg-draft-1-'), true);
+  assert.match(result.text, /Reward track operation saved/);
+});
+
+test('Content Operations Centre pools and rewards tab cold-loads spelling browse data', async () => {
+  const output = await runClientEntry(`
+    const { JSDOM } = require('jsdom');
+
+    globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+    const dom = new JSDOM('<!doctype html><html><body><div id="root"></div></body></html>', {
+      url: 'https://ks2.eugnel.uk/admin',
+    });
+    globalThis.window = dom.window;
+    globalThis.document = dom.window.document;
+    globalThis.navigator = dom.window.navigator;
+    globalThis.HTMLElement = dom.window.HTMLElement;
+    globalThis.Event = dom.window.Event;
+
+    const React = require('react');
+    const { createRoot } = require('react-dom/client');
+    const { AdminContentOperationsSection } = require(${CONTENT_OPS_SECTION_PATH});
+    const { act } = React;
+
+    const calls = [];
+    const model = ${JSON.stringify(baseModel({
+      contentOperations: {
+        overview,
+        packages: { packages: [contentPackage] },
+        releases: { releases: [release] },
+        spellingBrowse: null,
+        spellingItemDetail: null,
+      },
+    }))};
+    const actions = {
+      contentOperationsApi: {
+        async readSpellingBrowse(args) {
+          calls.push({ method: 'readSpellingBrowse', args });
+          return ${JSON.stringify(spellingBrowse)};
+        },
+      },
+    };
+
+    async function flush() {
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      });
+    }
+
+    async function main() {
+      const root = createRoot(document.getElementById('root'));
+      await act(async () => {
+        root.render(React.createElement(AdminContentOperationsSection, {
+          model,
+          actions,
+          initialActiveTab: 'poolsRewards',
+          initialSelectedPackageId: 'pkg-draft-1',
+        }));
+      });
+      await flush();
+      await flush();
+
+      process.stdout.write(JSON.stringify({ calls, text: document.body.textContent }));
+
+      await act(async () => {
+        root.unmount();
+      });
+      dom.window.close();
+      process.exit(0);
+    }
+
+    main().catch((error) => {
+      process.stderr.write(error.stack || error.message);
+      process.exitCode = 1;
+    });
+  `);
+  const result = JSON.parse(output);
+  assert.deepEqual(result.calls, [{
+    method: 'readSpellingBrowse',
+    args: { packageId: 'pkg-draft-1', query: '', pool: null, listId: null, limit: 75 },
+  }]);
+  assert.match(result.text, /Extra Vellhorn/);
+});
+
+test('Content Operations Centre reward editor rejects invalid or impossible threshold overrides before append', async () => {
+  const spellingBrowseWithLowActiveCount = {
+    browse: {
+      ...spellingBrowse.browse,
+      pools: spellingBrowse.browse.pools.map((pool) => ({
+        ...pool,
+        activeWordCount: 1,
+        wordCount: 0,
+        totalWordCount: 250,
+      })),
+    },
+  };
+  const output = await runClientEntry(`
+    const { JSDOM } = require('jsdom');
+
+    globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+    const dom = new JSDOM('<!doctype html><html><body><div id="root"></div></body></html>', {
+      url: 'https://ks2.eugnel.uk/admin',
+    });
+    globalThis.window = dom.window;
+    globalThis.document = dom.window.document;
+    globalThis.navigator = dom.window.navigator;
+    globalThis.HTMLElement = dom.window.HTMLElement;
+    globalThis.Event = dom.window.Event;
+
+    const React = require('react');
+    const { createRoot } = require('react-dom/client');
+    const { AdminContentOperationsSection } = require(${CONTENT_OPS_SECTION_PATH});
+    const { act } = React;
+
+    const calls = [];
+    const model = ${JSON.stringify(baseModel({
+      contentOperations: {
+        overview,
+        packages: { packages: [contentPackage] },
+        releases: { releases: [release] },
+        spellingBrowse: spellingBrowseWithLowActiveCount,
+        spellingItemDetail: spellingWordDetail,
+      },
+    }))};
+    const actions = {
+      contentOperationsApi: {
+        async appendOperation(args) {
+          calls.push({ method: 'appendOperation', args });
+          return { ok: true, operation: { operationId: 'op-reward-save-1', ...args.operation } };
+        },
+      },
+    };
+
+    async function flush() {
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      });
+    }
+
+    async function setControl(selector, value) {
+      const control = document.querySelector(selector);
+      const prototype = control.tagName === 'TEXTAREA'
+        ? dom.window.HTMLTextAreaElement.prototype
+        : (control.tagName === 'SELECT'
+            ? dom.window.HTMLSelectElement.prototype
+            : dom.window.HTMLInputElement.prototype);
+      const valueSetter = Object.getOwnPropertyDescriptor(prototype, 'value').set;
+      valueSetter.call(control, value);
+      await act(async () => {
+        control.dispatchEvent(new dom.window.Event('input', { bubbles: true }));
+        control.dispatchEvent(new dom.window.Event('change', { bubbles: true }));
+      });
+    }
+
+    async function saveNewTrack(thresholdOverrides) {
+      const newTrackButton = Array.from(document.querySelectorAll('button'))
+        .find((button) => button.textContent === 'New track');
+      await act(async () => {
+        newTrackButton.click();
+      });
+      await setControl('[data-content-ops-reward-field="id"]', 'extra-inklet');
+      await setControl('[data-content-ops-reward-field="poolId"]', 'extra');
+      await setControl('[data-content-ops-reward-field="monsterId"]', 'inklet');
+      await setControl('[data-content-ops-reward-field="thresholdOverrides"]', thresholdOverrides);
+      const saveButton = Array.from(document.querySelectorAll('button'))
+        .find((button) => button.textContent === 'Save reward track');
+      await act(async () => {
+        saveButton.click();
+      });
+      await flush();
+    }
+
+    async function main() {
+      const root = createRoot(document.getElementById('root'));
+      await act(async () => {
+        root.render(React.createElement(AdminContentOperationsSection, {
+          model,
+          actions,
+          initialActiveTab: 'poolsRewards',
+          initialSelectedPackageId: 'pkg-draft-1',
+        }));
+      });
+      await flush();
+
+      await saveNewTrack('1, nope, 3');
+      const invalidText = document.body.textContent;
+      await setControl('[data-content-ops-reward-field="thresholdOverrides"]', '2');
+      const saveButton = Array.from(document.querySelectorAll('button'))
+        .find((button) => button.textContent === 'Save reward track');
+      await act(async () => {
+        saveButton.click();
+      });
+      await flush();
+      const impossibleText = document.body.textContent;
+
+      process.stdout.write(JSON.stringify({ calls, invalidText, impossibleText }));
+
+      await act(async () => {
+        root.unmount();
+      });
+      dom.window.close();
+      process.exit(0);
+    }
+
+    main().catch((error) => {
+      process.stderr.write(error.stack || error.message);
+      process.exitCode = 1;
+    });
+  `);
+  const result = JSON.parse(output);
+  assert.deepEqual(result.calls, []);
+  assert.match(result.invalidText, /invalid value "nope"/);
+  assert.match(result.impossibleText, /needs 2 active word\(s\), but pool "extra" has 1/);
+});
+
+test('Content Operations Centre reward editor retires existing reward tracks', async () => {
+  const output = await runClientEntry(`
+    const { JSDOM } = require('jsdom');
+
+    globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+    const dom = new JSDOM('<!doctype html><html><body><div id="root"></div></body></html>', {
+      url: 'https://ks2.eugnel.uk/admin',
+    });
+    globalThis.window = dom.window;
+    globalThis.document = dom.window.document;
+    globalThis.navigator = dom.window.navigator;
+    globalThis.HTMLElement = dom.window.HTMLElement;
+    globalThis.Event = dom.window.Event;
+
+    const React = require('react');
+    const { createRoot } = require('react-dom/client');
+    const { AdminContentOperationsSection } = require(${CONTENT_OPS_SECTION_PATH});
+    const { act } = React;
+
+    const calls = [];
+    const model = ${JSON.stringify(baseModel({
+      contentOperations: {
+        overview,
+        packages: { packages: [contentPackage] },
+        releases: { releases: [release] },
+        spellingBrowse,
+        spellingItemDetail: spellingWordDetail,
+      },
+    }))};
+    const actions = {
+      contentOperationsApi: {
+        async appendOperation(args) {
+          calls.push({ method: 'appendOperation', args });
+          return { ok: true, operation: { operationId: 'op-reward-retire-1', ...args.operation } };
+        },
+      },
+    };
+
+    async function flush() {
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      });
+    }
+
+    async function setControl(selector, value) {
+      const control = document.querySelector(selector);
+      const prototype = control.tagName === 'TEXTAREA'
+        ? dom.window.HTMLTextAreaElement.prototype
+        : (control.tagName === 'SELECT'
+            ? dom.window.HTMLSelectElement.prototype
+            : dom.window.HTMLInputElement.prototype);
+      const valueSetter = Object.getOwnPropertyDescriptor(prototype, 'value').set;
+      valueSetter.call(control, value);
+      await act(async () => {
+        control.dispatchEvent(new dom.window.Event('input', { bubbles: true }));
+        control.dispatchEvent(new dom.window.Event('change', { bubbles: true }));
+      });
+    }
+
+    async function main() {
+      const root = createRoot(document.getElementById('root'));
+      await act(async () => {
+        root.render(React.createElement(AdminContentOperationsSection, {
+          model,
+          actions,
+          initialActiveTab: 'poolsRewards',
+          initialSelectedPackageId: 'pkg-draft-1',
+        }));
+      });
+      await flush();
+
+      await setControl('[data-content-ops-reward-field="retirementReason"]', 'Replacing the reward route.');
+      const retireButton = Array.from(document.querySelectorAll('button'))
+        .find((button) => button.textContent === 'Retire track');
+      await act(async () => {
+        retireButton.click();
+      });
+      await flush();
+      await flush();
+
+      process.stdout.write(JSON.stringify({ calls, text: document.body.textContent }));
+
+      await act(async () => {
+        root.unmount();
+      });
+      dom.window.close();
+      process.exit(0);
+    }
+
+    main().catch((error) => {
+      process.stderr.write(error.stack || error.message);
+      process.exitCode = 1;
+    });
+  `);
+  const result = JSON.parse(output);
+  const appendCall = result.calls.find((entry) => entry.method === 'appendOperation');
+
+  assert.ok(appendCall, 'reward-track editor should append a retire operation');
+  assert.equal(appendCall.args.operation.entityType, 'spelling.rewardTrack');
+  assert.equal(appendCall.args.operation.entityId, 'extra-vellhorn');
+  assert.equal(appendCall.args.operation.action, 'retire');
+  assert.equal(appendCall.args.operation.payload.reason, 'Replacing the reward route.');
+  assert.equal(appendCall.args.mutation.requestId.startsWith('content-ops-reward-track-retire-pkg-draft-1-'), true);
+  assert.match(result.text, /Reward track retired/);
 });
 
 test('Content Operations Centre spelling tab reloads browse data after package selection changes', async () => {

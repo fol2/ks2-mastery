@@ -828,9 +828,26 @@ describe('Content Operations Centre normalisers', () => {
             title: 'Secure vocabulary',
             type: 'extension',
             visibility: { state: 'hidden' },
+            rewardTrackIds: ['secure-track', 'secure-vellhorn'],
             rewardTrack: { id: 'secure-track', approved: true },
+            wordCount: 0,
+            activeWordCount: 12,
+            totalWordCount: 15,
           },
         ],
+        rewardTracks: [{
+          id: 'secure-track',
+          poolId: 'secure-vocabulary',
+          monsterId: 'inklet',
+          progressionMode: 'parallel',
+          thresholdTemplate: 'direct',
+          thresholdOverrides: [1, 2, 3],
+          active: true,
+          labels: { title: 'Secure Inklet', shortLabel: 'Inklet' },
+          sourceMonsterIds: ['inklet'],
+          progressKey: 'inklet',
+          sourceNote: 'Normaliser fixture.',
+        }],
       },
       actor: CONTENT_OPS_SPELLING_BROWSE.actor,
     });
@@ -842,7 +859,14 @@ describe('Content Operations Centre normalisers', () => {
     assert.equal(browse.pools[0].draftStateCounts.modified, 1);
     assert.equal(browse.pools[1].id, 'secure-vocabulary');
     assert.equal(browse.pools[1].pool, 'secure-vocabulary');
+    assert.deepEqual(browse.pools[1].rewardTrackIds, ['secure-track', 'secure-vellhorn']);
     assert.equal(browse.pools[1].rewardTrack.approved, true);
+    assert.equal(browse.pools[1].activeWordCount, 12);
+    assert.equal(browse.pools[1].totalWordCount, 15);
+    assert.equal(browse.rewardTracks[0].id, 'secure-track');
+    assert.equal(browse.rewardTracks[0].poolId, 'secure-vocabulary');
+    assert.equal(browse.rewardTracks[0].labels.title, 'Secure Inklet');
+    assert.deepEqual(browse.rewardTracks[0].thresholdOverrides, [1, 2, 3]);
     assert.equal(browse.wordLists[0].title, 'Extra Greek roots');
     assert.equal(browse.words[0].draftState, 'modified');
     assert.deepEqual(browse.words[0].audioReadiness.wordProfiles, ['male.natural', 'female.natural']);

@@ -227,6 +227,7 @@ export function normaliseRewardTrackConfig(rawValue = {}, {
   const raw = isPlainObject(rawValue) ? rawValue : {};
   const existing = isPlainObject(existingTrack) ? existingTrack : {};
   const activeProvided = Object.prototype.hasOwnProperty.call(raw, 'active');
+  const retired = Boolean(raw.retired || existing.retired);
   const dependencyApproval = raw.dependencyApproval || existing.dependencyApproval || raw.crossPoolDependencyApproved === true
     ? normaliseDependencyApproval(
       raw.dependencyApproval,
@@ -255,7 +256,9 @@ export function normaliseRewardTrackConfig(rawValue = {}, {
     compatibilityMode: normaliseIdentifier(raw.compatibilityMode, existing.compatibilityMode),
     progressKey: normaliseIdentifier(raw.progressKey || raw.legacyProgressKey, existing.progressKey || existing.legacyProgressKey),
     sourceMonsterIds: uniqueStrings(raw.sourceMonsterIds || raw.legacySourceMonsterIds || existing.sourceMonsterIds || existing.legacySourceMonsterIds),
-    active: activeProvided ? raw.active !== false : existing.active !== false,
+    active: retired ? false : (activeProvided ? raw.active !== false : existing.active !== false),
+    retired,
+    ...(raw.retirement || existing.retirement ? { retirement: raw.retirement || existing.retirement } : {}),
     labels: normaliseLabels(raw.labels, existing.labels),
     sequentialAfter: normaliseIdentifier(
       raw.sequentialAfter || raw.afterTrackId,

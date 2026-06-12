@@ -509,13 +509,50 @@ function normaliseSpellingPoolSummary(row = null) {
     retired: Boolean(safe.retired),
     retirement: isPlainObject(safe.retirement) ? { ...safe.retirement } : null,
     noRewardException: isPlainObject(safe.noRewardException) ? { ...safe.noRewardException } : null,
+    rewardTrackIds: asArray(safe.rewardTrackIds),
     rewardTrack: isPlainObject(safe.rewardTrack) ? { ...safe.rewardTrack } : null,
     wordCount: Number(safe.wordCount) || 0,
+    activeWordCount: Number(safe.activeWordCount ?? safe.wordCount) || 0,
     totalWordCount: Number(safe.totalWordCount ?? safe.wordCount) || 0,
     sentenceCount: Number(safe.sentenceCount) || 0,
     variantCount: Number(safe.variantCount) || 0,
     draftStateCounts: isPlainObject(safe.draftStateCounts) ? { ...safe.draftStateCounts } : {},
     draftState: asString(safe.draftState, 'unchanged'),
+  };
+}
+
+function normaliseSpellingRewardTrackSummary(row = null) {
+  const safe = isPlainObject(row) ? row : {};
+  const labels = isPlainObject(safe.labels) ? safe.labels : {};
+  const dependencyApproval = isPlainObject(safe.dependencyApproval)
+    ? { ...safe.dependencyApproval }
+    : null;
+  return {
+    id: asString(safe.id),
+    poolId: asString(safe.poolId || safe.spellingPool),
+    monsterId: asString(safe.monsterId),
+    progressionMode: asString(safe.progressionMode, 'parallel'),
+    thresholdTemplate: asString(safe.thresholdTemplate, 'direct'),
+    thresholdOverrides: asArray(safe.thresholdOverrides).map((entry) => Number(entry)).filter(Number.isFinite),
+    compatibilityMode: asString(safe.compatibilityMode),
+    progressKey: asString(safe.progressKey),
+    sourceMonsterIds: asArray(safe.sourceMonsterIds),
+    active: safe.active === false ? false : true,
+    retired: Boolean(safe.retired),
+    retirement: isPlainObject(safe.retirement) ? { ...safe.retirement } : null,
+    labels: {
+      title: asString(labels.title),
+      shortLabel: asString(labels.shortLabel),
+      description: asString(labels.description),
+    },
+    sequentialAfter: asString(safe.sequentialAfter),
+    prerequisites: asArray(safe.prerequisites),
+    dependencyApproval,
+    sourceNote: asString(safe.sourceNote),
+    draftState: asString(safe.draftState, 'unchanged'),
+    hasCurrent: safe.hasCurrent !== false,
+    hasPackageDraft: Boolean(safe.hasPackageDraft),
+    sortIndex: Number.isInteger(Number(safe.sortIndex)) ? Number(safe.sortIndex) : 0,
   };
 }
 
@@ -569,6 +606,7 @@ export function normaliseContentOperationsSpellingBrowse(payload = null) {
     draftStateCounts: isPlainObject(safe.draftStateCounts) ? { ...safe.draftStateCounts } : {},
     pools: asArray(safe.pools).map(normaliseSpellingPoolSummary),
     wordLists: asArray(safe.wordLists).map(normaliseSpellingWordList),
+    rewardTracks: asArray(safe.rewardTracks).map(normaliseSpellingRewardTrackSummary),
     words: asArray(safe.words).map(normaliseSpellingBrowseWord),
     actor: normaliseContentOperationActor(payload?.actor),
   };

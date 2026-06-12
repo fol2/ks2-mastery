@@ -554,6 +554,14 @@ test('button labels: every statically extractable label is classified', () => {
     'Edit pool',
     'New pool',
     'Save pool',
+    // Content Operations Centre T19: reward-track editor controls are
+    // package-scoped and intentionally track-specific so operators can
+    // distinguish pool metadata edits from reward configuration edits.
+    'Edit track',
+    'New track',
+    'Save reward track',
+    'Retire track',
+    'Delete draft track',
     // Content Operations Centre T16: audio operations controls are
     // package-scoped and need explicit scan/generate/regenerate wording so
     // operators can distinguish missing-audio generation from override.

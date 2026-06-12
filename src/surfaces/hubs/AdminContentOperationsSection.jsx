@@ -17,6 +17,8 @@ import {
 import {
   buildSpellingPoolDeleteOrRetireOperation,
   buildSpellingPoolUpsertOperation,
+  buildSpellingRewardTrackDeleteOrRetireOperation,
+  buildSpellingRewardTrackUpsertOperation,
   buildSpellingSentenceDeleteOrRetireOperation,
   buildSpellingSentenceUpsertOperation,
   buildSpellingWordListDeleteOrRetireOperation,
@@ -24,6 +26,11 @@ import {
   buildSpellingWordDeleteOrRetireOperation,
   buildSpellingWordUpsertOperation,
 } from '../../subjects/spelling/content/package-operations.js';
+import {
+  REWARD_TRACK_PROGRESS_MODES,
+  REWARD_TRACK_THRESHOLD_TEMPLATES,
+  SPELLING_REWARD_TRACK_MONSTER_IDS,
+} from '../../platform/game/reward-track-config.js';
 
 const CENTRE_TABS = Object.freeze([
   { key: 'overview', label: 'Overview' },
@@ -65,6 +72,42 @@ function contentOperationMutation(action, packageId) {
 
 function csvValue(values) {
   return Array.isArray(values) ? values.filter(Boolean).join(', ') : '';
+}
+
+function csvNumberValue(values) {
+  return Array.isArray(values)
+    ? values.filter((entry) => Number.isFinite(Number(entry))).join(', ')
+    : '';
+}
+
+function csvNumberList(value) {
+  return thresholdOverrideParse(value).values;
+}
+
+function thresholdOverrideParse(value) {
+  const values = [];
+  const invalidTokens = [];
+  String(value || '')
+    .split(/[\n,]+/)
+    .map((entry) => entry.trim())
+    .filter(Boolean)
+    .forEach((entry) => {
+      const numeric = Number(entry);
+      if (Number.isFinite(numeric)) {
+        values.push(numeric);
+      } else {
+        invalidTokens.push(entry);
+      }
+    });
+  return { values, invalidTokens };
+}
+
+function strictCsvNumberList(value) {
+  const parsed = thresholdOverrideParse(value);
+  if (parsed.invalidTokens.length) {
+    throw new TypeError(`Threshold overrides must be numbers; invalid value "${parsed.invalidTokens[0]}".`);
+  }
+  return parsed.values;
 }
 
 function provenanceField(provenance, key) {
@@ -304,6 +347,7 @@ function emptyPoolEditorForm(pools = [], selectedRow = null) {
     visibilityState: 'hidden',
     scheduledAt: '',
     rolloutFlag: '',
+    rewardTrackIds: '',
     tags: '',
     sourceNote: '',
     provenanceSource: '',
@@ -323,6 +367,7 @@ function poolEditorFormFromPool(pool, selectedRow = null, pools = []) {
     visibilityState: pool.visibility?.state || 'hidden',
     scheduledAt: pool.visibility?.scheduledAt ? String(pool.visibility.scheduledAt) : '',
     rolloutFlag: pool.visibility?.rolloutFlag || '',
+    rewardTrackIds: csvValue(pool.rewardTrackIds),
     tags: csvValue(pool.tags),
     sourceNote: pool.sourceNote || '',
     provenanceSource: provenanceField(pool.provenance, 'source'),
@@ -338,6 +383,7 @@ function operationInputFromPoolForm(form) {
     id: form.id,
     title: form.title,
     type: form.type,
+    rewardTrackIds: form.rewardTrackIds,
     visibility: {
       state: form.visibilityState,
       scheduledAt: form.scheduledAt,
@@ -353,6 +399,149 @@ function operationInputFromPoolForm(form) {
       approved: Boolean(form.noRewardExceptionApproved),
       reason: form.noRewardExceptionReason,
     },
+  };
+}
+
+function rewardTrackTemplateOptions() {
+  return Object.values(REWARD_TRACK_THRESHOLD_TEMPLATES);
+}
+
+function thresholdTemplateLabel(templateId) {
+  return REWARD_TRACK_THRESHOLD_TEMPLATES[templateId]?.label || templateId || 'Template';
+}
+
+function thresholdsForRewardTrackForm(form) {
+  const overrides = csvNumberList(form.thresholdOverrides);
+  if (overrides.length) return overrides;
+  const template = REWARD_TRACK_THRESHOLD_TEMPLATES[form.thresholdTemplate]
+    || REWARD_TRACK_THRESHOLD_TEMPLATES.direct;
+  return Array.isArray(template?.thresholds) ? [...template.thresholds] : [];
+}
+
+function poolWordCountValue(pool) {
+  return Number(pool?.activeWordCount ?? pool?.wordCount ?? pool?.totalWordCount) || 0;
+}
+
+function poolWordCountLookup(pools = []) {
+  return Object.fromEntries((Array.isArray(pools) ? pools : [])
+    .map((pool) => [spellingPoolOptionId(pool), poolWordCountValue(pool)])
+    .filter(([id]) => Boolean(id)));
+}
+
+function learnerVisiblePoolIds(pools = []) {
+  return new Set((Array.isArray(pools) ? pools : [])
+    .filter((pool) => pool?.active !== false && !pool?.retired && pool?.visibility?.state === 'visible')
+    .map(spellingPoolOptionId)
+    .filter(Boolean));
+}
+
+function rewardTrackOptionLabel(track) {
+  if (track?.labels?.title) return track.labels.title;
+  if (track?.id) return track.id;
+  return 'Reward track';
+}
+
+function nextRewardTrackId(poolId, monsterId, rewardTracks = []) {
+  const base = `${poolId || 'pool'}-${monsterId || 'reward-track'}`
+    .toLowerCase()
+    .replace(/[^a-z0-9-]+/g, '-')
+    .replace(/^-+|-+$/g, '') || 'spelling-reward-track';
+  const existing = new Set((Array.isArray(rewardTracks) ? rewardTracks : [])
+    .map((track) => track?.id)
+    .filter(Boolean));
+  if (!existing.has(base)) return base;
+  for (let index = 2; index < 100; index += 1) {
+    const candidate = `${base}-${index}`;
+    if (!existing.has(candidate)) return candidate;
+  }
+  return `${base}-${Date.now()}`;
+}
+
+function firstAvailableMonsterId(poolId, rewardTracks = []) {
+  const used = new Set((Array.isArray(rewardTracks) ? rewardTracks : [])
+    .filter((track) => track?.poolId === poolId && track?.active !== false)
+    .map((track) => track.monsterId)
+    .filter(Boolean));
+  return SPELLING_REWARD_TRACK_MONSTER_IDS.find((monsterId) => !used.has(monsterId))
+    || SPELLING_REWARD_TRACK_MONSTER_IDS[0]
+    || '';
+}
+
+function emptyRewardTrackEditorForm(pools = [], selectedPool = null, rewardTracks = []) {
+  const poolId = spellingPoolOptionId(selectedPool) || spellingPoolOptionId(pools[0]) || 'extra';
+  const monsterId = firstAvailableMonsterId(poolId, rewardTracks);
+  return {
+    id: nextRewardTrackId(poolId, monsterId, rewardTracks),
+    poolId,
+    monsterId,
+    progressionMode: 'parallel',
+    thresholdTemplate: 'direct',
+    thresholdOverrides: '1',
+    active: true,
+    progressKey: monsterId,
+    sourceMonsterIds: monsterId,
+    sequentialAfter: '',
+    dependencyApprovalApproved: false,
+    dependencyApprovalReason: '',
+    labelsTitle: '',
+    labelsShortLabel: '',
+    labelsDescription: '',
+    sourceNote: '',
+    retirementReason: '',
+    sortIndex: String(Array.isArray(rewardTracks) ? rewardTracks.length : 0),
+  };
+}
+
+function rewardTrackEditorFormFromTrack(track, selectedPool = null, pools = [], rewardTracks = []) {
+  if (!track) return emptyRewardTrackEditorForm(pools, selectedPool, rewardTracks);
+  return {
+    id: track.id || '',
+    poolId: track.poolId || spellingPoolOptionId(selectedPool) || '',
+    monsterId: track.monsterId || '',
+    progressionMode: track.progressionMode || 'parallel',
+    thresholdTemplate: track.thresholdTemplate || 'direct',
+    thresholdOverrides: csvNumberValue(track.thresholdOverrides),
+    active: track.active !== false,
+    progressKey: track.progressKey || track.monsterId || '',
+    sourceMonsterIds: csvValue(track.sourceMonsterIds),
+    sequentialAfter: track.sequentialAfter || '',
+    dependencyApprovalApproved: track.dependencyApproval?.approved === true,
+    dependencyApprovalReason: track.dependencyApproval?.reason || '',
+    labelsTitle: track.labels?.title || '',
+    labelsShortLabel: track.labels?.shortLabel || '',
+    labelsDescription: track.labels?.description || '',
+    sourceNote: track.sourceNote || '',
+    retirementReason: '',
+    sortIndex: Number.isInteger(Number(track.sortIndex)) ? String(track.sortIndex) : '0',
+  };
+}
+
+function operationInputFromRewardTrackForm(form) {
+  const dependencyApproval = form.dependencyApprovalApproved || form.dependencyApprovalReason
+    ? {
+        approved: Boolean(form.dependencyApprovalApproved),
+        reason: form.dependencyApprovalReason,
+      }
+    : undefined;
+  return {
+    id: form.id,
+    poolId: form.poolId,
+    monsterId: form.monsterId,
+    progressionMode: form.progressionMode,
+    thresholdTemplate: form.thresholdTemplate,
+    thresholdOverrides: strictCsvNumberList(form.thresholdOverrides),
+    active: Boolean(form.active),
+    progressKey: form.progressKey,
+    sourceMonsterIds: form.sourceMonsterIds,
+    sequentialAfter: form.sequentialAfter,
+    labels: {
+      title: form.labelsTitle,
+      shortLabel: form.labelsShortLabel,
+      description: form.labelsDescription,
+    },
+    ...(dependencyApproval ? { dependencyApproval } : {}),
+    sourceNote: form.sourceNote,
+    sortIndex: form.sortIndex,
   };
 }
 
@@ -1127,6 +1316,7 @@ function PublishedAreaPanel({
 }
 
 function SpellingBrowsePanel({
+  areaKey = 'spelling',
   browse,
   itemDetail,
   filters,
@@ -1159,6 +1349,13 @@ function SpellingBrowsePanel({
   const selectedPool = browse.pools.find((pool) => pool.id === selectedRow?.spellingPool || pool.pool === selectedRow?.spellingPool)
     || browse.pools[0]
     || null;
+  const rewardTracks = React.useMemo(() => (
+    Array.isArray(browse.rewardTracks) ? browse.rewardTracks : []
+  ), [browse.rewardTracks]);
+  const selectedPoolId = spellingPoolOptionId(selectedPool);
+  const rewardTracksForSelectedPool = React.useMemo(() => (
+    rewardTracks.filter((track) => track.poolId === selectedPoolId)
+  ), [rewardTracks, selectedPoolId]);
   const poolOptions = React.useMemo(() => spellingPoolOptions(browse.pools), [browse.pools]);
   const sentenceOptions = React.useMemo(() => {
     const seen = new Set();
@@ -1184,6 +1381,11 @@ function SpellingBrowsePanel({
   const [wordListForm, setWordListForm] = React.useState(() => emptyWordListEditorForm(browse.wordLists, selectedRow));
   const [poolMode, setPoolMode] = React.useState('edit');
   const [poolForm, setPoolForm] = React.useState(() => emptyPoolEditorForm(browse.pools, selectedRow));
+  const [rewardTrackMode, setRewardTrackMode] = React.useState('edit');
+  const [selectedRewardTrackId, setSelectedRewardTrackId] = React.useState('');
+  const [rewardTrackForm, setRewardTrackForm] = React.useState(() => (
+    emptyRewardTrackEditorForm(browse.pools, selectedPool, rewardTracks)
+  ));
   const [formError, setFormError] = React.useState('');
   const formDisabled = !selectedPackageId
     || !canEdit
@@ -1196,6 +1398,18 @@ function SpellingBrowsePanel({
   const selectedSentence = sentenceOptions.find((sentence) => sentence.id === selectedSentenceId)
     || sentenceOptions[0]
     || null;
+  const selectedRewardTrack = rewardTracks.find((track) => track.id === selectedRewardTrackId)
+    || rewardTracksForSelectedPool[0]
+    || rewardTracks[0]
+    || null;
+  const selectedRewardThresholds = React.useMemo(
+    () => thresholdsForRewardTrackForm(rewardTrackForm),
+    [rewardTrackForm],
+  );
+  const selectedRewardPool = browse.pools.find((pool) => spellingPoolOptionId(pool) === rewardTrackForm.poolId)
+    || selectedPool
+    || null;
+  const selectedRewardPoolWordCount = poolWordCountValue(selectedRewardPool);
 
   React.useEffect(() => {
     if (editorMode === 'create') return;
@@ -1247,6 +1461,24 @@ function SpellingBrowsePanel({
     selectedRow?.spellingPool,
   ]);
 
+  React.useEffect(() => {
+    if (rewardTrackMode === 'create') return;
+    setFormError('');
+    setSelectedRewardTrackId(selectedRewardTrack?.id || '');
+    setRewardTrackForm(rewardTrackEditorFormFromTrack(
+      selectedRewardTrack,
+      selectedPool,
+      browse.pools,
+      rewardTracks,
+    ));
+  }, [
+    browse.pools,
+    rewardTrackMode,
+    rewardTracks,
+    selectedPool,
+    selectedRewardTrack,
+  ]);
+
   const updateWordForm = React.useCallback((patch) => {
     setFormError('');
     setWordForm((current) => {
@@ -1286,6 +1518,22 @@ function SpellingBrowsePanel({
       if (Object.prototype.hasOwnProperty.call(patch, 'type')) {
         if (patch.type === 'statutory') next.visibilityState = next.id === 'core' ? next.visibilityState : 'hidden';
         if (patch.type === 'enrichment' && !next.id) next.id = 'extra';
+      }
+      return next;
+    });
+  }, []);
+
+  const updateRewardTrackForm = React.useCallback((patch) => {
+    setFormError('');
+    setRewardTrackForm((current) => {
+      const next = { ...current, ...patch };
+      if (Object.prototype.hasOwnProperty.call(patch, 'monsterId')) {
+        if (!next.progressKey || next.progressKey === current.monsterId) {
+          next.progressKey = patch.monsterId;
+        }
+        if (!next.sourceMonsterIds || next.sourceMonsterIds === current.monsterId) {
+          next.sourceMonsterIds = patch.monsterId;
+        }
       }
       return next;
     });
@@ -1382,6 +1630,26 @@ function SpellingBrowsePanel({
     setFormError('');
     setPoolForm(poolEditorFormFromPool(nextPool, selectedRow, browse.pools));
   }, [browse.pools, selectedPool, selectedRow]);
+
+  const startCreateRewardTrack = React.useCallback(() => {
+    setRewardTrackMode('create');
+    setSelectedRewardTrackId('');
+    setFormError('');
+    setRewardTrackForm(emptyRewardTrackEditorForm(browse.pools, selectedPool, rewardTracks));
+  }, [browse.pools, rewardTracks, selectedPool]);
+
+  const startEditRewardTrack = React.useCallback((trackId = '') => {
+    const nextTrack = rewardTracks.find((track) => track.id === trackId) || selectedRewardTrack;
+    setRewardTrackMode('edit');
+    setSelectedRewardTrackId(nextTrack?.id || '');
+    setFormError('');
+    setRewardTrackForm(rewardTrackEditorFormFromTrack(
+      nextTrack,
+      selectedPool,
+      browse.pools,
+      rewardTracks,
+    ));
+  }, [browse.pools, rewardTracks, selectedPool, selectedRewardTrack]);
 
   const submitWordForm = React.useCallback((event) => {
     event?.preventDefault?.();
@@ -1503,12 +1771,56 @@ function SpellingBrowsePanel({
     }
   }, [onSubmitSpellingOperation, poolForm.id, poolForm.retirementReason, selectedPool, selectedRow?.slug]);
 
+  const submitRewardTrackForm = React.useCallback((event) => {
+    event?.preventDefault?.();
+    if (!onSubmitSpellingOperation) return;
+    try {
+      const operation = buildSpellingRewardTrackUpsertOperation(operationInputFromRewardTrackForm(rewardTrackForm), {
+        existingTrack: rewardTrackMode === 'edit' ? selectedRewardTrack : null,
+        rewardTracks,
+        pools: browse.pools,
+        poolWordCounts: poolWordCountLookup(browse.pools),
+        learnerVisiblePoolIds: learnerVisiblePoolIds(browse.pools),
+        enforceThresholdsForHiddenPools: true,
+      });
+      onSubmitSpellingOperation(operation, { slug: selectedRow?.slug, action: 'reward-track-upsert' });
+    } catch (submitError) {
+      setFormError(submitError?.validation?.errors?.[0]?.message || submitError?.message || 'Reward-track operation is invalid.');
+    }
+  }, [
+    browse.pools,
+    onSubmitSpellingOperation,
+    rewardTrackForm,
+    rewardTrackMode,
+    rewardTracks,
+    selectedRewardTrack,
+    selectedRow?.slug,
+  ]);
+
+  const submitRewardTrackRemoval = React.useCallback(() => {
+    if (!onSubmitSpellingOperation || !selectedRewardTrack) return;
+    try {
+      const operation = buildSpellingRewardTrackDeleteOrRetireOperation({
+        id: rewardTrackForm.id || selectedRewardTrack.id,
+        hasCurrent: selectedRewardTrack.hasCurrent !== false && selectedRewardTrack.draftState !== 'added',
+        reason: rewardTrackForm.retirementReason,
+      }, {
+        reason: rewardTrackForm.retirementReason,
+      });
+      onSubmitSpellingOperation(operation, { slug: selectedRow?.slug, action: `reward-track-${operation.action}` });
+    } catch (submitError) {
+      setFormError(submitError?.message || 'Reward-track operation is invalid.');
+    }
+  }, [onSubmitSpellingOperation, rewardTrackForm.id, rewardTrackForm.retirementReason, selectedRewardTrack, selectedRow?.slug]);
+
   return (
-    <div className="content-ops-area-panel" data-content-ops-area="spelling" data-content-ops-spelling-browse="true">
+    <div className="content-ops-area-panel" data-content-ops-area={areaKey} data-content-ops-spelling-browse="true">
       <div className="content-ops-detail-header">
         <div>
           <div className="eyebrow">Published state</div>
-          <h4 className="section-title admin-section-title">Spelling browse</h4>
+          <h4 className="section-title admin-section-title">
+            {areaKey === 'poolsRewards' ? 'Pools & Rewards' : 'Spelling browse'}
+          </h4>
           <p className="small muted admin-note-spaced">
             Latest release {releaseLabel}
           </p>
@@ -1569,6 +1881,7 @@ function SpellingBrowsePanel({
                 <th className="small admin-overview-th">Type</th>
                 <th className="small admin-overview-th">Visibility</th>
                 <th className="small admin-overview-th-right">Words</th>
+                <th className="small admin-overview-th-right">Tracks</th>
                 <th className="small admin-overview-th">Draft</th>
               </tr>
             </thead>
@@ -1592,7 +1905,8 @@ function SpellingBrowsePanel({
                       {pool.retired ? 'retired' : (pool.visibility?.state || 'hidden')}
                     </span>
                   </td>
-                  <td className="admin-overview-td-right small">{String(pool.wordCount)} / {String(pool.totalWordCount)}</td>
+                  <td className="admin-overview-td-right small">{String(pool.activeWordCount ?? pool.wordCount)} / {String(pool.totalWordCount)}</td>
+                  <td className="admin-overview-td-right small">{String((pool.rewardTrackIds || []).length)}</td>
                   <td className="admin-overview-td">
                     <span className={`chip ${draftStateChipClass(pool.draftState)}`}>
                       {draftStateLabel(pool.draftState)}
@@ -1662,6 +1976,14 @@ function SpellingBrowsePanel({
               data-content-ops-pool-field="rolloutFlag"
             />
           </label>
+          <label className="content-ops-editor-wide">
+            <span className="small muted">Reward track ids</span>
+            <textarea
+              value={poolForm.rewardTrackIds}
+              onChange={(event) => updatePoolForm({ rewardTrackIds: event.target.value })}
+              data-content-ops-pool-field="rewardTrackIds"
+            />
+          </label>
           <label>
             <span className="small muted">Tags</span>
             <input
@@ -1717,6 +2039,269 @@ function SpellingBrowsePanel({
             </button>
             <button type="button" className="btn secondary" onClick={submitPoolRemoval} disabled={formDisabled || !selectedPool}>
               {selectedPool?.draftState === 'added' ? 'Delete draft pool' : 'Retire pool'}
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <section className="content-ops-editor-panel" data-content-ops-reward-editor="true">
+        <div className="content-ops-word-editor-header">
+          <div>
+            <div className="eyebrow">Reward tracks</div>
+            <strong>{rewardTrackMode === 'create' ? 'New reward track' : rewardTrackOptionLabel(selectedRewardTrack)}</strong>
+          </div>
+          <div className="chip-row content-ops-chip-wrap">
+            <button type="button" className="btn secondary compact" onClick={() => startEditRewardTrack(selectedRewardTrack?.id)} disabled={!selectedRewardTrack}>
+              Edit track
+            </button>
+            <button type="button" className="btn secondary compact" onClick={startCreateRewardTrack}>
+              New track
+            </button>
+          </div>
+        </div>
+        <div className="content-ops-reward-impact" data-content-ops-reward-impact="true">
+          <MetricTile
+            label="Selected pool words"
+            value={String(selectedRewardPoolWordCount)}
+            detail={selectedRewardPool?.title || selectedRewardPool?.id || 'No pool'}
+          />
+          <MetricTile
+            label="Thresholds"
+            value={String(selectedRewardThresholds.length)}
+            detail={selectedRewardThresholds.length ? `Highest ${String(Math.max(...selectedRewardThresholds))}` : 'Template required'}
+          />
+          <MetricTile
+            label="Progression"
+            value={rewardTrackForm.progressionMode}
+            detail={thresholdTemplateLabel(rewardTrackForm.thresholdTemplate)}
+          />
+        </div>
+        <div className="feedback warn content-ops-reward-safety" data-content-ops-reward-safety="true">
+          Existing learner history stays keyed by the published progress key. Changing thresholds, source monsters, or sequence changes future reward projection after approval.
+        </div>
+        <div className="content-ops-table-scroll">
+          <table className="admin-overview-table content-ops-table" aria-label="Spelling reward tracks">
+            <thead>
+              <tr className="admin-overview-thead-row">
+                <th className="small admin-overview-th-first">Track</th>
+                <th className="small admin-overview-th">Pool</th>
+                <th className="small admin-overview-th">Monster</th>
+                <th className="small admin-overview-th">Mode</th>
+                <th className="small admin-overview-th-right">Thresholds</th>
+                <th className="small admin-overview-th">State</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rewardTracks.length ? rewardTracks.map((track) => (
+                <tr key={track.id} className="admin-overview-tbody-row" data-selected={track.id === selectedRewardTrack?.id ? 'true' : undefined}>
+                  <td className="admin-overview-td-first">
+                    <button
+                      type="button"
+                      className="content-ops-row-button"
+                      onClick={() => startEditRewardTrack(track.id)}
+                      data-content-ops-reward-row={track.id}
+                    >
+                      {rewardTrackOptionLabel(track)}
+                    </button>
+                    <div className="small muted">{track.id}</div>
+                  </td>
+                  <td className="admin-overview-td small">{track.poolId || 'No pool'}</td>
+                  <td className="admin-overview-td small">{track.monsterId || 'No monster'}</td>
+                  <td className="admin-overview-td small">{track.progressionMode || 'parallel'}</td>
+                  <td className="admin-overview-td-right small">
+                    {String((track.thresholdOverrides || []).length || (REWARD_TRACK_THRESHOLD_TEMPLATES[track.thresholdTemplate]?.thresholds || []).length)}
+                  </td>
+                  <td className="admin-overview-td">
+                    <span className={`chip ${track.retired ? 'bad' : (track.active === false ? 'warn' : 'good')}`}>
+                      {track.retired ? 'retired' : (track.active === false ? 'inactive' : 'active')}
+                    </span>
+                  </td>
+                </tr>
+              )) : (
+                <tr className="admin-overview-tbody-row">
+                  <td className="admin-overview-td-first small muted" colSpan={6}>
+                    No reward tracks in this package view.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+        <form className="content-ops-word-editor-grid" onSubmit={submitRewardTrackForm}>
+          <label>
+            <span className="small muted">Track id</span>
+            <input
+              value={rewardTrackForm.id}
+              onChange={(event) => updateRewardTrackForm({ id: event.target.value })}
+              data-content-ops-reward-field="id"
+              disabled={rewardTrackMode === 'edit'}
+            />
+          </label>
+          <label>
+            <span className="small muted">Pool</span>
+            <select
+              value={rewardTrackForm.poolId}
+              onChange={(event) => updateRewardTrackForm({ poolId: event.target.value })}
+              data-content-ops-reward-field="poolId"
+            >
+              {poolOptions.map((pool) => (
+                <option key={pool.id} value={pool.id}>{pool.label}</option>
+              ))}
+            </select>
+          </label>
+          <label>
+            <span className="small muted">Monster</span>
+            <select
+              value={rewardTrackForm.monsterId}
+              onChange={(event) => updateRewardTrackForm({ monsterId: event.target.value })}
+              data-content-ops-reward-field="monsterId"
+            >
+              {SPELLING_REWARD_TRACK_MONSTER_IDS.map((monsterId) => (
+                <option key={monsterId} value={monsterId}>{monsterId}</option>
+              ))}
+            </select>
+          </label>
+          <label>
+            <span className="small muted">Progression mode</span>
+            <select
+              value={rewardTrackForm.progressionMode}
+              onChange={(event) => updateRewardTrackForm({ progressionMode: event.target.value })}
+              data-content-ops-reward-field="progressionMode"
+            >
+              {REWARD_TRACK_PROGRESS_MODES.map((mode) => (
+                <option key={mode} value={mode}>{mode}</option>
+              ))}
+            </select>
+          </label>
+          <label>
+            <span className="small muted">Threshold template</span>
+            <select
+              value={rewardTrackForm.thresholdTemplate}
+              onChange={(event) => updateRewardTrackForm({ thresholdTemplate: event.target.value })}
+              data-content-ops-reward-field="thresholdTemplate"
+            >
+              {rewardTrackTemplateOptions().map((template) => (
+                <option key={template.id} value={template.id}>{template.label}</option>
+              ))}
+            </select>
+          </label>
+          <label>
+            <span className="small muted">Threshold overrides</span>
+            <input
+              value={rewardTrackForm.thresholdOverrides}
+              onChange={(event) => updateRewardTrackForm({ thresholdOverrides: event.target.value })}
+              data-content-ops-reward-field="thresholdOverrides"
+            />
+          </label>
+          <label>
+            <span className="small muted">Progress key</span>
+            <input
+              value={rewardTrackForm.progressKey}
+              onChange={(event) => updateRewardTrackForm({ progressKey: event.target.value })}
+              data-content-ops-reward-field="progressKey"
+            />
+          </label>
+          <label>
+            <span className="small muted">Source monsters</span>
+            <input
+              value={rewardTrackForm.sourceMonsterIds}
+              onChange={(event) => updateRewardTrackForm({ sourceMonsterIds: event.target.value })}
+              data-content-ops-reward-field="sourceMonsterIds"
+            />
+          </label>
+          <label>
+            <span className="small muted">Sequential after</span>
+            <select
+              value={rewardTrackForm.sequentialAfter}
+              onChange={(event) => updateRewardTrackForm({ sequentialAfter: event.target.value })}
+              data-content-ops-reward-field="sequentialAfter"
+            >
+              <option value="">No dependency</option>
+              {rewardTracks.filter((track) => track.id !== rewardTrackForm.id).map((track) => (
+                <option key={track.id} value={track.id}>{rewardTrackOptionLabel(track)}</option>
+              ))}
+            </select>
+          </label>
+          <label>
+            <span className="small muted">Active</span>
+            <input
+              type="checkbox"
+              checked={rewardTrackForm.active}
+              onChange={(event) => updateRewardTrackForm({ active: event.target.checked })}
+              data-content-ops-reward-field="active"
+            />
+          </label>
+          <label>
+            <span className="small muted">Order</span>
+            <input
+              value={rewardTrackForm.sortIndex}
+              onChange={(event) => updateRewardTrackForm({ sortIndex: event.target.value })}
+              data-content-ops-reward-field="sortIndex"
+            />
+          </label>
+          <label>
+            <span className="small muted">Dependency approved</span>
+            <input
+              type="checkbox"
+              checked={rewardTrackForm.dependencyApprovalApproved}
+              onChange={(event) => updateRewardTrackForm({ dependencyApprovalApproved: event.target.checked })}
+              data-content-ops-reward-field="dependencyApprovalApproved"
+            />
+          </label>
+          <label>
+            <span className="small muted">Track title</span>
+            <input
+              value={rewardTrackForm.labelsTitle}
+              onChange={(event) => updateRewardTrackForm({ labelsTitle: event.target.value })}
+              data-content-ops-reward-field="labelsTitle"
+            />
+          </label>
+          <label>
+            <span className="small muted">Short label</span>
+            <input
+              value={rewardTrackForm.labelsShortLabel}
+              onChange={(event) => updateRewardTrackForm({ labelsShortLabel: event.target.value })}
+              data-content-ops-reward-field="labelsShortLabel"
+            />
+          </label>
+          <label className="content-ops-editor-wide">
+            <span className="small muted">Track description</span>
+            <textarea
+              value={rewardTrackForm.labelsDescription}
+              onChange={(event) => updateRewardTrackForm({ labelsDescription: event.target.value })}
+              data-content-ops-reward-field="labelsDescription"
+            />
+          </label>
+          <label className="content-ops-editor-wide">
+            <span className="small muted">Dependency approval reason</span>
+            <textarea
+              value={rewardTrackForm.dependencyApprovalReason}
+              onChange={(event) => updateRewardTrackForm({ dependencyApprovalReason: event.target.value })}
+              data-content-ops-reward-field="dependencyApprovalReason"
+            />
+          </label>
+          <label className="content-ops-editor-wide">
+            <span className="small muted">Source notes</span>
+            <textarea
+              value={rewardTrackForm.sourceNote}
+              onChange={(event) => updateRewardTrackForm({ sourceNote: event.target.value })}
+              data-content-ops-reward-field="sourceNote"
+            />
+          </label>
+          <label className="content-ops-editor-wide">
+            <span className="small muted">Retirement reason</span>
+            <input
+              value={rewardTrackForm.retirementReason}
+              onChange={(event) => updateRewardTrackForm({ retirementReason: event.target.value })}
+              data-content-ops-reward-field="retirementReason"
+            />
+          </label>
+          <div className="content-ops-editor-actions content-ops-editor-wide">
+            <button type="submit" className="btn primary" disabled={formDisabled}>
+              Save reward track
+            </button>
+            <button type="button" className="btn secondary" onClick={submitRewardTrackRemoval} disabled={formDisabled || !selectedRewardTrack}>
+              {selectedRewardTrack?.draftState === 'added' || selectedRewardTrack?.hasCurrent === false ? 'Delete draft track' : 'Retire track'}
             </button>
           </div>
         </form>
@@ -3261,7 +3846,9 @@ export function AdminContentOperationsSection({
         ? 'Sentence'
         : (operation.entityType === 'spelling.wordList'
             ? 'Word list'
-            : (operation.entityType === 'spelling.pool' ? 'Pool' : 'Word'));
+            : (operation.entityType === 'spelling.pool'
+                ? 'Pool'
+                : (operation.entityType === 'spelling.rewardTrack' ? 'Reward track' : 'Word')));
       setSpellingOperationState({
         packageId: selectedPackageId,
         action,
@@ -3326,7 +3913,7 @@ export function AdminContentOperationsSection({
   }, [api, overviewPayload, packageListPayload, refresh, releaseListPayload]);
 
   React.useEffect(() => {
-    if (activeTab !== 'spelling') return;
+    if (!['spelling', 'poolsRewards'].includes(activeTab)) return;
     if (!api?.readSpellingBrowse) return;
     if (spellingBrowsePayload) return;
     loadSpellingBrowse();
@@ -3600,8 +4187,9 @@ export function AdminContentOperationsSection({
         />
       ) : null}
 
-      {activeTab === 'spelling' ? (
+      {['spelling', 'poolsRewards'].includes(activeTab) ? (
         <SpellingBrowsePanel
+          areaKey={activeTab}
           browse={spellingBrowse}
           itemDetail={spellingItemDetail}
           filters={spellingFilters}
@@ -3620,7 +4208,7 @@ export function AdminContentOperationsSection({
         />
       ) : null}
 
-      {['audio', 'poolsRewards', 'monstersAssets', 'heroCodex', 'approvals'].includes(activeTab) ? (
+      {['audio', 'monstersAssets', 'heroCodex', 'approvals'].includes(activeTab) ? (
         <PublishedAreaPanel
           activeTab={activeTab}
           latestRelease={latestRelease}
