@@ -13,6 +13,9 @@
 const DEFAULT_ALLOWED_DOMAINS = Object.freeze([
   'ks2-mastery.pages.dev',
 ]);
+const CONTENT_OPERATION_MONSTER_ASSET_PREVIEW_HANDLE_RE = (
+  /^\/api\/admin\/content-operations\/packages\/[^/]+\/monster-assets\/[^/]+\/preview$/
+);
 
 /**
  * Validate whether a preview URL is safe to render as a clickable link.
@@ -46,6 +49,15 @@ export function isAllowedPreviewUrl(url, options) {
   // Reject protocol-relative URLs (//example.com/...)
   if (/^\/\//.test(trimmed)) {
     return { allowed: false, reason: 'Protocol-relative URLs are forbidden.' };
+  }
+
+  // Root-relative handles stay on the application origin, but only approved
+  // preview endpoints may bypass the external origin allowlist.
+  if (/^\//.test(trimmed)) {
+    if (CONTENT_OPERATION_MONSTER_ASSET_PREVIEW_HANDLE_RE.test(trimmed)) {
+      return { allowed: true };
+    }
+    return { allowed: false, reason: 'Root-relative URL is not an approved preview handle.' };
   }
 
   // Parse as URL — reject if unparseable

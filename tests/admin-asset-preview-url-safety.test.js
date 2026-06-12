@@ -84,6 +84,18 @@ describe('isAllowedPreviewUrl — allows safe URLs', () => {
     });
     assert.equal(result.allowed, true);
   });
+
+  it('allows root-relative admin preview handles', () => {
+    const result = isAllowedPreviewUrl('/api/admin/content-operations/packages/pkg-a/monster-assets/upload-a/preview');
+    assert.equal(result.allowed, true);
+    assert.equal(getSafePreviewUrl('  /api/admin/content-operations/packages/pkg-a/monster-assets/upload-a/preview  '),
+      '/api/admin/content-operations/packages/pkg-a/monster-assets/upload-a/preview');
+  });
+
+  it('rejects non-preview root-relative admin paths', () => {
+    assert.equal(isAllowedPreviewUrl('/api/auth/logout').allowed, false);
+    assert.equal(isAllowedPreviewUrl('/api/admin/assets/example/publish').allowed, false);
+  });
 });
 
 // ─── Null/undefined URL handling ──────────────────────────────────────────────

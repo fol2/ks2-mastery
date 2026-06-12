@@ -232,10 +232,18 @@ function releaseAudioMetadataFromProof(proof = null) {
   };
 }
 
+function releaseAssetMetadataFromProof(proof = null) {
+  const metadata = isPlainObject(proof?.contentOperationsAssets) ? proof.contentOperationsAssets : null;
+  return {
+    assetSummary: isPlainObject(metadata?.assetSummary) ? metadata.assetSummary : null,
+  };
+}
+
 export function normaliseContentOperationRelease(entry = null) {
   const safe = isPlainObject(entry) ? entry : {};
   const proof = safe.proof ?? null;
   const proofAudio = releaseAudioMetadataFromProof(proof);
+  const proofAssets = releaseAssetMetadataFromProof(proof);
   return {
     releaseId: asString(safe.releaseId),
     subjectId: asString(safe.subjectId, 'spelling'),
@@ -253,6 +261,9 @@ export function normaliseContentOperationRelease(entry = null) {
     audioWarnings: isPlainObject(safe.audioWarnings)
       ? safe.audioWarnings
       : proofAudio.audioWarnings,
+    assetSummary: isPlainObject(safe.assetSummary)
+      ? safe.assetSummary
+      : proofAssets.assetSummary,
     createdAt: asTs(safe.createdAt),
   };
 }

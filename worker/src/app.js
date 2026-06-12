@@ -2417,6 +2417,7 @@ export function createWorkerApp({
           env,
           session,
           repository,
+          capacity,
         });
         if (contentOperationsResponse) return contentOperationsResponse;
 

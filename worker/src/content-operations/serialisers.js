@@ -261,6 +261,7 @@ export function serialiseContentOperationCandidate(candidate = {}, { includeSnap
     candidateHash: candidate.candidateHash || '',
     validation: normaliseValidation(candidate.validation),
     audioScan: candidate.audioScan || null,
+    assetScan: candidate.assetScan || null,
     blockers: buildContentOperationBlockerEnvelope({
       validation: candidate.validation,
       conflicts: candidate.conflicts,
@@ -272,6 +273,36 @@ export function serialiseContentOperationCandidate(candidate = {}, { includeSnap
     conflicts: asArray(candidate.conflicts),
     createdAt: Number(candidate.createdAt) || 0,
     ...(includeSnapshot ? { candidate: candidate.candidate || null } : {}),
+  };
+}
+
+export function serialiseContentOperationAssetUpload(upload = {}) {
+  const preview = upload.preview && typeof upload.preview === 'object' && !Array.isArray(upload.preview)
+    ? upload.preview
+    : {};
+  return {
+    assetUploadId: upload.assetUploadId,
+    packageId: upload.packageId,
+    monsterId: upload.monsterId,
+    branchId: upload.branchId,
+    stageId: upload.stageId,
+    assetKind: upload.assetKind || 'monster-image',
+    contentType: upload.contentType || '',
+    byteSize: Number(upload.byteSize) || 0,
+    dimensions: {
+      width: upload.width == null ? null : Number(upload.width),
+      height: upload.height == null ? null : Number(upload.height),
+    },
+    validation: upload.validation || { ok: false, errors: [], warnings: [] },
+    preview: {
+      kind: preview.kind || 'admin-api-handle',
+      url: typeof preview.url === 'string' ? preview.url : null,
+      contentType: preview.contentType || upload.contentType || '',
+    },
+    previewUrl: typeof preview.url === 'string' ? preview.url : null,
+    status: upload.status || 'draft',
+    createdByAccountId: upload.createdByAccountId || null,
+    createdAt: Number(upload.createdAt) || 0,
   };
 }
 
@@ -307,9 +338,22 @@ function releaseAudioProofFromProof(proof = null) {
   };
 }
 
+function releaseAssetProofFromProof(proof = null) {
+  const metadata = proof && typeof proof === 'object' && !Array.isArray(proof)
+    ? proof.contentOperationsAssets
+    : null;
+  return {
+    assetSummary: metadata && typeof metadata === 'object' && !Array.isArray(metadata)
+      && metadata.assetSummary && typeof metadata.assetSummary === 'object' && !Array.isArray(metadata.assetSummary)
+      ? metadata.assetSummary
+      : null,
+  };
+}
+
 export function serialiseContentOperationRelease(release = {}, { includeSnapshot = false } = {}) {
   const proof = release.proof ?? null;
   const proofAudio = releaseAudioProofFromProof(proof);
+  const proofAssets = releaseAssetProofFromProof(proof);
   return {
     releaseId: release.releaseId,
     subjectId: release.subjectId || CONTENT_OPERATION_SUBJECT_ID,
@@ -323,6 +367,7 @@ export function serialiseContentOperationRelease(release = {}, { includeSnapshot
     proof,
     audioFallback: release.audioFallback ?? proofAudio.audioFallback,
     audioWarnings: release.audioWarnings ?? proofAudio.audioWarnings,
+    assetSummary: release.assetSummary ?? proofAssets.assetSummary,
     createdAt: Number(release.createdAt) || 0,
     ...(includeSnapshot ? { snapshot: release.snapshot || null } : {}),
   };

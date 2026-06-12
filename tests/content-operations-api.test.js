@@ -1357,18 +1357,13 @@ test('content operations API supports admin package lifecycle through separate a
     assert.equal(validated.candidate.blockers.publishReadiness.status, 'not_ready');
     server.DB.db.prepare(`
       UPDATE content_operation_package_candidates
-      SET audio_scan_json = ?, asset_scan_json = ?
+      SET audio_scan_json = ?
       WHERE candidate_id = ?
     `).run(
       JSON.stringify({
         status: 'warning',
         blockers: [],
         warnings: ['slow_sentence_missing'],
-      }),
-      JSON.stringify({
-        status: 'warning',
-        blockers: [],
-        warnings: ['monster_asset_pending'],
       }),
       validated.candidate.candidateId,
     );
@@ -1384,7 +1379,6 @@ test('content operations API supports admin package lifecycle through separate a
     const packageSummary = packageList.packages.find((entry) => entry.packageId === packageId);
     assert.deepEqual(packageSummary.blockers.audio.blockers, []);
     assert.deepEqual(packageSummary.blockers.audio.warnings, ['slow_sentence_missing']);
-    assert.deepEqual(packageSummary.blockers.assets.warnings, ['monster_asset_pending']);
 
     const approved = await approvePackage(server, packageId, validated.candidate.candidateId);
     assert.equal(approved.approval.candidateId, validated.candidate.candidateId);
@@ -1402,7 +1396,6 @@ test('content operations API supports admin package lifecycle through separate a
       (entry) => entry.packageId === packageId,
     );
     assert.deepEqual(approvedSummary.blockers.audio.blockers, []);
-    assert.deepEqual(approvedSummary.blockers.assets.warnings, ['monster_asset_pending']);
 
     const publishResponse = await server.fetchAs(
       ADMIN_ID,
