@@ -1,3 +1,9 @@
+import {
+  SPELLING_REWARD_TRACK_MONSTER_IDS,
+  normaliseRewardTrackConfig,
+  validateRewardTrackCollection,
+} from '../../../platform/game/reward-track-config.js';
+
 const LEGACY_SPELLING_POOLS = new Set(['core', 'extra']);
 const RESERVED_POOL_IDS = new Set(['all']);
 const VALID_POOL_TYPES = new Set(['statutory', 'enrichment', 'extension', 'custom']);
@@ -135,6 +141,15 @@ function poolValidationResult(errors, warnings, pool = null) {
     errors,
     warnings,
     pool,
+  };
+}
+
+function rewardTrackValidationResult(errors, warnings, rewardTrack = null) {
+  return {
+    ok: errors.length === 0,
+    errors,
+    warnings,
+    rewardTrack,
   };
 }
 
@@ -454,7 +469,7 @@ function normaliseNoRewardException(rawValue = {}, existingException = null) {
   };
 }
 
-function normaliseRewardTrack(rawValue = {}, existingTrack = null) {
+function normalisePoolRewardTrackApproval(rawValue = {}, existingTrack = null) {
   const raw = isPlainObject(rawValue) ? rawValue : {};
   const existing = isPlainObject(existingTrack) ? existingTrack : {};
   const hasApprovedValue = Object.prototype.hasOwnProperty.call(raw, 'approved');
@@ -468,6 +483,10 @@ function normaliseRewardTrack(rawValue = {}, existingTrack = null) {
       ? Number(raw.approvedAt ?? existing.approvedAt)
       : 0,
   };
+}
+
+function normaliseRewardTrackIds(rawValue, existingValue = [], { explicit = false } = {}) {
+  return uniqueStrings(explicit ? rawValue : (hasExplicitList(rawValue) ? rawValue : existingValue), { lowerCase: true });
 }
 
 export function normaliseSpellingPoolEditorInput(rawValue = {}, {
@@ -484,8 +503,12 @@ export function normaliseSpellingPoolEditorInput(rawValue = {}, {
   const noRewardException = raw.noRewardException || existing.noRewardException
     ? normaliseNoRewardException(raw.noRewardException, existing.noRewardException)
     : null;
+  const hasRewardTrackIds = Object.prototype.hasOwnProperty.call(raw, 'rewardTrackIds');
+  const rewardTrackIds = normaliseRewardTrackIds(raw.rewardTrackIds, existing.rewardTrackIds, {
+    explicit: hasRewardTrackIds,
+  });
   const rewardTrack = raw.rewardTrack || existing.rewardTrack
-    ? normaliseRewardTrack(raw.rewardTrack, existing.rewardTrack)
+    ? normalisePoolRewardTrackApproval(raw.rewardTrack, existing.rewardTrack)
     : null;
   return {
     id,
@@ -499,6 +522,7 @@ export function normaliseSpellingPoolEditorInput(rawValue = {}, {
     retired: Boolean(raw.retired || existing.retired),
     ...(raw.retirement || existing.retirement ? { retirement: raw.retirement || existing.retirement } : {}),
     ...(noRewardException ? { noRewardException } : {}),
+    ...(rewardTrackIds.length ? { rewardTrackIds } : {}),
     ...(rewardTrack ? { rewardTrack } : {}),
     sortIndex: Number.isInteger(Number(raw.sortIndex)) && Number(raw.sortIndex) >= 0
       ? Number(raw.sortIndex)
@@ -532,6 +556,7 @@ export function validateSpellingPoolEditorInput(rawValue = {}, options = {}) {
     pool.visibility.state === 'visible'
     && !LEGACY_SPELLING_POOLS.has(pool.id)
     && pool.noRewardException?.approved !== true
+    && !(Array.isArray(pool.rewardTrackIds) && pool.rewardTrackIds.length > 0)
     && pool.rewardTrack?.approved !== true
   ) {
     errors.push(issue('visibility.state', 'Learner-visible future pools require a reward track or approved no-reward exception.', 'pool_reward_required'));
@@ -541,6 +566,40 @@ export function validateSpellingPoolEditorInput(rawValue = {}, options = {}) {
   }
 
   return poolValidationResult(errors, warnings, pool);
+}
+
+function rewardTrackIssueToEditorIssue(entry) {
+  const field = normaliseString(entry.path).replace(/^rewardTracks\[\d+\]\.?/, '') || 'id';
+  return issue(field, entry.message, entry.code);
+}
+
+export function normaliseSpellingRewardTrackEditorInput(rawValue = {}, {
+  existingTrack = null,
+  defaultPoolId = '',
+} = {}) {
+  return normaliseRewardTrackConfig(rawValue, { existingTrack, defaultPoolId });
+}
+
+export function validateSpellingRewardTrackEditorInput(rawValue = {}, options = {}) {
+  const raw = isPlainObject(rawValue) ? rawValue : {};
+  const existing = isPlainObject(options.existingTrack) ? options.existingTrack : null;
+  const rewardTrack = normaliseSpellingRewardTrackEditorInput(raw, options);
+  const existingId = normaliseString(existing?.id);
+  const peers = (Array.isArray(options.rewardTracks) ? options.rewardTracks : [])
+    .filter((entry) => !existingId || entry?.id !== existingId);
+  const validation = validateRewardTrackCollection([...peers, rewardTrack], {
+    pools: options.pools || [],
+    poolWordCounts: options.poolWordCounts || null,
+    learnerVisiblePoolIds: options.learnerVisiblePoolIds || null,
+    allowedMonsterIds: options.allowedMonsterIds || SPELLING_REWARD_TRACK_MONSTER_IDS,
+    enforceThresholdsForHiddenPools: options.enforceThresholdsForHiddenPools === true,
+  });
+
+  return rewardTrackValidationResult(
+    validation.errors.map(rewardTrackIssueToEditorIssue),
+    validation.warnings.map(rewardTrackIssueToEditorIssue),
+    rewardTrack,
+  );
 }
 
 function throwIfInvalid(validation) {
@@ -595,6 +654,18 @@ export function buildSpellingPoolUpsertOperation(rawValue = {}, options = {}) {
     fieldPath: '',
     action: 'upsert',
     payload: validation.pool,
+  };
+}
+
+export function buildSpellingRewardTrackUpsertOperation(rawValue = {}, options = {}) {
+  const validation = validateSpellingRewardTrackEditorInput(rawValue, options);
+  throwIfInvalid(validation);
+  return {
+    entityType: 'spelling.rewardTrack',
+    entityId: validation.rewardTrack.id,
+    fieldPath: '',
+    action: 'upsert',
+    payload: validation.rewardTrack,
   };
 }
 

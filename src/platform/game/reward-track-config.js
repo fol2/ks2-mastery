@@ -1,0 +1,346 @@
+import {
+  DIRECT_STAGE_THRESHOLDS,
+  MONSTERS,
+  MONSTERS_BY_SUBJECT,
+  PHAETON_STAGE_THRESHOLDS,
+} from './monsters.js';
+
+export const REWARD_TRACK_PROGRESS_MODES = Object.freeze(['parallel', 'sequentialAfter']);
+export const DEFAULT_REWARD_TRACK_PROGRESS_MODE = 'parallel';
+export const DEFAULT_REWARD_TRACK_THRESHOLD_TEMPLATE = 'direct';
+
+export const SPELLING_REWARD_TRACK_MONSTER_IDS = Object.freeze([...MONSTERS_BY_SUBJECT.spelling]);
+
+export const REWARD_TRACK_THRESHOLD_TEMPLATES = Object.freeze({
+  direct: Object.freeze({
+    id: 'direct',
+    label: 'Direct staged thresholds',
+    thresholds: Object.freeze([...DIRECT_STAGE_THRESHOLDS]),
+  }),
+  aggregate: Object.freeze({
+    id: 'aggregate',
+    label: 'Aggregate staged thresholds',
+    thresholds: Object.freeze([...PHAETON_STAGE_THRESHOLDS]),
+  }),
+});
+
+const REWARD_TRACK_PROGRESS_MODE_SET = new Set(REWARD_TRACK_PROGRESS_MODES);
+
+function isPlainObject(value) {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+}
+
+function normaliseString(value, fallback = '') {
+  return typeof value === 'string' ? value.trim() || fallback : fallback;
+}
+
+function normaliseIdentifier(value, fallback = '') {
+  return normaliseString(value, fallback).toLowerCase();
+}
+
+function normaliseTimestamp(value, fallback = 0) {
+  const numeric = Number(value);
+  return Number.isFinite(numeric) && numeric >= 0 ? numeric : fallback;
+}
+
+function isValidStableId(value) {
+  return typeof value === 'string' && /^[a-z][a-z0-9-]{1,63}$/.test(value);
+}
+
+function uniqueStrings(values) {
+  const source = Array.isArray(values)
+    ? values
+    : String(values ?? '').split(/[\n,]+/);
+  const seen = new Set();
+  const output = [];
+  for (const value of source) {
+    const next = normaliseIdentifier(value);
+    if (!next || seen.has(next)) continue;
+    seen.add(next);
+    output.push(next);
+  }
+  return output;
+}
+
+function normaliseThresholdList(rawValue) {
+  if (Array.isArray(rawValue)) return rawValue.map((entry) => Number(entry));
+  if (!isPlainObject(rawValue)) return [];
+
+  return Object.entries(rawValue)
+    .map(([key, value]) => {
+      const match = String(key).match(/\d+/);
+      return {
+        order: match ? Number(match[0]) : Number.MAX_SAFE_INTEGER,
+        value: Number(value),
+      };
+    })
+    .sort((left, right) => left.order - right.order)
+    .map((entry) => entry.value);
+}
+
+function normaliseLabels(rawValue = {}, fallback = {}) {
+  const raw = isPlainObject(rawValue) ? rawValue : {};
+  const safeFallback = isPlainObject(fallback) ? fallback : {};
+  return {
+    title: normaliseString(raw.title, safeFallback.title),
+    shortLabel: normaliseString(raw.shortLabel, safeFallback.shortLabel),
+    description: normaliseString(raw.description, safeFallback.description),
+  };
+}
+
+function normaliseDependencyApproval(rawValue = {}, fallback = {}, approvedFallback = false) {
+  const raw = isPlainObject(rawValue) ? rawValue : {};
+  const safeFallback = isPlainObject(fallback) ? fallback : {};
+  const hasApprovedValue = Object.prototype.hasOwnProperty.call(raw, 'approved');
+  return {
+    approved: hasApprovedValue ? raw.approved === true : (safeFallback.approved === true || approvedFallback === true),
+    reason: normaliseString(raw.reason, safeFallback.reason),
+    approvedBy: normaliseString(raw.approvedBy, safeFallback.approvedBy),
+    approvedAt: normaliseTimestamp(raw.approvedAt ?? safeFallback.approvedAt, 0),
+  };
+}
+
+function issue(severity, code, path, message) {
+  return { severity, code, path, message };
+}
+
+function pathFor(index, field = '') {
+  const prefix = `rewardTracks[${index}]`;
+  return field ? `${prefix}.${field}` : prefix;
+}
+
+function valueFromPoolWordCounts(poolWordCounts, poolId) {
+  if (poolWordCounts instanceof Map) return poolWordCounts.get(poolId);
+  if (isPlainObject(poolWordCounts)) return poolWordCounts[poolId];
+  return undefined;
+}
+
+function learnerVisiblePoolIdsFrom(pools = []) {
+  return new Set((Array.isArray(pools) ? pools : [])
+    .filter((pool) => pool?.active !== false && !pool?.retired && pool?.visibility?.state === 'visible')
+    .map((pool) => pool.id)
+    .filter(Boolean));
+}
+
+export function isValidRewardTrackId(value) {
+  return isValidStableId(value);
+}
+
+export function isValidRewardTrackPoolId(value) {
+  return isValidStableId(value);
+}
+
+export function normaliseRewardTrackConfig(rawValue = {}, {
+  existingTrack = null,
+  defaultPoolId = '',
+} = {}) {
+  const raw = isPlainObject(rawValue) ? rawValue : {};
+  const existing = isPlainObject(existingTrack) ? existingTrack : {};
+  const activeProvided = Object.prototype.hasOwnProperty.call(raw, 'active');
+  const dependencyApproval = raw.dependencyApproval || existing.dependencyApproval || raw.crossPoolDependencyApproved === true
+    ? normaliseDependencyApproval(
+      raw.dependencyApproval,
+      existing.dependencyApproval,
+      raw.crossPoolDependencyApproved === true || existing.crossPoolDependencyApproved === true,
+    )
+    : null;
+
+  return {
+    id: normaliseIdentifier(raw.id || raw.rewardTrackId || raw.trackId, existing.id || existing.rewardTrackId || existing.trackId),
+    poolId: normaliseIdentifier(raw.poolId || raw.spellingPool, existing.poolId || existing.spellingPool || defaultPoolId),
+    monsterId: normaliseIdentifier(raw.monsterId, existing.monsterId),
+    progressionMode: normaliseString(
+      raw.progressionMode,
+      existing.progressionMode || DEFAULT_REWARD_TRACK_PROGRESS_MODE,
+    ),
+    thresholdTemplate: normaliseIdentifier(
+      raw.thresholdTemplate,
+      existing.thresholdTemplate || DEFAULT_REWARD_TRACK_THRESHOLD_TEMPLATE,
+    ),
+    thresholdOverrides: normaliseThresholdList(
+      Object.prototype.hasOwnProperty.call(raw, 'thresholdOverrides')
+        ? raw.thresholdOverrides
+        : (Object.prototype.hasOwnProperty.call(raw, 'thresholds') ? raw.thresholds : existing.thresholdOverrides),
+    ),
+    active: activeProvided ? raw.active !== false : existing.active !== false,
+    labels: normaliseLabels(raw.labels, existing.labels),
+    sequentialAfter: normaliseIdentifier(
+      raw.sequentialAfter || raw.afterTrackId,
+      existing.sequentialAfter || existing.afterTrackId,
+    ),
+    prerequisites: uniqueStrings(raw.prerequisites || existing.prerequisites),
+    ...(dependencyApproval ? { dependencyApproval } : {}),
+    sourceNote: normaliseString(raw.sourceNote, existing.sourceNote),
+    sortIndex: Number.isInteger(Number(raw.sortIndex)) && Number(raw.sortIndex) >= 0
+      ? Number(raw.sortIndex)
+      : (Number.isInteger(Number(existing.sortIndex)) ? Number(existing.sortIndex) : 0),
+  };
+}
+
+export function normaliseRewardTrackCollection(rawValue = []) {
+  return (Array.isArray(rawValue) ? rawValue : [])
+    .map((entry, index) => normaliseRewardTrackConfig(entry, { existingTrack: null, defaultPoolId: '' }))
+    .map((track, index) => ({
+      ...track,
+      sortIndex: Number.isInteger(Number(track.sortIndex)) && Number(track.sortIndex) >= 0 ? Number(track.sortIndex) : index,
+    }));
+}
+
+export function thresholdsForRewardTrack(track) {
+  if (Array.isArray(track?.thresholdOverrides) && track.thresholdOverrides.length) {
+    return [...track.thresholdOverrides];
+  }
+  const template = REWARD_TRACK_THRESHOLD_TEMPLATES[track?.thresholdTemplate || DEFAULT_REWARD_TRACK_THRESHOLD_TEMPLATE]
+    || REWARD_TRACK_THRESHOLD_TEMPLATES[DEFAULT_REWARD_TRACK_THRESHOLD_TEMPLATE];
+  return [...template.thresholds];
+}
+
+export function validateRewardTrackCollection(rawTracks = [], {
+  pools = [],
+  poolWordCounts = null,
+  learnerVisiblePoolIds = null,
+  allowedMonsterIds = Object.keys(MONSTERS),
+  enforceThresholdsForHiddenPools = false,
+} = {}) {
+  const tracks = normaliseRewardTrackCollection(rawTracks);
+  const errors = [];
+  const warnings = [];
+  const byId = new Map();
+  const poolsById = new Map((Array.isArray(pools) ? pools : []).map((pool) => [pool.id, pool]));
+  const allowedMonsterSet = new Set(Array.isArray(allowedMonsterIds) ? allowedMonsterIds : Object.keys(MONSTERS));
+  const visiblePools = learnerVisiblePoolIds instanceof Set
+    ? learnerVisiblePoolIds
+    : learnerVisiblePoolIdsFrom(pools);
+
+  tracks.forEach((track, index) => {
+    if (!track.id || !isValidRewardTrackId(track.id)) {
+      errors.push(issue('error', 'invalid_reward_track_id', pathFor(index, 'id'), 'Reward track id must be a stable lowercase id.'));
+    } else if (byId.has(track.id)) {
+      errors.push(issue('error', 'duplicate_reward_track', pathFor(index, 'id'), `Duplicate reward track id "${track.id}".`));
+    } else {
+      byId.set(track.id, track);
+    }
+
+    if (!track.poolId || !isValidRewardTrackPoolId(track.poolId)) {
+      errors.push(issue('error', 'invalid_reward_pool_id', pathFor(index, 'poolId'), `Reward track "${track.id || index + 1}" must target a stable pool id.`));
+    } else if (pools.length && !poolsById.has(track.poolId)) {
+      errors.push(issue('error', 'reward_pool_missing', pathFor(index, 'poolId'), `Reward track "${track.id}" points at missing pool "${track.poolId}".`));
+    }
+
+    if (!track.monsterId) {
+      errors.push(issue('error', 'reward_monster_required', pathFor(index, 'monsterId'), `Reward track "${track.id || index + 1}" must bind to a monster.`));
+    } else if (!MONSTERS[track.monsterId]) {
+      errors.push(issue('error', 'reward_monster_missing', pathFor(index, 'monsterId'), `Reward track "${track.id}" points at unknown monster "${track.monsterId}".`));
+    } else if (!allowedMonsterSet.has(track.monsterId)) {
+      errors.push(issue('error', 'reward_monster_not_allowed', pathFor(index, 'monsterId'), `Reward track "${track.id}" cannot bind monster "${track.monsterId}" for this subject.`));
+    }
+
+    if (!REWARD_TRACK_PROGRESS_MODE_SET.has(track.progressionMode)) {
+      errors.push(issue('error', 'invalid_reward_progression_mode', pathFor(index, 'progressionMode'), `Reward track "${track.id || index + 1}" has an invalid progression mode.`));
+    }
+
+    if (!REWARD_TRACK_THRESHOLD_TEMPLATES[track.thresholdTemplate]) {
+      errors.push(issue('error', 'invalid_reward_threshold_template', pathFor(index, 'thresholdTemplate'), `Reward track "${track.id || index + 1}" uses an unknown threshold template.`));
+    }
+
+    const thresholds = thresholdsForRewardTrack(track);
+    if (!thresholds.length) {
+      errors.push(issue('error', 'reward_threshold_required', pathFor(index, 'thresholdOverrides'), `Reward track "${track.id || index + 1}" must define at least one threshold.`));
+    }
+    thresholds.forEach((threshold, thresholdIndex) => {
+      if (!Number.isInteger(threshold) || threshold <= 0) {
+        errors.push(issue('error', 'invalid_reward_threshold', pathFor(index, `thresholdOverrides[${thresholdIndex}]`), `Reward track "${track.id || index + 1}" thresholds must be positive whole numbers.`));
+      }
+      if (thresholdIndex > 0 && Number.isFinite(threshold) && Number.isFinite(thresholds[thresholdIndex - 1]) && threshold <= thresholds[thresholdIndex - 1]) {
+        errors.push(issue('error', 'invalid_reward_threshold', pathFor(index, `thresholdOverrides[${thresholdIndex}]`), `Reward track "${track.id || index + 1}" thresholds must increase strictly.`));
+      }
+    });
+
+    const countShouldBlock = track.active !== false
+      && (enforceThresholdsForHiddenPools || visiblePools.has(track.poolId));
+    const poolWordCount = valueFromPoolWordCounts(poolWordCounts, track.poolId);
+    if (countShouldBlock && Number.isFinite(Number(poolWordCount)) && thresholds.length) {
+      const maxThreshold = Math.max(...thresholds.filter((entry) => Number.isFinite(entry)));
+      if (Number.isFinite(maxThreshold) && maxThreshold > Number(poolWordCount)) {
+        errors.push(issue(
+          'error',
+          'reward_threshold_exceeds_pool_count',
+          pathFor(index, 'thresholdOverrides'),
+          `Reward track "${track.id}" needs ${maxThreshold} active word(s), but pool "${track.poolId}" has ${Number(poolWordCount)}.`,
+        ));
+      }
+    }
+
+    if (track.progressionMode === 'sequentialAfter') {
+      if (!track.sequentialAfter) {
+        errors.push(issue('error', 'reward_dependency_required', pathFor(index, 'sequentialAfter'), `Reward track "${track.id || index + 1}" requires a sequential dependency.`));
+      } else if (track.sequentialAfter === track.id) {
+        errors.push(issue('error', 'reward_track_cycle', pathFor(index, 'sequentialAfter'), `Reward track "${track.id}" cannot depend on itself.`));
+      }
+    }
+
+    if (track.active === false && visiblePools.has(track.poolId)) {
+      warnings.push(issue('warn', 'inactive_visible_reward_track', pathFor(index, 'active'), `Reward track "${track.id}" is inactive for learner-visible pool "${track.poolId}".`));
+    }
+  });
+
+  tracks.forEach((track, index) => {
+    if (track.progressionMode !== 'sequentialAfter' || !track.sequentialAfter) return;
+    const dependency = byId.get(track.sequentialAfter);
+    if (!dependency) {
+      errors.push(issue('error', 'reward_dependency_missing', pathFor(index, 'sequentialAfter'), `Reward track "${track.id}" depends on missing track "${track.sequentialAfter}".`));
+      return;
+    }
+    if (dependency.active === false && track.active !== false) {
+      errors.push(issue('error', 'reward_dependency_inactive', pathFor(index, 'sequentialAfter'), `Reward track "${track.id}" depends on inactive track "${track.sequentialAfter}".`));
+    }
+    if (
+      track.active !== false
+      && dependency.poolId
+      && track.poolId
+      && dependency.poolId !== track.poolId
+      && track.dependencyApproval?.approved !== true
+    ) {
+      errors.push(issue(
+        'error',
+        'reward_cross_pool_dependency',
+        pathFor(index, 'dependencyApproval'),
+        `Reward track "${track.id}" depends on pool "${dependency.poolId}" from pool "${track.poolId}" without approval.`,
+      ));
+    }
+  });
+
+  const visiting = new Set();
+  const visited = new Set();
+  const cycleReported = new Set();
+  const visit = (track, stack = []) => {
+    if (!track || track.active === false || track.progressionMode !== 'sequentialAfter') return;
+    if (visiting.has(track.id)) {
+      const cycleStart = stack.indexOf(track.id);
+      const cycle = [...stack.slice(cycleStart >= 0 ? cycleStart : 0), track.id];
+      const key = [...cycle].sort().join('>');
+      if (!cycleReported.has(key)) {
+        cycleReported.add(key);
+        const index = tracks.findIndex((entry) => entry.id === track.id);
+        errors.push(issue('error', 'reward_track_cycle', pathFor(index, 'sequentialAfter'), `Reward track sequence contains a cycle: ${cycle.join(' -> ')}.`));
+      }
+      return;
+    }
+    if (visited.has(track.id)) return;
+    visiting.add(track.id);
+    const next = byId.get(track.sequentialAfter);
+    visit(next, [...stack, track.id]);
+    visiting.delete(track.id);
+    visited.add(track.id);
+  };
+
+  tracks.forEach((track) => visit(track));
+
+  return {
+    ok: errors.length === 0,
+    errors,
+    warnings,
+    tracks,
+    byId,
+  };
+}

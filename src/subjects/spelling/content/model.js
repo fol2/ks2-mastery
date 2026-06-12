@@ -1,4 +1,9 @@
 import { cloneSerialisable } from '../../../platform/core/repositories/helpers.js';
+import {
+  SPELLING_REWARD_TRACK_MONSTER_IDS,
+  normaliseRewardTrackCollection,
+  validateRewardTrackCollection,
+} from '../../../platform/game/reward-track-config.js';
 import { PATTERN_LAUNCH_THRESHOLD, SPELLING_PATTERN_IDS, SPELLING_PATTERNS } from './patterns.js';
 import {
   coverageTierForWord,
@@ -17,7 +22,7 @@ export const SPELLING_CONTENT_SUBJECT_ID = 'spelling';
  * a cached bundle — runtime consumers treat `modelVersion < MODEL_VERSION`
  * as "normalise and rewrite" on next save.
  */
-export const SPELLING_CONTENT_MODEL_VERSION = 8;
+export const SPELLING_CONTENT_MODEL_VERSION = 10;
 export const SPELLING_CONTENT_EXPORT_KIND = 'ks2-spelling-content';
 export const SPELLING_CONTENT_EXPORT_VERSION = 1;
 export const SPELLING_CONTENT_POOLS = Object.freeze(['core', 'extra']);
@@ -199,7 +204,7 @@ function normaliseNoRewardException(rawValue = null) {
   };
 }
 
-function normaliseRewardTrack(rawValue = null) {
+function normalisePoolRewardTrackApproval(rawValue = null) {
   const raw = isPlainObject(rawValue) ? rawValue : {};
   return {
     id: normaliseString(raw.id || raw.rewardTrackId || raw.trackId),
@@ -211,12 +216,20 @@ function normaliseRewardTrack(rawValue = null) {
   };
 }
 
+function normaliseRewardTrackIds(rawValue, fallback = []) {
+  const source = Array.isArray(rawValue)
+    ? rawValue
+    : (typeof rawValue === 'string' ? rawValue.split(/[\n,]+/) : fallback);
+  return uniqueStrings(source, { lowerCase: true });
+}
+
 function normaliseSpellingPoolMetadata(rawValue, index = 0) {
   const raw = isPlainObject(rawValue) ? rawValue : {};
   const id = normalisePoolIdCandidate(raw.id || raw.pool || raw.spellingPool, index === 0 ? 'core' : `pool-${index + 1}`);
   const defaults = DEFAULT_POOL_METADATA[id] || {};
   const typeCandidate = normaliseString(raw.type || raw.poolType, defaults.type || 'custom').toLowerCase();
   const type = VALID_POOL_TYPES.has(typeCandidate) ? typeCandidate : 'custom';
+  const rewardTrackIds = normaliseRewardTrackIds(raw.rewardTrackIds);
   return {
     id,
     title: normaliseString(raw.title, defaults.title || `Pool ${index + 1}`),
@@ -229,7 +242,8 @@ function normaliseSpellingPoolMetadata(rawValue, index = 0) {
     retired: Boolean(raw.retired),
     ...(raw.retired || raw.active === false || raw.retirement ? { retirement: normaliseRetirement(raw.retirement) } : {}),
     ...(raw.noRewardException ? { noRewardException: normaliseNoRewardException(raw.noRewardException) } : {}),
-    ...(raw.rewardTrack ? { rewardTrack: normaliseRewardTrack(raw.rewardTrack) } : {}),
+    ...(rewardTrackIds.length ? { rewardTrackIds } : {}),
+    ...(raw.rewardTrack ? { rewardTrack: normalisePoolRewardTrackApproval(raw.rewardTrack) } : {}),
     sortIndex: Number.isInteger(Number(raw.sortIndex)) && Number(raw.sortIndex) >= 0 ? Number(raw.sortIndex) : index,
   };
 }
@@ -462,6 +476,7 @@ function normaliseDraft(rawValue) {
       ? { audioRequirementProfile: cloneSerialisable(raw.audioRequirementProfile) }
       : {}),
     pools,
+    rewardTracks: normaliseRewardTrackCollection(raw.rewardTracks),
     wordLists,
     words: (Array.isArray(raw.words) ? raw.words : []).map((entry, index) => normaliseWordEntry(entry, index, wordListsById)),
     sentences: (Array.isArray(raw.sentences) ? raw.sentences : []).map((entry, index) => normaliseSentenceEntry(entry, index)),
@@ -558,6 +573,26 @@ function issue(severity, code, path, message) {
   return { severity, code, path, message };
 }
 
+function buildLearnerVisiblePoolIds(pools = []) {
+  return new Set((Array.isArray(pools) ? pools : [])
+    .filter((pool) => pool.active !== false && !pool.retired && pool.visibility?.state === 'visible')
+    .map((pool) => pool.id));
+}
+
+function buildActivePoolWordCounts(words = [], wordListsById = new Map(), poolsById = new Map()) {
+  const counts = new Map();
+  for (const poolId of poolsById.keys()) counts.set(poolId, 0);
+  for (const word of Array.isArray(words) ? words : []) {
+    if (word.active === false || word.retired) continue;
+    const pool = poolsById.get(word.spellingPool);
+    if (!pool || pool.active === false || pool.retired) continue;
+    const wordList = word.listId ? wordListsById.get(word.listId) : null;
+    if (!wordList || wordList.active === false || wordList.retired) continue;
+    counts.set(word.spellingPool, (counts.get(word.spellingPool) || 0) + 1);
+  }
+  return counts;
+}
+
 export function validateSpellingContentBundle(rawBundle) {
   const bundle = normaliseSpellingContentBundle(rawBundle);
   const errors = [];
@@ -598,12 +633,6 @@ export function validateSpellingContentBundle(rawBundle) {
     }
     if (pool.retired && pool.visibility?.state === 'visible') {
       warnings.push(issue('warn', 'retired_pool_visible', `draft.pools[${index}].visibility.state`, `Retired pool "${pool.id}" keeps visible metadata for history but is hidden from new sessions.`));
-    }
-    const learnerVisible = pool.active !== false && !pool.retired && pool.visibility?.state === 'visible';
-    const noRewardApproved = pool.noRewardException?.approved === true;
-    const rewardTrackApproved = pool.rewardTrack?.approved === true;
-    if (learnerVisible && !LEGACY_SPELLING_POOLS.has(pool.id) && !noRewardApproved && !rewardTrackApproved) {
-      errors.push(issue('error', 'pool_reward_required', `draft.pools[${index}].visibility.state`, `Learner-visible pool "${pool.id}" requires a reward track or approved no-reward exception before publish.`));
     }
   });
 
@@ -704,6 +733,61 @@ export function validateSpellingContentBundle(rawBundle) {
         errors.push(issue('error', 'broken_sentence_reference', `draft.words[${index}].variants[${variantIndex}].sentenceEntryIds`, `Variant "${variant.word || variantIndex + 1}" for word "${word.slug}" must reference at least one sentence entry.`));
       }
     });
+  });
+
+  const learnerVisiblePoolIds = buildLearnerVisiblePoolIds(bundle.draft.pools);
+  const poolWordCounts = buildActivePoolWordCounts(bundle.draft.words, wordListsById, poolsById);
+  const rewardValidation = validateRewardTrackCollection(bundle.draft.rewardTracks, {
+    pools: bundle.draft.pools,
+    poolWordCounts,
+    learnerVisiblePoolIds,
+    allowedMonsterIds: SPELLING_REWARD_TRACK_MONSTER_IDS,
+    enforceThresholdsForHiddenPools: true,
+  });
+  rewardValidation.errors.forEach((entry) => {
+    errors.push(issue(entry.severity, entry.code, `draft.${entry.path}`, entry.message));
+  });
+  rewardValidation.warnings.forEach((entry) => {
+    warnings.push(issue(entry.severity, entry.code, `draft.${entry.path}`, entry.message));
+  });
+
+  const activeRewardTracksByPool = new Map();
+  for (const track of rewardValidation.tracks) {
+    if (track.active === false || !track.poolId) continue;
+    if (!activeRewardTracksByPool.has(track.poolId)) activeRewardTracksByPool.set(track.poolId, []);
+    activeRewardTracksByPool.get(track.poolId).push(track);
+  }
+
+  bundle.draft.pools.forEach((pool, index) => {
+    const rewardTrackIds = Array.isArray(pool.rewardTrackIds) ? pool.rewardTrackIds : [];
+    rewardTrackIds.forEach((trackId, position) => {
+      const track = rewardValidation.byId.get(trackId);
+      if (!track) {
+        errors.push(issue('error', 'reward_track_missing', `draft.pools[${index}].rewardTrackIds[${position}]`, `Pool "${pool.id}" points at missing reward track "${trackId}".`));
+        return;
+      }
+      if (track.poolId !== pool.id) {
+        errors.push(issue('error', 'reward_pool_mismatch', `draft.pools[${index}].rewardTrackIds[${position}]`, `Pool "${pool.id}" cannot bind reward track "${trackId}" for pool "${track.poolId}".`));
+      }
+    });
+
+    const learnerVisible = learnerVisiblePoolIds.has(pool.id);
+    const noRewardApproved = pool.noRewardException?.approved === true;
+    const legacyRewardTrackApproved = pool.rewardTrack?.approved === true;
+    const formalRewardTracks = rewardTrackIds.length
+      ? rewardTrackIds
+        .map((trackId) => rewardValidation.byId.get(trackId))
+        .filter((track) => track && track.active !== false && track.poolId === pool.id)
+      : (activeRewardTracksByPool.get(pool.id) || []);
+    if (
+      learnerVisible
+      && !LEGACY_SPELLING_POOLS.has(pool.id)
+      && !noRewardApproved
+      && !legacyRewardTrackApproved
+      && formalRewardTracks.length === 0
+    ) {
+      errors.push(issue('error', 'pool_reward_required', `draft.pools[${index}].visibility.state`, `Learner-visible pool "${pool.id}" requires a reward track or approved no-reward exception before publish.`));
+    }
   });
 
   bundle.draft.sentences.forEach((sentence, index) => {
