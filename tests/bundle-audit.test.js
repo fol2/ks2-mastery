@@ -979,7 +979,20 @@ function createSeoAuditStubServer(options = {}) {
     const method = request.method || 'GET';
     const write = (status, headers, body = '') => {
       response.writeHead(status, { ...SEO_AUDIT_SECURITY_HEADERS, ...headers });
-      response.end(method === 'HEAD' ? '' : body);
+      const acceptHeader = String(request.headers.accept || '');
+      const shouldInjectBeacon = (
+        options.cloudflareBeaconOnHtmlAccept
+        && Boolean(acceptHeader)
+        && acceptHeader !== '*/*'
+        && /text\/html/iu.test(String(headers['content-type'] || ''))
+      );
+      const responseBody = shouldInjectBeacon
+        ? body.replace(
+          '</body>',
+          '<script defer src="https://static.cloudflareinsights.com/beacon.min.js"></script></body>',
+        )
+        : body;
+      response.end(method === 'HEAD' ? '' : responseBody);
     };
 
     if (url === '/' || url === '/index.html') {
@@ -1208,6 +1221,27 @@ test('production bundle audit passes with SEO root, robots, and sitemap resource
     });
     assert.match(stdout, /Production bundle audit passed/);
     assert.match(stdout, /cache-split checks: 15\/15/);
+  } finally {
+    await closeServer(server);
+  }
+});
+
+test('production bundle audit fetches SEO HTML without custom Accept to avoid Cloudflare beacon variants', async () => {
+  const server = createSeoAuditStubServer({ cloudflareBeaconOnHtmlAccept: true });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+
+  try {
+    const { port } = server.address();
+    const { stdout } = await execFileAsync(process.execPath, [
+      './scripts/production-bundle-audit.mjs',
+      '--skip-local',
+      '--url',
+      `http://127.0.0.1:${port}/`,
+    ], {
+      cwd: process.cwd(),
+      timeout: 8000,
+    });
+    assert.match(stdout, /Production bundle audit passed/);
   } finally {
     await closeServer(server);
   }
