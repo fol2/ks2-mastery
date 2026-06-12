@@ -1,6 +1,7 @@
 import { uid } from '../../../src/platform/core/utils.js';
 import { cloneSerialisable } from '../../../src/platform/core/repositories/helpers.js';
 import {
+  buildContentOperationRevertOperations,
   buildSpellingContentOperationCandidate,
   CONTENT_OPERATION_PACKAGE_STATES,
   CONTENT_OPERATION_SUBJECT_ID,
@@ -993,6 +994,21 @@ async function readReleaseRowById(db, subjectId, releaseId, { includeSnapshot = 
   `, [subjectId, releaseId]);
 }
 
+async function readReleaseRowByPackageId(db, subjectId, packageId, { includeSnapshot = false } = {}) {
+  if (!packageId) return null;
+  return first(db, `
+    SELECT
+      release_id, subject_id, status, snapshot_hash,
+      ${includeSnapshot ? 'snapshot_json' : 'NULL AS snapshot_json'},
+      base_release_id, package_id, published_at, published_by_account_id,
+      rollback_of_release_id, proof_json, created_at
+    FROM content_operation_releases
+    WHERE subject_id = ? AND package_id = ? AND status = 'published'
+    ORDER BY published_at DESC, created_at DESC, rowid DESC
+    LIMIT 1
+  `, [subjectId, packageId]);
+}
+
 async function readLegacySubjectContentBundle(db, subjectId) {
   const row = await first(db, `
     SELECT account_id, subject_id, content_json, updated_at, updated_by_account_id
@@ -1037,6 +1053,26 @@ async function listPackageOperations(db, packageId) {
     ORDER BY operation_order ASC
   `, [packageId]);
   return rows.map(operationRowToRecord);
+}
+
+async function readPackageRevertSource(db, packageId) {
+  const row = await first(db, `
+    SELECT event_json
+    FROM content_operation_events
+    WHERE package_id = ? AND event_type = 'package.revert_created'
+    ORDER BY created_at DESC, event_id DESC
+    LIMIT 1
+  `, [packageId]);
+  const event = parseJson(row?.event_json, null);
+  if (!isPlainObject(event)) return null;
+  const revertOfPackageId = normaliseString(event.revertOfPackageId);
+  const revertOfReleaseId = normaliseString(event.revertOfReleaseId);
+  if (!revertOfPackageId || !revertOfReleaseId) return null;
+  return {
+    revertOfPackageId,
+    revertOfReleaseId,
+    revertReason: normaliseString(event.revertReason),
+  };
 }
 
 async function attachReleaseHistorySummary(db, release = null) {
@@ -1262,11 +1298,24 @@ function packageOperationsHash(operations = []) {
   );
 }
 
+const TERMINAL_CONTENT_OPERATION_PACKAGE_STATES = new Set([
+  CONTENT_OPERATION_PACKAGE_STATES.PUBLISHED,
+  CONTENT_OPERATION_PACKAGE_STATES.REVERTED,
+  CONTENT_OPERATION_PACKAGE_STATES.SUPERSEDED,
+]);
+
 function assertPackageIsNotPublished(packageRow, packageId) {
   if (packageRow.state === CONTENT_OPERATION_PACKAGE_STATES.PUBLISHED) {
     throw new ConflictError('Published content operation packages cannot be mutated.', {
       code: 'content_operation_package_published',
       packageId,
+    });
+  }
+  if (TERMINAL_CONTENT_OPERATION_PACKAGE_STATES.has(packageRow.state)) {
+    throw new ConflictError('Terminal content operation packages cannot be mutated.', {
+      code: 'content_operation_package_terminal',
+      packageId,
+      state: packageRow.state,
     });
   }
 }
@@ -1471,6 +1520,230 @@ export function createContentOperationsRepository({ db, env = {}, now }) {
       ]);
 
       return record;
+    },
+
+    async createContentOperationPackageRevert(sourcePackageId, {
+      createdByAccountId,
+      reason = '',
+      title = '',
+      description = '',
+    } = {}) {
+      const sourcePackageRow = await requirePackage(db, sourcePackageId);
+      const actor = normaliseString(createdByAccountId);
+      if (!actor) throw new BadRequestError('Package revert creation requires an actor account id.');
+      const revertReason = normaliseString(reason);
+      if (!revertReason) {
+        throw new BadRequestError('Package revert creation requires a reason.', {
+          code: 'content_operation_revert_reason_required',
+          packageId: sourcePackageId,
+        });
+      }
+      if (sourcePackageRow.state !== CONTENT_OPERATION_PACKAGE_STATES.PUBLISHED) {
+        throw new ConflictError('Only published content operation packages can be reverted.', {
+          code: 'content_operation_package_not_published',
+          packageId: sourcePackageId,
+          state: sourcePackageRow.state,
+        });
+      }
+      if (normaliseString(sourcePackageRow.superseded_by_package_id)) {
+        throw new ConflictError('Content operation package already has a revert package.', {
+          code: 'content_operation_revert_already_created',
+          packageId: sourcePackageId,
+          revertPackageId: sourcePackageRow.superseded_by_package_id,
+        });
+      }
+
+      const sourceReleaseRow = await readReleaseRowByPackageId(
+        db,
+        sourcePackageRow.subject_id,
+        sourcePackageId,
+        { includeSnapshot: true },
+      );
+      const sourceRelease = await releaseRowToRecordAsync(sourceReleaseRow, { includeSnapshot: true });
+      if (!sourceRelease?.snapshot) {
+        throw new ConflictError('Published package release was not found for package revert.', {
+          code: 'content_operation_package_release_missing',
+          packageId: sourcePackageId,
+        });
+      }
+      const sourceBaseReleaseId = sourcePackageRow.base_release_id || sourceRelease.baseReleaseId || null;
+      const sourceBaseReleaseRow = sourceBaseReleaseId
+        ? await readReleaseRowById(db, sourcePackageRow.subject_id, sourceBaseReleaseId, { includeSnapshot: true })
+        : null;
+      if (sourceBaseReleaseId && !sourceBaseReleaseRow) {
+        throw new ConflictError('Published package base release was not found for package revert.', {
+          code: 'content_operation_package_base_release_missing',
+          packageId: sourcePackageId,
+          baseReleaseId: sourceBaseReleaseId,
+        });
+      }
+      const sourceBaseRelease = await releaseRowToRecordAsync(sourceBaseReleaseRow, { includeSnapshot: true });
+      const sourceBaseSnapshot = sourceBaseRelease?.snapshot || await readSeededSpellingContentBundle();
+      const sourceOperations = await listPackageOperations(db, sourcePackageId);
+      if (!sourceOperations.length) {
+        throw new ConflictError('Published package has no operations to revert.', {
+          code: 'content_operation_revert_no_operations',
+          packageId: sourcePackageId,
+        });
+      }
+
+      const nowTs = Number(nowFactory());
+      const inverse = buildContentOperationRevertOperations({
+        sourceBaseSnapshot,
+        operations: sourceOperations,
+        reason: revertReason,
+        now: () => nowTs,
+        sourcePackageId,
+        sourceReleaseId: sourceRelease.releaseId,
+      });
+      const replayedHash = contentOperationHash(inverse.replayedSnapshot, 'release');
+      if (replayedHash !== sourceRelease.snapshotHash) {
+        throw new ConflictError('Published package operations no longer replay to the source release.', {
+          code: 'content_operation_revert_source_replay_mismatch',
+          packageId: sourcePackageId,
+          releaseId: sourceRelease.releaseId,
+          expectedSnapshotHash: sourceRelease.snapshotHash,
+          replayedSnapshotHash: replayedHash,
+        });
+      }
+      if (!inverse.operations.length) {
+        throw new ConflictError('Published package has no snapshot-changing operations to revert.', {
+          code: 'content_operation_revert_no_operations',
+          packageId: sourcePackageId,
+          skippedOperations: inverse.skippedOperations,
+        });
+      }
+
+      const revertPackageId = uid('copkg');
+      const normalisedInverseOperations = inverse.operations.map((operation) => normaliseContentOperation(operation, {
+        actorAccountId: actor,
+        now: () => nowTs,
+        operationId: uid('coop'),
+      }));
+      const record = {
+        packageId: revertPackageId,
+        subjectId: sourcePackageRow.subject_id,
+        templateId: 'package-revert',
+        title: normaliseString(title, `Revert: ${sourcePackageRow.title || sourcePackageId}`),
+        description: normaliseString(
+          description,
+          `Package-level revert of ${sourcePackageId}. Reason: ${revertReason}`,
+        ),
+        baseReleaseId: sourceRelease.releaseId,
+        baseReleaseHash: sourceRelease.snapshotHash,
+        state: CONTENT_OPERATION_PACKAGE_STATES.DRAFT,
+        createdByAccountId: actor,
+        updatedByAccountId: actor,
+        createdAt: nowTs,
+        updatedAt: nowTs,
+      };
+      const lineage = {
+        revertOfPackageId: sourcePackageId,
+        revertOfReleaseId: sourceRelease.releaseId,
+        revertReason,
+        sourcePackageTitle: sourcePackageRow.title || '',
+        sourceReleaseSnapshotHash: sourceRelease.snapshotHash,
+        sourceBaseReleaseId,
+        sourceBaseReleaseHash: sourcePackageRow.base_release_hash || sourceBaseRelease?.snapshotHash || null,
+        inverseOperationIds: normalisedInverseOperations.map((operation) => operation.operationId),
+        skippedOperations: inverse.skippedOperations,
+      };
+
+      await batch(db, [
+        bindStatement(db, `
+          INSERT INTO content_operation_packages (
+            package_id, subject_id, template_id, title, description,
+            base_release_id, base_release_hash, state, created_by_account_id,
+            updated_by_account_id, created_at, updated_at
+          )
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `, [
+          record.packageId,
+          record.subjectId,
+          record.templateId,
+          record.title,
+          record.description,
+          record.baseReleaseId,
+          record.baseReleaseHash,
+          record.state,
+          record.createdByAccountId,
+          record.updatedByAccountId,
+          record.createdAt,
+          record.updatedAt,
+        ]),
+        ...normalisedInverseOperations.map((operation, index) => bindStatement(db, `
+          INSERT INTO content_operation_package_operations (
+            operation_id, package_id, operation_order, entity_type, entity_id,
+            field_path, action, before_hash, after_hash, payload_json,
+            created_by_account_id, created_at
+          )
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `, [
+          operation.operationId,
+          record.packageId,
+          index + 1,
+          operation.entityType,
+          operation.entityId,
+          operation.fieldPath,
+          operation.action,
+          operation.beforeHash || null,
+          operation.afterHash || null,
+          JSON.stringify(operation.payload),
+          operation.createdByAccountId,
+          operation.createdAt,
+        ])),
+        bindStatement(db, `
+          INSERT INTO content_operation_events (
+            event_id, package_id, release_id, subject_id, event_type,
+            actor_account_id, event_json, created_at
+          )
+          VALUES (?, ?, NULL, ?, ?, ?, ?, ?)
+        `, [
+          uid('coevt'),
+          record.packageId,
+          record.subjectId,
+          'package.revert_created',
+          actor,
+          JSON.stringify(lineage),
+          nowTs,
+        ]),
+        bindStatement(db, `
+          INSERT INTO content_operation_events (
+            event_id, package_id, release_id, subject_id, event_type,
+            actor_account_id, event_json, created_at
+          )
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        `, [
+          uid('coevt'),
+          sourcePackageId,
+          sourceRelease.releaseId,
+          record.subjectId,
+          'package.revert_requested',
+          actor,
+          JSON.stringify({
+            ...lineage,
+            revertPackageId: record.packageId,
+          }),
+          nowTs,
+        ]),
+      ]);
+
+      const candidate = await this.buildContentOperationCandidate(record.packageId, {
+        actorAccountId: actor,
+      });
+      const contentPackage = await this.readContentOperationPackage(record.packageId, {
+        includeOperations: true,
+      });
+      return {
+        package: contentPackage,
+        candidate,
+        source: {
+          packageId: sourcePackageId,
+          releaseId: sourceRelease.releaseId,
+          snapshotHash: sourceRelease.snapshotHash,
+        },
+        skippedOperations: inverse.skippedOperations,
+      };
     },
 
     async readContentOperationPackage(packageId, { includeOperations = true } = {}) {
@@ -2378,6 +2651,24 @@ export function createContentOperationsRepository({ db, env = {}, now }) {
       const releaseProof = buildReleaseProof(proof, approval, publishAudioScan, currentAssetScan);
       const releaseAudioProof = audioReleaseProofFromProof(releaseProof);
       const releaseAssetProof = releaseAssetProofFromProof(releaseProof);
+      const revertSource = await readPackageRevertSource(db, packageId);
+      if (revertSource) {
+        const sourcePackageRow = await requirePackage(db, revertSource.revertOfPackageId);
+        const sourceSupersededByPackageId = normaliseString(sourcePackageRow.superseded_by_package_id);
+        if (
+          sourcePackageRow.subject_id !== packageRow.subject_id
+          || sourcePackageRow.state !== CONTENT_OPERATION_PACKAGE_STATES.PUBLISHED
+          || sourceSupersededByPackageId
+        ) {
+          throw new ConflictError('Package revert source has already been superseded.', {
+            code: 'content_operation_revert_source_superseded',
+            packageId,
+            revertOfPackageId: revertSource.revertOfPackageId,
+            sourceState: sourcePackageRow.state,
+            supersededByPackageId: sourceSupersededByPackageId || null,
+          });
+        }
+      }
 
       let publishResults = [];
       try {
@@ -2471,6 +2762,84 @@ export function createContentOperationsRepository({ db, env = {}, now }) {
             nowTs,
             releaseId,
           ]),
+          ...(revertSource ? [
+            bindStatement(db, `
+              UPDATE content_operation_packages
+              SET state = ?, superseded_by_package_id = ?,
+                  updated_by_account_id = ?, updated_at = ?
+              WHERE package_id = ?
+                AND state = ?
+                AND EXISTS (
+                  SELECT 1
+                  FROM content_operation_releases
+                  WHERE release_id = ?
+                )
+            `, [
+              CONTENT_OPERATION_PACKAGE_STATES.REVERTED,
+              packageId,
+              actor,
+              nowTs,
+              revertSource.revertOfPackageId,
+              CONTENT_OPERATION_PACKAGE_STATES.PUBLISHED,
+              releaseId,
+            ]),
+            bindStatement(db, `
+              INSERT INTO content_operation_events (
+                event_id, package_id, release_id, subject_id, event_type,
+                actor_account_id, event_json, created_at
+              )
+              SELECT ?, ?, ?, ?, ?, ?, ?, ?
+              WHERE EXISTS (
+                SELECT 1
+                FROM content_operation_releases
+                WHERE release_id = ?
+              )
+            `, [
+              uid('coevt'),
+              revertSource.revertOfPackageId,
+              releaseId,
+              packageRow.subject_id,
+              'package.reverted',
+              actor,
+              JSON.stringify({
+                revertPackageId: packageId,
+                revertReleaseId: releaseId,
+                revertOfPackageId: revertSource.revertOfPackageId,
+                revertOfReleaseId: revertSource.revertOfReleaseId,
+                revertReason: revertSource.revertReason,
+              }),
+              nowTs,
+              releaseId,
+            ]),
+            bindStatement(db, `
+              INSERT INTO content_operation_events (
+                event_id, package_id, release_id, subject_id, event_type,
+                actor_account_id, event_json, created_at
+              )
+              SELECT ?, ?, ?, ?, ?, ?, ?, ?
+              WHERE EXISTS (
+                SELECT 1
+                FROM content_operation_releases
+                WHERE release_id = ?
+              )
+            `, [
+              uid('coevt'),
+              packageId,
+              releaseId,
+              packageRow.subject_id,
+              'package.revert_published',
+              actor,
+              JSON.stringify({
+                revertPackageId: packageId,
+                revertReleaseId: releaseId,
+                revertOfPackageId: revertSource.revertOfPackageId,
+                revertOfReleaseId: revertSource.revertOfReleaseId,
+                revertReason: revertSource.revertReason,
+              }),
+              nowTs,
+              releaseId,
+            ]),
+          ] : []),
         ]);
       } catch (error) {
         if (isUniqueConstraintError(error)) {

@@ -7,8 +7,10 @@ import {
   buildSpellingContentWordDetail,
 } from '../src/subjects/spelling/content/editor-read-model.js';
 import {
+  buildContentOperationRevertOperations,
   buildSpellingContentOperationCandidate,
   applyContentOperationsToSpellingContent,
+  contentOperationValueHash,
 } from '../src/subjects/spelling/content/operations-model.js';
 import {
   buildPublishedSnapshotFromDraft,
@@ -28,6 +30,9 @@ import {
   validateSpellingWordListEditorInput,
   validateSpellingWordEditorInput,
 } from '../src/subjects/spelling/content/package-operations.js';
+import {
+  readSeededSpellingContentBundle,
+} from '../worker/src/generated-spelling-content-seed.js';
 
 const NOW = Date.UTC(2026, 5, 11, 12, 0, 0);
 
@@ -756,6 +761,59 @@ test('spelling word editor builder keeps core word-family variants as separate r
     }),
     /Core word-family variants must stay as separate word rows/,
   );
+});
+
+test('content operation revert builder restores fields and retires created published entities', async () => {
+  const bundle = await readSeededSpellingContentBundle();
+  const word = bundle.draft.words[0];
+  const changedExplanation = `Temporary inverse-builder explanation for ${word.word}.`;
+  const operations = [{
+    operationId: 'source-set-word',
+    entityType: 'spelling.word',
+    entityId: word.slug,
+    fieldPath: 'explanation',
+    action: 'set',
+    payload: changedExplanation,
+  }, {
+    operationId: 'source-create-pool',
+    entityType: 'spelling.pool',
+    entityId: 'inverse-builder-pool',
+    fieldPath: '',
+    action: 'create',
+    payload: {
+      id: 'inverse-builder-pool',
+      title: 'Inverse builder pool',
+      type: 'extension',
+      visibility: { state: 'hidden' },
+      sourceNote: 'Created by inverse builder test.',
+      provenance: { source: 'content-operations-inverse-test' },
+    },
+  }];
+  const sourceSnapshot = applyContentOperationsToSpellingContent(bundle, operations);
+  const inverse = buildContentOperationRevertOperations({
+    sourceBaseSnapshot: bundle,
+    operations,
+    reason: 'Exercise inverse operation generation.',
+    now: () => NOW,
+    sourcePackageId: 'copkg-source',
+    sourceReleaseId: 'corel-source',
+  });
+
+  assert.equal(inverse.operations.length, 2);
+  assert.equal(inverse.operations[0].entityType, 'spelling.pool');
+  assert.equal(inverse.operations[0].action, 'retire');
+  assert.equal(inverse.operations[0].payload.source, 'content-operations-package-revert');
+  assert.equal(inverse.operations[1].entityType, 'spelling.word');
+  assert.equal(inverse.operations[1].action, 'set');
+  assert.equal(inverse.operations[1].payload, word.explanation);
+
+  const revertedSnapshot = applyContentOperationsToSpellingContent(sourceSnapshot, inverse.operations);
+  const revertedWord = revertedSnapshot.draft.words.find((entry) => entry.slug === word.slug);
+  const retiredPool = revertedSnapshot.draft.pools.find((entry) => entry.id === 'inverse-builder-pool');
+  assert.equal(revertedWord.explanation, word.explanation);
+  assert.equal(retiredPool.active, false);
+  assert.equal(retiredPool.retired, true);
+  assert.equal(inverse.operations[0].afterHash, contentOperationValueHash(retiredPool));
 });
 
 test('spelling word delete-or-retire operation hard deletes drafts and retires published words', () => {

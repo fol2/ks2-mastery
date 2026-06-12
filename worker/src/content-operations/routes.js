@@ -41,7 +41,6 @@ const CONTENT_OPERATIONS_SUBJECT_ID = 'spelling';
 const STUBBED_CONTENT_OPERATION_ROUTES = Object.freeze({
   rebase: { ticket: 'T6', capability: CONTENT_OPERATION_CAPABILITIES.EDIT },
   'scan-audio': { ticket: 'T7', capability: CONTENT_OPERATION_CAPABILITIES.EDIT },
-  'create-revert': { ticket: 'T9', capability: CONTENT_OPERATION_CAPABILITIES.ROLLBACK },
 });
 
 function mutationFromRequest(body = {}, request) {
@@ -611,7 +610,11 @@ export async function handleContentOperationsAdminRequest({
       const stub = STUBBED_CONTENT_OPERATION_ROUTES[action];
       const capability = action === 'approve'
         ? CONTENT_OPERATION_CAPABILITIES.APPROVE
-        : (action === 'publish' ? CONTENT_OPERATION_CAPABILITIES.PUBLISH : (stub?.capability || CONTENT_OPERATION_CAPABILITIES.EDIT));
+        : (action === 'publish'
+            ? CONTENT_OPERATION_CAPABILITIES.PUBLISH
+            : (action === 'create-revert'
+                ? CONTENT_OPERATION_CAPABILITIES.ROLLBACK
+                : (stub?.capability || CONTENT_OPERATION_CAPABILITIES.EDIT)));
       const actor = await requireRouteActor({
         repository,
         session,
@@ -645,6 +648,25 @@ export async function handleContentOperationsAdminRequest({
       }
 
       const body = normaliseBody(await readJson(request));
+      if (action === 'create-revert') {
+        const result = await repository.createContentOperationPackageRevert(packageId, {
+          createdByAccountId: actor.id,
+          reason: body.reason || body.revertReason || body.revert_reason,
+          title: body.title,
+          description: body.description,
+        });
+        return json({
+          ok: true,
+          actor: serialiseContentOperationActor(actor),
+          package: serialiseContentOperationPackage(result.package),
+          candidate: serialiseContentOperationCandidate(result.candidate, {
+            includeSnapshot: includeSnapshot(url, body),
+          }),
+          source: result.source,
+          skippedOperations: result.skippedOperations || [],
+        }, 201);
+      }
+
       if (action === 'validate') {
         let candidate;
         try {

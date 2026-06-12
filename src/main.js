@@ -2726,6 +2726,7 @@ function buildSurfaceActions() {
     generateAudio: hubApi.generateContentOperationAudio?.bind(hubApi),
     approvePackage: hubApi.approveContentOperationPackage?.bind(hubApi),
     publishPackage: hubApi.publishContentOperationPackage?.bind(hubApi),
+    createRevertPackage: hubApi.createContentOperationPackageRevert?.bind(hubApi),
     resolveConflict: hubApi.resolveContentOperationConflict?.bind(hubApi),
     readReleases: hubApi.readContentOperationReleases?.bind(hubApi),
     readRelease: hubApi.readContentOperationRelease?.bind(hubApi),

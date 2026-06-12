@@ -167,6 +167,16 @@ function packagePublishReadiness(contentPackage = {}) {
       warnings: [],
     };
   }
+  if (
+    contentPackage.state === CONTENT_OPERATION_PACKAGE_STATES.REVERTED
+    || contentPackage.state === CONTENT_OPERATION_PACKAGE_STATES.SUPERSEDED
+  ) {
+    return {
+      status: contentPackage.state,
+      blockers: ['terminal_package_state'],
+      warnings: [],
+    };
+  }
   if (contentPackage.state === CONTENT_OPERATION_PACKAGE_STATES.APPROVED) {
     return {
       status: 'ready',
