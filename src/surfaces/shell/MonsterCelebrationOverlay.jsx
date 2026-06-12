@@ -1,5 +1,6 @@
 import { useMonsterVisualConfig } from '../../platform/game/MonsterVisualConfigContext.jsx';
 import { resolveMonsterVisual } from '../../platform/game/monster-visual-config.js';
+import { applyMonsterImageFallback, monsterImageFallbackDataset } from '../../platform/game/render/image-fallback.js';
 import { monsterVisualCelebrationStyle } from '../../platform/game/monster-visual-style.js';
 
 function imageVisual(monsterId, stage, branch, config) {
@@ -60,6 +61,8 @@ function CelebrationVisual({ className, stage, visual }) {
         src={visual.src}
         srcSet={visual.srcSet}
         sizes="min(90vw, 540px)"
+        {...monsterImageFallbackDataset(visual)}
+        onError={applyMonsterImageFallback}
       />
     </span>
   );

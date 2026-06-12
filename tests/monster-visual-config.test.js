@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { MONSTER_ASSET_MANIFEST } from '../src/platform/game/monster-asset-manifest.js';
+import { applyMonsterImageFallback } from '../src/platform/game/render/image-fallback.js';
 import {
   BUNDLED_MONSTER_VISUAL_CONFIG,
   MONSTER_VISUAL_CONTEXTS,
@@ -11,8 +12,10 @@ import {
   buildMonsterAssetKey,
   monsterVisualAssetSources,
   monsterVisualSourceMonsterId,
+  normaliseMonsterRuntimeAssetReferences,
   normaliseMonsterVisualRuntimeConfig,
   resolveMonsterVisual,
+  resolveMonsterVisualConfigFromPointer,
   validateMonsterVisualConfigForPublish,
 } from '../src/platform/game/monster-visual-config.js';
 
@@ -326,4 +329,155 @@ test('U7 adv-u7-r1-001: normaliser rejects pointer with incompatible schemaVersi
     publishedVersion: 1,
     compact: true,
   }), null, 'schema-mismatch pointer still rejected');
+});
+
+test('T23: runtime asset references are normalised to safe app URLs only', () => {
+  const references = normaliseMonsterRuntimeAssetReferences({
+    schemaVersion: 1,
+    releaseId: 'corel-published',
+    hash: 'asset-hash-1',
+    byAssetKey: {
+      'inklet-b1-0': {
+        assetKey: 'inklet-b1-0',
+        releaseId: 'corel-published',
+        referenceId: 'monster-image:inklet:b1:0',
+        target: { monsterId: 'inklet', branchId: 'b1', stageId: '0' },
+        contentType: 'image/png',
+        width: 320,
+        height: 320,
+        src: '/api/content-operations/assets/monster-image/corel-published/monster-image%3Ainklet%3Ab1%3A0',
+      },
+      'inklet-b1-1': {
+        assetKey: 'inklet-b1-1',
+        target: { monsterId: 'inklet', branchId: 'b1', stageId: '1' },
+        src: '/api/admin/content-operations/packages/pkg/monster-assets/coasset/preview',
+      },
+    },
+  });
+
+  assert.equal(references.referenceCount, 1);
+  assert.equal(references.byAssetKey['inklet-b1-0'].src, '/api/content-operations/assets/monster-image/corel-published/monster-image%3Ainklet%3Ab1%3A0');
+  assert.equal(references.byAssetKey['inklet-b1-0'].srcSet, '/api/content-operations/assets/monster-image/corel-published/monster-image%3Ainklet%3Ab1%3A0 320w');
+  assert.equal(references.byAssetKey['inklet-b1-1'], undefined, 'admin preview URLs are never runtime-readable');
+});
+
+test('T23: compact pointer can carry runtime asset references without a full config payload', () => {
+  const pointer = normaliseMonsterVisualRuntimeConfig({
+    schemaVersion: 1,
+    manifestHash: BUNDLED_MONSTER_VISUAL_CONFIG.manifestHash,
+    publishedVersion: 3,
+    publishedAt: 1740000000000,
+    compact: true,
+    assetReferenceHash: 'asset-hash-1',
+    runtimeAssetReferences: {
+      schemaVersion: 1,
+      releaseId: 'corel-published',
+      hash: 'asset-hash-1',
+      byAssetKey: {
+        'inklet-b1-0': {
+          assetKey: 'inklet-b1-0',
+          referenceId: 'monster-image:inklet:b1:0',
+          target: { monsterId: 'inklet', branchId: 'b1', stageId: '0' },
+          src: '/api/content-operations/assets/monster-image/corel-published/monster-image%3Ainklet%3Ab1%3A0',
+          width: 320,
+        },
+      },
+    },
+  });
+
+  assert.equal(pointer.compact, true);
+  assert.equal(pointer.assetReferenceHash, 'asset-hash-1');
+  assert.equal(pointer.config.runtimeAssetReferences.byAssetKey['inklet-b1-0'].src, '/api/content-operations/assets/monster-image/corel-published/monster-image%3Ainklet%3Ab1%3A0');
+});
+
+test('T23: pointer asset hash invalidates cached full config so new remote assets apply', () => {
+  const cached = normaliseMonsterVisualRuntimeConfig({
+    schemaVersion: 1,
+    manifestHash: BUNDLED_MONSTER_VISUAL_CONFIG.manifestHash,
+    publishedVersion: 2,
+    publishedAt: 1000,
+    assetReferenceHash: 'old-assets',
+    config: BUNDLED_MONSTER_VISUAL_CONFIG,
+  });
+  const pointer = normaliseMonsterVisualRuntimeConfig({
+    schemaVersion: 1,
+    manifestHash: BUNDLED_MONSTER_VISUAL_CONFIG.manifestHash,
+    publishedVersion: 3,
+    publishedAt: 2000,
+    compact: true,
+    assetReferenceHash: 'new-assets',
+    runtimeAssetReferences: {
+      schemaVersion: 1,
+      releaseId: 'corel-published',
+      hash: 'new-assets',
+      byAssetKey: {
+        'inklet-b1-0': {
+          assetKey: 'inklet-b1-0',
+          referenceId: 'monster-image:inklet:b1:0',
+          target: { monsterId: 'inklet', branchId: 'b1', stageId: '0' },
+          src: '/api/content-operations/assets/monster-image/corel-published/monster-image%3Ainklet%3Ab1%3A0',
+          width: 320,
+        },
+      },
+    },
+  });
+
+  const resolved = resolveMonsterVisualConfigFromPointer(pointer, cached);
+  assert.equal(resolved, pointer);
+});
+
+test('T23: visual resolver uses published runtime asset first with bundled fallback metadata', () => {
+  const visual = resolveMonsterVisual({
+    monsterId: 'inklet',
+    branch: 'b1',
+    stage: 0,
+    context: 'codexCard',
+    preferredSize: 640,
+    config: {
+      ...BUNDLED_MONSTER_VISUAL_CONFIG,
+      runtimeAssetReferences: {
+        schemaVersion: 1,
+        releaseId: 'corel-published',
+        hash: 'asset-hash-1',
+        byAssetKey: {
+          'inklet-b1-0': {
+            assetKey: 'inklet-b1-0',
+            referenceId: 'monster-image:inklet:b1:0',
+            target: { monsterId: 'inklet', branchId: 'b1', stageId: '0' },
+            src: '/api/content-operations/assets/monster-image/corel-published/monster-image%3Ainklet%3Ab1%3A0',
+            width: 320,
+          },
+        },
+      },
+    },
+  });
+
+  assert.equal(visual.source, 'config-runtime-asset');
+  assert.equal(visual.src, '/api/content-operations/assets/monster-image/corel-published/monster-image%3Ainklet%3Ab1%3A0');
+  assert.equal(visual.srcSet, '/api/content-operations/assets/monster-image/corel-published/monster-image%3Ainklet%3Ab1%3A0 320w');
+  assert.equal(visual.fallbackSrc, './assets/monsters/inklet/b1/inklet-b1-0.640.webp?v=20260514-subject-assets');
+  assert.match(visual.fallbackSrcSet, /inklet-b1-0\.1280\.webp\?v=20260514-subject-assets 1280w/);
+});
+
+test('T23: monster image error handler swaps remote failures to bundled fallback once', () => {
+  const image = {
+    dataset: {
+      fallbackSrc: './assets/monsters/inklet/b1/inklet-b1-0.640.webp?v=20260514-subject-assets',
+      fallbackSrcset: './assets/monsters/inklet/b1/inklet-b1-0.640.webp?v=20260514-subject-assets 640w',
+    },
+    src: '/api/content-operations/assets/monster-image/corel-published/monster-image%3Ainklet%3Ab1%3A0',
+    srcset: '/api/content-operations/assets/monster-image/corel-published/monster-image%3Ainklet%3Ab1%3A0 320w',
+    removeAttribute(name) {
+      this[name] = '';
+    },
+  };
+
+  applyMonsterImageFallback({ currentTarget: image });
+  assert.equal(image.dataset.fallbackApplied, 'true');
+  assert.equal(image.src, './assets/monsters/inklet/b1/inklet-b1-0.640.webp?v=20260514-subject-assets');
+  assert.equal(image.srcset, './assets/monsters/inklet/b1/inklet-b1-0.640.webp?v=20260514-subject-assets 640w');
+
+  image.src = '/api/content-operations/assets/monster-image/corel-published/retry';
+  applyMonsterImageFallback({ currentTarget: image });
+  assert.equal(image.src, '/api/content-operations/assets/monster-image/corel-published/retry');
 });

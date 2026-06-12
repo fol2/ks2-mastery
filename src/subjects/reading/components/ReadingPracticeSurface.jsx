@@ -232,6 +232,8 @@ export function readingMonsterImageVisual(monsterId, progress, config) {
       sizes: '(max-width: 720px) 96px, 120px',
       loading: 'lazy',
       decoding: 'async',
+      'data-fallback-src': visual.fallbackSrc || '',
+      'data-fallback-srcset': visual.fallbackSrcSet || '',
     },
   };
 }

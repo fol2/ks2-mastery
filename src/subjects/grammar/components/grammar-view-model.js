@@ -577,6 +577,8 @@ export function grammarMonsterImageVisual(monsterId, stage, visualConfig = null,
       src: visual.src,
       srcSet: visual.srcSet,
       sizes: 'min(30vw, 120px)',
+      'data-fallback-src': visual.fallbackSrc || '',
+      'data-fallback-srcset': visual.fallbackSrcSet || '',
     },
   };
 }

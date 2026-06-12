@@ -4,6 +4,7 @@ import {
   resolveMonsterVisual,
 } from '../../platform/game/monster-visual-config.js';
 import { MonsterRender } from '../../platform/game/render/MonsterRender.jsx';
+import { applyMonsterImageFallback, monsterImageFallbackDataset } from '../../platform/game/render/image-fallback.js';
 import { MonsterEffectConfigProvider } from '../../platform/game/MonsterEffectConfigContext.jsx';
 import { CELEBRATION_KINDS } from './monster-effect-celebration-helpers.js';
 
@@ -41,6 +42,8 @@ function buildMonsterPropForRender({ asset, visual }) {
     displayState: asset.stage === 0 ? 'egg' : 'monster',
     img: visual.src,
     srcSet: visual.srcSet,
+    fallbackSrc: visual.fallbackSrc || '',
+    fallbackSrcSet: visual.fallbackSrcSet || '',
     imageAlt: '',
   };
 }
@@ -99,6 +102,8 @@ export function MonsterVisualPreviewGrid({
               src={visual.src}
               srcSet={visual.srcSet}
               sizes="120px"
+              {...monsterImageFallbackDataset(visual)}
+              onError={applyMonsterImageFallback}
               style={previewStyle(visual)}
             />
           )}

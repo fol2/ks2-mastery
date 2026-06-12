@@ -7,6 +7,7 @@
  * nextFocus (string), emptyState (string). Stateless (R10): no store, no mastery writes.
  */
 import { SectionHeader } from './SectionHeader.jsx';
+import { applyMonsterImageFallback } from '../game/render/image-fallback.js';
 
 export function SubjectCompanionPanel({
   subjectId,
@@ -37,7 +38,7 @@ export function SubjectCompanionPanel({
             {monsterVisuals.map((m) => (
               <div className={`ss-meadow-cell${m.isEgg ? ' egg' : ''}`} key={m.id}>
                 <span className="ss-meadow-visual" style={m.visual.style}>
-                  <img className="ss-meadow-art" alt="" {...m.visual.imageProps} />
+                  <img className="ss-meadow-art" alt="" {...m.visual.imageProps} onError={applyMonsterImageFallback} />
                 </span>
               </div>
             ))}

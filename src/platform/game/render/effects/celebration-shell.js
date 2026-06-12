@@ -10,6 +10,7 @@
 import { useMonsterVisualConfig } from '../../MonsterVisualConfigContext.jsx';
 import { resolveMonsterVisual } from '../../monster-visual-config.js';
 import { monsterVisualCelebrationStyle } from '../../monster-visual-style.js';
+import { applyMonsterImageFallback, monsterImageFallbackDataset } from '../image-fallback.js';
 
 const PALETTE_DEFAULTS = Object.freeze({
   primary: '#3E6FA8',
@@ -52,6 +53,8 @@ function CelebrationVisual({ className, stage, visual }) {
         src={visual.src}
         srcSet={visual.srcSet}
         sizes="min(90vw, 540px)"
+        {...monsterImageFallbackDataset(visual)}
+        onError={applyMonsterImageFallback}
       />
     </span>
   );

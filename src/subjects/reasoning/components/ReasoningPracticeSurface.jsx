@@ -125,7 +125,15 @@ export function reasoningMonsterImageVisual(monsterId, progress, config) {
   const visual = resolveMonsterVisual({ monsterId: assetMonsterId, branch, stage, context: 'meadow', config, preferredSize: 320 });
   return {
     style: monsterVisualFrameStyle(visual),
-    imageProps: { src: visual.src, srcSet: visual.srcSet, sizes: '(max-width: 720px) 96px, 120px', loading: 'lazy', decoding: 'async' },
+    imageProps: {
+      src: visual.src,
+      srcSet: visual.srcSet,
+      sizes: '(max-width: 720px) 96px, 120px',
+      loading: 'lazy',
+      decoding: 'async',
+      'data-fallback-src': visual.fallbackSrc || '',
+      'data-fallback-srcset': visual.fallbackSrcSet || '',
+    },
   };
 }
 

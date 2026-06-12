@@ -2107,8 +2107,15 @@ export function createContentOperationsRepository({ db, env = {}, now }) {
       const rollbackReleaseId = uid('corel');
       const snapshotHash = contentOperationHash(validation.bundle, 'release');
       const encodedSnapshot = await encodeContentOperationSnapshot(validation.bundle);
+      const targetAssetProof = releaseAssetProofFromProof(target.proof);
       const rollbackProof = {
         ...(proof && typeof proof === 'object' && !Array.isArray(proof) ? proof : {}),
+        ...(targetAssetProof.assetSummary || targetAssetProof.assetReferenceManifest ? {
+          [RELEASE_ASSET_PROOF_KEY]: {
+            assetSummary: cloneSerialisable(targetAssetProof.assetSummary),
+            assetReferenceManifest: cloneSerialisable(targetAssetProof.assetReferenceManifest),
+          },
+        } : {}),
         rollback: {
           targetReleaseId: target.releaseId,
           targetSnapshotHash: target.snapshotHash,
@@ -2190,6 +2197,8 @@ export function createContentOperationsRepository({ db, env = {}, now }) {
         publishedByAccountId: actor,
         rollbackOfReleaseId: target.releaseId,
         proof: rollbackProof,
+        assetSummary: targetAssetProof.assetSummary,
+        assetReferenceManifest: targetAssetProof.assetReferenceManifest,
         createdAt: nowTs,
       };
     },

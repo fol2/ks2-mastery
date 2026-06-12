@@ -90,6 +90,8 @@ export function punctuationMonsterAsset(monsterId = FALLBACK_MONSTER, stage = 0,
     stage: safeStage,
     src: visual.src,
     srcSet: visual.srcSet,
+    fallbackSrc: visual.fallbackSrc || '',
+    fallbackSrcSet: visual.fallbackSrcSet || '',
   };
 }
 
@@ -108,6 +110,8 @@ export function punctuationMonsterImageVisual(monsterId, stage, visualConfig = n
       src: visual.src,
       srcSet: visual.srcSet,
       sizes: 'min(30vw, 120px)',
+      'data-fallback-src': visual.fallbackSrc || '',
+      'data-fallback-srcset': visual.fallbackSrcSet || '',
     },
   };
 }
