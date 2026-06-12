@@ -159,9 +159,11 @@ export function normaliseContentOperationCandidate(entry = null) {
     operationsHash: asString(safe.operationsHash),
     candidateHash: asString(safe.candidateHash),
     validation,
+    audioScan: isPlainObject(safe.audioScan) ? safe.audioScan : null,
     blockers: normaliseContentOperationBlockers(safe.blockers),
     conflicts: asArray(safe.conflicts),
     createdAt: asTs(safe.createdAt),
+    ...(Object.prototype.hasOwnProperty.call(safe, 'candidate') ? { candidate: safe.candidate || null } : {}),
   };
 }
 

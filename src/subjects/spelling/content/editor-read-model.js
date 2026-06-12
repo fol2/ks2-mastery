@@ -4,16 +4,12 @@ import {
 import {
   stableContentOperationStringify,
 } from './operations-model.js';
+import {
+  audioReadinessSummaryForWord,
+} from './audio-readiness.js';
 
 const DEFAULT_BROWSE_LIMIT = 75;
 const MAX_BROWSE_LIMIT = 250;
-const WORD_AUDIO_PROFILES = Object.freeze(['male.natural', 'female.natural']);
-const SENTENCE_AUDIO_PROFILES = Object.freeze([
-  'male.normal',
-  'male.slow',
-  'female.normal',
-  'female.slow',
-]);
 
 function isPlainObject(value) {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
@@ -295,20 +291,6 @@ function packageDraftState(currentValue, packageValue) {
   return compareValue(currentValue, packageValue) ? 'unchanged' : 'modified';
 }
 
-function audioReadinessForWord(word, baseSentenceCount, variantSentenceCount) {
-  const variantCount = asArray(word?.variants).length;
-  const wordAudioRequired = (1 + variantCount) * WORD_AUDIO_PROFILES.length;
-  const sentenceAudioRequired = (baseSentenceCount + variantSentenceCount) * SENTENCE_AUDIO_PROFILES.length;
-  return {
-    status: 'not_scanned',
-    wordProfiles: [...WORD_AUDIO_PROFILES],
-    sentenceProfiles: [...SENTENCE_AUDIO_PROFILES],
-    wordAudioRequired,
-    sentenceAudioRequired,
-    totalRequired: wordAudioRequired + sentenceAudioRequired,
-  };
-}
-
 function rewardImpactForWord(word, familySize) {
   return {
     status: 'not_mapped',
@@ -332,6 +314,7 @@ function compactWordRow({
   packageComparable,
   draftState,
   validationState,
+  audioScan = null,
 }) {
   const list = maps.wordListsById.get(word.listId) || null;
   const sentences = sentenceEntriesForWord(word, maps);
@@ -363,7 +346,7 @@ function compactWordRow({
     validationState,
     hasCurrent: Boolean(currentComparable),
     hasPackageDraft: Boolean(packageComparable),
-    audioReadiness: audioReadinessForWord(word, sentences.length, variantSentenceCount),
+    audioReadiness: audioReadinessSummaryForWord(word, sentences.length, variantSentenceCount, audioScan),
     rewardImpact: rewardImpactForWord(word, familyMembers.length),
   };
 }
@@ -525,6 +508,7 @@ export function buildSpellingContentBrowseModel({
       packageComparable,
       draftState: packageBundle ? packageDraftState(currentComparable, packageComparable) : 'unchanged',
       validationState,
+      audioScan: packageCandidate?.audioScan || null,
     });
   }).sort((left, right) => (
     left.spellingPool.localeCompare(right.spellingPool)
@@ -572,7 +556,7 @@ export function buildSpellingContentBrowseModel({
   };
 }
 
-function detailedWord(bundle, maps, slug) {
+function detailedWord(bundle, maps, slug, audioScan = null) {
   const word = maps.wordsBySlug.get(slug);
   if (!word) return null;
   const list = maps.wordListsById.get(word.listId) || null;
@@ -602,7 +586,7 @@ function detailedWord(bundle, maps, slug) {
     sentences,
     variants,
     familyMembers,
-    audioReadiness: audioReadinessForWord(word, sentences.length, variantSentenceCount),
+    audioReadiness: audioReadinessSummaryForWord(word, sentences.length, variantSentenceCount, audioScan),
     rewardImpact: rewardImpactForWord(word, familyMembers.length),
   };
 }
@@ -621,8 +605,10 @@ export function buildSpellingContentWordDetail({
   const packageBundle = packageContent ? normaliseSpellingContentBundle(packageContent) : null;
   const currentMaps = draftMaps(currentBundle);
   const packageMaps = packageBundle ? draftMaps(packageBundle) : null;
-  const current = detailedWord(currentBundle, currentMaps, safeSlug);
-  const packageDraft = packageBundle ? detailedWord(packageBundle, packageMaps, safeSlug) : null;
+  const current = detailedWord(currentBundle, currentMaps, safeSlug, null);
+  const packageDraft = packageBundle
+    ? detailedWord(packageBundle, packageMaps, safeSlug, packageCandidate?.audioScan || null)
+    : null;
   return {
     type: 'word',
     slug: safeSlug,
