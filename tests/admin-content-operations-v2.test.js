@@ -696,13 +696,31 @@ describe('Content Operations Centre normalisers', () => {
   });
 
   it('normalises spelling browse rows with package draft, audio, and reward metadata', () => {
-    const browse = normaliseContentOperationsSpellingBrowse(CONTENT_OPS_SPELLING_BROWSE);
+    const browse = normaliseContentOperationsSpellingBrowse({
+      browse: {
+        ...CONTENT_OPS_SPELLING_BROWSE.browse,
+        pools: [
+          ...CONTENT_OPS_SPELLING_BROWSE.browse.pools,
+          {
+            id: 'secure-vocabulary',
+            title: 'Secure vocabulary',
+            type: 'extension',
+            visibility: { state: 'hidden' },
+            rewardTrack: { id: 'secure-track', approved: true },
+          },
+        ],
+      },
+      actor: CONTENT_OPS_SPELLING_BROWSE.actor,
+    });
 
     assert.equal(browse.release.releaseId, 'rel-global-1');
     assert.equal(browse.packageDraft.status, 'available');
     assert.equal(browse.packageDraft.validation.status, 'passed');
     assert.equal(browse.totals.variants, 1);
     assert.equal(browse.pools[0].draftStateCounts.modified, 1);
+    assert.equal(browse.pools[1].id, 'secure-vocabulary');
+    assert.equal(browse.pools[1].pool, 'secure-vocabulary');
+    assert.equal(browse.pools[1].rewardTrack.approved, true);
     assert.equal(browse.wordLists[0].title, 'Extra Greek roots');
     assert.equal(browse.words[0].draftState, 'modified');
     assert.deepEqual(browse.words[0].audioReadiness.wordProfiles, ['male.natural', 'female.natural']);

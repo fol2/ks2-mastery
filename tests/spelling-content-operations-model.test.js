@@ -12,8 +12,11 @@ import {
 } from '../src/subjects/spelling/content/operations-model.js';
 import {
   buildPublishedSnapshotFromDraft,
+  validateSpellingContentBundle,
 } from '../src/subjects/spelling/content/model.js';
 import {
+  buildSpellingPoolDeleteOrRetireOperation,
+  buildSpellingPoolUpsertOperation,
   buildSpellingSentenceDeleteOrRetireOperation,
   buildSpellingSentenceUpsertOperation,
   buildSpellingWordListDeleteOrRetireOperation,
@@ -21,6 +24,7 @@ import {
   buildSpellingWordDeleteOrRetireOperation,
   buildSpellingWordUpsertOperation,
   validateSpellingSentenceEditorInput,
+  validateSpellingPoolEditorInput,
   validateSpellingWordListEditorInput,
   validateSpellingWordEditorInput,
 } from '../src/subjects/spelling/content/package-operations.js';
@@ -168,6 +172,64 @@ function packageBundle() {
   };
 }
 
+function addFuturePoolWord(bundle, {
+  poolId,
+  title,
+  visibilityState = 'hidden',
+  slug,
+  word,
+  noRewardException = null,
+  rewardTrack = null,
+}) {
+  bundle.draft.pools = [
+    ...(bundle.draft.pools || []),
+    {
+      id: poolId,
+      title,
+      type: 'extension',
+      visibility: { state: visibilityState },
+      sourceNote: `${title} test fixture.`,
+      provenance: { source: 'spelling-content-operations-model-test' },
+      ...(noRewardException ? { noRewardException } : {}),
+      ...(rewardTrack ? { rewardTrack } : {}),
+    },
+  ];
+  bundle.draft.wordLists.push({
+    id: `${poolId}-list`,
+    title: `${title} list`,
+    spellingPool: poolId,
+    coverageTier: 'secure-extension',
+    yearGroups: [],
+    wordSlugs: [slug],
+    sourceNote: `${title} list fixture.`,
+    provenance: { source: 'spelling-content-operations-model-test' },
+    sortIndex: bundle.draft.wordLists.length,
+  });
+  bundle.draft.words.push({
+    slug,
+    word,
+    family: `${poolId}-family`,
+    listId: `${poolId}-list`,
+    spellingPool: poolId,
+    coverageTier: 'secure-extension',
+    yearGroups: [],
+    accepted: [word.toLowerCase()],
+    tags: [poolId],
+    explanation: `${word} is a future-pool fixture word for content operations tests.`,
+    sentenceEntryIds: [`${slug}-s1`],
+    sourceNote: `${word} fixture.`,
+    provenance: { source: 'spelling-content-operations-model-test' },
+    sortIndex: bundle.draft.words.length,
+  });
+  bundle.draft.sentences.push({
+    id: `${slug}-s1`,
+    wordSlug: slug,
+    text: `${word} appears in a future spelling pool fixture sentence.`,
+    variantLabel: 'default',
+    sortIndex: bundle.draft.sentences.length,
+  });
+}
+
 test('spelling content operations browse summarises families, pools, and audio requirements', () => {
   const browse = buildSpellingContentBrowseModel({
     publishedContent: contentBundle(),
@@ -226,6 +288,253 @@ test('spelling content operations browse keeps retired words out of active pool 
   assert.equal(coreList.wordCount, 1);
   assert.equal(coreList.totalWordCount, 2);
   assert.equal(retiredRow.retired, true);
+});
+
+test('spelling content operations browse exposes pool metadata and future hidden pools', () => {
+  const bundle = contentBundle();
+  bundle.draft.pools = [
+    {
+      id: 'core',
+      title: 'Core statutory spelling',
+      type: 'statutory',
+      visibility: { state: 'visible' },
+      sourceNote: 'Seeded core pool.',
+    },
+    {
+      id: 'secure-vocabulary',
+      title: 'Secure vocabulary',
+      type: 'extension',
+      visibility: { state: 'hidden' },
+      sourceNote: 'Staged by editors.',
+    },
+  ];
+  bundle.draft.wordLists.push({
+    id: 'secure-list',
+    title: 'Secure extension',
+    spellingPool: 'secure-vocabulary',
+    coverageTier: 'secure-extension',
+    yearGroups: [],
+    wordSlugs: [],
+    sourceNote: 'Secure list fixture.',
+    sortIndex: 2,
+  });
+
+  const browse = buildSpellingContentBrowseModel({
+    publishedContent: bundle,
+    filters: { pool: 'secure-vocabulary', limit: 20 },
+  });
+  const securePool = browse.pools.find((pool) => pool.id === 'secure-vocabulary');
+  const secureList = browse.wordLists.find((list) => list.id === 'secure-list');
+
+  assert.equal(securePool.title, 'Secure vocabulary');
+  assert.equal(securePool.type, 'extension');
+  assert.equal(securePool.visibility.state, 'hidden');
+  assert.equal(securePool.wordCount, 0);
+  assert.equal(secureList.spellingPool, 'secure-vocabulary');
+  assert.equal(secureList.coverageTier, 'secure-extension');
+});
+
+test('spelling published snapshot filters hidden and staged pool words but keeps visible approved pool words', () => {
+  const bundle = contentBundle();
+  addFuturePoolWord(bundle, {
+    poolId: 'secure-hidden',
+    title: 'Secure hidden',
+    visibilityState: 'hidden',
+    slug: 'hiddenword',
+    word: 'hiddenword',
+  });
+  addFuturePoolWord(bundle, {
+    poolId: 'secure-staged',
+    title: 'Secure staged',
+    visibilityState: 'staged',
+    slug: 'stagedword',
+    word: 'stagedword',
+  });
+  addFuturePoolWord(bundle, {
+    poolId: 'secure-rewarded',
+    title: 'Secure rewarded',
+    visibilityState: 'visible',
+    slug: 'rewardedword',
+    word: 'rewardedword',
+    rewardTrack: { id: 'secure-reward-track', approved: true, source: 'test' },
+  });
+
+  const validation = validateSpellingContentBundle(bundle);
+  const snapshot = buildPublishedSnapshotFromDraft(validation.bundle.draft, { generatedAt: NOW });
+
+  assert.equal(validation.ok, true);
+  assert.equal(snapshot.wordBySlug.hiddenword, undefined);
+  assert.equal(snapshot.wordBySlug.stagedword, undefined);
+  assert.equal(snapshot.wordBySlug.rewardedword.spellingPool, 'secure-rewarded');
+});
+
+test('spelling pool editor allows hidden future pools and blocks visible pools without reward exception', () => {
+  const hiddenOperation = buildSpellingPoolUpsertOperation({
+    id: 'secure-vocabulary',
+    title: 'Secure vocabulary',
+    type: 'extension',
+    visibility: { state: 'hidden' },
+    sourceNote: 'Created by editor.',
+    provenance: { source: 'admin-editor', note: 'T12 hidden pool' },
+  });
+  const blocked = validateSpellingPoolEditorInput({
+    id: 'secure-visible',
+    title: 'Secure visible',
+    type: 'extension',
+    visibility: { state: 'visible' },
+    sourceNote: 'Created by editor.',
+    provenance: { source: 'admin-editor' },
+  });
+  const invalidId = validateSpellingPoolEditorInput({
+    id: 'Bad Pool!',
+    title: 'Bad pool',
+    type: 'extension',
+    visibility: { state: 'hidden' },
+    sourceNote: 'Created by editor.',
+    provenance: { source: 'admin-editor' },
+  });
+  const exceptionOperation = buildSpellingPoolUpsertOperation({
+    id: 'secure-visible-exception',
+    title: 'Secure visible exception',
+    type: 'extension',
+    visibility: { state: 'visible' },
+    sourceNote: 'Created by editor.',
+    provenance: { source: 'admin-editor' },
+    noRewardException: { approved: true, reason: 'Temporary no-reward pool.' },
+  });
+  const rewardTrackOperation = buildSpellingPoolUpsertOperation({
+    id: 'secure-rewarded',
+    title: 'Secure rewarded',
+    type: 'extension',
+    visibility: { state: 'visible' },
+    sourceNote: 'Created by editor.',
+    provenance: { source: 'admin-editor' },
+    rewardTrack: { id: 'secure-track', approved: true, source: 'reward-track-placeholder' },
+  });
+  const exceptionCandidate = buildSpellingContentOperationCandidate(contentBundle(), [exceptionOperation]);
+  const rewardedCandidate = buildSpellingContentOperationCandidate(contentBundle(), [rewardTrackOperation]);
+  const revokeExistingException = validateSpellingPoolEditorInput({
+    id: 'secure-visible-exception',
+    title: 'Secure visible exception',
+    type: 'extension',
+    visibility: { state: 'visible' },
+    sourceNote: 'Created by editor.',
+    provenance: { source: 'admin-editor' },
+    noRewardException: { approved: false, reason: '' },
+  }, {
+    existingPool: exceptionOperation.payload,
+  });
+
+  assert.equal(hiddenOperation.entityType, 'spelling.pool');
+  assert.equal(hiddenOperation.action, 'upsert');
+  assert.equal(hiddenOperation.payload.visibility.state, 'hidden');
+  assert.equal(blocked.ok, false);
+  assert.ok(blocked.errors.some((entry) => entry.code === 'pool_reward_required'));
+  assert.equal(invalidId.ok, false);
+  assert.equal(invalidId.pool.id, 'bad pool!');
+  assert.ok(invalidId.errors.some((entry) => entry.field === 'id'));
+  assert.throws(
+    () => buildSpellingPoolDeleteOrRetireOperation({ id: 'Bad Pool!' }),
+    /stable lowercase id/,
+  );
+  assert.equal(exceptionOperation.payload.noRewardException.approved, true);
+  assert.equal(exceptionCandidate.validation.ok, true);
+  assert.equal(rewardTrackOperation.payload.rewardTrack.approved, true);
+  assert.equal(rewardedCandidate.validation.ok, true);
+  assert.equal(revokeExistingException.ok, false);
+  assert.ok(revokeExistingException.errors.some((entry) => entry.code === 'pool_reward_required'));
+});
+
+test('spelling pool delete removes draft-only pools and blocks referenced pool removal', () => {
+  const draftOnlyBundle = contentBundle({
+    draft: {
+      ...contentBundle().draft,
+      pools: [{
+        id: 'draft-pool',
+        title: 'Draft pool',
+        type: 'extension',
+        visibility: { state: 'hidden' },
+        sourceNote: 'Draft pool fixture.',
+        provenance: { source: 'spelling-content-operations-model-test' },
+      }],
+    },
+  });
+  const remove = buildSpellingPoolDeleteOrRetireOperation({ id: 'draft-pool', hasCurrent: false });
+  const removedCandidate = buildSpellingContentOperationCandidate(draftOnlyBundle, [remove]);
+
+  const referencedBundle = contentBundle();
+  addFuturePoolWord(referencedBundle, {
+    poolId: 'draft-pool',
+    title: 'Draft pool',
+    visibilityState: 'hidden',
+    slug: 'draftpoolword',
+    word: 'draftpoolword',
+  });
+  const blockedCandidate = buildSpellingContentOperationCandidate(referencedBundle, [remove]);
+
+  assert.equal(remove.action, 'remove');
+  assert.equal(removedCandidate.validation.ok, true);
+  assert.equal(removedCandidate.candidate.draft.pools.some((pool) => pool.id === 'draft-pool'), false);
+  assert.equal(blockedCandidate.validation.ok, false);
+  assert.ok(blockedCandidate.validation.errors.some((entry) => entry.code === 'missing_pool'));
+});
+
+test('spelling candidate validation blocks implicit custom pools and non-core statutory pool types', () => {
+  const implicitPoolCandidate = buildSpellingContentOperationCandidate(contentBundle(), [{
+    entityType: 'spelling.wordList',
+    entityId: 'rogue-list',
+    fieldPath: '',
+    action: 'upsert',
+    payload: {
+      id: 'rogue-list',
+      title: 'Rogue list',
+      spellingPool: 'rogue-pool',
+      coverageTier: 'secure-extension',
+      yearGroups: [],
+      wordSlugs: [],
+      sourceNote: 'Raw package operation fixture.',
+      provenance: { source: 'spelling-content-operations-model-test' },
+    },
+  }]);
+  const statutoryFuturePool = buildSpellingContentOperationCandidate(contentBundle(), [{
+    entityType: 'spelling.pool',
+    entityId: 'secure-statutory',
+    fieldPath: '',
+    action: 'upsert',
+    payload: {
+      id: 'secure-statutory',
+      title: 'Secure statutory',
+      type: 'statutory',
+      visibility: { state: 'hidden' },
+      sourceNote: 'Raw package operation fixture.',
+      provenance: { source: 'spelling-content-operations-model-test' },
+    },
+  }]);
+
+  assert.equal(implicitPoolCandidate.validation.ok, false);
+  assert.ok(implicitPoolCandidate.validation.errors.some((entry) => entry.code === 'missing_pool'));
+  assert.equal(statutoryFuturePool.validation.ok, false);
+  assert.ok(statutoryFuturePool.validation.errors.some((entry) => entry.code === 'pool_type_mismatch'));
+});
+
+test('spelling pool retirement hides runtime words but preserves draft references', () => {
+  const bundle = contentBundle();
+  const retire = buildSpellingPoolDeleteOrRetireOperation({ id: 'extra', hasCurrent: true }, {
+    reason: 'Retired by test.',
+    now: () => NOW,
+  });
+  const candidate = buildSpellingContentOperationCandidate(bundle, [retire]);
+  const retiredPool = candidate.candidate.draft.pools.find((pool) => pool.id === 'extra');
+  const retainedList = candidate.candidate.draft.wordLists.find((list) => list.spellingPool === 'extra');
+  const snapshot = buildPublishedSnapshotFromDraft(candidate.candidate.draft, { generatedAt: NOW });
+
+  assert.equal(retire.action, 'retire');
+  assert.equal(candidate.validation.ok, true);
+  assert.equal(retiredPool.retired, true);
+  assert.equal(retiredPool.retirement.reason, 'Retired by test.');
+  assert.ok(retainedList, 'retired pool keeps word-list references for audit/history');
+  assert.equal(snapshot.words.some((word) => word.spellingPool === 'extra'), false);
+  assert.ok(candidate.validation.warnings.some((entry) => entry.code === 'retired_pool_reference'));
 });
 
 test('spelling content operations browse marks package draft additions and modifications', () => {

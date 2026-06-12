@@ -10,6 +10,9 @@ import {
   isEncodedContentOperationSnapshot,
 } from '../src/subjects/spelling/content/release-snapshot-codec.js';
 import {
+  SPELLING_CONTENT_MODEL_VERSION,
+} from '../src/subjects/spelling/content/model.js';
+import {
   readSeededSpellingContentBundle,
 } from '../worker/src/generated-spelling-content-seed.js';
 import { createMigratedSqliteD1Database } from './helpers/sqlite-d1.js';
@@ -50,7 +53,8 @@ test('content operations seed script builds idempotent first-release SQL', async
     assert.equal(releaseRows[0].published_by_account_id, 'admin-a');
     assert.equal(isEncodedContentOperationSnapshot(releaseRows[0].snapshot_json), true);
     const decoded = JSON.parse(await decodeContentOperationSnapshot(releaseRows[0].snapshot_json));
-    assert.equal(decoded.modelVersion, bundledContent.modelVersion);
+    assert.equal(decoded.modelVersion, SPELLING_CONTENT_MODEL_VERSION);
+    assert.ok(decoded.modelVersion >= bundledContent.modelVersion);
 
     const eventRows = DB.db.prepare(`
       SELECT event_id, event_type, actor_account_id

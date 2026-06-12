@@ -27,6 +27,10 @@ function asString(value, fallback = '') {
   return typeof value === 'string' && value.trim() ? value.trim() : fallback;
 }
 
+function isValidPoolId(value) {
+  return typeof value === 'string' && /^[a-z][a-z0-9-]{1,63}$/.test(value) && value !== 'all';
+}
+
 function normaliseLimit(value) {
   const limit = Number(value);
   if (!Number.isFinite(limit) || limit <= 0) return DEFAULT_BROWSE_LIMIT;
@@ -38,7 +42,7 @@ function normaliseFilters(filters = {}) {
   const pool = asString(safe.pool || safe.spellingPool, 'all').toLowerCase();
   return {
     query: asString(safe.query || safe.q).toLowerCase(),
-    pool: ['core', 'extra'].includes(pool) ? pool : 'all',
+    pool: isValidPoolId(pool) ? pool : 'all',
     listId: asString(safe.listId),
     limit: normaliseLimit(safe.limit),
   };
@@ -60,10 +64,11 @@ function validationSummary(validation = null) {
 }
 
 function draftMaps(bundle) {
+  const poolsById = new Map(bundle.draft.pools.map((entry) => [entry.id, entry]));
   const wordListsById = new Map(bundle.draft.wordLists.map((entry) => [entry.id, entry]));
   const wordsBySlug = new Map(bundle.draft.words.map((entry) => [entry.slug, entry]));
   const sentencesById = new Map(bundle.draft.sentences.map((entry) => [entry.id, entry]));
-  return { wordListsById, wordsBySlug, sentencesById };
+  return { poolsById, wordListsById, wordsBySlug, sentencesById };
 }
 
 function sentenceEntriesForWord(word, maps) {
@@ -205,6 +210,51 @@ function compactWordList(list, wordCount, draftState = 'unchanged', totalWordCou
     wordCount,
     totalWordCount,
     draftState,
+  };
+}
+
+function compactPool(pool, rows, draftState = 'unchanged') {
+  const poolRows = rows.filter((row) => row.spellingPool === pool.id);
+  const activePoolRows = pool.active !== false && !pool.retired && pool.visibility?.state === 'visible'
+    ? poolRows.filter((row) => row.active !== false && !row.retired)
+    : [];
+  return {
+    id: pool.id,
+    pool: pool.id,
+    title: pool.title,
+    type: pool.type || 'custom',
+    visibility: pool.visibility || { state: 'hidden', learnerVisible: false },
+    sourceNote: pool.sourceNote || '',
+    provenance: pool.provenance || null,
+    tags: asArray(pool.tags),
+    active: pool.active !== false,
+    retired: Boolean(pool.retired),
+    retirement: pool.retirement || null,
+    noRewardException: pool.noRewardException || null,
+    rewardTrack: pool.rewardTrack || null,
+    wordCount: activePoolRows.length,
+    totalWordCount: poolRows.length,
+    sentenceCount: activePoolRows.reduce((sum, row) => sum + row.sentenceCount + row.variantSentenceCount, 0),
+    variantCount: activePoolRows.reduce((sum, row) => sum + row.variantCount, 0),
+    draftStateCounts: draftStateCounts(poolRows),
+    draftState,
+    sortIndex: Number.isInteger(Number(pool.sortIndex)) ? Number(pool.sortIndex) : 0,
+  };
+}
+
+function comparablePool(pool) {
+  if (!pool) return null;
+  return {
+    id: pool.id,
+    title: pool.title,
+    type: pool.type,
+    visibility: pool.visibility || null,
+    sourceNote: pool.sourceNote || '',
+    tags: asArray(pool.tags),
+    active: pool.active !== false,
+    retired: Boolean(pool.retired),
+    noRewardException: pool.noRewardException || null,
+    rewardTrack: pool.rewardTrack || null,
   };
 }
 
@@ -352,19 +402,22 @@ function draftStateCounts(rows) {
   return counts;
 }
 
-function poolSummaries(rows) {
-  return ['core', 'extra'].map((pool) => {
-    const poolRows = rows.filter((row) => row.spellingPool === pool);
-    const activePoolRows = poolRows.filter((row) => row.active !== false && !row.retired);
-    return {
-      pool,
-      wordCount: activePoolRows.length,
-      totalWordCount: poolRows.length,
-      sentenceCount: activePoolRows.reduce((sum, row) => sum + row.sentenceCount + row.variantSentenceCount, 0),
-      variantCount: activePoolRows.reduce((sum, row) => sum + row.variantCount, 0),
-      draftStateCounts: draftStateCounts(poolRows),
-    };
-  });
+function poolSummaries({ currentBundle, packageBundle, currentMaps, packageMaps, rows }) {
+  const poolIds = new Set([
+    ...currentBundle.draft.pools.map((entry) => entry.id),
+    ...asArray(packageBundle?.draft?.pools).map((entry) => entry.id),
+    ...rows.map((row) => row.spellingPool),
+  ]);
+  return [...poolIds].map((id) => {
+    const currentPool = currentMaps.poolsById.get(id) || null;
+    const packagePool = packageMaps?.poolsById.get(id) || null;
+    const display = packagePool || currentPool || { id, title: id, type: 'custom', visibility: { state: 'hidden' } };
+    return compactPool(
+      display,
+      rows,
+      packageBundle ? packageDraftState(comparablePool(currentPool), comparablePool(packagePool)) : 'unchanged',
+    );
+  }).sort((left, right) => left.sortIndex - right.sortIndex || left.title.localeCompare(right.title));
 }
 
 function compactWordLists({ currentBundle, packageBundle, currentMaps, packageMaps }) {
@@ -379,7 +432,12 @@ function compactWordLists({ currentBundle, packageBundle, currentMaps, packageMa
     const packageList = packageMaps?.wordListsById.get(id) || null;
     const display = packageList || currentList;
     const listWords = displayBundle.draft.words.filter((word) => word.listId === id);
-    const wordCount = listWords.filter((word) => word.active !== false && !word.retired).length;
+    const pool = displayMaps.poolsById.get(display?.spellingPool) || null;
+    const poolLearnerVisible = !pool || (pool.active !== false && !pool.retired && pool.visibility?.state === 'visible');
+    const listLearnerVisible = display?.active !== false && !display?.retired && poolLearnerVisible;
+    const wordCount = listLearnerVisible
+      ? listWords.filter((word) => word.active !== false && !word.retired).length
+      : 0;
     return compactWordList(
       display,
       wordCount,
@@ -497,7 +555,13 @@ export function buildSpellingContentBrowseModel({
       families: new Set(displayBundle.draft.words.map((word) => `${word.spellingPool}:${word.coverageTier}:${word.family}`)).size,
     },
     draftStateCounts: draftStateCounts(rows),
-    pools: poolSummaries(rows),
+    pools: poolSummaries({
+      currentBundle,
+      packageBundle,
+      currentMaps,
+      packageMaps,
+      rows,
+    }),
     wordLists: compactWordLists({
       currentBundle,
       packageBundle,

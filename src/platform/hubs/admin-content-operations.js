@@ -348,13 +348,33 @@ function normaliseSpellingWordList(row = null) {
 
 function normaliseSpellingPoolSummary(row = null) {
   const safe = isPlainObject(row) ? row : {};
+  const visibility = isPlainObject(safe.visibility) ? safe.visibility : {};
+  const poolId = asString(safe.id || safe.pool, 'core');
   return {
-    pool: asString(safe.pool, 'core'),
+    id: poolId,
+    pool: poolId,
+    title: asString(safe.title, poolId),
+    type: asString(safe.type, 'custom'),
+    visibility: {
+      state: asString(visibility.state, 'hidden'),
+      learnerVisible: Boolean(visibility.learnerVisible),
+      scheduledAt: asTs(visibility.scheduledAt),
+      rolloutFlag: asString(visibility.rolloutFlag),
+    },
+    sourceNote: asString(safe.sourceNote),
+    provenance: isPlainObject(safe.provenance) ? { ...safe.provenance } : null,
+    tags: asArray(safe.tags),
+    active: safe.active === false ? false : true,
+    retired: Boolean(safe.retired),
+    retirement: isPlainObject(safe.retirement) ? { ...safe.retirement } : null,
+    noRewardException: isPlainObject(safe.noRewardException) ? { ...safe.noRewardException } : null,
+    rewardTrack: isPlainObject(safe.rewardTrack) ? { ...safe.rewardTrack } : null,
     wordCount: Number(safe.wordCount) || 0,
     totalWordCount: Number(safe.totalWordCount ?? safe.wordCount) || 0,
     sentenceCount: Number(safe.sentenceCount) || 0,
     variantCount: Number(safe.variantCount) || 0,
     draftStateCounts: isPlainObject(safe.draftStateCounts) ? { ...safe.draftStateCounts } : {},
+    draftState: asString(safe.draftState, 'unchanged'),
   };
 }
 
