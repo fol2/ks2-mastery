@@ -1,5 +1,6 @@
 import { useMonsterVisualConfig } from '../../platform/game/MonsterVisualConfigContext.jsx';
 import { resolveMonsterVisual } from '../../platform/game/monster-visual-config.js';
+import { applyMonsterImageFallback, monsterImageFallbackDataset } from '../../platform/game/render/image-fallback.js';
 
 function imageVisual(monsterId, stage, branch, config) {
   return resolveMonsterVisual({
@@ -53,6 +54,8 @@ function ToastContent({ toast }) {
             src={visual.src}
             srcSet={visual.srcSet}
             sizes="56px"
+            {...monsterImageFallbackDataset(visual)}
+            onError={applyMonsterImageFallback}
             width={56}
             height={56}
             style={portraitStyle(visual)}

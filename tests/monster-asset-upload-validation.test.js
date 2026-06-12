@@ -810,6 +810,115 @@ test('monster image uploads are bound to candidate approval and publish proof', 
   }
 });
 
+test('published monster image assets are runtime-readable with draft isolation and rollback retention', async () => {
+  const bucket = createMemoryR2Bucket();
+  const server = createWorkerRepositoryServer({
+    env: { SPELLING_AUDIO_BUCKET: bucket },
+    now: () => NOW,
+  });
+  try {
+    await seedFirstRelease(server);
+    const contentPackage = await createPackage(server);
+    const uploadResponse = await uploadMonsterAsset(server, contentPackage.packageId, monsterAssetForm());
+    assert.equal(uploadResponse.status, 201);
+
+    const draftBootstrapResponse = await server.fetchAs(
+      ADMIN_ID,
+      `${BASE_URL}/api/bootstrap`,
+      { headers: { 'x-ks2-public-read-models': '1' } },
+      adminHeaders(),
+    );
+    assert.equal(draftBootstrapResponse.status, 200);
+    const draftBootstrap = await draftBootstrapResponse.json();
+    assert.equal(draftBootstrap.monsterVisualConfig.runtimeAssetReferences, undefined);
+
+    const candidate = await validatePackage(server, contentPackage.packageId);
+    const approvalResponse = await approvePackage(server, contentPackage.packageId, candidate.candidate.candidateId);
+    assert.equal(approvalResponse.status, 200);
+    const publishResponse = await publishPackage(server, contentPackage.packageId);
+    assert.equal(publishResponse.status, 200);
+    const published = await publishResponse.json();
+    const reference = published.release.assetReferenceManifest.references[0];
+
+    const bootstrapResponse = await server.fetchAs(
+      ADMIN_ID,
+      `${BASE_URL}/api/bootstrap`,
+      { headers: { 'x-ks2-public-read-models': '1' } },
+      adminHeaders(),
+    );
+    assert.equal(bootstrapResponse.status, 200);
+    const bootstrap = await bootstrapResponse.json();
+    const runtimeReferences = bootstrap.monsterVisualConfig.runtimeAssetReferences;
+    assert.equal(bootstrap.monsterVisualConfig.compact, true);
+    assert.equal(runtimeReferences.releaseId, published.release.releaseId);
+    assert.equal(runtimeReferences.hash, published.release.assetReferenceManifest.hash);
+    assert.equal(runtimeReferences.byAssetKey['inklet-b1-0'].assetUploadId, reference.assetUploadId);
+    assert.match(
+      runtimeReferences.byAssetKey['inklet-b1-0'].src,
+      new RegExp(`^/api/content-operations/assets/monster-image/${published.release.releaseId}/monster-image%3Ainklet%3Ab1%3A0$`),
+    );
+    assert.equal(
+      runtimeReferences.byAssetKey['inklet-b1-0'].src.includes('/api/admin/content-operations/'),
+      false,
+    );
+    assert.equal(JSON.stringify(runtimeReferences).includes('r2Key'), false);
+
+    const imageResponse = await server.fetchAs(
+      ADMIN_ID,
+      `${BASE_URL}${runtimeReferences.byAssetKey['inklet-b1-0'].src}`,
+      {},
+      adminHeaders(),
+    );
+    assert.equal(imageResponse.status, 200);
+    assert.equal(imageResponse.headers.get('content-type'), 'image/png');
+    assert.equal(imageResponse.headers.get('x-content-type-options'), 'nosniff');
+    assert.equal(imageResponse.headers.get('cache-control'), 'public, max-age=3600');
+    assert.equal((await imageResponse.arrayBuffer()).byteLength, validPngBytes().byteLength);
+
+    const repository = createWorkerRepository({
+      env: server.env,
+      now: () => NOW + 1000,
+    });
+    const rollback = await repository.rollbackContentOperationRelease('spelling', published.release.releaseId, {
+      rolledBackByAccountId: ADMIN_ID,
+      proof: { source: 'monster-asset-upload-validation-test' },
+    });
+    assert.equal(rollback.assetReferenceManifest.referenceCount, 1);
+    assert.equal(rollback.assetReferenceManifest.references[0].assetUploadId, reference.assetUploadId);
+
+    const rollbackBootstrapResponse = await server.fetchAs(
+      ADMIN_ID,
+      `${BASE_URL}/api/bootstrap`,
+      { headers: { 'x-ks2-public-read-models': '1' } },
+      adminHeaders(),
+    );
+    assert.equal(rollbackBootstrapResponse.status, 200);
+    const rollbackBootstrap = await rollbackBootstrapResponse.json();
+    const rollbackReferences = rollbackBootstrap.monsterVisualConfig.runtimeAssetReferences;
+    assert.equal(rollbackReferences.releaseId, rollback.releaseId);
+    assert.equal(rollbackReferences.byAssetKey['inklet-b1-0'].assetUploadId, reference.assetUploadId);
+
+    const rollbackImageResponse = await server.fetchAs(
+      ADMIN_ID,
+      `${BASE_URL}${rollbackReferences.byAssetKey['inklet-b1-0'].src}`,
+      {},
+      adminHeaders(),
+    );
+    assert.equal(rollbackImageResponse.status, 200);
+
+    await bucket.delete(bucket.puts[0].key);
+    const missingImageResponse = await server.fetchAs(
+      ADMIN_ID,
+      `${BASE_URL}${rollbackReferences.byAssetKey['inklet-b1-0'].src}`,
+      {},
+      adminHeaders(),
+    );
+    assert.equal(missingImageResponse.status, 404);
+  } finally {
+    server.close();
+  }
+});
+
 test('monster image release serialisation distinguishes caller proof from server asset proof', () => {
   const release = serialiseContentOperationRelease({
     releaseId: 'rel-server-asset-proof',

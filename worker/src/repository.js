@@ -182,6 +182,7 @@ import {
 } from '../../src/subjects/punctuation/service-contract.js';
 import {
   BUNDLED_MONSTER_VISUAL_CONFIG,
+  buildMonsterAssetKey,
   MONSTER_VISUAL_SCHEMA_VERSION,
   validateMonsterVisualConfigForPublish,
   validatePublishedConfigForPublish,
@@ -247,6 +248,8 @@ const MONSTER_VISUAL_CONFIG_POINTER_CACHE_TTL_MS = 5_000;
 const monsterVisualConfigPointerCache = new WeakMap();
 const MONSTER_VISUAL_SCOPE_TYPE = 'platform';
 const MONSTER_VISUAL_SCOPE_ID = 'monster-visual-config';
+const CONTENT_OPERATION_ASSET_PROOF_KEY = 'contentOperationsAssets';
+const CONTENT_OPERATION_MONSTER_ASSET_RUNTIME_ROUTE = '/api/content-operations/assets/monster-image';
 
 // safeJsonParse, asTs, isMissingTableError → repository-helpers.js
 
@@ -578,6 +581,7 @@ async function readPublishedContentOperationReleaseRow(db, subjectId = 'spelling
         status,
         snapshot_hash,
         ${includeSnapshot ? 'snapshot_json' : 'NULL AS snapshot_json'},
+        proof_json,
         published_at,
         created_at
       FROM content_operation_releases
@@ -602,6 +606,7 @@ async function readActiveContentOperationOverrideReleaseRow(db, accountId, subje
         r.status,
         r.snapshot_hash,
         ${includeSnapshot ? 'r.snapshot_json' : 'NULL'} AS snapshot_json,
+        r.proof_json,
         r.published_at,
         r.created_at
       FROM content_operation_account_overrides o
@@ -637,6 +642,7 @@ async function readResolvedContentOperationReleaseRow(db, accountId, subjectId =
         status,
         snapshot_hash,
         snapshot_json,
+        proof_json,
         published_at,
         created_at,
         release_source
@@ -647,6 +653,7 @@ async function readResolvedContentOperationReleaseRow(db, accountId, subjectId =
           r.status,
           r.snapshot_hash,
           ${includeSnapshot ? 'r.snapshot_json' : 'NULL'} AS snapshot_json,
+          r.proof_json,
           r.published_at,
           r.created_at,
           'override' AS release_source,
@@ -668,6 +675,7 @@ async function readResolvedContentOperationReleaseRow(db, accountId, subjectId =
           r.status,
           r.snapshot_hash,
           ${includeSnapshot ? 'r.snapshot_json' : 'NULL'} AS snapshot_json,
+          r.proof_json,
           r.published_at,
           r.created_at,
           'global' AS release_source,
@@ -700,6 +708,83 @@ function contentOperationReleaseRevisionToken(row) {
     row.snapshot_hash || '',
     Number(row.published_at) || 0,
   ].join(':');
+}
+
+function runtimeMonsterAssetReferenceUrl(releaseId, referenceId) {
+  return [
+    CONTENT_OPERATION_MONSTER_ASSET_RUNTIME_ROUTE,
+    encodeURIComponent(String(releaseId || '')),
+    encodeURIComponent(String(referenceId || '')),
+  ].join('/');
+}
+
+function runtimeMonsterAssetReferencesFromReleaseRow(row) {
+  const releaseId = typeof row?.release_id === 'string' ? row.release_id : '';
+  if (!releaseId) return null;
+  const proof = safeJsonParse(row?.proof_json, null);
+  const manifest = isPlainObject(proof?.[CONTENT_OPERATION_ASSET_PROOF_KEY]?.assetReferenceManifest)
+    ? proof[CONTENT_OPERATION_ASSET_PROOF_KEY].assetReferenceManifest
+    : null;
+  const references = Array.isArray(manifest?.references) ? manifest.references : [];
+  if (!references.length) return null;
+  const byAssetKey = {};
+
+  for (const reference of references) {
+    if (!isPlainObject(reference)) continue;
+    const target = isPlainObject(reference.target) ? reference.target : {};
+    const monsterId = typeof target.monsterId === 'string' ? target.monsterId.trim() : '';
+    const branchId = typeof target.branchId === 'string' ? target.branchId.trim() : '';
+    const stageId = String(target.stageId ?? '').trim();
+    const referenceId = typeof reference.referenceId === 'string' ? reference.referenceId.trim() : '';
+    if (!monsterId || !branchId || !stageId || !referenceId) continue;
+    const assetKey = buildMonsterAssetKey(monsterId, branchId, stageId);
+    const width = Math.max(0, Math.floor(Number(reference.content?.dimensions?.width) || 0));
+    const height = Math.max(0, Math.floor(Number(reference.content?.dimensions?.height) || 0));
+    const src = runtimeMonsterAssetReferenceUrl(releaseId, referenceId);
+    byAssetKey[assetKey] = {
+      assetKey,
+      releaseId,
+      referenceId,
+      packageId: typeof reference.packageId === 'string' ? reference.packageId : '',
+      assetUploadId: typeof reference.assetUploadId === 'string' ? reference.assetUploadId : '',
+      target: { monsterId, branchId, stageId },
+      contentType: typeof reference.content?.contentType === 'string' ? reference.content.contentType : '',
+      byteSize: Math.max(0, Math.floor(Number(reference.content?.byteSize) || 0)),
+      width: width || null,
+      height: height || null,
+      src,
+    };
+  }
+
+  const referenceCount = Object.keys(byAssetKey).length;
+  if (!referenceCount) return null;
+  const hash = typeof manifest.hash === 'string' && manifest.hash
+    ? manifest.hash
+    : stableHash(byAssetKey);
+  return {
+    schemaVersion: 1,
+    source: 'content-operation-release',
+    releaseId,
+    hash,
+    referenceCount,
+    byAssetKey,
+  };
+}
+
+function attachRuntimeMonsterAssetReferencesToVisualConfig(monsterVisualConfig, runtimeAssetReferences = null) {
+  if (!runtimeAssetReferences) return monsterVisualConfig;
+  const output = isPlainObject(monsterVisualConfig) ? cloneSerialisable(monsterVisualConfig) : {};
+  output.assetReferenceHash = runtimeAssetReferences.hash || '';
+  output.runtimeAssetReferences = runtimeAssetReferences;
+  if (isPlainObject(output.config)) {
+    output.config = {
+      ...output.config,
+      runtimeAssetReferences,
+    };
+  } else {
+    output.config = { runtimeAssetReferences };
+  }
+  return output;
 }
 
 async function readSpellingRuntimeContentBundle(db, accountId, subjectId = 'spelling', {
@@ -7474,7 +7559,7 @@ async function bootstrapBundle(db, accountId, {
         : null,
     }),
   );
-  const monsterVisualConfig = fullMonsterVisualConfig || monsterVisualConfigPointer;
+  const baseMonsterVisualConfig = fullMonsterVisualConfig || monsterVisualConfigPointer;
   const membershipRows = await measureBootstrapPhase(capacity, BOOTSTRAP_PHASE_TIMING.membership, () => (
     listMembershipRows(db, accountId, { writableOnly: true })
   ));
@@ -7536,6 +7621,10 @@ async function bootstrapBundle(db, accountId, {
       readResolvedContentOperationReleaseRow(db, accountId, 'spelling')
     ))
     : null;
+  const monsterVisualConfig = attachRuntimeMonsterAssetReferencesToVisualConfig(
+    baseMonsterVisualConfig,
+    runtimeMonsterAssetReferencesFromReleaseRow(spellingContentReleaseRow),
+  );
 
   // U7: precompute the revision-envelope ingredients so that both the
   // empty and non-empty branches can stamp them consistently. These

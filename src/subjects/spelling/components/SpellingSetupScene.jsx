@@ -1,5 +1,6 @@
 import React from 'react';
 import { useMonsterVisualConfig } from '../../../platform/game/MonsterVisualConfigContext.jsx';
+import { applyMonsterImageFallback } from '../../../platform/game/render/image-fallback.js';
 import { SpellingHeroBackdrop } from './SpellingHeroBackdrop.jsx';
 import { ArrowRightIcon, CheckIcon } from './spelling-icons.jsx';
 import { useSetupHeroContrast } from './useSetupHeroContrast.js';
@@ -238,7 +239,7 @@ export function SetupMeadow({ codex }) {
         return (
           <div className={`ss-meadow-cell${progress.stage === 0 ? ' egg' : ''}`} key={monster.id}>
             <span className="ss-meadow-visual" style={visual.style}>
-              <img className="ss-meadow-art" alt="" {...visual.imageProps} />
+              <img className="ss-meadow-art" alt="" {...visual.imageProps} onError={applyMonsterImageFallback} />
             </span>
           </div>
         );

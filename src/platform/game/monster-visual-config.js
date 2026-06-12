@@ -151,6 +151,10 @@ function isPlainObject(value) {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 }
 
+function normaliseString(value, fallback = '') {
+  return typeof value === 'string' ? value.trim() || fallback : fallback;
+}
+
 function numberOrDefault(value, fallback = 0) {
   const numeric = Number(value);
   return Number.isFinite(numeric) ? numeric : fallback;
@@ -286,6 +290,79 @@ export function buildBundledMonsterVisualConfig(manifest = MONSTER_ASSET_MANIFES
 }
 
 export const BUNDLED_MONSTER_VISUAL_CONFIG = Object.freeze(buildBundledMonsterVisualConfig());
+
+function normaliseRuntimeAssetUrl(value) {
+  const url = normaliseString(value);
+  if (!url.startsWith('/api/content-operations/assets/monster-image/')) return '';
+  if (/[\r\n]/.test(url)) return '';
+  return url;
+}
+
+function runtimeSourceSetForReference(src, width) {
+  const resolvedWidth = Math.max(1, Math.floor(Number(width) || 0));
+  return resolvedWidth ? `${src} ${resolvedWidth}w` : '';
+}
+
+function normaliseRuntimeAssetReferenceEntry(value = {}) {
+  if (!isPlainObject(value)) return null;
+  const target = isPlainObject(value.target) ? value.target : {};
+  const assetKey = normaliseString(value.assetKey)
+    || buildMonsterAssetKey(target.monsterId, target.branchId || target.branch, target.stageId ?? target.stage);
+  if (!assetKey || !assetByKey.has(assetKey)) return null;
+  const src = normaliseRuntimeAssetUrl(value.src);
+  if (!src) return null;
+  const width = Math.max(0, Math.floor(Number(value.width ?? value.content?.dimensions?.width) || 0));
+  const height = Math.max(0, Math.floor(Number(value.height ?? value.content?.dimensions?.height) || 0));
+  const sizes = width ? [width] : [];
+  return {
+    assetKey,
+    referenceId: normaliseString(value.referenceId),
+    releaseId: normaliseString(value.releaseId),
+    packageId: normaliseString(value.packageId),
+    assetUploadId: normaliseString(value.assetUploadId),
+    target: {
+      monsterId: normaliseString(target.monsterId),
+      branchId: normaliseString(target.branchId || target.branch),
+      stageId: normaliseString(target.stageId ?? target.stage),
+    },
+    contentType: normaliseString(value.contentType ?? value.content?.contentType),
+    byteSize: Math.max(0, Math.floor(Number(value.byteSize ?? value.content?.byteSize) || 0)),
+    width: width || null,
+    height: height || null,
+    src,
+    srcSet: runtimeSourceSetForReference(src, width),
+    sizes,
+  };
+}
+
+export function normaliseMonsterRuntimeAssetReferences(rawValue) {
+  if (!isPlainObject(rawValue)) return null;
+  const rawByAssetKey = isPlainObject(rawValue.byAssetKey) ? rawValue.byAssetKey : null;
+  const sourceEntries = rawByAssetKey
+    ? Object.values(rawByAssetKey)
+    : (Array.isArray(rawValue.references) ? rawValue.references : []);
+  const byAssetKey = {};
+  for (const entry of sourceEntries) {
+    const reference = normaliseRuntimeAssetReferenceEntry(entry);
+    if (!reference) continue;
+    byAssetKey[reference.assetKey] = reference;
+  }
+  const referenceCount = Object.keys(byAssetKey).length;
+  if (!referenceCount) return null;
+  return {
+    schemaVersion: Math.max(1, Math.floor(Number(rawValue.schemaVersion) || 1)),
+    source: normaliseString(rawValue.source, 'content-operation-release'),
+    releaseId: normaliseString(rawValue.releaseId),
+    hash: normaliseString(rawValue.hash),
+    referenceCount,
+    byAssetKey,
+  };
+}
+
+function runtimeReferenceForAssetKey(config, assetKey) {
+  const references = normaliseMonsterRuntimeAssetReferences(config?.runtimeAssetReferences);
+  return references?.byAssetKey?.[assetKey] || null;
+}
 
 function issue(code, message, details = {}) {
   return {
@@ -479,6 +556,11 @@ export function normaliseMonsterVisualRuntimeConfig(rawValue) {
     return null;
   }
 
+  const runtimeAssetReferences = normaliseMonsterRuntimeAssetReferences(
+    raw.runtimeAssetReferences || rawConfig.runtimeAssetReferences,
+  );
+  const assetReferenceHash = normaliseString(raw.assetReferenceHash || runtimeAssetReferences?.hash);
+
   // Pointer-only envelope (no bundled `config.assets`).
   if (raw.compact === true && !isPlainObject(rawConfig.assets)) {
     const manifestHash = typeof raw.manifestHash === 'string' && raw.manifestHash
@@ -490,8 +572,9 @@ export function normaliseMonsterVisualRuntimeConfig(rawValue) {
       manifestHashMismatch: Boolean(manifestHash && manifestHash !== MONSTER_ASSET_MANIFEST.manifestHash),
       publishedVersion: Math.max(0, numberOrDefault(raw.publishedVersion, 0)),
       publishedAt: Math.max(0, numberOrDefault(raw.publishedAt, 0)),
+      assetReferenceHash,
       compact: true,
-      config: null,
+      config: runtimeAssetReferences ? { runtimeAssetReferences } : null,
     };
   }
 
@@ -508,6 +591,7 @@ export function normaliseMonsterVisualRuntimeConfig(rawValue) {
     ...cloneSerialisable(rawConfig),
     schemaVersion,
     manifestHash: rawConfig.manifestHash || manifestHash,
+    ...(runtimeAssetReferences ? { runtimeAssetReferences } : {}),
   };
 
   return {
@@ -516,6 +600,7 @@ export function normaliseMonsterVisualRuntimeConfig(rawValue) {
     manifestHashMismatch: Boolean(manifestHash && manifestHash !== MONSTER_ASSET_MANIFEST.manifestHash),
     publishedVersion: Math.max(0, numberOrDefault(raw.publishedVersion ?? config.version, 0)),
     publishedAt: Math.max(0, numberOrDefault(raw.publishedAt, 0)),
+    assetReferenceHash,
     config,
   };
 }
@@ -545,7 +630,16 @@ export function resolveMonsterVisualConfigFromPointer(normalised, cachedConfig) 
     && !cachedConfig.compact
     && isPlainObject(cachedConfig.config)
     && isPlainObject(cachedConfig.config.assets);
-  if (hasCachedFull && cachedHash && cachedHash === normalised.manifestHash) {
+  const cachedAssetReferenceHash = normaliseString(
+    cachedConfig?.assetReferenceHash || cachedConfig?.config?.runtimeAssetReferences?.hash,
+  );
+  const normalisedAssetReferenceHash = normaliseString(normalised.assetReferenceHash);
+  if (
+    hasCachedFull
+    && cachedHash
+    && cachedHash === normalised.manifestHash
+    && cachedAssetReferenceHash === normalisedAssetReferenceHash
+  ) {
     return cachedConfig;
   }
   return normalised;
@@ -618,7 +712,15 @@ export function resolveMonsterVisual({
     branch,
     stage: normaliseStage(stage),
   }, resolvedContext);
-  const sources = monsterVisualAssetSources(assetKey, { preferredSize });
+  const bundledSources = monsterVisualAssetSources(assetKey, { preferredSize });
+  const runtimeReference = runtimeReferenceForAssetKey(config, assetKey);
+  const sources = runtimeReference
+    ? {
+        src: runtimeReference.src,
+        srcSet: runtimeReference.srcSet || runtimeSourceSetForReference(runtimeReference.src, runtimeReference.width),
+        sizes: runtimeReference.sizes.length ? runtimeReference.sizes : bundledSources.sizes,
+      }
+    : bundledSources;
   const facing = normaliseFacing(baseline.facing, 'left');
 
   return {
@@ -627,7 +729,8 @@ export function resolveMonsterVisual({
     branch: entry?.branch || branch,
     stage: normaliseStage(entry?.stage ?? stage),
     context: resolvedContext,
-    source: useCandidate ? 'config' : 'bundled',
+    source: runtimeReference ? (useCandidate ? 'config-runtime-asset' : 'runtime-asset') : (useCandidate ? 'config' : 'bundled'),
+    runtimeAssetReference: runtimeReference ? cloneSerialisable(runtimeReference) : null,
     ...cloneSerialisable(baseline),
     ...cloneSerialisable(contextValues),
     facing,
@@ -635,6 +738,9 @@ export function resolveMonsterVisual({
     src: sources.src,
     srcSet: sources.srcSet,
     sizes: sources.sizes,
+    fallbackSrc: runtimeReference ? bundledSources.src : '',
+    fallbackSrcSet: runtimeReference ? bundledSources.srcSet : '',
+    fallbackSizes: runtimeReference ? bundledSources.sizes : [],
   };
 }
 

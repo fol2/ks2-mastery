@@ -1,5 +1,6 @@
 import { useMonsterVisualConfig } from '../../platform/game/MonsterVisualConfigContext.jsx';
 import { resolveMonsterVisual } from '../../platform/game/monster-visual-config.js';
+import { applyMonsterImageFallback, monsterImageFallbackDataset } from '../../platform/game/render/image-fallback.js';
 import { eggBreatheStyle } from './data.js';
 // SH2-U5: fresh learners land on the home hero with zero caught monsters.
 // Before the re-skin the meadow rendered `null`, which meant learners saw
@@ -98,6 +99,8 @@ export function MonsterMeadow({ monsters = [], maxSlots = 10 }) {
                 src={src}
                 srcSet={srcSet}
                 sizes={`${size}px`}
+                {...monsterImageFallbackDataset(visual)}
+                onError={applyMonsterImageFallback}
                 width={size}
                 height={size}
                 alt=""

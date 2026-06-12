@@ -2,6 +2,8 @@
 // Kept thin so MonsterRender owns the layering decisions and BaseSprite
 // owns the visible shell tokens (className, src, srcSet, alt, sizes).
 //
+import { applyMonsterImageFallback, monsterImageFallbackDataset } from './image-fallback.js';
+
 // SH2-U10 CLS: declare an intrinsic aspect ratio via `width`/`height` so
 // the browser reserves the box before the .webp decodes. Monster sprites
 // are uniformly 1:1 across all branches (the assets pipeline in
@@ -21,6 +23,8 @@ export function BaseSprite({ monster, sizes, style }) {
       src={monster.img}
       srcSet={monster.srcSet}
       sizes={sizes != null ? sizes : monster.sizes}
+      {...monsterImageFallbackDataset(monster)}
+      onError={applyMonsterImageFallback}
       width={MONSTER_SPRITE_INTRINSIC_DIMENSION}
       height={MONSTER_SPRITE_INTRINSIC_DIMENSION}
       style={style}

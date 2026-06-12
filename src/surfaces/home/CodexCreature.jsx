@@ -50,7 +50,13 @@ export function CodexCreatureVisual({ entry, sizes, context = 'card' }) {
   // asset than the entry default; fold it back into the monster object so
   // <BaseSprite> picks up src/srcSet without us forking its rendering.
   const monsterForRender = visual.src || visual.srcSet
-    ? { ...entry, img: visual.src || entry.img, srcSet: visual.srcSet || entry.srcSet }
+    ? {
+        ...entry,
+        img: visual.src || entry.img,
+        srcSet: visual.srcSet || entry.srcSet,
+        fallbackSrc: visual.fallbackSrc || '',
+        fallbackSrcSet: visual.fallbackSrcSet || '',
+      }
     : entry;
 
   return (

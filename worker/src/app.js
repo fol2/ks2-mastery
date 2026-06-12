@@ -36,6 +36,7 @@ import { createWorkerSubjectRuntime } from './subjects/runtime.js';
 import {
   ConflictError,
   ForbiddenError,
+  BadRequestError,
   NotFoundError,
   AccountSuspendedError,
   AccountPaymentHoldError,
@@ -47,6 +48,7 @@ import { getReadModelDerivedWriteBreaker } from './circuit-breaker-server.js';
 import { isResetableBreakerName } from '../../src/platform/core/circuit-breaker.js';
 import { handleHeroReadModel } from './hero/routes.js';
 import { handleContentOperationsAdminRequest } from './content-operations/routes.js';
+import { readPublishedContentOperationMonsterAssetObject } from './content-operations/assets.js';
 import { resolveHeroStartTaskCommand } from './hero/launch.js';
 import { resolveHeroClaimCommand } from './hero/claim.js';
 import { resolveHeroCampCommand } from './hero/camp.js';
@@ -777,6 +779,23 @@ function decorateResponse(response, { capacity, attachBody, requestId }) {
   });
 }
 
+function decodeRouteSegment(value, code) {
+  try {
+    return decodeURIComponent(value || '');
+  } catch {
+    throw new BadRequestError('Route segment is not valid URL encoding.', { code });
+  }
+}
+
+function publicMonsterAssetResponse({ object, upload }) {
+  const headers = new Headers();
+  const contentType = upload?.contentType || object?.httpMetadata?.contentType || 'application/octet-stream';
+  headers.set('content-type', contentType);
+  headers.set('cache-control', 'public, max-age=3600');
+  headers.set('x-content-type-options', 'nosniff');
+  return new Response(object.body, { headers });
+}
+
 export function createWorkerApp({
   now = Date.now,
   fetchFn = (...args) => fetch(...args),
@@ -1292,6 +1311,26 @@ export function createWorkerApp({
         const session = await auth.requireSession(request);
         const account = await repository.ensureAccount(session);
         resolvedPlatformRole = account?.platform_role || session.platformRole || 'parent';
+
+        const publicMonsterAssetMatch = /^\/api\/content-operations\/assets\/monster-image\/([^/]+)\/([^/]+)$/.exec(url.pathname);
+        if (publicMonsterAssetMatch && request.method === 'GET') {
+          const releaseId = decodeRouteSegment(
+            publicMonsterAssetMatch[1],
+            'content_operation_monster_asset_release_id_invalid',
+          );
+          const referenceId = decodeRouteSegment(
+            publicMonsterAssetMatch[2],
+            'content_operation_monster_asset_reference_id_invalid',
+          );
+          const result = await readPublishedContentOperationMonsterAssetObject({
+            db: requireDatabaseWithCapacity(env, capacity),
+            env,
+            subjectId: 'spelling',
+            releaseId,
+            referenceId,
+          });
+          return publicMonsterAssetResponse(result);
+        }
 
         const subjectCommandMatch = /^\/api\/subjects\/([^/]+)\/command$/.exec(url.pathname);
         if (subjectCommandMatch && request.method === 'POST') {

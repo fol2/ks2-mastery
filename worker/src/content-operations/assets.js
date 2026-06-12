@@ -1607,3 +1607,102 @@ export async function readContentOperationMonsterAssetObject({
   }
   return { upload, object };
 }
+
+function assetReferenceManifestFromReleaseProof(proof = null) {
+  const assets = proof && typeof proof === 'object' && !Array.isArray(proof)
+    ? proof.contentOperationsAssets
+    : null;
+  const manifest = assets && typeof assets === 'object' && !Array.isArray(assets)
+    ? assets.assetReferenceManifest
+    : null;
+  return manifest && typeof manifest === 'object' && !Array.isArray(manifest)
+    ? manifest
+    : null;
+}
+
+function assetReferenceTargetMatchesUpload(reference, upload) {
+  const target = reference?.target && typeof reference.target === 'object' && !Array.isArray(reference.target)
+    ? reference.target
+    : {};
+  return upload
+    && target.monsterId === upload.monsterId
+    && target.branchId === upload.branchId
+    && String(target.stageId) === String(upload.stageId)
+    && reference.assetKind === CONTENT_OPERATION_MONSTER_ASSET_KIND;
+}
+
+export async function readPublishedContentOperationMonsterAssetObject({
+  db,
+  env,
+  subjectId = CONTENT_OPERATION_SUBJECT_ID,
+  releaseId,
+  referenceId,
+}) {
+  const safeSubjectId = normaliseString(subjectId, CONTENT_OPERATION_SUBJECT_ID);
+  const safeReleaseId = normaliseString(releaseId);
+  const safeReferenceId = normaliseString(referenceId);
+  if (!safeReleaseId || !safeReferenceId) {
+    throw new BadRequestError('Published monster asset requests require a release id and reference id.', {
+      code: 'content_operation_monster_asset_runtime_target_required',
+    });
+  }
+
+  const releaseRow = await first(db, `
+    SELECT release_id, subject_id, status, proof_json
+    FROM content_operation_releases
+    WHERE subject_id = ? AND release_id = ? AND status = 'published'
+    LIMIT 1
+  `, [safeSubjectId, safeReleaseId]);
+  const manifest = assetReferenceManifestFromReleaseProof(parseJson(releaseRow?.proof_json, null));
+  const reference = Array.isArray(manifest?.references)
+    ? manifest.references.find((entry) => (
+        entry
+        && typeof entry === 'object'
+        && !Array.isArray(entry)
+        && entry.referenceId === safeReferenceId
+      ))
+    : null;
+  if (!reference) {
+    throw new NotFoundError('Published monster asset reference was not found.', {
+      code: 'content_operation_monster_asset_reference_not_found',
+      releaseId: safeReleaseId,
+      referenceId: safeReferenceId,
+    });
+  }
+
+  const packageId = normaliseString(reference.packageId);
+  const assetUploadId = normaliseString(reference.assetUploadId);
+  const row = await first(db, `
+    SELECT *
+    FROM content_operation_asset_uploads
+    WHERE package_id = ? AND asset_upload_id = ? AND asset_kind = ?
+    LIMIT 1
+  `, [packageId, assetUploadId, CONTENT_OPERATION_MONSTER_ASSET_KIND]);
+  const upload = assetUploadRowToRecord(row);
+  if (!assetReferenceTargetMatchesUpload(reference, upload)) {
+    throw new NotFoundError('Published monster asset upload no longer matches its release reference.', {
+      code: 'content_operation_monster_asset_reference_upload_mismatch',
+      releaseId: safeReleaseId,
+      referenceId: safeReferenceId,
+    });
+  }
+
+  const object = await assertContentOperationAssetBucket(env).get(upload.r2Key);
+  if (!object) {
+    throw new NotFoundError('Published monster asset object was not found.', {
+      code: 'content_operation_monster_asset_object_not_found',
+      releaseId: safeReleaseId,
+      referenceId: safeReferenceId,
+    });
+  }
+
+  return {
+    release: {
+      releaseId: safeReleaseId,
+      subjectId: safeSubjectId,
+    },
+    reference,
+    upload,
+    object,
+  };
+}
