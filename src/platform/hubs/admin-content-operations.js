@@ -1,6 +1,10 @@
 import {
   normaliseHeroExposure,
 } from '../game/reward-track-config.js';
+import {
+  getPreviewBlockedReason,
+  getSafePreviewUrl,
+} from './admin-asset-url-allowlist.js';
 
 const PACKAGE_STATE_LABELS = Object.freeze({
   draft: 'Draft',
@@ -168,6 +172,98 @@ export function normaliseContentOperationActor(actor = null) {
   };
 }
 
+function normaliseContentOperationAssetReference(reference = null) {
+  const safe = isPlainObject(reference) ? reference : {};
+  const target = isPlainObject(safe.target) ? safe.target : {};
+  const preview = isPlainObject(safe.preview) ? safe.preview : {};
+  const content = isPlainObject(safe.content) ? safe.content : {};
+  const dimensions = isPlainObject(content.dimensions) ? content.dimensions : {};
+  const storage = isPlainObject(safe.storage) ? safe.storage : {};
+  const validation = isPlainObject(safe.validation) ? safe.validation : {};
+  const renderer = isPlainObject(safe.renderer) ? safe.renderer : {};
+  const previewUrl = getSafePreviewUrl(preview.url);
+  return {
+    schemaVersion: Number(safe.schemaVersion) || 1,
+    referenceId: asString(safe.referenceId),
+    assetKind: asString(safe.assetKind, 'monster-image'),
+    assetUploadId: asString(safe.assetUploadId),
+    packageId: asNullableString(safe.packageId),
+    target: {
+      monsterId: asString(target.monsterId),
+      branchId: asString(target.branchId),
+      stageId: asString(target.stageId),
+    },
+    preview: {
+      kind: asString(preview.kind, 'admin-api-handle'),
+      url: previewUrl,
+      blockedReason: getPreviewBlockedReason(preview.url),
+      contentType: asString(preview.contentType, content.contentType || ''),
+    },
+    content: {
+      contentType: asString(content.contentType),
+      byteSize: Number(content.byteSize) || 0,
+      dimensions: {
+        width: dimensions.width == null ? null : Number(dimensions.width),
+        height: dimensions.height == null ? null : Number(dimensions.height),
+      },
+    },
+    validation: {
+      status: asString(validation.status, validation.ok === false ? 'blocked' : 'passed'),
+      ok: validation.ok === true,
+      errorCodes: asArray(validation.errorCodes),
+      warningCodes: asArray(validation.warningCodes),
+      errors: asArray(validation.errors),
+      warnings: asArray(validation.warnings),
+    },
+    storage: {
+      status: asString(storage.status, 'not_checked'),
+      byteSize: storage.byteSize == null ? null : Number(storage.byteSize),
+      contentType: asString(storage.contentType),
+    },
+    renderer: {
+      contexts: asArray(renderer.contexts),
+      minDimension: Number(renderer.minDimension) || 0,
+      maxDimension: Number(renderer.maxDimension) || 0,
+      maxAspectRatio: Number(renderer.maxAspectRatio) || 0,
+    },
+    policy: isPlainObject(safe.policy) ? safe.policy : {},
+    createdAt: asTs(safe.createdAt),
+  };
+}
+
+export function normaliseContentOperationAssetReferenceManifest(manifest = null) {
+  const safe = isPlainObject(manifest) ? manifest : {};
+  const references = asArray(safe.references)
+    .map(normaliseContentOperationAssetReference)
+    .filter((reference) => reference.referenceId || reference.assetUploadId);
+  return {
+    schemaVersion: Number(safe.schemaVersion) || 1,
+    assetKind: asString(safe.assetKind, 'monster-image'),
+    packageId: asNullableString(safe.packageId),
+    status: asString(safe.status, references.length ? 'passed' : 'not_scanned'),
+    hash: asString(safe.hash),
+    referenceCount: Number(safe.referenceCount ?? references.length) || 0,
+    references,
+    policy: isPlainObject(safe.policy) ? safe.policy : {},
+  };
+}
+
+export function normaliseContentOperationAssetScan(scan = null) {
+  if (!isPlainObject(scan)) return null;
+  return {
+    ...scan,
+    status: asString(scan.status, 'not_scanned'),
+    hash: asString(scan.hash),
+    blockers: asArray(scan.blockers),
+    warnings: asArray(scan.warnings),
+    uploadCount: Number(scan.uploadCount) || 0,
+    itemCount: Number(scan.itemCount) || 0,
+    targetCount: Number(scan.targetCount) || 0,
+    items: asArray(scan.items),
+    assetReferenceManifest: normaliseContentOperationAssetReferenceManifest(scan.assetReferenceManifest),
+  };
+}
+
 export function normaliseContentOperationCandidate(entry = null) {
   const safe = isPlainObject(entry) ? entry : {};
   const validation = normaliseBlockerSection(safe.validation);
@@ -183,7 +279,7 @@ export function normaliseContentOperationCandidate(entry = null) {
     candidateHash: asString(safe.candidateHash),
     validation,
     audioScan: isPlainObject(safe.audioScan) ? safe.audioScan : null,
-    assetScan: isPlainObject(safe.assetScan) ? safe.assetScan : null,
+    assetScan: normaliseContentOperationAssetScan(safe.assetScan),
     blockers: normaliseContentOperationBlockers(safe.blockers),
     conflicts: asArray(safe.conflicts),
     createdAt: asTs(safe.createdAt),
@@ -237,6 +333,7 @@ function releaseAssetMetadataFromProof(proof = null) {
   const metadata = isPlainObject(proof?.contentOperationsAssets) ? proof.contentOperationsAssets : null;
   return {
     assetSummary: isPlainObject(metadata?.assetSummary) ? metadata.assetSummary : null,
+    assetReferenceManifest: isPlainObject(metadata?.assetReferenceManifest) ? metadata.assetReferenceManifest : null,
   };
 }
 
@@ -273,9 +370,16 @@ export function normaliseContentOperationRelease(entry = null) {
     audioWarnings: isPlainObject(safe.audioWarnings)
       ? safe.audioWarnings
       : proofAudio.audioWarnings,
-    assetSummary: isPlainObject(safe.assetSummary)
-      ? safe.assetSummary
-      : proofAssets.assetSummary,
+    assetSummary: normaliseContentOperationAssetScan(
+      isPlainObject(safe.assetSummary)
+        ? safe.assetSummary
+        : proofAssets.assetSummary,
+    ),
+    assetReferenceManifest: normaliseContentOperationAssetReferenceManifest(
+      isPlainObject(safe.assetReferenceManifest)
+        ? safe.assetReferenceManifest
+        : proofAssets.assetReferenceManifest,
+    ),
     createdAt: asTs(safe.createdAt),
   };
 }

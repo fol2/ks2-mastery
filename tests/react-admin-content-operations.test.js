@@ -105,6 +105,51 @@ const audioScan = {
   ],
 };
 
+const monsterAssetScan = {
+  status: 'passed',
+  hash: 'asset-scan-hash-1',
+  blockers: [],
+  warnings: [],
+  uploadCount: 1,
+  itemCount: 1,
+  targetCount: 1,
+  assetReferenceManifest: {
+    schemaVersion: 1,
+    assetKind: 'monster-image',
+    packageId: 'pkg-draft-1',
+    status: 'passed',
+    hash: 'asset-scan-hash-1',
+    referenceCount: 1,
+    references: [{
+      referenceId: 'monster-image:inklet:b1:0',
+      assetUploadId: 'coasset-1',
+      target: { monsterId: 'inklet', branchId: 'b1', stageId: '0' },
+      preview: {
+        kind: 'admin-api-handle',
+        url: '/api/admin/content-operations/packages/pkg-draft-1/monster-assets/coasset-1/preview',
+        contentType: 'image/png',
+      },
+      content: {
+        contentType: 'image/png',
+        byteSize: 1024,
+        dimensions: { width: 640, height: 640 },
+      },
+      validation: { status: 'passed', ok: true },
+      storage: { status: 'present', byteSize: 1024, contentType: 'image/png' },
+      renderer: { contexts: ['hero-camp', 'hero-codex', 'reward-track'] },
+      policy: {
+        retention: { rollbackAvailability: 'release-reference-retained' },
+        responsiveDerivatives: { mode: 'source_image_until_runtime_derivatives' },
+      },
+    }],
+    policy: {
+      runtimeReadable: false,
+      retention: { rollbackAvailability: 'release-reference-retained' },
+      responsiveDerivatives: { mode: 'source_image_until_runtime_derivatives' },
+    },
+  },
+};
+
 const contentPackage = {
   packageId: 'pkg-draft-1',
   subjectId: 'spelling',
@@ -725,13 +770,49 @@ test('Content Operations Centre area pages show selected package audio operation
   assert.match(audioHtml, /word_audio_missing/);
   assert.doesNotMatch(audioHtml, /No mutation controls/);
 
+  const assetPackage = {
+    ...contentPackage,
+    latestCandidate: {
+      ...contentPackage.latestCandidate,
+      assetScan: monsterAssetScan,
+      blockers: {
+        ...contentPackage.latestCandidate.blockers,
+        assets: { status: 'passed', blockers: [], warnings: [] },
+      },
+    },
+    blockers: {
+      ...contentPackage.blockers,
+      assets: { status: 'passed', blockers: [], warnings: [] },
+    },
+  };
   const assetHtml = await renderEntry(buildContentOpsEntry({
+    model: baseModel({
+      contentOperations: {
+        overview: {
+          ...overview,
+          lanes: {
+            ...overview.lanes,
+            drafts: [assetPackage],
+          },
+        },
+        packages: { packages: [assetPackage] },
+        releases: { releases: [release] },
+        packageDetail: {
+          package: assetPackage,
+          events: [],
+        },
+      },
+    }),
     initialActiveTab: 'monstersAssets',
     initialSelectedPackageId: 'pkg-draft-1',
   }));
-  assert.match(assetHtml, /Monsters &amp; Assets/);
-  assert.match(assetHtml, /1 warnings/);
-  assert.match(assetHtml, /No mutation controls/);
+  assert.match(assetHtml, /Monster assets/);
+  assert.match(assetHtml, /Package image references/);
+  assert.match(assetHtml, /coasset-1/);
+  assert.match(assetHtml, /inklet \/ b1 \/ stage 0/);
+  assert.match(assetHtml, /src="\/api\/admin\/content-operations\/packages\/pkg-draft-1\/monster-assets\/coasset-1\/preview"/);
+  assert.match(assetHtml, /hero camp/);
+  assert.doesNotMatch(assetHtml, /No mutation controls/);
 });
 
 test('Content Operations Centre SSR handles missing local data without breaking the panel', async () => {

@@ -9,6 +9,7 @@ import assert from 'node:assert/strict';
 
 import {
   buildAssetRegistry,
+  buildContentOperationMonsterAssetRegistryEntries,
   buildMonsterVisualRegistryEntry,
 } from '../src/platform/hubs/admin-asset-registry.js';
 
@@ -80,6 +81,37 @@ const NO_DRAFT_CONFIG = {
   draft: null,
   published: { monsters: [] },
   versions: [{ version: 1, publishedAt: 1714000000000 }],
+};
+
+const CONTENT_OPERATION_PACKAGE_WITH_ASSET = {
+  packageId: 'pkg-draft-1',
+  latestCandidate: {
+    createdAt: 1714300800000,
+    assetScan: {
+      status: 'passed',
+      hash: 'asset-scan-hash-1',
+      assetReferenceManifest: {
+        schemaVersion: 1,
+        assetKind: 'monster-image',
+        packageId: 'pkg-draft-1',
+        status: 'passed',
+        hash: 'asset-scan-hash-1',
+        referenceCount: 1,
+        references: [{
+          referenceId: 'monster-image:inklet:b1:0',
+          assetUploadId: 'coasset-1',
+          target: { monsterId: 'inklet', branchId: 'b1', stageId: '0' },
+          preview: {
+            kind: 'admin-api-handle',
+            url: '/api/admin/content-operations/packages/pkg-draft-1/monster-assets/coasset-1/preview',
+          },
+          validation: { status: 'passed', ok: true, errors: [], warnings: [] },
+          storage: { status: 'present', byteSize: 1024, contentType: 'image/png' },
+          renderer: { contexts: ['hero-camp', 'hero-codex'] },
+        }],
+      },
+    },
+  },
 };
 
 const NO_PERMISSION_CONFIG = {
@@ -213,6 +245,50 @@ describe('buildAssetRegistry — v1 extended shape', () => {
     const registry = buildAssetRegistry(null);
     // Null model => no permission, no draft => at least 2 blockers
     assert.ok(registry[0].publishBlockers.length >= 2);
+  });
+
+  it('appends package monster image asset references after the global visual config entry', () => {
+    const model = {
+      monsterVisualConfig: PUBLISHABLE_CONFIG,
+      contentOperations: {
+        packages: [CONTENT_OPERATION_PACKAGE_WITH_ASSET],
+      },
+    };
+    const registry = buildAssetRegistry(model);
+
+    assert.equal(registry[0].assetId, 'monster-visual-config');
+    assert.equal(registry[1].assetId, 'content-operation-monster-asset:pkg-draft-1:monster-image:inklet:b1:0');
+    assert.equal(registry[1].assetUploadId, 'coasset-1');
+    assert.equal(registry[1].previewUrl, '/api/admin/content-operations/packages/pkg-draft-1/monster-assets/coasset-1/preview');
+    assert.deepEqual(registry[1].rendererContexts, ['hero-camp', 'hero-codex']);
+    assert.equal(registry[1].reviewStatus, 'has-blockers');
+    assert.ok(registry[1].publishBlockers.some((blocker) => blocker.includes('package workflow')));
+  });
+
+  it('discovers package monster image references from wrapped content operation package lists', () => {
+    const registry = buildAssetRegistry({
+      monsterVisualConfig: PUBLISHABLE_CONFIG,
+      contentOperations: {
+        packages: {
+          packages: [CONTENT_OPERATION_PACKAGE_WITH_ASSET],
+        },
+      },
+    });
+
+    assert.equal(registry.length, 2);
+    assert.equal(registry[1].assetUploadId, 'coasset-1');
+    assert.ok(registry[1].publishBlockers.some((blocker) => blocker.includes('package workflow')));
+  });
+
+  it('builds package monster image entries directly from content operation packages', () => {
+    const entries = buildContentOperationMonsterAssetRegistryEntries({
+      packages: [CONTENT_OPERATION_PACKAGE_WITH_ASSET],
+    });
+
+    assert.equal(entries.length, 1);
+    assert.equal(entries[0].displayName, 'Monster Image - inklet / b1 / stage 0');
+    assert.equal(entries[0].fallbackStatus, 'bundled-manifest-unchanged');
+    assert.ok(entries[0].publishBlockers.some((blocker) => blocker.includes('package workflow')));
   });
 });
 

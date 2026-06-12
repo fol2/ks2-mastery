@@ -21,9 +21,12 @@ export const CONTENT_OPERATION_PACKAGE_STATES = Object.freeze({
   SUPERSEDED: 'superseded',
 });
 
+export const CONTENT_OPERATION_MONSTER_ASSET_REFERENCE_ENTITY_TYPE = 'spelling.monsterAssetReference';
+
 export const CONTENT_OPERATION_ENTITY_TYPES = Object.freeze([
   'spelling.audioRequirementProfile',
   'spelling.heroExposure',
+  CONTENT_OPERATION_MONSTER_ASSET_REFERENCE_ENTITY_TYPE,
   'spelling.pool',
   'spelling.rewardTrack',
   'spelling.word',
@@ -152,6 +155,10 @@ function applyCollectionOperation(bundle, operation) {
       bundle.draft.audioRequirementProfile = next;
       return;
     }
+  }
+
+  if (operation.entityType === CONTENT_OPERATION_MONSTER_ASSET_REFERENCE_ENTITY_TYPE) {
+    return;
   }
 
   if (operation.entityType === HERO_EXPOSURE_ENTITY_TYPE) {
@@ -408,6 +415,9 @@ export function detectContentOperationConflicts(leftOperations = [], rightOperat
 
 export function readContentOperationField(bundle, operation) {
   const normalised = normaliseContentOperation(operation, { now: () => 0 });
+  if (normalised.entityType === CONTENT_OPERATION_MONSTER_ASSET_REFERENCE_ENTITY_TYPE) {
+    return undefined;
+  }
   if (normalised.entityType === AUDIO_REQUIREMENT_PROFILE_ENTITY_TYPE) {
     if (normalised.entityId !== AUDIO_REQUIREMENT_PROFILE_ENTITY_ID) return undefined;
     return getAtPath(

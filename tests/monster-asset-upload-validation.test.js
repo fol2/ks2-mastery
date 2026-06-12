@@ -747,11 +747,34 @@ test('monster image uploads are bound to candidate approval and publish proof', 
     );
     assert.equal(staleApprovalResponse.status, 409);
     const staleApproval = await staleApprovalResponse.json();
-    assert.equal(staleApproval.code, 'content_operation_candidate_assets_stale');
+    assert.equal(staleApproval.code, 'content_operation_candidate_operations_stale');
 
     const currentCandidate = await validatePackage(server, contentPackage.packageId);
     assert.equal(currentCandidate.candidate.assetScan.uploadCount, 1);
     assert.notEqual(currentCandidate.candidate.assetScan.hash, firstCandidate.candidate.assetScan.hash);
+    assert.equal(currentCandidate.candidate.assetScan.assetReferenceManifest.referenceCount, 1);
+    assert.equal(currentCandidate.candidate.assetScan.assetReferenceManifest.references[0].assetUploadId, currentCandidate.candidate.assetScan.items[0].assetUploadId);
+    assert.match(
+      currentCandidate.candidate.assetScan.assetReferenceManifest.references[0].preview.url,
+      /^\/api\/admin\/content-operations\/packages\/.+\/monster-assets\/.+\/preview$/,
+    );
+    assert.equal(
+      JSON.stringify(currentCandidate.candidate.assetScan.assetReferenceManifest).includes('r2Key'),
+      false,
+    );
+
+    const operationRow = server.DB.db.prepare(`
+      SELECT entity_type, entity_id, action, payload_json
+      FROM content_operation_package_operations
+      WHERE package_id = ?
+    `).get(contentPackage.packageId);
+    assert.equal(operationRow.entity_type, 'spelling.monsterAssetReference');
+    assert.equal(operationRow.entity_id, 'inklet:b1:0');
+    assert.equal(operationRow.action, 'replace');
+    const operationPayload = JSON.parse(operationRow.payload_json);
+    assert.equal(operationPayload.assetUploadId, currentCandidate.candidate.assetScan.items[0].assetUploadId);
+    assert.equal(operationPayload.preview.url, currentCandidate.candidate.assetScan.assetReferenceManifest.references[0].preview.url);
+    assert.equal(JSON.stringify(operationPayload).includes('r2Key'), false);
 
     const approvalResponse = await approvePackage(
       server,
@@ -771,7 +794,17 @@ test('monster image uploads are bound to candidate approval and publish proof', 
       published.release.proof.contentOperationsAssets.assetSummary.hash,
       currentCandidate.candidate.assetScan.hash,
     );
+    assert.equal(
+      published.release.proof.contentOperationsAssets.assetReferenceManifest.referenceCount,
+      1,
+    );
+    assert.equal(
+      published.release.proof.contentOperationsAssets.assetReferenceManifest.references[0].assetUploadId,
+      operationPayload.assetUploadId,
+    );
+    assert.equal(JSON.stringify(published.release.proof.contentOperationsAssets.assetReferenceManifest).includes('r2Key'), false);
     assert.equal(published.release.assetSummary.hash, currentCandidate.candidate.assetScan.hash);
+    assert.equal(published.release.assetReferenceManifest.referenceCount, 1);
   } finally {
     server.close();
   }
@@ -789,6 +822,20 @@ test('monster image release serialisation distinguishes caller proof from server
           hash: 'asset-scan-hash-1',
           uploadCount: 1,
         },
+        assetReferenceManifest: {
+          schemaVersion: 1,
+          assetKind: 'monster-image',
+          packageId: 'pkg-asset',
+          status: 'passed',
+          hash: 'asset-scan-hash-1',
+          referenceCount: 1,
+          references: [{
+            referenceId: 'monster-image:inklet:b1:0',
+            assetUploadId: 'coasset-1',
+            target: { monsterId: 'inklet', branchId: 'b1', stageId: '0' },
+            preview: { kind: 'admin-api-handle', url: '/api/admin/content-operations/packages/pkg-asset/monster-assets/coasset-1/preview' },
+          }],
+        },
       },
     },
   });
@@ -796,6 +843,8 @@ test('monster image release serialisation distinguishes caller proof from server
   assert.equal(release.hasCallerProof, false);
   assert.equal(release.assetSummary.hash, 'asset-scan-hash-1');
   assert.equal(release.assetSummary.uploadCount, 1);
+  assert.equal(release.assetReferenceManifest.referenceCount, 1);
+  assert.equal(release.assetReferenceManifest.references[0].assetUploadId, 'coasset-1');
 });
 
 test('content operation approval rejects caller-supplied monster asset summaries', async () => {
@@ -921,6 +970,13 @@ test('duplicate monster image target uploads replace the previous draft target',
     assert.equal(validated.candidate.assetScan.status, 'passed');
     assert.equal(validated.candidate.assetScan.uploadCount, 1);
     assert.equal(validated.candidate.assetScan.blockers.length, 0);
+    assert.equal(rowCount(server, 'content_operation_package_operations', 'WHERE package_id = ?', [contentPackage.packageId]), 1);
+    const operationPayload = JSON.parse(server.DB.db.prepare(`
+      SELECT payload_json
+      FROM content_operation_package_operations
+      WHERE package_id = ?
+    `).get(contentPackage.packageId).payload_json);
+    assert.equal(operationPayload.assetUploadId, (await secondUpload.json()).assetUpload.assetUploadId);
 
     const approvalResponse = await approvePackage(
       server,
@@ -937,7 +993,7 @@ test('duplicate monster image target uploads replace the previous draft target',
   }
 });
 
-test('monster image draft upload does not create runtime operations or releases', async () => {
+test('monster image draft upload creates a package reference operation but no release', async () => {
   const server = createWorkerRepositoryServer({
     env: { SPELLING_AUDIO_BUCKET: createMemoryR2Bucket() },
     now: () => NOW,
@@ -947,8 +1003,16 @@ test('monster image draft upload does not create runtime operations or releases'
     const response = await uploadMonsterAsset(server, contentPackage.packageId, monsterAssetForm());
     assert.equal(response.status, 201);
     assert.equal(rowCount(server, 'content_operation_asset_uploads', 'WHERE package_id = ?', [contentPackage.packageId]), 1);
-    assert.equal(rowCount(server, 'content_operation_package_operations', 'WHERE package_id = ?', [contentPackage.packageId]), 0);
+    assert.equal(rowCount(server, 'content_operation_package_operations', 'WHERE package_id = ?', [contentPackage.packageId]), 1);
     assert.equal(rowCount(server, 'content_operation_releases', 'WHERE package_id = ?', [contentPackage.packageId]), 0);
+    const operationRow = server.DB.db.prepare(`
+      SELECT entity_type, entity_id, payload_json
+      FROM content_operation_package_operations
+      WHERE package_id = ?
+    `).get(contentPackage.packageId);
+    assert.equal(operationRow.entity_type, 'spelling.monsterAssetReference');
+    assert.equal(operationRow.entity_id, 'inklet:b1:0');
+    assert.match(JSON.parse(operationRow.payload_json).preview.url, /\/monster-assets\/.+\/preview$/);
     const packageRow = server.DB.db.prepare(`
       SELECT state, published_at
       FROM content_operation_packages

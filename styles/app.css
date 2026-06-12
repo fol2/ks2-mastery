@@ -12348,6 +12348,28 @@ html { scroll-behavior: smooth; }
   flex-shrink: 0;
 }
 
+.content-ops-asset-preview-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.content-ops-asset-preview-card {
+  display: grid;
+  gap: 8px;
+  cursor: default;
+}
+
+.content-ops-asset-preview-image {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: contain;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--panel);
+}
+
 .content-ops-row-button {
   padding: 0;
   border: 0;

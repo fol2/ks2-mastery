@@ -43,6 +43,16 @@ function isPlainObject(value) {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 }
 
+function asArray(value) {
+  return Array.isArray(value) ? value : [];
+}
+
+function packageArrayFromValue(value) {
+  if (Array.isArray(value)) return value;
+  if (isPlainObject(value)) return asArray(value.packages);
+  return [];
+}
+
 function safeString(value, fallback) {
   return typeof value === 'string' ? value : (fallback || '');
 }
@@ -145,11 +155,102 @@ export function buildMonsterVisualRegistryEntry(monsterVisualConfig) {
   };
 }
 
+function contentOperationPackagesFromModel(model) {
+  const hub = isPlainObject(model) ? model : {};
+  const contentOperations = isPlainObject(hub.contentOperations) ? hub.contentOperations : hub;
+  const directPackages = packageArrayFromValue(contentOperations.packages);
+  const lanes = isPlainObject(contentOperations.lanes) ? contentOperations.lanes : {};
+  const lanePackages = Object.values(lanes).flatMap((lane) => asArray(lane));
+  const selectedPackage = isPlainObject(contentOperations.package) ? [contentOperations.package] : [];
+  const byId = new Map();
+  for (const contentPackage of [...directPackages, ...lanePackages, ...selectedPackage]) {
+    const packageId = safeString(contentPackage?.packageId, '');
+    if (!packageId || byId.has(packageId)) continue;
+    byId.set(packageId, contentPackage);
+  }
+  return [...byId.values()];
+}
+
+function monsterAssetReferenceTargetLabel(target = {}) {
+  const monsterId = safeString(target.monsterId, 'monster');
+  const branchId = safeString(target.branchId, 'branch');
+  const stageId = safeString(target.stageId, 'stage');
+  return `${monsterId} / ${branchId} / stage ${stageId}`;
+}
+
+function publishBlockersForMonsterAssetReference(reference = {}) {
+  const blockers = [
+    'Publish this monster image through the content operation package workflow.',
+  ];
+  const validation = isPlainObject(reference.validation) ? reference.validation : {};
+  const storage = isPlainObject(reference.storage) ? reference.storage : {};
+  if (validation.ok === false || safeString(validation.status, '') === 'blocked') {
+    blockers.push('Renderer validation must pass before publish.');
+  }
+  if (['missing', 'mismatch', 'unavailable'].includes(safeString(storage.status, ''))) {
+    blockers.push('Stored image object must be present and match the approved upload.');
+  }
+  return blockers;
+}
+
+function buildMonsterAssetReferenceRegistryEntry(reference, contentPackage) {
+  const safeReference = isPlainObject(reference) ? reference : {};
+  const target = isPlainObject(safeReference.target) ? safeReference.target : {};
+  const preview = isPlainObject(safeReference.preview) ? safeReference.preview : {};
+  const validation = isPlainObject(safeReference.validation) ? safeReference.validation : {};
+  const blockers = publishBlockersForMonsterAssetReference(safeReference);
+  const rawPreviewUrl = safeString(preview.url, '');
+  const previewUrl = getSafePreviewUrl(rawPreviewUrl);
+  return {
+    assetId: `content-operation-monster-asset:${safeString(contentPackage?.packageId, 'package')}:${safeString(safeReference.referenceId, safeString(safeReference.assetUploadId, 'upload'))}`,
+    category: 'visual',
+    displayName: `Monster Image - ${monsterAssetReferenceTargetLabel(target)}`,
+    draftVersion: safeNonNegativeInt(contentPackage?.latestCandidate?.createdAt),
+    publishedVersion: 0,
+    manifestHash: safeString(contentPackage?.latestCandidate?.assetScan?.hash, safeString(safeReference.assetUploadId, '')),
+    reviewStatus: blockers.length ? 'has-blockers' : 'publishable',
+    validationState: {
+      ok: validation.ok === true,
+      errorCount: asArray(validation.errors).length + asArray(validation.errorCodes).length,
+      warningCount: asArray(validation.warnings).length + asArray(validation.warningCodes).length,
+      errors: asArray(validation.errors),
+      warnings: asArray(validation.warnings),
+    },
+    lastPublishedAt: 0,
+    lastPublishedBy: '',
+    canManage: true,
+    hasDraft: true,
+    hasPublished: false,
+    versions: [],
+    publishBlockers: blockers,
+    previewUrl,
+    previewBlockedReason: getPreviewBlockedReason(rawPreviewUrl),
+    reducedMotionStatus: null,
+    fallbackStatus: 'bundled-manifest-unchanged',
+    packageId: safeString(contentPackage?.packageId, ''),
+    assetUploadId: safeString(safeReference.assetUploadId, ''),
+    target: {
+      monsterId: safeString(target.monsterId, ''),
+      branchId: safeString(target.branchId, ''),
+      stageId: safeString(target.stageId, ''),
+    },
+    rendererContexts: asArray(safeReference.renderer?.contexts),
+  };
+}
+
+export function buildContentOperationMonsterAssetRegistryEntries(model) {
+  return contentOperationPackagesFromModel(model).flatMap((contentPackage) => {
+    const manifest = contentPackage?.latestCandidate?.assetScan?.assetReferenceManifest;
+    const references = asArray(manifest?.references);
+    return references.map((reference) => buildMonsterAssetReferenceRegistryEntry(reference, contentPackage));
+  });
+}
+
 /**
  * Build the full asset registry from the admin hub read-model.
  *
- * Returns an array of registry entries. Currently contains one entry
- * (monster-visual-config). Future asset categories append to this array.
+ * Returns an array of registry entries. The global monster visual config stays
+ * first; package-scoped monster image references append as draft entries.
  *
  * @param {object} model — the full admin hub read-model
  * @returns {RegistryEntry[]}
@@ -158,6 +259,7 @@ export function buildAssetRegistry(model) {
   const hub = isPlainObject(model) ? model : {};
   return [
     buildMonsterVisualRegistryEntry(hub.monsterVisualConfig),
+    ...buildContentOperationMonsterAssetRegistryEntries(hub),
   ];
 }
 

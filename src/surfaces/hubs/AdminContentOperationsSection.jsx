@@ -783,8 +783,8 @@ function draftStateLabel(state) {
 }
 
 function statusChipClass(status) {
-  if (['available', 'passed', 'published'].includes(status)) return 'good';
-  if (['blocked', 'stale_candidate'].includes(status)) return 'bad';
+  if (['available', 'passed', 'published', 'present'].includes(status)) return 'good';
+  if (['blocked', 'stale_candidate', 'missing', 'mismatch', 'unavailable'].includes(status)) return 'bad';
   if (['candidate_required', 'not_ready', 'warning', 'warnings_only'].includes(status)) return 'warn';
   return '';
 }
@@ -843,6 +843,126 @@ function audioGenerationMessage(action, payload) {
 
 function audioItemSelectable(item) {
   return Boolean(item?.canGenerate || item?.canOverride);
+}
+
+function assetScanForPackage(contentPackage) {
+  return contentPackage?.latestCandidate?.assetScan || null;
+}
+
+function assetManifestForPackage(contentPackage, latestRelease = null) {
+  const scanManifest = assetScanForPackage(contentPackage)?.assetReferenceManifest || null;
+  if (scanManifest?.references?.length) return scanManifest;
+  if (latestRelease?.assetReferenceManifest?.references?.length) return latestRelease.assetReferenceManifest;
+  return scanManifest || latestRelease?.assetReferenceManifest || null;
+}
+
+function assetReferenceTargetLabel(reference) {
+  const target = reference?.target || {};
+  return [
+    target.monsterId || 'monster',
+    target.branchId || 'branch',
+    target.stageId ? `stage ${target.stageId}` : 'stage',
+  ].join(' / ');
+}
+
+function byteSizeLabel(bytes) {
+  const numeric = Number(bytes) || 0;
+  if (numeric >= 1024 * 1024) return `${(numeric / (1024 * 1024)).toFixed(1)} MB`;
+  if (numeric >= 1024) return `${Math.round(numeric / 1024)} KB`;
+  return `${String(numeric)} B`;
+}
+
+function rendererContextLabel(context) {
+  return String(context || '').replace(/-/g, ' ');
+}
+
+function AssetReferencePreviewCards({ manifest }) {
+  const references = Array.isArray(manifest?.references) ? manifest.references : [];
+  if (!references.length) {
+    return (
+      <div className="feedback admin-note-spaced" data-content-ops-asset-preview-empty="true">
+        No package monster image references.
+      </div>
+    );
+  }
+  return (
+    <div className="content-ops-asset-preview-grid" data-content-ops-asset-preview-grid="true">
+      {references.map((reference) => {
+        const dimensions = reference.content?.dimensions || {};
+        const contexts = Array.isArray(reference.renderer?.contexts) ? reference.renderer.contexts : [];
+        const previewUrl = reference.preview?.url || '';
+        const key = reference.referenceId || reference.assetUploadId || assetReferenceTargetLabel(reference);
+        return (
+          <article className="content-ops-package-summary content-ops-asset-preview-card" key={key} data-content-ops-asset-reference={key}>
+            <span className="content-ops-package-summary-main">
+              <strong>{assetReferenceTargetLabel(reference)}</strong>
+              <span className="small muted">{reference.assetUploadId || 'Upload pending'}</span>
+            </span>
+            {previewUrl ? (
+              <img
+                src={previewUrl}
+                alt={`${assetReferenceTargetLabel(reference)} monster asset preview`}
+                loading="lazy"
+                className="content-ops-asset-preview-image"
+              />
+            ) : (
+              <div className="feedback warn admin-note-spaced" data-content-ops-asset-preview-blocked="true">
+                {reference.preview?.blockedReason || 'Preview unavailable'}
+              </div>
+            )}
+            <span className="chip-row content-ops-package-summary-meta">
+              <span className={`chip ${statusChipClass(reference.validation?.status)}`}>{statusLabel(reference.validation?.status)}</span>
+              <span className={`chip ${statusChipClass(reference.storage?.status)}`}>{statusLabel(reference.storage?.status)}</span>
+              <span className="chip">{dimensions.width || '?'} x {dimensions.height || '?'}</span>
+              <span className="chip">{byteSizeLabel(reference.content?.byteSize)}</span>
+            </span>
+            {contexts.length ? (
+              <span className="chip-row content-ops-chip-wrap">
+                {contexts.map((context) => (
+                  <span className="chip" key={context}>{rendererContextLabel(context)}</span>
+                ))}
+              </span>
+            ) : null}
+          </article>
+        );
+      })}
+    </div>
+  );
+}
+
+function MonsterAssetsPanel({ contentPackage, latestRelease = null, blockerSection = null }) {
+  const scan = assetScanForPackage(contentPackage);
+  const manifest = assetManifestForPackage(contentPackage, latestRelease);
+  const status = scan?.status || manifest?.status || 'not_scanned';
+  const references = Array.isArray(manifest?.references) ? manifest.references : [];
+  return (
+    <section className="content-ops-area-panel" data-content-ops-monster-assets-panel="true">
+      <div className="content-ops-detail-header">
+        <div>
+          <div className="eyebrow">Monster assets</div>
+          <h5>Package image references</h5>
+          <p className="small muted admin-note-spaced">
+            {contentPackage?.packageId ? `Package ${contentPackage.packageId}` : `Latest release ${latestRelease?.releaseId || 'bundled fallback'}`}
+          </p>
+        </div>
+        <div className="chip-row content-ops-chip-wrap">
+          <span className={`chip ${statusChipClass(status)}`}>{statusLabel(status)}</span>
+          <span className="chip">{String(references.length)} references</span>
+          {manifest?.policy?.runtimeReadable === false ? <span className="chip warn">Runtime T23</span> : null}
+        </div>
+      </div>
+      <div className="content-ops-metric-grid">
+        <MetricTile label="Uploads" value={String(scan?.uploadCount || 0)} detail={`${String(scan?.targetCount || references.length)} targets`} />
+        <MetricTile label="Manifest" value={manifest?.hash || scan?.hash || 'Pending'} detail={`Schema ${String(manifest?.schemaVersion || 1)}`} />
+        <MetricTile label="Rollback" value={manifest?.policy?.retention?.rollbackAvailability || 'retained'} detail="Release reference policy" />
+        <MetricTile label="Derivatives" value={manifest?.policy?.responsiveDerivatives?.mode || 'source'} detail="Responsive policy" />
+      </div>
+      {blockerSection && contentPackage ? (
+        <BlockerSummary blockers={contentPackage.blockers} sectionKey={blockerSection} />
+      ) : null}
+      <AssetReferencePreviewCards manifest={manifest} />
+    </section>
+  );
 }
 
 function CentreTabNav({ activeTab, onSelect }) {
@@ -1360,6 +1480,15 @@ function PublishedAreaPanel({
         audioState={audioState}
         actionAvailability={audioActionAvailability}
         onRunAction={onRunAudioAction}
+      />
+    );
+  }
+  if (activeTab === 'monstersAssets') {
+    return (
+      <MonsterAssetsPanel
+        contentPackage={selectedSummary}
+        latestRelease={latestRelease}
+        blockerSection={blockerSection}
       />
     );
   }
@@ -3596,6 +3725,15 @@ function PackageDetailBody({
         audioState={audioState}
         actionAvailability={audioActionAvailability}
         onRunAction={onRunAudioAction}
+      />
+    );
+  }
+
+  if (activeTab === 'monstersAssets') {
+    return (
+      <MonsterAssetsPanel
+        contentPackage={contentPackage}
+        blockerSection={DETAIL_TAB_BLOCKER_SECTIONS.monstersAssets}
       />
     );
   }

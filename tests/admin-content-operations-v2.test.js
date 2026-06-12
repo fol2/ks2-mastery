@@ -33,6 +33,7 @@ import {
   CONTENT_OPERATION_DETAIL_TABS,
   CONTENT_OPERATION_LANES,
   normaliseContentOperationAudioScan,
+  normaliseContentOperationAssetReferenceManifest,
   normaliseContentOperationCandidate,
   normaliseContentOperationPackage,
   normaliseContentOperationsOverview,
@@ -710,12 +711,78 @@ describe('Content Operations Centre normalisers', () => {
       proof: {
         contentOperationsAssets: {
           assetSummary: { hash: 'asset-scan-hash-1', uploadCount: 1 },
+          assetReferenceManifest: {
+            schemaVersion: 1,
+            assetKind: 'monster-image',
+            packageId: 'pkg-draft-1',
+            status: 'passed',
+            hash: 'asset-scan-hash-1',
+            referenceCount: 1,
+            references: [{
+              referenceId: 'monster-image:inklet:b1:0',
+              assetUploadId: 'coasset-1',
+              target: { monsterId: 'inklet', branchId: 'b1', stageId: '0' },
+              preview: {
+                kind: 'admin-api-handle',
+                url: '/api/admin/content-operations/packages/pkg-draft-1/monster-assets/coasset-1/preview',
+              },
+              content: {
+                contentType: 'image/png',
+                byteSize: 1024,
+                dimensions: { width: 640, height: 640 },
+              },
+              storage: { status: 'present', byteSize: 1024, contentType: 'image/png' },
+            }],
+          },
         },
       },
     });
 
     assert.equal(release.hasCallerProof, false);
     assert.equal(release.assetSummary.hash, 'asset-scan-hash-1');
+    assert.equal(release.assetReferenceManifest.referenceCount, 1);
+    assert.equal(
+      release.assetReferenceManifest.references[0].preview.url,
+      '/api/admin/content-operations/packages/pkg-draft-1/monster-assets/coasset-1/preview',
+    );
+  });
+
+  it('normalises package monster asset manifests without rendering unsafe preview URLs', () => {
+    const manifest = normaliseContentOperationAssetReferenceManifest({
+      schemaVersion: 1,
+      assetKind: 'monster-image',
+      packageId: 'pkg-draft-1',
+      status: 'passed',
+      hash: 'asset-hash',
+      referenceCount: 2,
+      references: [
+        {
+          referenceId: 'monster-image:inklet:b1:0',
+          assetUploadId: 'coasset-safe',
+          target: { monsterId: 'inklet', branchId: 'b1', stageId: '0' },
+          preview: { url: '/api/admin/content-operations/packages/pkg-draft-1/monster-assets/coasset-safe/preview' },
+          validation: { status: 'passed', ok: true },
+          storage: { status: 'present' },
+        },
+        {
+          referenceId: 'monster-image:inklet:b1:1',
+          assetUploadId: 'coasset-unsafe',
+          target: { monsterId: 'inklet', branchId: 'b1', stageId: '1' },
+          preview: { url: 'javascript:alert(1)' },
+          validation: { status: 'passed', ok: true },
+          storage: { status: 'present' },
+        },
+      ],
+    });
+
+    assert.equal(manifest.referenceCount, 2);
+    assert.equal(
+      manifest.references[0].preview.url,
+      '/api/admin/content-operations/packages/pkg-draft-1/monster-assets/coasset-safe/preview',
+    );
+    assert.equal(manifest.references[0].storage.status, 'present');
+    assert.equal(manifest.references[1].preview.url, null);
+    assert.match(manifest.references[1].preview.blockedReason, /javascript:/);
   });
 
   it('normalises package lists, release lists, and package detail array payloads', () => {
