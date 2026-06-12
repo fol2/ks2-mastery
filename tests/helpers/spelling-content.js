@@ -7,6 +7,8 @@ export function coreOnlyVersionOneContent(bundle) {
   const coreSlugs = new Set(coreWords.map((word) => word.slug));
   const coreListIds = new Set(coreWords.map((word) => word.listId));
   next.modelVersion = 1;
+  delete next.draft.pools;
+  delete next.draft.rewardTracks;
   next.draft.wordLists = next.draft.wordLists
     .filter((list) => coreListIds.has(list.id))
     .map(({ spellingPool: _spellingPool, ...list }) => list);
@@ -19,6 +21,8 @@ export function coreOnlyVersionOneContent(bundle) {
     .map(({ spellingPool: _spellingPool, ...word }) => word);
   release.snapshot.words = releaseWords;
   release.snapshot.wordBySlug = Object.fromEntries(releaseWords.map((word) => [word.slug, word]));
+  delete release.snapshot.pools;
+  delete release.snapshot.rewardTracks;
   next.releases = [release];
   next.publication = {
     currentReleaseId: release.id,

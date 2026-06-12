@@ -3,7 +3,11 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
 import { createWorkerApp } from '../worker/src/app.js';
-import { createWorkerRepository } from '../worker/src/repository.js';
+import {
+  PUBLIC_SPELLING_REWARD_TRACK_IDS,
+  createWorkerRepository,
+  publicMonsterCodexStateFromSpellingProgress,
+} from '../worker/src/repository.js';
 import { createSubjectRuntime, createWorkerSubjectRuntime } from '../worker/src/subjects/runtime.js';
 import { normaliseSubjectCommandRequest } from '../worker/src/subjects/command-contract.js';
 import { resolveRuntimeSnapshot } from '../src/subjects/spelling/content/model.js';
@@ -19,6 +23,9 @@ import {
 import {
   isStatutoryCoreWord,
 } from '../src/subjects/spelling/content/taxonomy.js';
+import {
+  LEGACY_SPELLING_REWARD_TRACKS,
+} from '../src/platform/game/reward-track-config.js';
 import { createWorkerRepositoryServer } from './helpers/worker-server.js';
 import { createMigratedSqliteD1Database } from './helpers/sqlite-d1.js';
 
@@ -35,6 +42,36 @@ function accountContentQueries(db) {
 function selectsRawContentJson(sql = '') {
   return /\n\s*content_json\s*(?:,|\n|\r)/i.test(sql);
 }
+
+test('Worker spelling codex projection follows legacy reward-track mapping without migrating state', () => {
+  const derived = publicMonsterCodexStateFromSpellingProgress(
+    {
+      possess: { stage: 4 },
+      necessary: { stage: 4 },
+      mollusc: { stage: 4 },
+    },
+    {
+      words: [
+        { slug: 'possess', spellingPool: 'core', yearBand: '3-4' },
+        { slug: 'necessary', spellingPool: 'core', yearBand: '5-6' },
+        { slug: 'mollusc', spellingPool: 'extra', yearBand: 'extra' },
+      ],
+    },
+    {},
+    { learnerId: 'learner-reward-track-projection' },
+  );
+
+  assert.deepEqual(
+    PUBLIC_SPELLING_REWARD_TRACK_IDS,
+    LEGACY_SPELLING_REWARD_TRACKS.map((track) => track.id),
+  );
+  assert.equal(derived.knownWordCount, 3);
+  assert.equal(derived.state.inklet.masteredCount, 1);
+  assert.equal(derived.state.glimmerbug.masteredCount, 1);
+  assert.equal(derived.state.phaeton.masteredCount, 2);
+  assert.equal(derived.state.vellhorn.masteredCount, 1);
+  assert.equal(derived.state.inklet.rewardTrackId, undefined);
+});
 
 async function postJson(server, path, body = {}, headers = {}) {
   return server.fetchRaw(`https://repo.test${path}`, {

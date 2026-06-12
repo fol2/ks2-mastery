@@ -4,6 +4,10 @@ import {
   stageFor,
 } from '../monsters.js';
 import {
+  spellingRewardTrackForMonster,
+  thresholdsForRewardTrack,
+} from '../reward-track-config.js';
+import {
   branchForMonster,
   ensureMonsterBranches,
   eventFromTransition,
@@ -85,13 +89,18 @@ export function progressForMonster(state, monsterId) {
   if (monsterId === 'phaeton') return derivePhaeton(state);
   const entry = isPlainObject(state?.[monsterId]) ? state[monsterId] : { mastered: [], caught: false };
   const mastered = masteredCount(entry);
+  const rewardTrack = spellingRewardTrackForMonster(monsterId);
   return {
     mastered,
-    stage: stageFor(mastered),
+    stage: stageFor(mastered, rewardTrack ? thresholdsForRewardTrack(rewardTrack) : undefined),
     level: levelFor(mastered),
     caught: mastered >= 1,
     branch: branchForMonster(state, monsterId),
     masteredList: masteredList(entry),
+    ...(rewardTrack ? {
+      rewardTrackId: rewardTrack.id,
+      progressKey: rewardTrack.progressKey || monsterId,
+    } : {}),
   };
 }
 

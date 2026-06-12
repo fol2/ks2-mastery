@@ -24,6 +24,11 @@ import { MONSTERS_BY_SUBJECT } from '../../src/platform/game/monsters.js';
 import { monsterBranchOverrideForLearner } from '../../src/platform/game/learner-monster-branch-overrides.js';
 import { monsterIdForSpellingWord } from '../../src/platform/game/monster-system.js';
 import {
+  LEGACY_SPELLING_REWARD_TRACKS,
+  sourceMonsterIdsForRewardTrack,
+  spellingRewardTrackForMonster,
+} from '../../src/platform/game/reward-track-config.js';
+import {
   asTs,
   isPlainObject,
   safeJsonParse,
@@ -55,7 +60,12 @@ export const PUBLIC_EVENT_TYPES = new Set([
   'platform.practice-streak-hit',
 ]);
 export const PUBLIC_MONSTER_CODEX_SYSTEM_ID = 'monster-codex';
-export const PUBLIC_SPELLING_MONSTER_IDS = Object.freeze(['inklet', 'glimmerbug', 'phaeton', 'vellhorn']);
+export const PUBLIC_SPELLING_REWARD_TRACK_IDS = Object.freeze(
+  LEGACY_SPELLING_REWARD_TRACKS.map((track) => track.id),
+);
+export const PUBLIC_SPELLING_MONSTER_IDS = Object.freeze(
+  LEGACY_SPELLING_REWARD_TRACKS.map((track) => track.monsterId),
+);
 export const PUBLIC_PUNCTUATION_MONSTER_IDS = Object.freeze(
   Array.isArray(MONSTERS_BY_SUBJECT?.punctuation)
     ? [...MONSTERS_BY_SUBJECT.punctuation]
@@ -83,7 +93,11 @@ export const PUBLIC_MONSTER_IDS = new Set([
   ...PUBLIC_READING_MONSTER_IDS,
   ...PUBLIC_ARITHMETIC_MONSTER_IDS,
 ]);
-export const PUBLIC_DIRECT_SPELLING_MONSTER_IDS = ['inklet', 'glimmerbug', 'vellhorn'];
+export const PUBLIC_DIRECT_SPELLING_MONSTER_IDS = Object.freeze(
+  LEGACY_SPELLING_REWARD_TRACKS
+    .filter((track) => track.monsterId !== 'phaeton')
+    .map((track) => track.monsterId),
+);
 export const PUBLIC_MONSTER_BRANCHES = new Set(['b1', 'b2']);
 export const SPELLING_SECURE_STAGE = 4;
 export const PUBLIC_EVENT_TEXT_ENUMS = {
@@ -232,7 +246,9 @@ export function publicMonsterCodexStateFromSpellingProgress(progress, snapshot, 
       ? { branch: branchOverride }
       : (PUBLIC_MONSTER_BRANCHES.has(existing.branch) ? { branch: existing.branch } : {})
   );
-  const counts = Object.fromEntries(PUBLIC_DIRECT_SPELLING_MONSTER_IDS.map((monsterId) => [monsterId, 0]));
+  const directRewardTracks = LEGACY_SPELLING_REWARD_TRACKS
+    .filter((track) => PUBLIC_DIRECT_SPELLING_MONSTER_IDS.includes(track.monsterId));
+  const counts = Object.fromEntries(directRewardTracks.map((track) => [track.monsterId, 0]));
   const words = Array.isArray(snapshot?.words) ? snapshot.words : [];
   let knownWordCount = 0;
 
@@ -241,11 +257,14 @@ export function publicMonsterCodexStateFromSpellingProgress(progress, snapshot, 
     knownWordCount += 1;
     if (!secureSpellingProgress(progress[word.slug])) continue;
     const monsterId = monsterIdForSpellingWord(word);
-    if (monsterId in counts) counts[monsterId] += 1;
+    const rewardTrack = spellingRewardTrackForMonster(monsterId);
+    if (rewardTrack?.monsterId && Object.prototype.hasOwnProperty.call(counts, rewardTrack.monsterId)) {
+      counts[rewardTrack.monsterId] += 1;
+    }
   }
 
   const nextState = {};
-  for (const monsterId of PUBLIC_DIRECT_SPELLING_MONSTER_IDS) {
+  for (const { monsterId } of directRewardTracks) {
     const existing = isPlainObject(existingState?.[monsterId]) ? existingState[monsterId] : {};
     nextState[monsterId] = {
       masteredCount: counts[monsterId],
@@ -254,7 +273,9 @@ export function publicMonsterCodexStateFromSpellingProgress(progress, snapshot, 
     };
   }
 
-  const phaetonCount = counts.inklet + counts.glimmerbug;
+  const phaetonTrack = spellingRewardTrackForMonster('phaeton');
+  const phaetonCount = sourceMonsterIdsForRewardTrack(phaetonTrack)
+    .reduce((sum, monsterId) => sum + (counts[monsterId] || 0), 0);
   const existingPhaeton = isPlainObject(existingState?.phaeton) ? existingState.phaeton : {};
   nextState.phaeton = {
     masteredCount: phaetonCount,

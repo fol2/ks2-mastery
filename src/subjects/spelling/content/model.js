@@ -432,11 +432,18 @@ function normaliseRuntimeWordVariant(rawValue, index = 0) {
   };
 }
 
-function normalisePublishedSnapshot(rawValue) {
+function normalisePublishedSnapshot(rawValue, {
+  fallbackPools = [],
+  fallbackRewardTracks = [],
+} = {}) {
   const raw = isPlainObject(rawValue) ? rawValue : {};
   const inputWords = Array.isArray(raw.words)
     ? raw.words
     : (isPlainObject(raw.wordBySlug) ? Object.values(raw.wordBySlug) : []);
+  const pools = normalisePoolCollection(Array.isArray(raw.pools) ? raw.pools : fallbackPools);
+  const rewardTracks = normaliseRewardTrackCollection(
+    Array.isArray(raw.rewardTracks) ? raw.rewardTracks : fallbackRewardTracks,
+  );
 
   const wordOrder = [];
   const bySlug = {};
@@ -450,6 +457,8 @@ function normalisePublishedSnapshot(rawValue) {
   const words = wordOrder.map((slug) => bySlug[slug]);
   return {
     generatedAt: normaliseTimestamp(raw.generatedAt, 0),
+    pools,
+    rewardTracks,
     words,
     wordBySlug: Object.fromEntries(words.map((word) => [word.slug, word])),
   };
@@ -483,7 +492,10 @@ function normaliseDraft(rawValue) {
   };
 }
 
-function normaliseRelease(rawValue, index = 0) {
+function normaliseRelease(rawValue, index = 0, {
+  fallbackPools = [],
+  fallbackRewardTracks = [],
+} = {}) {
   const raw = isPlainObject(rawValue) ? rawValue : {};
   const version = normalisePositiveInteger(raw.version, index + 1);
   const publishedAt = normaliseTimestamp(raw.publishedAt, 0);
@@ -497,7 +509,7 @@ function normaliseRelease(rawValue, index = 0) {
     sourceNote: normaliseString(raw.sourceNote),
     provenance: normaliseProvenance(raw.provenance, raw.sourceNote || 'spelling release'),
     publishedAt,
-    snapshot: normalisePublishedSnapshot(raw.snapshot),
+    snapshot: normalisePublishedSnapshot(raw.snapshot, { fallbackPools, fallbackRewardTracks }),
   };
 }
 
@@ -512,11 +524,15 @@ function normalisePublication(rawValue) {
 
 export function normaliseSpellingContentBundle(rawValue) {
   const raw = isPlainObject(rawValue) ? rawValue : {};
-  const releases = (Array.isArray(raw.releases) ? raw.releases : []).map((entry, index) => normaliseRelease(entry, index));
+  const draft = normaliseDraft(raw.draft);
+  const releases = (Array.isArray(raw.releases) ? raw.releases : []).map((entry, index) => normaliseRelease(entry, index, {
+    fallbackPools: draft.pools,
+    fallbackRewardTracks: draft.rewardTracks,
+  }));
   return {
     modelVersion: Math.max(normalisePositiveInteger(raw.modelVersion, SPELLING_CONTENT_MODEL_VERSION), SPELLING_CONTENT_MODEL_VERSION),
     subjectId: normaliseString(raw.subjectId, SPELLING_CONTENT_SUBJECT_ID),
-    draft: normaliseDraft(raw.draft),
+    draft,
     releases,
     publication: normalisePublication(raw.publication),
   };
@@ -534,14 +550,20 @@ function collectWordExplanations(rawBundle) {
   return bySlug;
 }
 
-function backfillRuntimeSnapshotWordExplanations(snapshot, explanationsBySlug) {
+function backfillRuntimeSnapshotWordExplanations(snapshot, explanationsBySlug, referenceSnapshot = null) {
+  const reference = referenceSnapshot ? normalisePublishedSnapshot(referenceSnapshot) : null;
   const words = snapshot.words.map((word) => {
     if (hasUsableWordExplanation(word.explanation)) return word;
     const explanation = explanationsBySlug.get(word.slug) || '';
     return explanation ? { ...word, explanation } : word;
   });
+  const rewardTracks = snapshot.rewardTracks.length
+    ? snapshot.rewardTracks
+    : (reference?.rewardTracks || []);
   return {
     ...snapshot,
+    pools: snapshot.pools.length ? snapshot.pools : (reference?.pools || []),
+    rewardTracks,
     words,
     wordBySlug: Object.fromEntries(words.map((word) => [word.slug, word])),
   };
@@ -549,8 +571,11 @@ function backfillRuntimeSnapshotWordExplanations(snapshot, explanationsBySlug) {
 
 export function backfillSpellingWordExplanations(rawBundle, rawReferenceBundle) {
   const bundle = normaliseSpellingContentBundle(rawBundle);
+  const referenceSnapshot = rawReferenceBundle ? resolvePublishedSnapshot(rawReferenceBundle) : null;
   const explanationsBySlug = collectWordExplanations(rawReferenceBundle);
-  if (!explanationsBySlug.size) return bundle;
+  const needsReleaseMetadata = Boolean(referenceSnapshot)
+    && bundle.releases.some((release) => !release.snapshot.rewardTracks.length);
+  if (!explanationsBySlug.size && !needsReleaseMetadata) return bundle;
 
   return normaliseSpellingContentBundle({
     ...bundle,
@@ -564,7 +589,7 @@ export function backfillSpellingWordExplanations(rawBundle, rawReferenceBundle) 
     },
     releases: bundle.releases.map((release) => ({
       ...release,
-      snapshot: backfillRuntimeSnapshotWordExplanations(release.snapshot, explanationsBySlug),
+      snapshot: backfillRuntimeSnapshotWordExplanations(release.snapshot, explanationsBySlug, referenceSnapshot),
     })),
   });
 }
@@ -1051,6 +1076,8 @@ export function buildPublishedSnapshotFromDraft(rawDraft, { generatedAt = Date.n
 
   return {
     generatedAt: normaliseTimestamp(generatedAt, Date.now()),
+    pools: draft.pools,
+    rewardTracks: draft.rewardTracks,
     words,
     wordBySlug: Object.fromEntries(words.map((word) => [word.slug, word])),
   };
@@ -1087,6 +1114,8 @@ function mergeRuntimeSnapshots(primarySnapshot, supplementalSnapshot) {
   const words = [...wordsBySlug.values()].sort((a, b) => a.sortIndex - b.sortIndex);
   return {
     generatedAt: Math.max(primary.generatedAt, supplemental.generatedAt),
+    pools: primary.pools.length ? primary.pools : supplemental.pools,
+    rewardTracks: primary.rewardTracks.length ? primary.rewardTracks : supplemental.rewardTracks,
     words,
     wordBySlug: Object.fromEntries(words.map((word) => [word.slug, word])),
   };

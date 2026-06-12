@@ -24,6 +24,96 @@ export const REWARD_TRACK_THRESHOLD_TEMPLATES = Object.freeze({
   }),
 });
 
+function freezeLegacyTrack(track) {
+  return Object.freeze({
+    ...track,
+    labels: Object.freeze({ ...(track.labels || {}) }),
+    sourceMonsterIds: Object.freeze([...(track.sourceMonsterIds || [])]),
+  });
+}
+
+export const LEGACY_SPELLING_REWARD_TRACKS = Object.freeze([
+  freezeLegacyTrack({
+    id: 'spelling-core-inklet',
+    poolId: 'core',
+    monsterId: 'inklet',
+    progressKey: 'inklet',
+    sourceMonsterIds: ['inklet'],
+    progressionMode: 'parallel',
+    thresholdTemplate: 'direct',
+    active: true,
+    labels: {
+      title: 'Core Inklet',
+      shortLabel: 'Inklet',
+      description: 'Compatibility reward track for existing Years 3-4 spelling progress.',
+    },
+    sourceNote: 'Preserves the existing Inklet monster-codex progress key.',
+    sortIndex: 0,
+  }),
+  freezeLegacyTrack({
+    id: 'spelling-core-glimmerbug',
+    poolId: 'core',
+    monsterId: 'glimmerbug',
+    progressKey: 'glimmerbug',
+    sourceMonsterIds: ['glimmerbug'],
+    progressionMode: 'parallel',
+    thresholdTemplate: 'direct',
+    active: true,
+    labels: {
+      title: 'Core Glimmerbug',
+      shortLabel: 'Glimmerbug',
+      description: 'Compatibility reward track for existing Years 5-6 spelling progress.',
+    },
+    sourceNote: 'Preserves the existing Glimmerbug monster-codex progress key.',
+    sortIndex: 1,
+  }),
+  freezeLegacyTrack({
+    id: 'spelling-core-phaeton',
+    poolId: 'core',
+    monsterId: 'phaeton',
+    progressKey: 'phaeton',
+    sourceMonsterIds: ['inklet', 'glimmerbug'],
+    progressionMode: 'parallel',
+    thresholdTemplate: 'aggregate',
+    active: true,
+    labels: {
+      title: 'Core Phaeton',
+      shortLabel: 'Phaeton',
+      description: 'Compatibility aggregate reward track over existing core spelling progress.',
+    },
+    sourceNote: 'Preserves the existing Phaeton aggregate derived from Inklet and Glimmerbug.',
+    sortIndex: 2,
+  }),
+  freezeLegacyTrack({
+    id: 'spelling-extra-vellhorn',
+    poolId: 'extra',
+    monsterId: 'vellhorn',
+    progressKey: 'vellhorn',
+    sourceMonsterIds: ['vellhorn'],
+    progressionMode: 'parallel',
+    thresholdTemplate: 'direct',
+    compatibilityMode: 'legacy',
+    active: true,
+    labels: {
+      title: 'Extra Vellhorn',
+      shortLabel: 'Vellhorn',
+      description: 'Compatibility reward track for existing Extra spelling progress.',
+    },
+    sourceNote: 'Preserves the existing Vellhorn monster-codex progress key and direct staged thresholds.',
+    sortIndex: 3,
+  }),
+]);
+
+export const LEGACY_SPELLING_REWARD_TRACK_IDS_BY_POOL = Object.freeze(
+  LEGACY_SPELLING_REWARD_TRACKS.reduce((output, track) => {
+    const existing = output[track.poolId] || [];
+    return {
+      ...output,
+      [track.poolId]: Object.freeze([...existing, track.id]),
+    };
+  }, {}),
+);
+
 const REWARD_TRACK_PROGRESS_MODE_SET = new Set(REWARD_TRACK_PROGRESS_MODES);
 
 function isPlainObject(value) {
@@ -162,6 +252,9 @@ export function normaliseRewardTrackConfig(rawValue = {}, {
         ? raw.thresholdOverrides
         : (Object.prototype.hasOwnProperty.call(raw, 'thresholds') ? raw.thresholds : existing.thresholdOverrides),
     ),
+    compatibilityMode: normaliseIdentifier(raw.compatibilityMode, existing.compatibilityMode),
+    progressKey: normaliseIdentifier(raw.progressKey || raw.legacyProgressKey, existing.progressKey || existing.legacyProgressKey),
+    sourceMonsterIds: uniqueStrings(raw.sourceMonsterIds || raw.legacySourceMonsterIds || existing.sourceMonsterIds || existing.legacySourceMonsterIds),
     active: activeProvided ? raw.active !== false : existing.active !== false,
     labels: normaliseLabels(raw.labels, existing.labels),
     sequentialAfter: normaliseIdentifier(
@@ -193,6 +286,47 @@ export function thresholdsForRewardTrack(track) {
   const template = REWARD_TRACK_THRESHOLD_TEMPLATES[track?.thresholdTemplate || DEFAULT_REWARD_TRACK_THRESHOLD_TEMPLATE]
     || REWARD_TRACK_THRESHOLD_TEMPLATES[DEFAULT_REWARD_TRACK_THRESHOLD_TEMPLATE];
   return [...template.thresholds];
+}
+
+function cloneRewardTrack(track) {
+  return {
+    ...track,
+    labels: { ...(track.labels || {}) },
+    sourceMonsterIds: [...(track.sourceMonsterIds || [])],
+    ...(Array.isArray(track.thresholdOverrides) ? { thresholdOverrides: [...track.thresholdOverrides] } : {}),
+  };
+}
+
+export function defaultSpellingRewardTracks() {
+  return LEGACY_SPELLING_REWARD_TRACKS.map(cloneRewardTrack);
+}
+
+export function legacySpellingRewardTrackIdsForPool(poolId) {
+  return [...(LEGACY_SPELLING_REWARD_TRACK_IDS_BY_POOL[normaliseIdentifier(poolId)] || [])];
+}
+
+export function spellingRewardTrackForMonster(monsterId, rewardTracks = LEGACY_SPELLING_REWARD_TRACKS) {
+  const safeMonsterId = normaliseIdentifier(monsterId);
+  if (!safeMonsterId) return null;
+  const tracks = Array.isArray(rewardTracks) ? rewardTracks : [];
+  return tracks
+    .map((track) => normaliseRewardTrackConfig(track))
+    .find((track) => track.monsterId === safeMonsterId) || null;
+}
+
+export function spellingRewardTrackIdForMonster(monsterId, rewardTracks = LEGACY_SPELLING_REWARD_TRACKS) {
+  return spellingRewardTrackForMonster(monsterId, rewardTracks)?.id || '';
+}
+
+export function progressKeyForRewardTrack(track) {
+  const normalised = normaliseRewardTrackConfig(track);
+  return normalised.progressKey || normalised.monsterId;
+}
+
+export function sourceMonsterIdsForRewardTrack(track) {
+  const normalised = normaliseRewardTrackConfig(track);
+  const sourceIds = uniqueStrings(normalised.sourceMonsterIds);
+  return sourceIds.length ? sourceIds : [progressKeyForRewardTrack(normalised)].filter(Boolean);
 }
 
 export function validateRewardTrackCollection(rawTracks = [], {
@@ -256,14 +390,34 @@ export function validateRewardTrackCollection(rawTracks = [], {
       }
     });
 
+    (Array.isArray(track.sourceMonsterIds) ? track.sourceMonsterIds : []).forEach((sourceMonsterId, sourceIndex) => {
+      if (!MONSTERS[sourceMonsterId]) {
+        errors.push(issue(
+          'error',
+          'reward_source_monster_missing',
+          pathFor(index, `sourceMonsterIds[${sourceIndex}]`),
+          `Reward track "${track.id || index + 1}" points at unknown source monster "${sourceMonsterId}".`,
+        ));
+      } else if (!allowedMonsterSet.has(sourceMonsterId)) {
+        errors.push(issue(
+          'error',
+          'reward_source_monster_not_allowed',
+          pathFor(index, `sourceMonsterIds[${sourceIndex}]`),
+          `Reward track "${track.id || index + 1}" cannot source monster "${sourceMonsterId}" for this subject.`,
+        ));
+      }
+    });
+
     const countShouldBlock = track.active !== false
       && (enforceThresholdsForHiddenPools || visiblePools.has(track.poolId));
     const poolWordCount = valueFromPoolWordCounts(poolWordCounts, track.poolId);
     if (countShouldBlock && Number.isFinite(Number(poolWordCount)) && thresholds.length) {
       const maxThreshold = Math.max(...thresholds.filter((entry) => Number.isFinite(entry)));
       if (Number.isFinite(maxThreshold) && maxThreshold > Number(poolWordCount)) {
-        errors.push(issue(
-          'error',
+        const severity = track.compatibilityMode === 'legacy' ? 'warn' : 'error';
+        const collection = severity === 'warn' ? warnings : errors;
+        collection.push(issue(
+          severity,
           'reward_threshold_exceeds_pool_count',
           pathFor(index, 'thresholdOverrides'),
           `Reward track "${track.id}" needs ${maxThreshold} active word(s), but pool "${track.poolId}" has ${Number(poolWordCount)}.`,

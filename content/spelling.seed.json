@@ -1,5 +1,5 @@
 {
-  "modelVersion": 6,
+  "modelVersion": 10,
   "subjectId": "spelling",
   "draft": {
     "id": "main",
@@ -15,6 +15,116 @@
     },
     "createdAt": 1776704142602,
     "updatedAt": 1779293842422,
+    "pools": [
+      {
+        "id": "core",
+        "title": "Core spelling",
+        "type": "statutory",
+        "visibility": {
+          "state": "visible"
+        },
+        "sourceNote": "Bundled legacy core spelling pool.",
+        "rewardTrackIds": [
+          "spelling-core-inklet",
+          "spelling-core-glimmerbug",
+          "spelling-core-phaeton"
+        ],
+        "sortIndex": 0
+      },
+      {
+        "id": "extra",
+        "title": "Extra spelling",
+        "type": "enrichment",
+        "visibility": {
+          "state": "visible"
+        },
+        "sourceNote": "Bundled legacy extra spelling pool.",
+        "rewardTrackIds": [
+          "spelling-extra-vellhorn"
+        ],
+        "sortIndex": 1
+      }
+    ],
+    "rewardTracks": [
+      {
+        "id": "spelling-core-inklet",
+        "poolId": "core",
+        "monsterId": "inklet",
+        "progressKey": "inklet",
+        "sourceMonsterIds": [
+          "inklet"
+        ],
+        "progressionMode": "parallel",
+        "thresholdTemplate": "direct",
+        "active": true,
+        "labels": {
+          "title": "Core Inklet",
+          "shortLabel": "Inklet",
+          "description": "Compatibility reward track for existing Years 3-4 spelling progress."
+        },
+        "sourceNote": "Preserves the existing Inklet monster-codex progress key.",
+        "sortIndex": 0
+      },
+      {
+        "id": "spelling-core-glimmerbug",
+        "poolId": "core",
+        "monsterId": "glimmerbug",
+        "progressKey": "glimmerbug",
+        "sourceMonsterIds": [
+          "glimmerbug"
+        ],
+        "progressionMode": "parallel",
+        "thresholdTemplate": "direct",
+        "active": true,
+        "labels": {
+          "title": "Core Glimmerbug",
+          "shortLabel": "Glimmerbug",
+          "description": "Compatibility reward track for existing Years 5-6 spelling progress."
+        },
+        "sourceNote": "Preserves the existing Glimmerbug monster-codex progress key.",
+        "sortIndex": 1
+      },
+      {
+        "id": "spelling-core-phaeton",
+        "poolId": "core",
+        "monsterId": "phaeton",
+        "progressKey": "phaeton",
+        "sourceMonsterIds": [
+          "inklet",
+          "glimmerbug"
+        ],
+        "progressionMode": "parallel",
+        "thresholdTemplate": "aggregate",
+        "active": true,
+        "labels": {
+          "title": "Core Phaeton",
+          "shortLabel": "Phaeton",
+          "description": "Compatibility aggregate reward track over existing core spelling progress."
+        },
+        "sourceNote": "Preserves the existing Phaeton aggregate derived from Inklet and Glimmerbug.",
+        "sortIndex": 2
+      },
+      {
+        "id": "spelling-extra-vellhorn",
+        "poolId": "extra",
+        "monsterId": "vellhorn",
+        "progressKey": "vellhorn",
+        "sourceMonsterIds": [
+          "vellhorn"
+        ],
+        "progressionMode": "parallel",
+        "thresholdTemplate": "direct",
+        "compatibilityMode": "legacy",
+        "active": true,
+        "labels": {
+          "title": "Extra Vellhorn",
+          "shortLabel": "Vellhorn",
+          "description": "Compatibility reward track for existing Extra spelling progress."
+        },
+        "sourceNote": "Preserves the existing Vellhorn monster-codex progress key and direct staged thresholds.",
+        "sortIndex": 3
+      }
+    ],
     "wordLists": [
       {
         "id": "statutory-y3-4",

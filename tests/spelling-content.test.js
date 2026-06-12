@@ -549,6 +549,7 @@ test('content service supplements legacy published runtime with seeded release a
   assert.equal(content.readBundle().publication.publishedVersion, 1);
   assert.equal(snapshot.words.filter((word) => word.spellingPool === 'extra').length, 52);
   assert.equal(snapshot.wordBySlug.mollusc.spellingPool, 'extra');
+  assert.ok(snapshot.rewardTracks.some((track) => track.id === 'spelling-extra-vellhorn'));
 
   stored.releases[0].version = SEEDED_SPELLING_CONTENT_BUNDLE.publication.publishedVersion + 1;
   stored.releases[0].publishedAt = 1;
@@ -666,4 +667,9 @@ test('publishing a valid spelling draft increments release versions and updates 
   assert.equal(published.publication.currentReleaseId, `spelling-r${currentVersion + 1}`);
   assert.equal(published.publication.publishedVersion, currentVersion + 1);
   assert.equal(published.releases.at(-1).snapshot.words.length, SEEDED_SPELLING_CONTENT_BUNDLE.releases.at(-1).snapshot.words.length);
+  assert.deepEqual(
+    published.releases.at(-1).snapshot.pools.map((pool) => pool.id),
+    ['core', 'extra'],
+  );
+  assert.ok(published.releases.at(-1).snapshot.rewardTracks.some((track) => track.id === 'spelling-extra-vellhorn'));
 });

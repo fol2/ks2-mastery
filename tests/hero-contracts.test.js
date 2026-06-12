@@ -36,8 +36,18 @@ import {
   MONSTERS_BY_SUBJECT,
 } from '../src/platform/game/monsters.js';
 import {
+  BUNDLED_MONSTER_VISUAL_CONFIG,
+  buildMonsterAssetKey,
+} from '../src/platform/game/monster-visual-config.js';
+import {
+  LEGACY_SPELLING_REWARD_TRACKS,
   REWARD_TRACK_THRESHOLD_TEMPLATES,
   SPELLING_REWARD_TRACK_MONSTER_IDS,
+  defaultSpellingRewardTracks,
+  legacySpellingRewardTrackIdsForPool,
+  progressKeyForRewardTrack,
+  sourceMonsterIdsForRewardTrack,
+  thresholdsForRewardTrack,
 } from '../src/platform/game/reward-track-config.js';
 
 // ── Constants ──────────────────────────────────────────────────────
@@ -119,6 +129,44 @@ test('spelling reward-track thresholds fit current monster mastered maxima', () 
     assert.ok(directMax <= MONSTERS[monsterId].masteredMax);
   }
   assert.ok(aggregateMax <= MONSTERS.phaeton.masteredMax);
+});
+
+test('legacy spelling reward tracks preserve existing monster progress keys', () => {
+  const tracks = defaultSpellingRewardTracks();
+
+  assert.deepEqual(
+    tracks.map((track) => track.id),
+    LEGACY_SPELLING_REWARD_TRACKS.map((track) => track.id),
+  );
+  assert.deepEqual(
+    legacySpellingRewardTrackIdsForPool('core'),
+    ['spelling-core-inklet', 'spelling-core-glimmerbug', 'spelling-core-phaeton'],
+  );
+  assert.deepEqual(
+    legacySpellingRewardTrackIdsForPool('extra'),
+    ['spelling-extra-vellhorn'],
+  );
+
+  for (const track of tracks) {
+    assert.equal(progressKeyForRewardTrack(track), track.monsterId);
+    assert.ok(MONSTERS[track.monsterId], `${track.id} must bind an existing monster`);
+    assert.ok(thresholdsForRewardTrack(track).length >= 4, `${track.id} must have staged thresholds`);
+  }
+  assert.deepEqual(sourceMonsterIdsForRewardTrack(tracks.find((track) => track.monsterId === 'phaeton')), [
+    'inklet',
+    'glimmerbug',
+  ]);
+});
+
+test('legacy spelling reward-track monsters have bundled visual coverage', () => {
+  for (const track of LEGACY_SPELLING_REWARD_TRACKS) {
+    for (const branch of ['b1', 'b2']) {
+      for (let stage = 0; stage <= 4; stage += 1) {
+        const key = buildMonsterAssetKey(track.monsterId, branch, stage);
+        assert.ok(BUNDLED_MONSTER_VISUAL_CONFIG.assets[key], `${track.id} missing visual asset ${key}`);
+      }
+    }
+  }
 });
 
 // ── Intent / launcher validation ───────────────────────────────────

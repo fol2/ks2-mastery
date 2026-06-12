@@ -595,6 +595,8 @@ test('worker spelling content route backfills version-one core bundles without p
     assert.equal(payload.content.draft.words.every((word) => word.coverageTier === 'statutory-core'), true);
     assert.equal(payload.content.releases[0].snapshot.words.every((word) => word.spellingPool === 'core'), true);
     assert.equal(payload.content.releases[0].snapshot.words.every((word) => word.coverageTier === 'statutory-core'), true);
+    assert.deepEqual(payload.content.releases[0].snapshot.pools.map((pool) => pool.id), ['core', 'extra']);
+    assert.ok(payload.content.releases[0].snapshot.rewardTracks.some((track) => track.id === 'spelling-core-inklet'));
   } finally {
     server.close();
   }
