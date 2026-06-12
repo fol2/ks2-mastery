@@ -535,6 +535,29 @@ test('codex synthesises uncaught entries for every registered subject monster', 
   assert.equal(readingEgg.nextGoal, 'Find this egg with a reading round');
 });
 
+test('codex synthesis respects exposure-filtered spelling rosters', async () => {
+  const { buildCodexEntries } = await import('../src/surfaces/home/data.js');
+  const entries = buildCodexEntries([
+    {
+      subjectId: 'spelling',
+      monster: MONSTERS.glimmerbug,
+      progress: { caught: false, mastered: 0, stage: 0, level: 0, branch: 'b1', visibleInCodex: true },
+    },
+    {
+      subjectId: 'spelling',
+      monster: MONSTERS.phaeton,
+      progress: { caught: false, mastered: 0, stage: 0, level: 0, branch: 'b1', visibleInCodex: true },
+    },
+  ]);
+  const spellingIds = entries
+    .filter((entry) => entry.subjectId === 'spelling')
+    .map((entry) => entry.id)
+    .sort();
+
+  assert.deepEqual(spellingIds, ['glimmerbug', 'phaeton']);
+  assert.ok(entries.some((entry) => entry.id === 'bracehart'), 'non-spelling subjects still use their default roster');
+});
+
 test('codex entries use grammar displayState for first-Star Egg Found', async () => {
   const { buildCodexEntries } = await import('../src/surfaces/home/data.js');
   const [entry] = buildCodexEntries([

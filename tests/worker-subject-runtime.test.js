@@ -4,9 +4,12 @@ import { readFile } from 'node:fs/promises';
 
 import { createWorkerApp } from '../worker/src/app.js';
 import {
+  PUBLIC_SPELLING_MONSTER_IDS,
   PUBLIC_SPELLING_REWARD_TRACK_IDS,
   createWorkerRepository,
+  publicMonsterCodexState,
   publicMonsterCodexStateFromSpellingProgress,
+  publicMonsterCodexStateWithoutSpellingEntries,
 } from '../worker/src/repository.js';
 import { createSubjectRuntime, createWorkerSubjectRuntime } from '../worker/src/subjects/runtime.js';
 import { normaliseSubjectCommandRequest } from '../worker/src/subjects/command-contract.js';
@@ -71,6 +74,99 @@ test('Worker spelling codex projection follows legacy reward-track mapping witho
   assert.equal(derived.state.phaeton.masteredCount, 2);
   assert.equal(derived.state.vellhorn.masteredCount, 1);
   assert.equal(derived.state.inklet.rewardTrackId, undefined);
+});
+
+test('Worker spelling codex projection respects reward-track Hero / Codex exposure', () => {
+  const now = Date.UTC(2026, 5, 12, 9, 0, 0);
+  const exposedTracks = LEGACY_SPELLING_REWARD_TRACKS.map((track) => {
+    if (track.id === 'spelling-core-inklet') {
+      return { ...track, heroExposure: { state: 'hidden' } };
+    }
+    if (track.id === 'spelling-core-glimmerbug') {
+      return { ...track, heroExposure: { state: 'scheduled', scheduledAt: now + 60_000 } };
+    }
+    return { ...track, heroExposure: { state: 'visible' } };
+  });
+  const snapshot = {
+    rewardTracks: exposedTracks,
+    words: [
+      { slug: 'alpha', spellingPool: 'core', yearBand: '3-4' },
+      { slug: 'bravo', spellingPool: 'core', yearBand: '5-6' },
+    ],
+  };
+  const progress = {
+    alpha: { stage: 4 },
+    bravo: { stage: 4 },
+  };
+
+  const learnerRuntime = publicMonsterCodexStateFromSpellingProgress(progress, snapshot, {}, {
+    learnerId: 'learner-exposure',
+    now,
+  });
+  const afterSchedule = publicMonsterCodexStateFromSpellingProgress(progress, {
+    ...snapshot,
+    rewardTracks: exposedTracks.map((track) => (
+      track.id === 'spelling-core-glimmerbug'
+        ? { ...track, heroExposure: { state: 'scheduled', scheduledAt: now } }
+        : track
+    )),
+  }, {}, {
+    learnerId: 'learner-exposure',
+    now,
+  });
+  const adminPreview = publicMonsterCodexStateFromSpellingProgress(progress, snapshot, {}, {
+    learnerId: 'learner-exposure',
+    now,
+    includeAdminPreview: true,
+  });
+
+  assert.equal(learnerRuntime.knownWordCount, 2);
+  assert.equal(learnerRuntime.state.inklet, undefined);
+  assert.equal(learnerRuntime.state.glimmerbug, undefined);
+  assert.equal(learnerRuntime.state.phaeton.masteredCount, 0);
+  assert.equal(afterSchedule.state.glimmerbug.masteredCount, 1);
+  assert.equal(afterSchedule.state.phaeton.masteredCount, 1);
+  assert.equal(adminPreview.state.inklet.masteredCount, 1);
+  assert.equal(adminPreview.state.glimmerbug.masteredCount, 1);
+});
+
+test('Worker spelling codex projection drops stale hidden entries while preserving other subjects', () => {
+  const now = Date.UTC(2026, 5, 12, 9, 0, 0);
+  const learnerId = 'learner-stale-exposure';
+  const rewardTracks = LEGACY_SPELLING_REWARD_TRACKS.map((track) => {
+    if (track.id === 'spelling-core-inklet') {
+      return { ...track, heroExposure: { state: 'hidden' } };
+    }
+    return { ...track, heroExposure: { state: 'visible' } };
+  });
+  const existingState = publicMonsterCodexState({
+    inklet: { masteredCount: 12, caught: true, branch: 'b1' },
+    quoral: { masteredCount: 3, caught: true, branch: 'b2' },
+  }, { learnerId });
+  const derived = publicMonsterCodexStateFromSpellingProgress(
+    { alpha: { stage: 4 }, bravo: { stage: 4 } },
+    {
+      rewardTracks,
+      words: [
+        { slug: 'alpha', spellingPool: 'core', yearBand: '3-4' },
+        { slug: 'bravo', spellingPool: 'core', yearBand: '5-6' },
+      ],
+    },
+    existingState,
+    { learnerId, now },
+  );
+  const merged = publicMonsterCodexState({
+    ...publicMonsterCodexStateWithoutSpellingEntries(existingState, { learnerId }),
+    ...derived.state,
+  }, { learnerId });
+
+  assert.equal(PUBLIC_SPELLING_MONSTER_IDS.includes('inklet'), true);
+  assert.equal(derived.state.inklet, undefined);
+  assert.equal(merged.inklet, undefined);
+  assert.equal(merged.glimmerbug.visibleInCodex, true);
+  assert.equal(merged.phaeton.visibleInCodex, true);
+  assert.equal(merged.quoral.masteredCount, 3);
+  assert.equal(merged.quoral.branch, 'b2');
 });
 
 async function postJson(server, path, body = {}, headers = {}) {

@@ -1619,6 +1619,219 @@ test('Content Operations Centre pools and rewards tab appends reward-track upser
   assert.match(result.text, /Reward track operation saved/);
 });
 
+test('Content Operations Centre Hero / Codex tab appends exposure-only operations', async () => {
+  const output = await runClientEntry(`
+    const { JSDOM } = require('jsdom');
+
+    globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+    const dom = new JSDOM('<!doctype html><html><body><div id="root"></div></body></html>', {
+      url: 'https://ks2.eugnel.uk/admin',
+    });
+    globalThis.window = dom.window;
+    globalThis.document = dom.window.document;
+    globalThis.navigator = dom.window.navigator;
+    globalThis.HTMLElement = dom.window.HTMLElement;
+    globalThis.Event = dom.window.Event;
+
+    const React = require('react');
+    const { createRoot } = require('react-dom/client');
+    const { AdminContentOperationsSection } = require(${CONTENT_OPS_SECTION_PATH});
+    const { act } = React;
+
+    const calls = [];
+    const model = ${JSON.stringify(baseModel({
+      contentOperations: {
+        overview,
+        packages: { packages: [contentPackage] },
+        releases: { releases: [release] },
+        spellingBrowse,
+        spellingItemDetail: spellingWordDetail,
+      },
+    }))};
+    const actions = {
+      contentOperationsApi: {
+        async readSpellingWord(args) {
+          calls.push({ method: 'readSpellingWord', args });
+          return ${JSON.stringify(spellingWordDetail)};
+        },
+        async appendOperation(args) {
+          calls.push({ method: 'appendOperation', args });
+          return { ok: true, operation: { operationId: 'op-exposure-save-1', ...args.operation } };
+        },
+      },
+    };
+
+    async function flush() {
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      });
+    }
+
+    async function setControl(selector, value) {
+      const control = document.querySelector(selector);
+      const prototype = control.tagName === 'TEXTAREA'
+        ? dom.window.HTMLTextAreaElement.prototype
+        : (control.tagName === 'SELECT'
+            ? dom.window.HTMLSelectElement.prototype
+            : dom.window.HTMLInputElement.prototype);
+      const valueSetter = Object.getOwnPropertyDescriptor(prototype, 'value').set;
+      valueSetter.call(control, value);
+      await act(async () => {
+        control.dispatchEvent(new dom.window.Event('input', { bubbles: true }));
+        control.dispatchEvent(new dom.window.Event('change', { bubbles: true }));
+      });
+    }
+
+    async function main() {
+      const root = createRoot(document.getElementById('root'));
+      await act(async () => {
+        root.render(React.createElement(AdminContentOperationsSection, {
+          model,
+          actions,
+          initialActiveTab: 'heroCodex',
+          initialSelectedPackageId: 'pkg-draft-1',
+        }));
+      });
+      await flush();
+
+      await setControl('[data-content-ops-reward-field="heroExposureState"]', 'scheduled');
+      await setControl('[data-content-ops-reward-field="heroExposureSurfaces"]', 'heroCamp, heroQuest, codex, subjectSetup');
+      await setControl('[data-content-ops-reward-field="heroExposureScheduledAt"]', '1781254800000');
+
+      const saveButton = Array.from(document.querySelectorAll('button'))
+        .find((button) => button.textContent === 'Save exposure');
+      await act(async () => {
+        saveButton.click();
+      });
+      await flush();
+      await flush();
+
+      process.stdout.write(JSON.stringify({
+        calls,
+        text: document.body.textContent,
+        area: document.querySelector('[data-content-ops-area]')?.getAttribute('data-content-ops-area'),
+      }));
+
+      await act(async () => {
+        root.unmount();
+      });
+      dom.window.close();
+      process.exit(0);
+    }
+
+    main().catch((error) => {
+      process.stderr.write(error.stack || error.message);
+      process.exitCode = 1;
+    });
+  `);
+  const result = JSON.parse(output);
+  const appendCall = result.calls.find((entry) => entry.method === 'appendOperation');
+
+  assert.equal(result.area, 'heroCodex');
+  assert.ok(appendCall, 'Hero / Codex editor should append an operation');
+  assert.equal(appendCall.args.packageId, 'pkg-draft-1');
+  assert.equal(appendCall.args.operation.entityType, 'spelling.heroExposure');
+  assert.equal(appendCall.args.operation.action, 'upsert');
+  assert.equal(appendCall.args.operation.entityId, 'extra-vellhorn');
+  assert.equal(appendCall.args.operation.payload.state, 'scheduled');
+  assert.equal(appendCall.args.operation.payload.scheduledAt, 1781254800000);
+  assert.deepEqual(appendCall.args.operation.payload.surfaces, ['heroCamp', 'heroQuest', 'codex', 'subjectSetup']);
+  assert.equal(appendCall.args.mutation.requestId.startsWith('content-ops-hero-exposure-upsert-pkg-draft-1-'), true);
+  assert.match(result.text, /Hero \/ Codex operation saved/);
+});
+
+test('Content Operations Centre disables exposure-only save while creating a new reward track', async () => {
+  const output = await runClientEntry(`
+    const { JSDOM } = require('jsdom');
+
+    globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+    const dom = new JSDOM('<!doctype html><html><body><div id="root"></div></body></html>', {
+      url: 'https://ks2.eugnel.uk/admin',
+    });
+    globalThis.window = dom.window;
+    globalThis.document = dom.window.document;
+    globalThis.navigator = dom.window.navigator;
+    globalThis.HTMLElement = dom.window.HTMLElement;
+    globalThis.Event = dom.window.Event;
+
+    const React = require('react');
+    const { createRoot } = require('react-dom/client');
+    const { AdminContentOperationsSection } = require(${CONTENT_OPS_SECTION_PATH});
+    const { act } = React;
+
+    const calls = [];
+    const model = ${JSON.stringify(baseModel({
+      contentOperations: {
+        overview,
+        packages: { packages: [contentPackage] },
+        releases: { releases: [release] },
+        spellingBrowse,
+        spellingItemDetail: spellingWordDetail,
+      },
+    }))};
+    const actions = {
+      contentOperationsApi: {
+        async appendOperation(args) {
+          calls.push({ method: 'appendOperation', args });
+          return { ok: true, operation: { operationId: 'op-exposure-create-leak', ...args.operation } };
+        },
+      },
+    };
+
+    async function flush() {
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      });
+    }
+
+    async function main() {
+      const root = createRoot(document.getElementById('root'));
+      await act(async () => {
+        root.render(React.createElement(AdminContentOperationsSection, {
+          model,
+          actions,
+          initialActiveTab: 'heroCodex',
+          initialSelectedPackageId: 'pkg-draft-1',
+        }));
+      });
+      await flush();
+
+      const newTrackButton = Array.from(document.querySelectorAll('button'))
+        .find((button) => button.textContent === 'New track');
+      await act(async () => {
+        newTrackButton.click();
+      });
+
+      const saveExposureButton = Array.from(document.querySelectorAll('button'))
+        .find((button) => button.textContent === 'Save exposure');
+      await act(async () => {
+        saveExposureButton.click();
+      });
+      await flush();
+
+      process.stdout.write(JSON.stringify({
+        calls,
+        disabled: saveExposureButton.disabled,
+      }));
+
+      await act(async () => {
+        root.unmount();
+      });
+      dom.window.close();
+      process.exit(0);
+    }
+
+    main().catch((error) => {
+      process.stderr.write(error.stack || error.message);
+      process.exitCode = 1;
+    });
+  `);
+  const result = JSON.parse(output);
+
+  assert.equal(result.disabled, true);
+  assert.deepEqual(result.calls, []);
+});
+
 test('Content Operations Centre pools and rewards tab cold-loads spelling browse data', async () => {
   const output = await runClientEntry(`
     const { JSDOM } = require('jsdom');

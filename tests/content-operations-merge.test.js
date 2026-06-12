@@ -6,6 +6,7 @@ import {
   contentOperationHash,
   detectContentOperationConflicts,
   normaliseContentOperation,
+  operationConflictKey,
   readContentOperationField,
 } from '../src/subjects/spelling/content/operations-model.js';
 import {
@@ -135,6 +136,59 @@ test('structural operations conflict with child-field edits on the same entity',
   assert.equal(conflicts[0].code, 'structural_conflict');
   assert.equal(conflicts[0].fieldPath, '$');
 });
+
+test('Hero / Codex exposure operations conflict with reward-track edits on the same track', async () => {
+  const structuralRewardTrackEdit = [{
+    operationId: 'reward-track-op',
+    entityType: 'spelling.rewardTrack',
+    entityId: 'spelling-core-inklet',
+    action: 'upsert',
+    payload: {
+      id: 'spelling-core-inklet',
+      poolId: 'core',
+      monsterId: 'inklet',
+      thresholdOverrides: [1],
+      heroExposure: { state: 'visible', surfaces: ['codex'] },
+    },
+  }];
+  const exposureOnlyEdit = [{
+    operationId: 'exposure-op',
+    entityType: 'spelling.heroExposure',
+    entityId: 'spelling-core-inklet',
+    action: 'upsert',
+    payload: {
+      state: 'hidden',
+      surfaces: ['codex'],
+      scheduledAt: 0,
+      rolloutFlag: '',
+      previewAllowed: true,
+    },
+  }];
+  const unrelatedRewardTrackLabelEdit = [{
+    operationId: 'reward-track-labels-op',
+    entityType: 'spelling.rewardTrack',
+    entityId: 'spelling-core-inklet',
+    fieldPath: 'labels.title',
+    action: 'set',
+    payload: 'Core Inklet',
+  }];
+  const bundle = await readSeededSpellingContentBundle();
+
+  const conflicts = detectContentOperationConflicts(exposureOnlyEdit, structuralRewardTrackEdit);
+
+  assert.equal(operationConflictKey(exposureOnlyEdit[0]), 'spelling.rewardTrack::spelling-core-inklet::heroExposure');
+  assert.equal(conflicts.length, 1);
+  assert.equal(conflicts[0].code, 'structural_conflict');
+  assert.equal(conflicts[0].entityType, 'spelling.rewardTrack');
+  assert.equal(conflicts[0].entityId, 'spelling-core-inklet');
+  assert.equal(conflicts[0].fieldPath, '$');
+  assert.deepEqual(detectContentOperationConflicts(exposureOnlyEdit, unrelatedRewardTrackLabelEdit), []);
+  assert.equal(
+    readContentOperationField(bundle, exposureOnlyEdit[0]).state,
+    'visible',
+  );
+}
+);
 
 test('spelling package candidate applies word edits against the existing bundle', async () => {
   const bundle = await readSeededSpellingContentBundle();

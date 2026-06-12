@@ -19,13 +19,18 @@ export const FORBIDDEN_CAMP_FIELDS = Object.freeze([
 
 const CAMP_COMMANDS = new Set(['unlock-monster', 'evolve-monster']);
 
+function allowedMonsterSet(allowedMonsterIds) {
+  if (!Array.isArray(allowedMonsterIds)) return null;
+  return new Set(allowedMonsterIds.map((entry) => String(entry || '').trim()).filter(Boolean));
+}
+
 // ── Main resolver ──────────────────────────────────────────────────
 
 /**
  * Pure camp command resolver — receives pre-loaded state, returns intent.
  * Does NOT perform DB reads or writes.
  */
-export function resolveHeroCampCommand({ command, body, heroState, learnerId, rosterVersion, nowTs }) {
+export function resolveHeroCampCommand({ command, body, heroState, learnerId, rosterVersion, nowTs, allowedMonsterIds = null }) {
   // 1. Validate command
   if (!CAMP_COMMANDS.has(command)) {
     return { ok: false, code: 'hero_camp_disabled', httpStatus: 400, reason: `Unknown camp command: ${command}` };
@@ -39,6 +44,17 @@ export function resolveHeroCampCommand({ command, body, heroState, learnerId, ro
       code: 'hero_client_field_rejected',
       httpStatus: 400,
       reason: `Client must not send: ${rejectedFields.join(', ')}`,
+    };
+  }
+
+  const monsterId = String(body?.monsterId || '').trim();
+  const allowList = allowedMonsterSet(allowedMonsterIds);
+  if (allowList && !allowList.has(monsterId)) {
+    return {
+      ok: false,
+      code: 'hero_monster_hidden',
+      httpStatus: 404,
+      reason: 'This Hero Camp monster is not currently available.',
     };
   }
 

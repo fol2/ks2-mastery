@@ -9,6 +9,39 @@ export const REWARD_TRACK_PROGRESS_MODES = Object.freeze(['parallel', 'sequentia
 export const DEFAULT_REWARD_TRACK_PROGRESS_MODE = 'parallel';
 export const DEFAULT_REWARD_TRACK_THRESHOLD_TEMPLATE = 'direct';
 
+const HERO_EXPOSURE_STATE_ALIASES = Object.freeze({
+  rolloutFlagged: 'rollout-flagged',
+  rollout_flagged: 'rollout-flagged',
+  rollout: 'rollout-flagged',
+  flagged: 'rollout-flagged',
+  staged: 'scheduled',
+});
+
+export const HERO_EXPOSURE_STATES = Object.freeze([
+  'visible',
+  'hidden',
+  'scheduled',
+  'rollout-flagged',
+]);
+
+export const HERO_EXPOSURE_SURFACES = Object.freeze([
+  'heroCamp',
+  'heroQuest',
+  'codex',
+  'subjectSetup',
+]);
+
+export const DEFAULT_HERO_EXPOSURE = Object.freeze({
+  state: 'visible',
+  surfaces: HERO_EXPOSURE_SURFACES,
+  scheduledAt: 0,
+  rolloutFlag: '',
+  previewAllowed: true,
+});
+
+const HERO_EXPOSURE_STATE_SET = new Set(HERO_EXPOSURE_STATES);
+const HERO_EXPOSURE_SURFACE_SET = new Set(HERO_EXPOSURE_SURFACES);
+
 export const SPELLING_REWARD_TRACK_MONSTER_IDS = Object.freeze([...MONSTERS_BY_SUBJECT.spelling]);
 
 export const REWARD_TRACK_THRESHOLD_TEMPLATES = Object.freeze({
@@ -25,10 +58,15 @@ export const REWARD_TRACK_THRESHOLD_TEMPLATES = Object.freeze({
 });
 
 function freezeLegacyTrack(track) {
+  const heroExposure = normaliseHeroExposure(track.heroExposure);
   return Object.freeze({
     ...track,
     labels: Object.freeze({ ...(track.labels || {}) }),
     sourceMonsterIds: Object.freeze([...(track.sourceMonsterIds || [])]),
+    heroExposure: Object.freeze({
+      ...heroExposure,
+      surfaces: Object.freeze([...heroExposure.surfaces]),
+    }),
   });
 }
 
@@ -131,6 +169,89 @@ function normaliseIdentifier(value, fallback = '') {
 function normaliseTimestamp(value, fallback = 0) {
   const numeric = Number(value);
   return Number.isFinite(numeric) && numeric >= 0 ? numeric : fallback;
+}
+
+function normaliseHeroExposureState(value, fallback = DEFAULT_HERO_EXPOSURE.state) {
+  const raw = normaliseString(value, fallback);
+  const aliased = HERO_EXPOSURE_STATE_ALIASES[raw] || raw;
+  return HERO_EXPOSURE_STATE_SET.has(aliased) ? aliased : fallback;
+}
+
+function normaliseHeroExposureSurfaces(value, fallback = DEFAULT_HERO_EXPOSURE.surfaces) {
+  const hasExplicitValue = Array.isArray(value) || typeof value === 'string';
+  const source = Array.isArray(value)
+    ? value
+    : (typeof value === 'string' ? value.split(/[\n,]+/) : fallback);
+  const seen = new Set();
+  const output = [];
+  for (const entry of source) {
+    const surface = normaliseString(entry);
+    if (!HERO_EXPOSURE_SURFACE_SET.has(surface) || seen.has(surface)) continue;
+    seen.add(surface);
+    output.push(surface);
+  }
+  if (output.length) return output;
+  return hasExplicitValue ? [] : [...DEFAULT_HERO_EXPOSURE.surfaces];
+}
+
+function heroExposureEnvFlagEnabled(env, flagName) {
+  const name = normaliseString(flagName);
+  if (!name) return false;
+  const value = isPlainObject(env) ? env[name] : undefined;
+  return ['1', 'true', 'yes', 'on'].includes(String(value || '').trim().toLowerCase());
+}
+
+export function isKnownHeroExposureState(value) {
+  const raw = normaliseString(value);
+  const aliased = HERO_EXPOSURE_STATE_ALIASES[raw] || raw;
+  return HERO_EXPOSURE_STATE_SET.has(aliased);
+}
+
+export function isKnownHeroExposureSurface(value) {
+  return HERO_EXPOSURE_SURFACE_SET.has(normaliseString(value));
+}
+
+export function normaliseHeroExposure(rawValue = null, fallback = null) {
+  const raw = isPlainObject(rawValue) ? rawValue : {};
+  const safeFallback = isPlainObject(fallback) ? fallback : DEFAULT_HERO_EXPOSURE;
+  return {
+    state: normaliseHeroExposureState(raw.state, normaliseHeroExposureState(safeFallback.state)),
+    surfaces: normaliseHeroExposureSurfaces(raw.surfaces, safeFallback.surfaces),
+    scheduledAt: normaliseTimestamp(raw.scheduledAt ?? safeFallback.scheduledAt, 0),
+    rolloutFlag: normaliseString(raw.rolloutFlag, safeFallback.rolloutFlag || ''),
+    previewAllowed: raw.previewAllowed === false ? false : safeFallback.previewAllowed !== false,
+  };
+}
+
+export function heroExposureSurfaceEnabled(exposure, surface) {
+  const safe = normaliseHeroExposure(exposure);
+  return safe.surfaces.includes(surface);
+}
+
+export function isHeroExposureVisible(exposure, {
+  surface = 'codex',
+  now = Date.now(),
+  env = {},
+} = {}) {
+  const safe = normaliseHeroExposure(exposure);
+  if (!heroExposureSurfaceEnabled(safe, surface)) return false;
+  if (safe.state === 'hidden') return false;
+  if (safe.state === 'visible') return true;
+  if (safe.state === 'scheduled') {
+    return safe.scheduledAt > 0 && safe.scheduledAt <= normaliseTimestamp(now, Date.now());
+  }
+  if (safe.state === 'rollout-flagged') {
+    return heroExposureEnvFlagEnabled(env, safe.rolloutFlag);
+  }
+  return false;
+}
+
+export function heroExposureStatus(exposure, options = {}) {
+  const safe = normaliseHeroExposure(exposure);
+  return {
+    ...safe,
+    learnerVisible: isHeroExposureVisible(safe, options),
+  };
 }
 
 function isValidStableId(value) {
@@ -259,6 +380,7 @@ export function normaliseRewardTrackConfig(rawValue = {}, {
     active: retired ? false : (activeProvided ? raw.active !== false : existing.active !== false),
     retired,
     ...(raw.retirement || existing.retirement ? { retirement: raw.retirement || existing.retirement } : {}),
+    heroExposure: normaliseHeroExposure(raw.heroExposure || raw.exposure, existing.heroExposure || existing.exposure),
     labels: normaliseLabels(raw.labels, existing.labels),
     sequentialAfter: normaliseIdentifier(
       raw.sequentialAfter || raw.afterTrackId,
@@ -296,6 +418,10 @@ function cloneRewardTrack(track) {
     ...track,
     labels: { ...(track.labels || {}) },
     sourceMonsterIds: [...(track.sourceMonsterIds || [])],
+    heroExposure: {
+      ...(track.heroExposure || DEFAULT_HERO_EXPOSURE),
+      surfaces: [...(track.heroExposure?.surfaces || DEFAULT_HERO_EXPOSURE.surfaces)],
+    },
     ...(Array.isArray(track.thresholdOverrides) ? { thresholdOverrides: [...track.thresholdOverrides] } : {}),
   };
 }
@@ -332,6 +458,25 @@ export function sourceMonsterIdsForRewardTrack(track) {
   return sourceIds.length ? sourceIds : [progressKeyForRewardTrack(normalised)].filter(Boolean);
 }
 
+export function rewardTracksVisibleForHeroSurface(rewardTracks = LEGACY_SPELLING_REWARD_TRACKS, {
+  surface = 'codex',
+  now = Date.now(),
+  env = {},
+  includeAdminPreview = false,
+} = {}) {
+  return normaliseRewardTrackCollection(rewardTracks)
+    .filter((track) => {
+      if (track.active === false || track.retired) return false;
+      const status = heroExposureStatus(track.heroExposure, { surface, now, env });
+      return status.learnerVisible
+        || (
+          includeAdminPreview === true
+          && status.previewAllowed !== false
+          && status.surfaces.includes(surface)
+        );
+    });
+}
+
 export function validateRewardTrackCollection(rawTracks = [], {
   pools = [],
   poolWordCounts = null,
@@ -340,6 +485,7 @@ export function validateRewardTrackCollection(rawTracks = [], {
   enforceThresholdsForHiddenPools = false,
 } = {}) {
   const tracks = normaliseRewardTrackCollection(rawTracks);
+  const rawTrackValues = Array.isArray(rawTracks) ? rawTracks : [];
   const errors = [];
   const warnings = [];
   const byId = new Map();
@@ -350,6 +496,15 @@ export function validateRewardTrackCollection(rawTracks = [], {
     : learnerVisiblePoolIdsFrom(pools);
 
   tracks.forEach((track, index) => {
+    const rawTrack = isPlainObject(rawTrackValues[index]) ? rawTrackValues[index] : {};
+    const rawHeroExposure = isPlainObject(rawTrack.heroExposure)
+      ? rawTrack.heroExposure
+      : (isPlainObject(rawTrack.exposure) ? rawTrack.exposure : null);
+    const rawHeroExposureSurfaces = Array.isArray(rawHeroExposure?.surfaces)
+      ? rawHeroExposure.surfaces.map((surface) => String(surface || '').trim()).filter(Boolean)
+      : (typeof rawHeroExposure?.surfaces === 'string'
+          ? rawHeroExposure.surfaces.split(/[\n,]+/).map((surface) => surface.trim()).filter(Boolean)
+          : []);
     if (!track.id || !isValidRewardTrackId(track.id)) {
       errors.push(issue('error', 'invalid_reward_track_id', pathFor(index, 'id'), 'Reward track id must be a stable lowercase id.'));
     } else if (byId.has(track.id)) {
@@ -438,6 +593,24 @@ export function validateRewardTrackCollection(rawTracks = [], {
 
     if (track.active === false && visiblePools.has(track.poolId)) {
       warnings.push(issue('warn', 'inactive_visible_reward_track', pathFor(index, 'active'), `Reward track "${track.id}" is inactive for learner-visible pool "${track.poolId}".`));
+    }
+
+    if (rawHeroExposure?.state && !isKnownHeroExposureState(rawHeroExposure.state)) {
+      errors.push(issue('error', 'invalid_hero_exposure_state', pathFor(index, 'heroExposure.state'), `Reward track "${track.id || index + 1}" has an unknown Hero / Codex exposure state.`));
+    }
+    if (!Array.isArray(track.heroExposure?.surfaces) || track.heroExposure.surfaces.length === 0) {
+      errors.push(issue('error', 'hero_exposure_surface_required', pathFor(index, 'heroExposure.surfaces'), `Reward track "${track.id || index + 1}" needs at least one Hero / Codex exposure surface.`));
+    }
+    rawHeroExposureSurfaces.forEach((surface, surfaceIndex) => {
+      if (!isKnownHeroExposureSurface(surface)) {
+        errors.push(issue('error', 'invalid_hero_exposure_surface', pathFor(index, `heroExposure.surfaces[${surfaceIndex}]`), `Reward track "${track.id || index + 1}" has an unknown Hero / Codex exposure surface.`));
+      }
+    });
+    if (track.heroExposure?.state === 'scheduled' && !track.heroExposure.scheduledAt) {
+      errors.push(issue('error', 'hero_exposure_schedule_required', pathFor(index, 'heroExposure.scheduledAt'), `Reward track "${track.id || index + 1}" requires a schedule timestamp for scheduled exposure.`));
+    }
+    if (track.heroExposure?.state === 'rollout-flagged' && !track.heroExposure.rolloutFlag) {
+      errors.push(issue('error', 'hero_exposure_flag_required', pathFor(index, 'heroExposure.rolloutFlag'), `Reward track "${track.id || index + 1}" requires a rollout flag for flagged exposure.`));
     }
   });
 

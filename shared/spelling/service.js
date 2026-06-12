@@ -1332,6 +1332,11 @@ export function createSpellingService({ repository, storage, tts, now, random, c
   const runtimeWordBySlug = contentSnapshot?.wordBySlug && typeof contentSnapshot.wordBySlug === 'object' && !Array.isArray(contentSnapshot.wordBySlug)
     ? cloneSerialisable(contentSnapshot.wordBySlug)
     : Object.fromEntries(runtimeWords.map((word) => [word.slug, cloneSerialisable(word)]));
+  const runtimeContentSnapshot = contentSnapshot && typeof contentSnapshot === 'object' && !Array.isArray(contentSnapshot)
+    ? cloneSerialisable(contentSnapshot)
+    : {};
+  runtimeContentSnapshot.words = cloneSerialisable(runtimeWords);
+  runtimeContentSnapshot.wordBySlug = cloneSerialisable(runtimeWordBySlug);
   const isRuntimeKnownSlug = (slug) => isKnownSlug(slug, runtimeWordBySlug);
   const engine = createLegacySpellingEngine({
     words: runtimeWords,
@@ -4129,6 +4134,13 @@ export function createSpellingService({ repository, storage, tts, now, random, c
 
   return {
     initState,
+    getRuntimeContentSnapshot() {
+      return cloneSerialisable(runtimeContentSnapshot);
+    },
+    getRuntimeRewardTracks() {
+      const rewardTracks = runtimeContentSnapshot?.rewardTracks;
+      return Array.isArray(rewardTracks) ? cloneSerialisable(rewardTracks) : null;
+    },
     getPrefs,
     savePrefs,
     getStats,

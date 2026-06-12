@@ -758,17 +758,30 @@ export function buildCodexEntries(summary = []) {
   });
 }
 
+function visibleMonsterRosterFromSummary(summary = []) {
+  const bySubject = new Map();
+  for (const entry of Array.isArray(summary) ? summary : []) {
+    if (entry?.progress?.visibleInCodex !== true || !entry?.monster?.id) continue;
+    const subjectId = entry.subjectId || entry.progress?.subjectId || 'spelling';
+    const existing = bySubject.get(subjectId) || [];
+    if (!existing.includes(entry.monster.id)) existing.push(entry.monster.id);
+    bySubject.set(subjectId, existing);
+  }
+  return bySubject;
+}
+
 function withSynthesisedUncaughtMonsters(summary = []) {
   const presentIds = new Set(
     summary.map(({ monster }) => monster?.id).filter(Boolean),
   );
+  const exposedRosterBySubject = visibleMonsterRosterFromSummary(summary);
   const synthesised = [];
   // Scope iteration to active learner-facing subject groups only. Reserved
   // buckets (`punctuationReserve`, `grammarReserve`) never enter the Codex
   // pipeline; without this guard, every uncaught reserve monster would surface
   // as a "not caught" Codex card, leaking the retired Hero Camp roster.
   for (const subjectId of CODEX_SUBJECT_GROUP_IDS) {
-    const monsterIds = MONSTERS_BY_SUBJECT[subjectId] || [];
+    const monsterIds = exposedRosterBySubject.get(subjectId) || MONSTERS_BY_SUBJECT[subjectId] || [];
     for (const monsterId of monsterIds) {
       if (presentIds.has(monsterId)) continue;
       const monster = MONSTERS[monsterId];

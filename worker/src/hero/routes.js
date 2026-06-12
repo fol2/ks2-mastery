@@ -8,9 +8,15 @@ import { json } from '../http.js';
 import { NotFoundError } from '../errors.js';
 import { buildHeroShadowReadModel } from './read-model.js';
 import { resolveHeroFlagsForAccount } from '../../../shared/hero/account-override.js';
+import { heroCampMonsterIdsFromRewardTracks } from './exposure.js';
 
 function envFlagEnabled(value) {
   return ['1', 'true', 'yes', 'on'].includes(String(value || '').trim().toLowerCase());
+}
+
+function campMonsterIdsFromSubjectExposure(subjectReadModels, { now, env } = {}) {
+  const rewardTracks = subjectReadModels?.spelling?.content?.rewardTracks;
+  return heroCampMonsterIdsFromRewardTracks(rewardTracks, { now, env });
 }
 
 /**
@@ -101,6 +107,10 @@ export async function handleHeroReadModel({
   const progressFlagEnabled = envFlagEnabled(resolvedEnv.HERO_MODE_PROGRESS_ENABLED);
   const economyFlagEnabled = envFlagEnabled(resolvedEnv.HERO_MODE_ECONOMY_ENABLED);
   const campFlagEnabled = envFlagEnabled(resolvedEnv.HERO_MODE_CAMP_ENABLED);
+  const campMonsterIds = campMonsterIdsFromSubjectExposure(subjectReadModels, {
+    now: nowTs,
+    env: resolvedEnv,
+  });
   const heroProgressData = progressFlagEnabled
     ? await repository.readHeroProgressData(learnerId)
     : { heroProgressState: null, recentCompletedSessions: [] };
@@ -118,6 +128,7 @@ export async function handleHeroReadModel({
     progressEnabled: progressFlagEnabled,
     economyEnabled: progressFlagEnabled && economyFlagEnabled,
     campEnabled: progressFlagEnabled && economyFlagEnabled && campFlagEnabled,
+    campMonsterIds,
   });
 
   // U10: structured observability — fire-and-forget, never blocks the response.

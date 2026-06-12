@@ -4,6 +4,9 @@ import {
   normaliseSpellingContentBundle,
   validateSpellingContentBundle,
 } from './model.js';
+import {
+  normaliseHeroExposure,
+} from '../../../platform/game/reward-track-config.js';
 
 export const CONTENT_OPERATION_SUBJECT_ID = 'spelling';
 
@@ -20,6 +23,7 @@ export const CONTENT_OPERATION_PACKAGE_STATES = Object.freeze({
 
 export const CONTENT_OPERATION_ENTITY_TYPES = Object.freeze([
   'spelling.audioRequirementProfile',
+  'spelling.heroExposure',
   'spelling.pool',
   'spelling.rewardTrack',
   'spelling.word',
@@ -41,6 +45,7 @@ const ACTION_SET = new Set(CONTENT_OPERATION_ACTIONS);
 const STRUCTURAL_ACTIONS = new Set(['create', 'upsert', 'replace', 'remove', 'retire']);
 const AUDIO_REQUIREMENT_PROFILE_ENTITY_TYPE = 'spelling.audioRequirementProfile';
 const AUDIO_REQUIREMENT_PROFILE_ENTITY_ID = 'default';
+const HERO_EXPOSURE_ENTITY_TYPE = 'spelling.heroExposure';
 
 const EDITABLE_COLLECTIONS = Object.freeze({
   'spelling.pool': Object.freeze({ collectionPath: ['draft', 'pools'], idField: 'id' }),
@@ -149,6 +154,45 @@ function applyCollectionOperation(bundle, operation) {
     }
   }
 
+  if (operation.entityType === HERO_EXPOSURE_ENTITY_TYPE) {
+    const descriptor = collectionFor(bundle, 'spelling.rewardTrack');
+    if (!descriptor) {
+      throw new Error('Reward-track collection is unavailable.');
+    }
+    const { collection, idField } = descriptor;
+    const { index, entity } = findEntity(collection, idField, operation.entityId);
+    if (index < 0 || !entity) {
+      throw new Error(`Hero / Codex exposure target "${operation.entityId}" does not exist.`);
+    }
+
+    if (operation.action === 'remove' || operation.action === 'retire') {
+      collection[index] = {
+        ...cloneSerialisable(entity),
+        heroExposure: normaliseHeroExposure({ state: 'hidden' }),
+      };
+      return;
+    }
+
+    if (operation.action === 'set') {
+      const pathParts = splitFieldPath(operation.fieldPath);
+      if (!pathParts.length) {
+        throw new Error('Set operations require a fieldPath.');
+      }
+      const nextExposure = isPlainObject(entity.heroExposure)
+        ? cloneSerialisable(entity.heroExposure)
+        : {};
+      setAtPath(nextExposure, pathParts, operation.payload);
+      collection[index] = { ...cloneSerialisable(entity), heroExposure: nextExposure };
+      return;
+    }
+
+    collection[index] = {
+      ...cloneSerialisable(entity),
+      heroExposure: cloneSerialisable(operation.payload) || {},
+    };
+    return;
+  }
+
   const descriptor = collectionFor(bundle, operation.entityType);
   if (!descriptor) {
     throw new Error(`Unsupported content operation entity type "${operation.entityType}".`);
@@ -207,6 +251,7 @@ function applyCollectionOperation(bundle, operation) {
 }
 
 function isStructuralOperation(operation) {
+  if (operation?.entityType === HERO_EXPOSURE_ENTITY_TYPE) return false;
   return STRUCTURAL_ACTIONS.has(operation.action) || !operation.fieldPath || operation.fieldPath === '$';
 }
 
@@ -280,7 +325,26 @@ export function normaliseContentOperation(rawValue = {}, {
 
 export function operationConflictKey(operation) {
   const normalised = normaliseContentOperation(operation, { now: () => 0 });
-  return `${normalised.entityType}::${normalised.entityId}::${normalised.fieldPath || '$'}`;
+  const target = operationConflictTarget(normalised);
+  return `${target.entityType}::${target.entityId}::${target.fieldPath || '$'}`;
+}
+
+function operationConflictTarget(operation) {
+  if (operation?.entityType === HERO_EXPOSURE_ENTITY_TYPE) {
+    const fieldPath = operation.action === 'set' && operation.fieldPath
+      ? `heroExposure.${operation.fieldPath}`
+      : 'heroExposure';
+    return {
+      entityType: 'spelling.rewardTrack',
+      entityId: operation.entityId,
+      fieldPath,
+    };
+  }
+  return {
+    entityType: operation.entityType,
+    entityId: operation.entityId,
+    fieldPath: operation.fieldPath || '$',
+  };
 }
 
 export function effectiveContentOperations(operations = []) {
@@ -302,13 +366,15 @@ export function detectContentOperationConflicts(leftOperations = [], rightOperat
 
   for (const leftOperation of left) {
     for (const rightOperation of right) {
+      const leftTarget = operationConflictTarget(leftOperation);
+      const rightTarget = operationConflictTarget(rightOperation);
       if (
-        leftOperation.entityType !== rightOperation.entityType
-        || leftOperation.entityId !== rightOperation.entityId
+        leftTarget.entityType !== rightTarget.entityType
+        || leftTarget.entityId !== rightTarget.entityId
       ) {
         continue;
       }
-      const sameField = (leftOperation.fieldPath || '$') === (rightOperation.fieldPath || '$');
+      const sameField = (leftTarget.fieldPath || '$') === (rightTarget.fieldPath || '$');
       const structural = isStructuralOperation(leftOperation) || isStructuralOperation(rightOperation);
       if (!sameField && !structural) continue;
       if (contentOperationHash(leftOperation) === contentOperationHash(rightOperation)) continue;
@@ -319,18 +385,18 @@ export function detectContentOperationConflicts(leftOperations = [], rightOperat
       conflicts.push({
         conflictId: contentOperationHash({
           code: conflictCodeFor(leftOperation, rightOperation),
-          entityType: leftOperation.entityType,
-          entityId: leftOperation.entityId,
-          fieldPath: sameField ? (leftOperation.fieldPath || rightOperation.fieldPath || '$') : '$',
+          entityType: leftTarget.entityType,
+          entityId: leftTarget.entityId,
+          fieldPath: sameField ? (leftTarget.fieldPath || rightTarget.fieldPath || '$') : '$',
           leftOperationId: leftOperation.operationId,
           rightOperationId: rightOperation.operationId,
           leftValueHash,
           rightValueHash,
         }, 'conflict'),
         code: conflictCodeFor(leftOperation, rightOperation),
-        entityType: leftOperation.entityType,
-        entityId: leftOperation.entityId,
-        fieldPath: sameField ? (leftOperation.fieldPath || rightOperation.fieldPath || '$') : '$',
+        entityType: leftTarget.entityType,
+        entityId: leftTarget.entityId,
+        fieldPath: sameField ? (leftTarget.fieldPath || rightTarget.fieldPath || '$') : '$',
         leftOperationId: leftOperation.operationId,
         rightOperationId: rightOperation.operationId,
       });
@@ -348,6 +414,13 @@ export function readContentOperationField(bundle, operation) {
       normaliseSpellingContentBundle(bundle).draft.audioRequirementProfile || {},
       splitFieldPath(normalised.fieldPath),
     );
+  }
+  if (normalised.entityType === HERO_EXPOSURE_ENTITY_TYPE) {
+    const descriptor = collectionFor(normaliseSpellingContentBundle(bundle), 'spelling.rewardTrack');
+    if (!descriptor) return undefined;
+    const { entity } = findEntity(descriptor.collection, descriptor.idField, normalised.entityId);
+    if (!entity) return undefined;
+    return getAtPath(entity, ['heroExposure', ...splitFieldPath(normalised.fieldPath)]);
   }
   const descriptor = collectionFor(normaliseSpellingContentBundle(bundle), normalised.entityType);
   if (!descriptor) return undefined;

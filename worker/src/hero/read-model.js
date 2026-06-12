@@ -192,6 +192,7 @@ export function buildHeroShadowReadModel({
   progressEnabled = false,
   economyEnabled = false,
   campEnabled = false,
+  campMonsterIds = null,
 } = {}) {
   const dateKey = deriveDateKey(now, HERO_DEFAULT_TIMEZONE);
 
@@ -539,7 +540,9 @@ export function buildHeroShadowReadModel({
   // 18. If camp enabled → evolve to v6 with child-safe Camp block
   if (!campEnabled) return v5Result;
 
-  const campBlock = buildChildSafeCampBlock(heroProgressState, economyBlock?.balance ?? 0);
+  const campBlock = buildChildSafeCampBlock(heroProgressState, economyBlock?.balance ?? 0, {
+    monsterIds: campMonsterIds,
+  });
 
   return {
     ...v5Result,
@@ -550,14 +553,21 @@ export function buildHeroShadowReadModel({
 
 // ── Camp block helpers ────────────────────────────────────────────────
 
-function buildChildSafeCampBlock(heroProgressState, balance) {
+function visibleHeroPoolMonsterIds(monsterIds = null) {
+  if (!Array.isArray(monsterIds)) return HERO_POOL_INITIAL_MONSTER_IDS;
+  const allowed = new Set(monsterIds.map((entry) => String(entry || '').trim()).filter(Boolean));
+  return HERO_POOL_INITIAL_MONSTER_IDS.filter((monsterId) => allowed.has(monsterId));
+}
+
+function buildChildSafeCampBlock(heroProgressState, balance, { monsterIds = null } = {}) {
   const heroPool = heroProgressState?.heroPool;
+  const visibleMonsterIds = visibleHeroPoolMonsterIds(monsterIds);
 
   if (!heroPool || typeof heroPool !== 'object') {
-    return buildEmptyCampBlock(balance);
+    return buildEmptyCampBlock(balance, { monsterIds: visibleMonsterIds });
   }
 
-  const monsters = HERO_POOL_INITIAL_MONSTER_IDS.map(monsterId => {
+  const monsters = visibleMonsterIds.map(monsterId => {
     const def = HERO_POOL_REGISTRY[monsterId];
     const owned = heroPool.monsters?.[monsterId];
 
@@ -588,7 +598,7 @@ function buildChildSafeCampBlock(heroProgressState, balance) {
   });
 
   const recentActions = Array.isArray(heroPool.recentActions)
-    ? heroPool.recentActions.slice(-5).map(a => ({
+    ? heroPool.recentActions.filter((action) => visibleMonsterIds.includes(action?.monsterId)).slice(-5).map(a => ({
         type: a.type,
         monsterId: a.monsterId,
         stageAfter: a.stageAfter,
@@ -607,13 +617,13 @@ function buildChildSafeCampBlock(heroProgressState, balance) {
     },
     rosterVersion: HERO_POOL_ROSTER_VERSION,
     balance,
-    selectedMonsterId: heroPool.selectedMonsterId || null,
+    selectedMonsterId: visibleMonsterIds.includes(heroPool.selectedMonsterId) ? heroPool.selectedMonsterId : null,
     monsters,
     recentActions,
   };
 }
 
-function buildEmptyCampBlock(balance) {
+function buildEmptyCampBlock(balance, { monsterIds = HERO_POOL_INITIAL_MONSTER_IDS } = {}) {
   return {
     enabled: true,
     version: 1,
@@ -625,7 +635,7 @@ function buildEmptyCampBlock(balance) {
     rosterVersion: HERO_POOL_ROSTER_VERSION,
     balance: balance || 0,
     selectedMonsterId: null,
-    monsters: HERO_POOL_INITIAL_MONSTER_IDS.map(monsterId => {
+    monsters: monsterIds.map(monsterId => {
       const def = HERO_POOL_REGISTRY[monsterId];
       return {
         monsterId: def.monsterId,

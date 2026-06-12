@@ -7,6 +7,9 @@ import {
 import {
   audioReadinessSummaryForWord,
 } from './audio-readiness.js';
+import {
+  normaliseHeroExposure,
+} from '../../../platform/game/reward-track-config.js';
 
 const DEFAULT_BROWSE_LIMIT = 75;
 const MAX_BROWSE_LIMIT = 250;
@@ -247,6 +250,7 @@ function compactRewardTrack(track, draftState = 'unchanged', {
   hasCurrent = true,
   hasPackageDraft = false,
 } = {}) {
+  const heroExposure = normaliseHeroExposure(track.heroExposure);
   return {
     id: track.id,
     poolId: track.poolId,
@@ -260,6 +264,7 @@ function compactRewardTrack(track, draftState = 'unchanged', {
     active: track.active !== false,
     retired: Boolean(track.retired),
     retirement: track.retirement || null,
+    heroExposure,
     labels: track.labels || {},
     sequentialAfter: track.sequentialAfter || '',
     prerequisites: asArray(track.prerequisites),

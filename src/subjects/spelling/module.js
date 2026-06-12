@@ -168,7 +168,13 @@ export const spellingModule = {
   getDashboardStats(appState, { service, repositories }) {
     const learner = appState.learners.byId[appState.learners.selectedId];
     const stats = getOverallSpellingStats(service, learner.id);
-    const codex = monsterSummaryFromSpellingAnalytics(service.getAnalyticsSnapshot(learner.id));
+    const runtimeRewardTracks = typeof service.getRuntimeRewardTracks === 'function'
+      ? service.getRuntimeRewardTracks()
+      : null;
+    const codex = monsterSummaryFromSpellingAnalytics(service.getAnalyticsSnapshot(learner.id), {
+      rewardTracks: Array.isArray(runtimeRewardTracks) ? runtimeRewardTracks : null,
+      surface: 'subjectSetup',
+    });
     // Post-Mega banner branch — graduated learners see the
     // `cover-post-mega-{branch}` banner on the home subject card so the
     // tile matches the Guardian / Boss / Pattern Quest vista they will

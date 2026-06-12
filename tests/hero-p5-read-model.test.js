@@ -151,6 +151,16 @@ test('camp enabled + economy enabled → v6 with camp block and 6 monsters', () 
   );
 });
 
+test('camp read model honours explicit exposure monster roster', () => {
+  const model = buildV6({ campMonsterIds: ['glossbloom', 'colisk'] });
+
+  assert.equal(model.version, 6);
+  assert.deepEqual(
+    model.camp.monsters.map(m => m.monsterId),
+    ['glossbloom', 'colisk'],
+  );
+});
+
 test('owned monster shows correct stage, branch, and costs', () => {
   const state = makeProgressStateWithPool({
     monsters: {
