@@ -39,6 +39,9 @@ import {
 import {
   buildContentOperationAudioScan,
 } from './audio.js';
+import {
+  buildContentOperationAssetScan,
+} from './assets.js';
 
 function parseJson(value, fallback = null) {
   if (value == null || value === '') return fallback;
@@ -205,6 +208,7 @@ function releaseRowToRecord(row, { includeSnapshot = false } = {}) {
   if (!row) return null;
   const proof = parseJson(row.proof_json, null);
   const audioProof = audioReleaseProofFromProof(proof);
+  const assetProof = releaseAssetProofFromProof(proof);
   return {
     releaseId: row.release_id,
     subjectId: row.subject_id,
@@ -219,6 +223,7 @@ function releaseRowToRecord(row, { includeSnapshot = false } = {}) {
     proof,
     audioFallback: audioProof.audioFallback,
     audioWarnings: audioProof.audioWarnings,
+    assetSummary: assetProof.assetSummary,
     createdAt: Number(row.created_at) || 0,
   };
 }
@@ -321,10 +326,14 @@ const AUDIO_FALLBACK_BLOCKING_STATUSES = new Set([
   'override_requested',
 ]);
 const RELEASE_AUDIO_PROOF_KEY = 'contentOperationsAudio';
+const RELEASE_ASSET_PROOF_KEY = 'contentOperationsAssets';
 const RELEASE_PROOF_RESERVED_KEYS = new Set([
   'audioFallback',
   'audioWarnings',
+  'assetSummary',
+  'assetWarnings',
   RELEASE_AUDIO_PROOF_KEY,
+  RELEASE_ASSET_PROOF_KEY,
 ]);
 
 function audioFallbackBlockingItems(scan = null) {
@@ -496,6 +505,16 @@ function audioWarningProofForScan(scan = null, fallbackApproval = null) {
   };
 }
 
+function assetScanHasBlockingItems(scan = null) {
+  return normaliseString(scan?.status) === 'blocked' || asArray(scan?.blockers).length > 0;
+}
+
+function assetScansMatch(left = null, right = null) {
+  const leftHash = normaliseString(left?.hash);
+  const rightHash = normaliseString(right?.hash);
+  return Boolean(leftHash && rightHash && leftHash === rightHash);
+}
+
 function audioReleaseProofFromProof(proof = null) {
   const metadata = isPlainObject(proof?.[RELEASE_AUDIO_PROOF_KEY])
     ? proof[RELEASE_AUDIO_PROOF_KEY]
@@ -519,15 +538,70 @@ function normaliseCallerReleaseProof(proof = null) {
   return cloneSerialisable(proof);
 }
 
-function buildReleaseProof(proof = null, approval = null, audioScan = null) {
-  const baseProof = normaliseCallerReleaseProof(proof);
-  if (!approval?.audioFallback?.allowed) return baseProof;
+function buildReleaseProof(proof = null, approval = null, audioScan = null, assetScan = null) {
+  let releaseProof = normaliseCallerReleaseProof(proof);
+  if (approval?.audioFallback?.allowed) {
+    releaseProof = {
+      ...(releaseProof || {}),
+      [RELEASE_AUDIO_PROOF_KEY]: {
+        audioFallback: approval.audioFallback,
+        audioWarnings: audioWarningProofForScan(audioScan, approval.audioFallback),
+      },
+    };
+  }
+  if (assetScan) {
+    releaseProof = {
+      ...(releaseProof || {}),
+      [RELEASE_ASSET_PROOF_KEY]: {
+        assetSummary: cloneSerialisable(assetScan),
+      },
+    };
+  }
+  return releaseProof;
+}
+
+function releaseAssetProofFromProof(proof = null) {
+  const metadata = isPlainObject(proof?.[RELEASE_ASSET_PROOF_KEY])
+    ? proof[RELEASE_ASSET_PROOF_KEY]
+    : null;
   return {
-    ...(baseProof || {}),
-    [RELEASE_AUDIO_PROOF_KEY]: {
-      audioFallback: approval.audioFallback,
-      audioWarnings: audioWarningProofForScan(audioScan, approval.audioFallback),
-    },
+    assetSummary: isPlainObject(metadata?.assetSummary) ? metadata.assetSummary : null,
+  };
+}
+
+function buildApprovalAssetSummary(assetScan = null) {
+  return assetScan ? cloneSerialisable(assetScan) : null;
+}
+
+function assetEventSummary(assetScan = null) {
+  if (!assetScan) return null;
+  return {
+    status: normaliseString(assetScan.status, 'not_scanned'),
+    hash: normaliseString(assetScan.hash),
+    blockers: asArray(assetScan.blockers),
+    warnings: asArray(assetScan.warnings),
+    uploadCount: Number(assetScan.uploadCount) || 0,
+    itemCount: Number(assetScan.itemCount) || 0,
+    targetCount: Number(assetScan.targetCount) || 0,
+  };
+}
+
+function approvedAssetSummaryMatches(approval = null, assetScan = null) {
+  if (!assetScan) return false;
+  return assetScansMatch(approval?.assetSummary, assetScan);
+}
+
+function candidateAssetScanMatches(candidate = null, assetScan = null) {
+  return assetScansMatch(candidate?.assetScan, assetScan);
+}
+
+function assetScanConflictExtra(packageId, candidateId, candidateAssetScan, currentAssetScan) {
+  return {
+    packageId,
+    candidateId,
+    candidateAssetHash: normaliseString(candidateAssetScan?.hash) || null,
+    currentAssetHash: normaliseString(currentAssetScan?.hash) || null,
+    assetScan: currentAssetScan,
   };
 }
 
@@ -743,7 +817,7 @@ function assertPackageIsNotPublished(packageRow, packageId) {
   }
 }
 
-export function createContentOperationsRepository({ db, now }) {
+export function createContentOperationsRepository({ db, env = {}, now }) {
   const nowFactory = typeof now === 'function' ? now : () => Date.now();
 
   return {
@@ -1307,6 +1381,11 @@ export function createContentOperationsRepository({ db, now }) {
         candidate: candidate.candidate,
         operations,
       });
+      const assetScan = await buildContentOperationAssetScan(db, {
+        packageId,
+        env,
+        verifyStorage: true,
+      });
       const candidateId = uid('cocand');
       const nowTs = Number(nowFactory());
       const validationSummary = {
@@ -1326,7 +1405,7 @@ export function createContentOperationsRepository({ db, now }) {
             validation_json, audio_scan_json, asset_scan_json, reward_scan_json,
             visibility_scan_json, conflicts_json, created_at
           )
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, NULL, ?, ?)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, ?, ?)
         `, [
           candidateId,
           packageId,
@@ -1337,6 +1416,7 @@ export function createContentOperationsRepository({ db, now }) {
           encodedCandidateSnapshot,
           JSON.stringify(validationSummary),
           JSON.stringify(audioScan),
+          JSON.stringify(assetScan),
           JSON.stringify(conflicts),
           nowTs,
         ]),
@@ -1371,6 +1451,7 @@ export function createContentOperationsRepository({ db, now }) {
               blockers: audioScan.blockers,
               requiredCount: audioScan.requiredCount,
             },
+            assets: assetEventSummary(assetScan),
           }),
           nowTs,
         ]),
@@ -1386,6 +1467,7 @@ export function createContentOperationsRepository({ db, now }) {
         candidate: candidate.candidate,
         validation: validationSummary,
         audioScan,
+        assetScan,
         conflicts,
         createdAt: nowTs,
       };
@@ -1499,7 +1581,6 @@ export function createContentOperationsRepository({ db, now }) {
       approvedByAccountId,
       notes = '',
       audioFallback = null,
-      assetSummary = null,
     } = {}) {
       const packageRow = await requirePackage(db, packageId);
       assertPackageIsNotPublished(packageRow, packageId);
@@ -1560,6 +1641,11 @@ export function createContentOperationsRepository({ db, now }) {
         candidate: candidate.candidate,
         operations,
       });
+      const currentAssetScan = await buildContentOperationAssetScan(db, {
+        packageId,
+        env,
+        verifyStorage: true,
+      });
       const nowTs = Number(nowFactory());
       let approvedAudioScan = currentAudioScan;
       let audioFallbackApproval = null;
@@ -1589,6 +1675,20 @@ export function createContentOperationsRepository({ db, now }) {
         }
         approvedAudioScan = applyAudioFallbackToScan(currentAudioScan, audioFallbackApproval);
       }
+      if (!candidateAssetScanMatches(candidate, currentAssetScan)) {
+        throw new ConflictError('Content operation candidate was built from stale asset uploads.', {
+          code: 'content_operation_candidate_assets_stale',
+          ...assetScanConflictExtra(packageId, candidateId, candidate.assetScan, currentAssetScan),
+        });
+      }
+      if (assetScanHasBlockingItems(currentAssetScan)) {
+        throw new ConflictError('Content operation candidate has asset readiness blockers.', {
+          code: 'content_operation_candidate_assets_blocked',
+          packageId,
+          candidateId,
+          assetScan: currentAssetScan,
+        });
+      }
       if (Array.isArray(candidate.conflicts) && candidate.conflicts.length) {
         throw new ConflictError('Content operation candidate has unresolved conflicts.', {
           code: 'content_operation_candidate_conflicted',
@@ -1606,10 +1706,12 @@ export function createContentOperationsRepository({ db, now }) {
         `, [packageId]),
         bindStatement(db, `
           UPDATE content_operation_package_candidates
-          SET audio_scan_json = ?
+          SET audio_scan_json = ?,
+              asset_scan_json = ?
           WHERE candidate_id = ?
         `, [
           JSON.stringify(approvedAudioScan),
+          JSON.stringify(currentAssetScan),
           candidateId,
         ]),
         bindStatement(db, `
@@ -1628,7 +1730,7 @@ export function createContentOperationsRepository({ db, now }) {
           nowTs,
           normaliseString(notes),
           audioFallbackApproval == null ? null : JSON.stringify(audioFallbackApproval),
-          assetSummary == null ? null : JSON.stringify(assetSummary),
+          JSON.stringify(buildApprovalAssetSummary(currentAssetScan)),
           JSON.stringify(candidate.validation),
         ]),
         bindStatement(db, `
@@ -1667,7 +1769,7 @@ export function createContentOperationsRepository({ db, now }) {
               requiredCount: approvedAudioScan.requiredCount,
             },
             audioFallback: audioFallbackApproval,
-            assetSummary,
+            assetSummary: buildApprovalAssetSummary(currentAssetScan),
           }),
           nowTs,
         ]),
@@ -1683,7 +1785,7 @@ export function createContentOperationsRepository({ db, now }) {
         notes: normaliseString(notes),
         validationSummary: candidate.validation,
         audioFallback: audioFallbackApproval,
-        assetSummary,
+        assetSummary: buildApprovalAssetSummary(currentAssetScan),
       };
     },
 
@@ -1771,6 +1873,11 @@ export function createContentOperationsRepository({ db, now }) {
         candidate: candidate.candidate,
         operations,
       });
+      const currentAssetScan = await buildContentOperationAssetScan(db, {
+        packageId,
+        env,
+        verifyStorage: true,
+      });
       let publishAudioScan = currentAudioScan;
       if (audioReadinessHasBlockingItems(currentAudioScan)) {
         if (audioFallbackCoversCurrentScan(approval.audioFallback, currentAudioScan)) {
@@ -1785,12 +1892,38 @@ export function createContentOperationsRepository({ db, now }) {
           });
         }
       }
+      if (!candidateAssetScanMatches(candidate, currentAssetScan)) {
+        throw new ConflictError('Content operation candidate was built from stale asset uploads.', {
+          code: 'content_operation_candidate_assets_stale',
+          ...assetScanConflictExtra(packageId, candidate.candidateId, candidate.assetScan, currentAssetScan),
+        });
+      }
+      if (!approvedAssetSummaryMatches(approval, currentAssetScan)) {
+        throw new ConflictError('Content operation approval was built from stale asset uploads.', {
+          code: 'content_operation_approval_assets_stale',
+          packageId,
+          candidateId: candidate.candidateId,
+          approvalId: approval.approvalId,
+          approvalAssetHash: normaliseString(approval.assetSummary?.hash) || null,
+          currentAssetHash: normaliseString(currentAssetScan?.hash) || null,
+          assetScan: currentAssetScan,
+        });
+      }
+      if (assetScanHasBlockingItems(currentAssetScan)) {
+        throw new ConflictError('Approved candidate has asset readiness blockers.', {
+          code: 'content_operation_candidate_assets_blocked',
+          packageId,
+          candidateId: candidate.candidateId,
+          assetScan: currentAssetScan,
+        });
+      }
       const releaseId = uid('corel');
       const nowTs = Number(nowFactory());
       const snapshotHash = contentOperationHash(candidate.candidate, 'release');
       const encodedSnapshot = await encodeContentOperationSnapshot(candidate.candidate);
-      const releaseProof = buildReleaseProof(proof, approval, publishAudioScan);
+      const releaseProof = buildReleaseProof(proof, approval, publishAudioScan, currentAssetScan);
       const releaseAudioProof = audioReleaseProofFromProof(releaseProof);
+      const releaseAssetProof = releaseAssetProofFromProof(releaseProof);
 
       let publishResults = [];
       try {
@@ -1826,10 +1959,12 @@ export function createContentOperationsRepository({ db, now }) {
           ]),
           bindStatement(db, `
             UPDATE content_operation_package_candidates
-            SET audio_scan_json = ?
+            SET audio_scan_json = ?,
+                asset_scan_json = ?
             WHERE candidate_id = ?
           `, [
             JSON.stringify(publishAudioScan),
+            JSON.stringify(currentAssetScan),
             candidate.candidateId,
           ]),
           bindStatement(db, `
@@ -1877,6 +2012,7 @@ export function createContentOperationsRepository({ db, now }) {
               summary: buildSpellingContentSummary(candidate.candidate),
               audioFallback: approval.audioFallback,
               audioWarnings: audioWarningProofForScan(publishAudioScan, approval.audioFallback),
+              assets: assetEventSummary(currentAssetScan),
             }),
             nowTs,
             releaseId,
@@ -1929,6 +2065,7 @@ export function createContentOperationsRepository({ db, now }) {
         proof: releaseProof,
         audioFallback: releaseAudioProof.audioFallback,
         audioWarnings: releaseAudioProof.audioWarnings,
+        assetSummary: releaseAssetProof.assetSummary,
       };
     },
 

@@ -439,6 +439,13 @@ const CONTENT_OPS_PACKAGE = {
     operationsHash: 'ops-hash-1',
     candidateHash: 'candidate-hash-1',
     validation: { ok: true, errorCount: 0, warningCount: 0, errors: [], warnings: [] },
+    assetScan: {
+      status: 'passed',
+      hash: 'asset-scan-hash-1',
+      uploadCount: 1,
+      blockers: [],
+      warnings: [],
+    },
     blockers: {
       validation: { status: 'passed', errorCount: 0, warningCount: 0, errors: [], warnings: [] },
       conflicts: { status: 'passed', count: 0, items: [] },
@@ -674,6 +681,7 @@ describe('Content Operations Centre normalisers', () => {
     assert.equal(overview.lanes.drafts[0].blockers.warningCount, 1);
     assert.equal(overview.lanes.drafts[0].latestCandidate.candidateHash, 'candidate-hash-1');
     assert.equal(overview.recentReleases[0].proof.source, 'test');
+    assert.equal(overview.recentReleases[0].hasCallerProof, true);
     assert.equal(overview.recentReleases[0].audioFallback.allowed, true);
     assert.equal(overview.recentReleases[0].audioFallback.affectedMatrix.affectedCount, 1);
     assert.equal(overview.recentReleases[0].audioWarnings.status, 'warning');
@@ -692,7 +700,22 @@ describe('Content Operations Centre normalisers', () => {
 
     assert.equal(release.audioFallback, null);
     assert.equal(release.audioWarnings, null);
+    assert.equal(release.hasCallerProof, true);
     assert.equal(release.proof.audioFallback.allowed, true);
+  });
+
+  it('does not treat server-only release proof metadata as caller proof', () => {
+    const release = normaliseContentOperationRelease({
+      releaseId: 'rel-server-proof-only',
+      proof: {
+        contentOperationsAssets: {
+          assetSummary: { hash: 'asset-scan-hash-1', uploadCount: 1 },
+        },
+      },
+    });
+
+    assert.equal(release.hasCallerProof, false);
+    assert.equal(release.assetSummary.hash, 'asset-scan-hash-1');
   });
 
   it('normalises package lists, release lists, and package detail array payloads', () => {
@@ -725,6 +748,8 @@ describe('Content Operations Centre normalisers', () => {
 
     assert.equal(candidate.candidateId, 'cand-draft-1');
     assert.equal(candidate.candidateHash, 'candidate-hash-1');
+    assert.equal(candidate.assetScan.hash, 'asset-scan-hash-1');
+    assert.equal(candidate.assetScan.uploadCount, 1);
     assert.equal(candidate.validation.status, 'passed');
     assert.deepEqual(candidate.blockers.blockingSections, ['publishReadiness']);
     assert.equal(candidate.blockers.publishReadiness.blockers[0], 'approval_required');
@@ -1033,6 +1058,7 @@ describe('Content Operations Centre hub API client', () => {
       calls[2].body.audioFallback.reason,
       'Temporary runtime TTS fallback while slow sentence audio is generated.',
     );
+    assert.equal(Object.prototype.hasOwnProperty.call(calls[2].body, 'assetSummary'), false);
     assert.equal(calls[3].body.proof.source, 'test');
     assert.equal(calls[4].body.conflictId, 'conflict/with/slash');
     assert.equal(calls[4].body.resolution, 'edit');

@@ -1,5 +1,8 @@
 import { requireMutationCapability } from '../auth.js';
-import { requireDatabase } from '../d1.js';
+import {
+  requireDatabase,
+  requireDatabaseWithCapacity,
+} from '../d1.js';
 import { requireSameOrigin } from '../demo/sessions.js';
 import {
   BadRequestError,
@@ -11,6 +14,7 @@ import {
   serialiseContentOperation,
   serialiseContentOperationActor,
   serialiseContentOperationApproval,
+  serialiseContentOperationAssetUpload,
   serialiseContentOperationCandidate,
   serialiseContentOperationEvent,
   serialiseContentOperationOverview,
@@ -26,13 +30,17 @@ import {
 import {
   generateContentOperationPackageAudio,
 } from './audio.js';
+import {
+  listContentOperationMonsterAssetUploads,
+  readContentOperationMonsterAssetObject,
+  uploadContentOperationMonsterAsset,
+} from './assets.js';
 
 const CONTENT_OPERATIONS_ROUTE_PREFIX = '/api/admin/content-operations';
 const CONTENT_OPERATIONS_SUBJECT_ID = 'spelling';
 const STUBBED_CONTENT_OPERATION_ROUTES = Object.freeze({
   rebase: { ticket: 'T6', capability: CONTENT_OPERATION_CAPABILITIES.EDIT },
   'scan-audio': { ticket: 'T7', capability: CONTENT_OPERATION_CAPABILITIES.EDIT },
-  'upload-monster-asset': { ticket: 'T8', capability: CONTENT_OPERATION_CAPABILITIES.EDIT },
   'create-revert': { ticket: 'T9', capability: CONTENT_OPERATION_CAPABILITIES.ROLLBACK },
 });
 
@@ -62,6 +70,10 @@ function includeSnapshot(url, body = {}) {
 function optionalQueryString(url, key) {
   const value = url.searchParams.get(key);
   return typeof value === 'string' && value.trim() ? value.trim() : '';
+}
+
+function routeDatabase(env, capacity = null) {
+  return capacity ? requireDatabaseWithCapacity(env, capacity) : requireDatabase(env);
 }
 
 function decodePathSegment(value, label) {
@@ -183,6 +195,7 @@ export async function handleContentOperationsAdminRequest({
   env,
   session,
   repository,
+  capacity = null,
 }) {
   if (!isContentOperationPath(url.pathname)) return null;
 
@@ -496,6 +509,63 @@ export async function handleContentOperationsAdminRequest({
   }
 
   {
+    const monsterAssetsMatch = /^\/packages\/([^/]+)\/monster-assets$/.exec(relativePath);
+    if (request.method === 'GET' && monsterAssetsMatch) {
+      const actor = await requireRouteActor({
+        repository,
+        session,
+        request,
+        env,
+        capability: CONTENT_OPERATION_CAPABILITIES.VIEW,
+      });
+      const packageId = decodePathSegment(monsterAssetsMatch[1], 'package_id');
+      const uploads = await listContentOperationMonsterAssetUploads(routeDatabase(env, capacity), {
+        packageId,
+        status: optionalQueryString(url, 'status') || null,
+        limit: normaliseLimit(url.searchParams.get('limit'), 100, 250),
+      });
+      return json({
+        ok: true,
+        actor: serialiseContentOperationActor(actor),
+        uploads: uploads.map(serialiseContentOperationAssetUpload),
+      });
+    }
+  }
+
+  {
+    const monsterAssetPreviewMatch = /^\/packages\/([^/]+)\/monster-assets\/([^/]+)\/preview$/.exec(relativePath);
+    if (request.method === 'GET' && monsterAssetPreviewMatch) {
+      await requireRouteActor({
+        repository,
+        session,
+        request,
+        env,
+        capability: CONTENT_OPERATION_CAPABILITIES.VIEW,
+      });
+      const packageId = decodePathSegment(monsterAssetPreviewMatch[1], 'package_id');
+      const assetUploadId = decodePathSegment(monsterAssetPreviewMatch[2], 'asset_upload_id');
+      const { upload, object } = await readContentOperationMonsterAssetObject({
+        db: routeDatabase(env, capacity),
+        env,
+        packageId,
+        assetUploadId,
+      });
+      const extension = upload.contentType === 'image/jpeg'
+        ? 'jpg'
+        : (upload.contentType.split('/')[1] || 'img');
+      return new Response(object.body, {
+        status: 200,
+        headers: {
+          'content-type': upload.contentType,
+          'cache-control': 'private, no-store',
+          'content-disposition': `inline; filename="${upload.monsterId}-${upload.branchId}-${upload.stageId}.${extension}"`,
+          'x-content-type-options': 'nosniff',
+        },
+      });
+    }
+  }
+
+  {
     const actionMatch = /^\/packages\/([^/]+)\/(validate|approve|publish|resolve-conflict|rebase|scan-audio|generate-audio|upload-monster-asset|create-revert)$/.exec(relativePath);
     if (request.method === 'POST' && actionMatch) {
       const packageId = decodePathSegment(actionMatch[1], 'package_id');
@@ -519,6 +589,21 @@ export async function handleContentOperationsAdminRequest({
           ticket: stub.ticket,
           capability,
         }), 501);
+      }
+
+      if (action === 'upload-monster-asset') {
+        const upload = await uploadContentOperationMonsterAsset({
+          db: routeDatabase(env, capacity),
+          env,
+          packageId,
+          request,
+          actorAccountId: actor.id,
+        });
+        return json({
+          ok: true,
+          actor: serialiseContentOperationActor(actor),
+          assetUpload: serialiseContentOperationAssetUpload(upload),
+        }, 201);
       }
 
       const body = normaliseBody(await readJson(request));
@@ -581,7 +666,7 @@ export async function handleContentOperationsAdminRequest({
         const resolvedCandidateId = body.candidateId || body.candidate_id || candidate.candidateId;
         const overrideReason = body.reason || body.overrideReason || body.override_reason || '';
         const audio = await generateContentOperationPackageAudio({
-          db: requireDatabase(env),
+          db: routeDatabase(env, capacity),
           env,
           packageId,
           candidate,
@@ -625,11 +710,18 @@ export async function handleContentOperationsAdminRequest({
             packageId,
           });
         }
+        const callerAssetSummary = body.assetSummary ?? body.asset_summary ?? null;
+        if (callerAssetSummary != null) {
+          throw new BadRequestError('Content operation approval asset summaries are derived by the server.', {
+            code: 'content_operation_approval_asset_summary_readonly',
+            packageId,
+            candidateId,
+          });
+        }
         const approval = await repository.approveContentOperationCandidate(packageId, candidateId, {
           approvedByAccountId: actor.id,
           notes: body.notes,
           audioFallback: body.audioFallback ?? body.audio_fallback ?? null,
-          assetSummary: body.assetSummary ?? null,
         });
         return json({
           ok: true,

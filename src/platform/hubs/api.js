@@ -393,7 +393,6 @@ export function createHubApi({
       candidateId,
       notes = '',
       audioFallback = null,
-      assetSummary = null,
       mutation,
     } = {}) {
       if (!packageId) throw new TypeError('Content operation package id is required.');
@@ -407,7 +406,6 @@ export function createHubApi({
           candidateId,
           notes,
           audioFallback,
-          assetSummary,
           mutation,
         }),
       }, authSession);

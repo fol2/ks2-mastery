@@ -208,6 +208,24 @@ const HANDLER_CAPABILITY_REGISTRY = Object.freeze({
     casFields: ['draftRevision'],
     auditBehaviour: 'log',
   }),
+  'content-operation-monster-asset-list': Object.freeze({
+    roleRequired: 'viewer',
+    mutationClass: 'read',
+    casFields: ['packageId'],
+    auditBehaviour: 'silent',
+  }),
+  'content-operation-monster-asset-preview': Object.freeze({
+    roleRequired: 'viewer',
+    mutationClass: 'read',
+    casFields: ['packageId', 'assetUploadId'],
+    auditBehaviour: 'silent',
+  }),
+  'content-operation-monster-asset-upload': Object.freeze({
+    roleRequired: 'editor',
+    mutationClass: 'draft-write',
+    casFields: ['packageId', 'monsterId', 'branchId', 'stageId'],
+    auditBehaviour: 'log',
+  }),
 });
 
 /**

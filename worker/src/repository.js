@@ -9147,7 +9147,7 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
       // Structured logs are best-effort.
     }
   }
-  const contentOperations = createContentOperationsRepository({ db, now: nowFactory });
+  const contentOperations = createContentOperationsRepository({ db, env, now: nowFactory });
 
   return {
     ...contentOperations,

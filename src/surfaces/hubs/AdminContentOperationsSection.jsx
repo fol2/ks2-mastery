@@ -3751,7 +3751,7 @@ function ReleaseTable({ releases }) {
                   )}
                 </td>
                 <td className="admin-overview-td">
-                  {release.proof ? <span className="chip good">Recorded</span> : <span className="chip warn">Missing</span>}
+                  {release.hasCallerProof ? <span className="chip good">Recorded</span> : <span className="chip warn">Missing</span>}
                 </td>
               </tr>
             );
