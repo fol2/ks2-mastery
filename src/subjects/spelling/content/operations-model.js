@@ -21,6 +21,7 @@ export const CONTENT_OPERATION_PACKAGE_STATES = Object.freeze({
 export const CONTENT_OPERATION_ENTITY_TYPES = Object.freeze([
   'spelling.audioRequirementProfile',
   'spelling.pool',
+  'spelling.rewardTrack',
   'spelling.word',
   'spelling.sentenceEntry',
   'spelling.wordList',
@@ -43,6 +44,7 @@ const AUDIO_REQUIREMENT_PROFILE_ENTITY_ID = 'default';
 
 const EDITABLE_COLLECTIONS = Object.freeze({
   'spelling.pool': Object.freeze({ collectionPath: ['draft', 'pools'], idField: 'id' }),
+  'spelling.rewardTrack': Object.freeze({ collectionPath: ['draft', 'rewardTracks'], idField: 'id' }),
   'spelling.word': Object.freeze({ collectionPath: ['draft', 'words'], idField: 'slug' }),
   'spelling.sentenceEntry': Object.freeze({ collectionPath: ['draft', 'sentences'], idField: 'id' }),
   'spelling.wordList': Object.freeze({ collectionPath: ['draft', 'wordLists'], idField: 'id' }),

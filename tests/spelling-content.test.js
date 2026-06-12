@@ -201,7 +201,7 @@ test('seeded spelling content validates and round-trips through the portable exp
   const validation = content.validate();
   assert.equal(validation.ok, true);
   assert.equal(validation.bundle.modelVersion, SPELLING_CONTENT_MODEL_VERSION);
-  assert.equal(SPELLING_CONTENT_MODEL_VERSION, 8, 'Spelling content model keeps the even-version convention.');
+  assert.equal(SPELLING_CONTENT_MODEL_VERSION, 10, 'Spelling content model keeps the even-version convention.');
   assert.equal(validation.errors.length, 0);
   assert.equal(validation.bundle.releases.length, 7);
   assert.equal(validation.bundle.publication.publishedVersion, 7);

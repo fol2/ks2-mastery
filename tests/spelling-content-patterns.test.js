@@ -306,7 +306,7 @@ test('H7 convention: content model even, service state odd', () => {
 });
 
 test('SPELLING_CONTENT_MODEL_VERSION keeps the even content-model lane', () => {
-  assert.equal(SPELLING_CONTENT_MODEL_VERSION, 8);
+  assert.equal(SPELLING_CONTENT_MODEL_VERSION, 10);
 });
 
 test('normaliser drops unknown patternIds without crashing', () => {

@@ -31,6 +31,14 @@ import {
   buildTaskEnvelope,
   validateTaskEnvelope,
 } from '../shared/hero/task-envelope.js';
+import {
+  MONSTERS,
+  MONSTERS_BY_SUBJECT,
+} from '../src/platform/game/monsters.js';
+import {
+  REWARD_TRACK_THRESHOLD_TEMPLATES,
+  SPELLING_REWARD_TRACK_MONSTER_IDS,
+} from '../src/platform/game/reward-track-config.js';
 
 // ── Constants ──────────────────────────────────────────────────────
 
@@ -91,6 +99,26 @@ test('HERO_SCHEDULER_VERSION is a non-empty string', () => {
 
 test('HERO_DEFAULT_TIMEZONE is Europe/London', () => {
   assert.equal(HERO_DEFAULT_TIMEZONE, 'Europe/London');
+});
+
+test('spelling reward-track monsters match the active spelling roster', () => {
+  assert.deepEqual(
+    [...SPELLING_REWARD_TRACK_MONSTER_IDS].sort(),
+    [...MONSTERS_BY_SUBJECT.spelling].sort(),
+  );
+  for (const monsterId of SPELLING_REWARD_TRACK_MONSTER_IDS) {
+    assert.ok(MONSTERS[monsterId], `${monsterId} should exist in the monster registry`);
+  }
+});
+
+test('spelling reward-track thresholds fit current monster mastered maxima', () => {
+  const directMax = Math.max(...REWARD_TRACK_THRESHOLD_TEMPLATES.direct.thresholds);
+  const aggregateMax = Math.max(...REWARD_TRACK_THRESHOLD_TEMPLATES.aggregate.thresholds);
+
+  for (const monsterId of ['inklet', 'glimmerbug', 'vellhorn']) {
+    assert.ok(directMax <= MONSTERS[monsterId].masteredMax);
+  }
+  assert.ok(aggregateMax <= MONSTERS.phaeton.masteredMax);
 });
 
 // ── Intent / launcher validation ───────────────────────────────────
