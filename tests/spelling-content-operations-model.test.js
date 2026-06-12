@@ -14,8 +14,14 @@ import {
   buildPublishedSnapshotFromDraft,
 } from '../src/subjects/spelling/content/model.js';
 import {
+  buildSpellingSentenceDeleteOrRetireOperation,
+  buildSpellingSentenceUpsertOperation,
+  buildSpellingWordListDeleteOrRetireOperation,
+  buildSpellingWordListUpsertOperation,
   buildSpellingWordDeleteOrRetireOperation,
   buildSpellingWordUpsertOperation,
+  validateSpellingSentenceEditorInput,
+  validateSpellingWordListEditorInput,
   validateSpellingWordEditorInput,
 } from '../src/subjects/spelling/content/package-operations.js';
 
@@ -193,6 +199,33 @@ test('spelling content operations browse filters by variant words and accepted s
   assert.deepEqual(browse.words.map((row) => row.slug), ['metamorphosis']);
   assert.deepEqual(browse.words[0].variantWords, ['metamorphic']);
   assert.deepEqual(browse.words[0].variantAccepted, ['metamorphic']);
+});
+
+test('spelling content operations browse keeps retired words out of active pool and list totals', () => {
+  const retiredBundle = contentBundle();
+  retiredBundle.draft.words = retiredBundle.draft.words.map((word) => (
+    word.slug === 'alpha'
+      ? {
+          ...word,
+          active: false,
+          retired: true,
+          retirement: { reason: 'Retired by test.', source: 'test', retiredAt: NOW },
+        }
+      : word
+  ));
+  const browse = buildSpellingContentBrowseModel({
+    publishedContent: retiredBundle,
+    filters: { pool: 'all', limit: 20 },
+  });
+  const corePool = browse.pools.find((pool) => pool.pool === 'core');
+  const coreList = browse.wordLists.find((list) => list.id === 'core-y34');
+  const retiredRow = browse.words.find((row) => row.slug === 'alpha');
+
+  assert.equal(corePool.wordCount, 1);
+  assert.equal(corePool.totalWordCount, 2);
+  assert.equal(coreList.wordCount, 1);
+  assert.equal(coreList.totalWordCount, 2);
+  assert.equal(retiredRow.retired, true);
 });
 
 test('spelling content operations browse marks package draft additions and modifications', () => {
@@ -414,4 +447,129 @@ test('spelling word delete-or-retire operation hard deletes drafts and retires p
   assert.equal(retiredAlpha.retirement.reason, 'Retired by test.');
   assert.equal(snapshot.words.some((word) => word.slug === 'alpha'), false);
   assert.equal(snapshot.words.some((word) => word.slug === 'beta'), true);
+});
+
+test('spelling sentence editor builder creates stable-id sentence upsert operations', () => {
+  const bundle = contentBundle();
+  const operation = buildSpellingSentenceUpsertOperation({
+    id: 'alpha-s3',
+    wordSlug: 'alpha',
+    text: 'A third alpha sentence gives editors another dictation choice.',
+    variantLabel: 'default',
+    tags: 'dictation, core',
+    sourceNote: 'Added in Content Operations Centre.',
+    provenance: { source: 'admin-editor', note: 'T11 sentence test' },
+  }, {
+    words: bundle.draft.words,
+  });
+  const candidate = buildSpellingContentOperationCandidate(bundle, [operation]);
+
+  assert.equal(operation.entityType, 'spelling.sentenceEntry');
+  assert.equal(operation.action, 'upsert');
+  assert.equal(operation.entityId, 'alpha-s3');
+  assert.deepEqual(operation.payload.tags, ['dictation', 'core']);
+  assert.equal(candidate.validation.ok, true);
+  assert.equal(
+    candidate.candidate.draft.sentences.find((sentence) => sentence.id === 'alpha-s3').text,
+    'A third alpha sentence gives editors another dictation choice.',
+  );
+});
+
+test('spelling sentence editor validation blocks missing text, owner, and provenance', () => {
+  const bundle = contentBundle();
+  const result = validateSpellingSentenceEditorInput({
+    id: 'alpha-s4',
+    wordSlug: 'missing-word',
+    text: '',
+  }, {
+    words: bundle.draft.words,
+  });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.errors.some((entry) => entry.field === 'wordSlug'));
+  assert.ok(result.errors.some((entry) => entry.field === 'text'));
+  assert.ok(result.errors.some((entry) => entry.field === 'provenance'));
+});
+
+test('spelling sentence delete-or-retire operation removes drafts and blocks retiring active references', () => {
+  const bundle = contentBundle();
+  const draftDelete = buildSpellingSentenceDeleteOrRetireOperation({ id: 'draft-sentence' });
+  const retire = buildSpellingSentenceDeleteOrRetireOperation({ id: 'alpha-s1', hasCurrent: true }, {
+    reason: 'Retired by test.',
+    now: () => NOW,
+  });
+  const candidate = buildSpellingContentOperationCandidate(bundle, [retire]);
+  const retiredSentence = candidate.candidate.draft.sentences.find((sentence) => sentence.id === 'alpha-s1');
+
+  assert.equal(draftDelete.action, 'remove');
+  assert.equal(retire.action, 'retire');
+  assert.equal(retiredSentence.active, false);
+  assert.equal(retiredSentence.retired, true);
+  assert.equal(retiredSentence.retirement.reason, 'Retired by test.');
+  assert.equal(candidate.validation.ok, false);
+  assert.ok(candidate.validation.errors.some((entry) => entry.code === 'retired_sentence_reference'));
+});
+
+test('spelling word-list editor builder manages list metadata and membership without sentence text', () => {
+  const bundle = contentBundle();
+  const operation = buildSpellingWordListUpsertOperation({
+    id: 'extra-greek',
+    title: 'Extra Greek roots revised',
+    spellingPool: 'extra',
+    coverageTier: 'enrichment-extra',
+    wordSlugs: 'metamorphosis',
+    tags: 'roots, enrichment',
+    sourceNote: 'Edited in Content Operations Centre.',
+    provenance: { source: 'admin-editor', note: 'T11 list test' },
+  }, {
+    existingWordList: bundle.draft.wordLists.find((list) => list.id === 'extra-greek'),
+    words: bundle.draft.words,
+  });
+  const candidate = buildSpellingContentOperationCandidate(bundle, [operation]);
+  const list = candidate.candidate.draft.wordLists.find((entry) => entry.id === 'extra-greek');
+
+  assert.equal(operation.entityType, 'spelling.wordList');
+  assert.equal(operation.action, 'upsert');
+  assert.deepEqual(operation.payload.wordSlugs, ['metamorphosis']);
+  assert.equal(Object.prototype.hasOwnProperty.call(operation.payload, 'sentences'), false);
+  assert.equal(candidate.validation.ok, true);
+  assert.equal(list.title, 'Extra Greek roots revised');
+});
+
+test('spelling word-list editor validation blocks missing metadata and invalid membership', () => {
+  const bundle = contentBundle();
+  const result = validateSpellingWordListEditorInput({
+    id: 'core-empty',
+    title: '',
+    spellingPool: 'core',
+    coverageTier: 'statutory-core',
+    wordSlugs: 'missing-word',
+  }, {
+    words: bundle.draft.words,
+  });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.errors.some((entry) => entry.field === 'title'));
+  assert.ok(result.errors.some((entry) => entry.field === 'yearGroups'));
+  assert.ok(result.errors.some((entry) => entry.field === 'wordSlugs'));
+  assert.ok(result.errors.some((entry) => entry.field === 'provenance'));
+});
+
+test('spelling word-list delete-or-retire operation removes drafts and blocks retiring active lists', () => {
+  const bundle = contentBundle();
+  const draftDelete = buildSpellingWordListDeleteOrRetireOperation({ id: 'draft-list' });
+  const retire = buildSpellingWordListDeleteOrRetireOperation({ id: 'core-y34', hasCurrent: true }, {
+    reason: 'Retired by test.',
+    now: () => NOW,
+  });
+  const candidate = buildSpellingContentOperationCandidate(bundle, [retire]);
+  const retiredList = candidate.candidate.draft.wordLists.find((list) => list.id === 'core-y34');
+
+  assert.equal(draftDelete.action, 'remove');
+  assert.equal(retire.action, 'retire');
+  assert.equal(retiredList.active, false);
+  assert.equal(retiredList.retired, true);
+  assert.equal(retiredList.retirement.reason, 'Retired by test.');
+  assert.equal(candidate.validation.ok, false);
+  assert.ok(candidate.validation.errors.some((entry) => entry.code === 'retired_word_list_reference'));
 });

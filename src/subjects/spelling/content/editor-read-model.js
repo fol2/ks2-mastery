@@ -180,17 +180,30 @@ function compactSentence(sentence) {
     text: sentence.text,
     variantLabel: sentence.variantLabel || '',
     tags: asArray(sentence.tags),
+    sourceNote: sentence.sourceNote || '',
+    provenance: sentence.provenance || null,
+    active: sentence.active !== false,
+    retired: Boolean(sentence.retired),
+    retirement: sentence.retirement || null,
   };
 }
 
-function compactWordList(list, wordCount, draftState = 'unchanged') {
+function compactWordList(list, wordCount, draftState = 'unchanged', totalWordCount = wordCount) {
   return {
     id: list.id,
     title: list.title,
     spellingPool: list.spellingPool,
     coverageTier: list.coverageTier,
     yearGroups: asArray(list.yearGroups),
+    tags: asArray(list.tags),
+    wordSlugs: asArray(list.wordSlugs),
+    sourceNote: list.sourceNote || '',
+    provenance: list.provenance || null,
+    active: list.active !== false,
+    retired: Boolean(list.retired),
+    retirement: list.retirement || null,
     wordCount,
+    totalWordCount,
     draftState,
   };
 }
@@ -293,6 +306,9 @@ function compactWordRow({
     variantWords: variants.map((variant) => variant.word).filter(Boolean),
     variantAccepted: variants.flatMap((variant) => asArray(variant.accepted)),
     familySize: familyMembers.length,
+    active: word.active !== false,
+    retired: Boolean(word.retired),
+    retirement: word.retirement || null,
     draftState,
     validationState,
     hasCurrent: Boolean(currentComparable),
@@ -339,11 +355,13 @@ function draftStateCounts(rows) {
 function poolSummaries(rows) {
   return ['core', 'extra'].map((pool) => {
     const poolRows = rows.filter((row) => row.spellingPool === pool);
+    const activePoolRows = poolRows.filter((row) => row.active !== false && !row.retired);
     return {
       pool,
-      wordCount: poolRows.length,
-      sentenceCount: poolRows.reduce((sum, row) => sum + row.sentenceCount + row.variantSentenceCount, 0),
-      variantCount: poolRows.reduce((sum, row) => sum + row.variantCount, 0),
+      wordCount: activePoolRows.length,
+      totalWordCount: poolRows.length,
+      sentenceCount: activePoolRows.reduce((sum, row) => sum + row.sentenceCount + row.variantSentenceCount, 0),
+      variantCount: activePoolRows.reduce((sum, row) => sum + row.variantCount, 0),
       draftStateCounts: draftStateCounts(poolRows),
     };
   });
@@ -360,11 +378,13 @@ function compactWordLists({ currentBundle, packageBundle, currentMaps, packageMa
     const currentList = currentMaps.wordListsById.get(id) || null;
     const packageList = packageMaps?.wordListsById.get(id) || null;
     const display = packageList || currentList;
-    const wordCount = displayBundle.draft.words.filter((word) => word.listId === id).length;
+    const listWords = displayBundle.draft.words.filter((word) => word.listId === id);
+    const wordCount = listWords.filter((word) => word.active !== false && !word.retired).length;
     return compactWordList(
       display,
       wordCount,
       packageBundle ? packageDraftState(currentList, packageList) : 'unchanged',
+      listWords.length,
     );
   }).sort((left, right) => left.spellingPool.localeCompare(right.spellingPool) || left.title.localeCompare(right.title));
 }
