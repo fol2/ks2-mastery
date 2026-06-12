@@ -60,6 +60,7 @@ const CONTENT_OPERATION_CAPABILITIES = Object.freeze({
   EDIT: 'content_operations.edit',
   APPROVE: 'content_operations.approve',
   PUBLISH: 'content_operations.publish',
+  ROLLBACK: 'content_operations.rollback',
 });
 
 const SPELLING_OPERATION_NOUNS = Object.freeze({
@@ -3871,7 +3872,15 @@ function releaseAssetChangeLines(assetChanges = null) {
   return lines;
 }
 
-function ReleaseTable({ releases }) {
+function ReleaseTable({
+  releases,
+  latestReleaseId = '',
+  canRollback = false,
+  rollbackAvailable = false,
+  rollbackState = null,
+  onRollback = null,
+}) {
+  const [rollbackReasons, setRollbackReasons] = React.useState({});
   if (!releases.length) {
     return (
       <div className="feedback admin-note-spaced" data-content-ops-empty-releases="true">
@@ -3891,6 +3900,7 @@ function ReleaseTable({ releases }) {
             <th className="small admin-overview-th">Changed</th>
             <th className="small admin-overview-th">Audio</th>
             <th className="small admin-overview-th">Proof</th>
+            <th className="small admin-overview-th">Recovery</th>
           </tr>
         </thead>
         <tbody>
@@ -3918,6 +3928,22 @@ function ReleaseTable({ releases }) {
               .join(', ');
             const changedLines = releaseChangedEntityLines(changedEntities);
             const assetLines = releaseAssetChangeLines(history?.assetChanges);
+            const rollbackMetadata = release.proof?.rollback && typeof release.proof.rollback === 'object'
+              ? release.proof.rollback
+              : null;
+            const rollbackReason = String(rollbackReasons[release.releaseId] ?? '');
+            const isLatestRelease = Boolean(latestReleaseId && release.releaseId === latestReleaseId);
+            const rollbackRunning = rollbackState?.running && rollbackState.releaseId === release.releaseId;
+            const rollbackDisabled = !rollbackAvailable
+              || !canRollback
+              || !onRollback
+              || isLatestRelease
+              || release.status !== 'published'
+              || rollbackRunning
+              || !rollbackReason.trim();
+            const rollbackHint = isLatestRelease
+              ? 'Current release'
+              : (!canRollback ? 'No rollback role' : (!rollbackAvailable ? 'Rollback unavailable' : 'Requires reason'));
             return (
               <tr
                 key={release.releaseId}
@@ -3934,8 +3960,16 @@ function ReleaseTable({ releases }) {
                   </span>
                 </td>
                 <td className="admin-overview-td small">
-                  {history?.package?.title || release.packageId || 'seeded'}
-                  <div className="small muted">{release.packageId || 'first release'}</div>
+                  {history?.package?.title || (release.rollbackOfReleaseId ? 'Rollback release' : (release.packageId || 'seeded'))}
+                  <div className="small muted">{release.packageId || (release.rollbackOfReleaseId ? 'recovery action' : 'first release')}</div>
+                  {release.rollbackOfReleaseId ? (
+                    <div className="small muted" data-content-ops-rollback-lineage={release.rollbackOfReleaseId}>
+                      Rollback of {release.rollbackOfReleaseId}
+                    </div>
+                  ) : null}
+                  {rollbackMetadata?.reason ? (
+                    <div className="small muted">Reason: {rollbackMetadata.reason}</div>
+                  ) : null}
                 </td>
                 <td className="admin-overview-td small">
                   <div>Published by {history?.publishedByAccountId || release.publishedByAccountId || 'unknown'}</div>
@@ -3977,11 +4011,56 @@ function ReleaseTable({ releases }) {
                   {!missingSurfaces && linkedSurfaces ? <div className="small muted">{linkedSurfaces}</div> : null}
                   {capture ? <div className="small muted">{capture}</div> : null}
                 </td>
+                <td className="admin-overview-td">
+                  <div className="content-ops-release-recovery">
+                    <textarea
+                      rows={2}
+                      value={rollbackReason}
+                      placeholder="Rollback reason"
+                      aria-label={`Rollback reason for ${release.releaseId}`}
+                      data-content-ops-rollback-reason={release.releaseId}
+                      disabled={isLatestRelease || rollbackRunning || !canRollback || !rollbackAvailable}
+                      onChange={(event) => {
+                        const value = event.target.value;
+                        setRollbackReasons((current) => ({
+                          ...current,
+                          [release.releaseId]: value,
+                        }));
+                      }}
+                    />
+                    <button
+                      type="button"
+                      className="btn secondary compact"
+                      disabled={rollbackDisabled}
+                      aria-busy={rollbackRunning ? 'true' : undefined}
+                      data-content-ops-rollback-action={release.releaseId}
+                      onClick={() => onRollback?.({
+                        releaseId: release.releaseId,
+                        reason: rollbackReason.trim(),
+                      })}
+                    >
+                      Rollback
+                    </button>
+                    <div className="small muted">
+                      {rollbackRunning ? 'Rolling back...' : rollbackHint}
+                    </div>
+                  </div>
+                </td>
               </tr>
             );
           })}
         </tbody>
       </table>
+      {rollbackState?.message ? (
+        <div className="feedback good admin-note-spaced" data-content-ops-rollback-message="true">
+          {rollbackState.message}
+        </div>
+      ) : null}
+      {rollbackState?.error ? (
+        <div className="feedback warn admin-note-spaced" data-content-ops-rollback-error="true">
+          {rollbackState.error.message}
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -4060,6 +4139,13 @@ export function AdminContentOperationsSection({
     running: false,
     message: '',
     error: null,
+  });
+  const [rollbackState, setRollbackState] = React.useState({
+    releaseId: '',
+    running: false,
+    message: '',
+    error: null,
+    release: null,
   });
   const detailRequestRef = React.useRef({ id: '', seq: 0 });
   const spellingBrowseRequestRef = React.useRef(0);
@@ -4498,6 +4584,57 @@ export function AdminContentOperationsSection({
     }
   }, [api, invalidateSpellingBrowse, loadPackageDetail, refresh]);
 
+  const runRollbackRelease = React.useCallback(async ({ releaseId, reason }) => {
+    const safeReleaseId = String(releaseId || '').trim();
+    const safeReason = String(reason || '').trim();
+    if (!api?.rollbackRelease || !safeReleaseId || !safeReason) return;
+    setRollbackState({
+      releaseId: safeReleaseId,
+      running: true,
+      message: '',
+      error: null,
+      release: null,
+    });
+    try {
+      const payload = await api.rollbackRelease({
+        releaseId: safeReleaseId,
+        reason: safeReason,
+        proof: {
+          source: 'content-operations-centre',
+          reason: safeReason,
+          rollback: {
+            targetReleaseId: safeReleaseId,
+            reason: safeReason,
+            approvedByAccountId: overview.actor?.accountId || null,
+            publishedByAccountId: overview.actor?.accountId || null,
+            approvalMode: 'same-role-placeholder',
+            proofRequirement: 'production-proof-after-rollback',
+          },
+        },
+        mutation: contentOperationMutation('rollback', safeReleaseId),
+      });
+      setRollbackState({
+        releaseId: safeReleaseId,
+        running: false,
+        message: `Rolled back to ${safeReleaseId}.`,
+        error: null,
+        release: payload?.release || null,
+      });
+      invalidateSpellingBrowse();
+      if (api.readOverview) {
+        await refresh();
+      }
+    } catch (error) {
+      setRollbackState({
+        releaseId: safeReleaseId,
+        running: false,
+        message: '',
+        error: errorEnvelope(error, 'content_operations_rollback_failed'),
+        release: null,
+      });
+    }
+  }, [api, invalidateSpellingBrowse, overview.actor?.accountId, refresh]);
+
   const latestRelease = overview.latestRelease;
   const primaryData = overview.openPackageCount || packages.length || releases.length || latestRelease || spellingBrowse.words.length ? {
     overview,
@@ -4524,6 +4661,7 @@ export function AdminContentOperationsSection({
     approve: Boolean(api?.approvePackage),
     publish: Boolean(api?.publishPackage),
   };
+  const canRollback = actorCan(overview.actor, CONTENT_OPERATION_CAPABILITIES.ROLLBACK);
   const audioActionAvailability = {
     scan: Boolean(api?.validatePackage),
     generate: Boolean(api?.generateAudio),
@@ -4622,7 +4760,16 @@ export function AdminContentOperationsSection({
         />
       ) : null}
 
-      {activeTab === 'releases' ? <ReleaseTable releases={releases} /> : null}
+      {activeTab === 'releases' ? (
+        <ReleaseTable
+          releases={releases}
+          latestReleaseId={latestRelease?.releaseId || ''}
+          canRollback={canRollback}
+          rollbackAvailable={Boolean(api?.rollbackRelease)}
+          rollbackState={rollbackState}
+          onRollback={runRollbackRelease}
+        />
+      ) : null}
     </AdminPanelFrame>
   );
 }

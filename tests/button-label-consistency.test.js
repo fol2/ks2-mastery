@@ -353,6 +353,7 @@ test('button labels: every statically extractable label is classified', () => {
     'Refresh now',
     'Edit',
     'Restore to v',
+    'Rollback',
     'Confirm schedule',
     'Open Spelling',
     'Open settings tab',

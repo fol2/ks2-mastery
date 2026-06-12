@@ -1211,6 +1211,12 @@ describe('Content Operations Centre hub API client', () => {
       proof: { surfaces: { spellingSetup: { evidence: 'setup' } } },
       includeSnapshot: true,
     });
+    await api.rollbackContentOperationRelease({
+      releaseId: 'rel/with/slash',
+      reason: 'Restore the previous global spelling release.',
+      proof: { source: 'test', reason: 'Restore the previous global spelling release.' },
+      mutation: { requestId: 'rollback-1' },
+    });
     await api.resolveContentOperationConflict({
       packageId: 'pkg/with/slash',
       conflictId: 'conflict/with/slash',
@@ -1225,8 +1231,9 @@ describe('Content Operations Centre hub API client', () => {
     assert.equal(new URL(calls[3].url).pathname, '/api/admin/content-operations/packages/pkg%2Fwith%2Fslash/publish');
     assert.equal(new URL(calls[4].url).pathname, '/api/admin/content-operations/subjects/spelling/releases/rel%2Fwith%2Fslash/proof');
     assert.equal(new URL(calls[4].url).searchParams.get('includeSnapshot'), 'true');
-    assert.equal(new URL(calls[5].url).pathname, '/api/admin/content-operations/packages/pkg%2Fwith%2Fslash/resolve-conflict');
-    assert.deepEqual(calls.map((call) => call.method), ['POST', 'POST', 'POST', 'POST', 'POST', 'POST']);
+    assert.equal(new URL(calls[5].url).pathname, '/api/admin/content-operations/releases/rel%2Fwith%2Fslash/rollback');
+    assert.equal(new URL(calls[6].url).pathname, '/api/admin/content-operations/packages/pkg%2Fwith%2Fslash/resolve-conflict');
+    assert.deepEqual(calls.map((call) => call.method), ['POST', 'POST', 'POST', 'POST', 'POST', 'POST', 'POST']);
     assert.equal(calls[0].body.includeSnapshot, true);
     assert.equal(calls[1].body.candidateId, 'cand/with/slash');
     assert.deepEqual(calls[1].body.itemIds, ['word:meta:base:male.natural']);
@@ -1242,9 +1249,12 @@ describe('Content Operations Centre hub API client', () => {
     assert.equal(Object.prototype.hasOwnProperty.call(calls[2].body, 'assetSummary'), false);
     assert.equal(calls[3].body.proof.source, 'test');
     assert.equal(calls[4].body.proof.surfaces.spellingSetup.evidence, 'setup');
-    assert.equal(calls[5].body.conflictId, 'conflict/with/slash');
-    assert.equal(calls[5].body.resolution, 'edit');
-    assert.equal(calls[5].body.value, 'Merged value.');
+    assert.equal(calls[5].body.reason, 'Restore the previous global spelling release.');
+    assert.equal(calls[5].body.proof.reason, 'Restore the previous global spelling release.');
+    assert.equal(calls[5].body.mutation.requestId, 'rollback-1');
+    assert.equal(calls[6].body.conflictId, 'conflict/with/slash');
+    assert.equal(calls[6].body.resolution, 'edit');
+    assert.equal(calls[6].body.value, 'Merged value.');
   });
 
   it('calls content operation append and delete endpoints', async () => {
@@ -1299,6 +1309,14 @@ describe('Content Operations Centre hub API client', () => {
     await assert.rejects(
       () => api.readContentOperationRelease({ releaseId: '' }),
       /Content operation release id is required/,
+    );
+    await assert.rejects(
+      () => api.rollbackContentOperationRelease({ releaseId: '' }),
+      /Content operation release id is required/,
+    );
+    await assert.rejects(
+      () => api.rollbackContentOperationRelease({ releaseId: 'rel-1', reason: '' }),
+      /Content operation rollback reason is required/,
     );
     await assert.rejects(
       () => api.readContentOperationSpellingWord({ slug: '' }),

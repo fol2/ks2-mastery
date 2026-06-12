@@ -2729,6 +2729,7 @@ function buildSurfaceActions() {
     resolveConflict: hubApi.resolveContentOperationConflict?.bind(hubApi),
     readReleases: hubApi.readContentOperationReleases?.bind(hubApi),
     readRelease: hubApi.readContentOperationRelease?.bind(hubApi),
+    rollbackRelease: hubApi.rollbackContentOperationRelease?.bind(hubApi),
   } : null;
   return {
     dispatch: dispatchAction,
