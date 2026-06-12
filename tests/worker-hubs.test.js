@@ -140,6 +140,7 @@ test('worker hubs supplement operator legacy core-only content with seeded runti
     assert.equal(writeResponse.status, 200);
     assert.equal(written.content.publication.publishedVersion, 1);
     assert.equal(written.content.releases[0].snapshot.words.some((word) => word.spellingPool === 'extra'), false);
+    assert.ok(written.content.releases[0].snapshot.rewardTracks.some((track) => track.id === 'spelling-core-inklet'));
 
     const hubResponse = await server.fetchAs('adult-parent', 'https://repo.test/api/hubs/parent?learnerId=learner-a');
     const hubPayload = await hubResponse.json();

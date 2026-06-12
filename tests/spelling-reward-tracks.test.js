@@ -2,6 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
+  LEGACY_SPELLING_REWARD_TRACKS,
+  legacySpellingRewardTrackIdsForPool,
   normaliseRewardTrackConfig,
   thresholdsForRewardTrack,
 } from '../src/platform/game/reward-track-config.js';
@@ -17,6 +19,9 @@ import {
   normaliseSpellingPoolEditorInput,
   validateSpellingRewardTrackEditorInput,
 } from '../src/subjects/spelling/content/package-operations.js';
+import {
+  SEEDED_SPELLING_CONTENT_BUNDLE,
+} from '../src/subjects/spelling/data/content-data.js';
 
 const NOW = Date.UTC(2026, 5, 12, 9, 0, 0);
 
@@ -142,6 +147,37 @@ test('reward track config defaults to parallel direct progression', () => {
   assert.deepEqual(thresholdsForRewardTrack(track), [1, 10, 30, 60, 100]);
 });
 
+test('seeded spelling content binds legacy pools to formal reward tracks', () => {
+  const validation = validateSpellingContentBundle(SEEDED_SPELLING_CONTENT_BUNDLE);
+
+  assert.equal(validation.ok, true, JSON.stringify(validation.errors, null, 2));
+  const { draft } = validation.bundle;
+  const poolsById = new Map(draft.pools.map((pool) => [pool.id, pool]));
+  const tracksById = new Map(draft.rewardTracks.map((track) => [track.id, track]));
+
+  assert.deepEqual(poolsById.get('core').rewardTrackIds, legacySpellingRewardTrackIdsForPool('core'));
+  assert.deepEqual(poolsById.get('extra').rewardTrackIds, legacySpellingRewardTrackIdsForPool('extra'));
+  assert.deepEqual(
+    draft.rewardTracks.map((track) => track.id),
+    LEGACY_SPELLING_REWARD_TRACKS.map((track) => track.id),
+  );
+
+  for (const track of LEGACY_SPELLING_REWARD_TRACKS) {
+    assert.ok(tracksById.has(track.id), `${track.id} should be present in the seeded draft`);
+    assert.equal(tracksById.get(track.id).progressKey, track.progressKey);
+  }
+
+  const extraWordCount = draft.words.filter((word) => (
+    word.spellingPool === 'extra' && word.active !== false && !word.retired
+  )).length;
+  const vellhornThresholds = thresholdsForRewardTrack(tracksById.get('spelling-extra-vellhorn'));
+  assert.deepEqual(vellhornThresholds, [1, 10, 30, 60, 100]);
+  assert.equal(tracksById.get('spelling-extra-vellhorn').compatibilityMode, 'legacy');
+  assert.equal(Math.max(...vellhornThresholds) > extraWordCount, true);
+  assert.ok(errorCodes(validation).includes('reward_threshold_exceeds_pool_count') === false);
+  assert.ok(validation.warnings.some((issue) => issue.code === 'reward_threshold_exceeds_pool_count'));
+});
+
 test('pool can bind to multiple formal reward tracks through content operations', () => {
   const base = rewardBundle({
     pools: [poolFixture('secure-vocabulary', { visibilityState: 'hidden' })],
@@ -246,6 +282,24 @@ test('dangling pool rewardTrackIds return validation errors instead of throwing'
 
   assert.equal(validation.ok, false);
   assert.ok(errorCodes(validation).includes('reward_track_missing'));
+});
+
+test('unknown reward track source monsters block publish', () => {
+  const validation = validateSpellingContentBundle(rewardBundle({
+    pools: [poolFixture('secure-vocabulary', { rewardTrackIds: ['secure-phaeton'] })],
+    rewardTracks: [{
+      id: 'secure-phaeton',
+      poolId: 'secure-vocabulary',
+      monsterId: 'phaeton',
+      thresholdTemplate: 'aggregate',
+      sourceMonsterIds: ['inklet', 'glimmerbugg'],
+      thresholdOverrides: [1],
+    }],
+    wordCounts: { 'secure-vocabulary': 1 },
+  }));
+
+  assert.equal(validation.ok, false);
+  assert.ok(errorCodes(validation).includes('reward_source_monster_missing'));
 });
 
 test('sequential reward-track cycles block publish', () => {

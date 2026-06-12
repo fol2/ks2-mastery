@@ -64,14 +64,28 @@ test('direct spelling monsters evolve at 10, 30, 60 and 100 secure words', () =>
 });
 
 test('Vellhorn follows the direct spelling monster stage thresholds', () => {
-  const state = {
-    vellhorn: {
-      caught: true,
-      mastered: masteredWords(100, 'extra'),
-    },
-  };
+  const cases = [
+    [20, 1],
+    [29, 1],
+    [30, 2],
+    [35, 2],
+    [52, 2],
+    [59, 2],
+    [60, 3],
+    [99, 3],
+    [100, 4],
+  ];
 
-  assert.equal(progressForMonster(state, 'vellhorn').stage, 4);
+  for (const [extraWords, expectedStage] of cases) {
+    const state = {
+      vellhorn: {
+        caught: true,
+        mastered: masteredWords(extraWords, 'extra'),
+      },
+    };
+
+    assert.equal(progressForMonster(state, 'vellhorn').stage, expectedStage, `${extraWords} Extra words`);
+  }
 });
 
 test('direct spelling monsters unlock stage 0 from the first secure word', () => {
@@ -178,6 +192,31 @@ test('spelling monster routing maps Extra words to Vellhorn while preserving cor
   assert.equal(monsterIdForSpellingWord({ spellingPool: 'core', yearBand: '5-6' }), 'glimmerbug');
   assert.equal(monsterIdForSpellingWord({ spellingPool: 'extra', yearBand: 'extra' }), 'vellhorn');
   assert.equal(monsterIdForSpellingWord({ year: 'extra' }), 'vellhorn');
+});
+
+test('spelling monster progress projects onto legacy reward tracks without changing state keys', () => {
+  const state = {
+    inklet: { masteredCount: 12, caught: true, branch: 'b1' },
+    glimmerbug: { masteredCount: 7, caught: true, branch: 'b2' },
+    vellhorn: { masteredCount: 52, caught: true, branch: 'b1' },
+  };
+
+  const inklet = progressForMonster(state, 'inklet');
+  const glimmerbug = progressForMonster(state, 'glimmerbug');
+  const phaeton = derivePhaeton(state);
+  const vellhorn = progressForMonster(state, 'vellhorn');
+
+  assert.equal(inklet.rewardTrackId, 'spelling-core-inklet');
+  assert.equal(inklet.progressKey, 'inklet');
+  assert.equal(glimmerbug.rewardTrackId, 'spelling-core-glimmerbug');
+  assert.equal(glimmerbug.progressKey, 'glimmerbug');
+  assert.equal(phaeton.rewardTrackId, 'spelling-core-phaeton');
+  assert.equal(phaeton.progressKey, 'phaeton');
+  assert.equal(phaeton.mastered, 19);
+  assert.equal(vellhorn.rewardTrackId, 'spelling-extra-vellhorn');
+  assert.equal(vellhorn.progressKey, 'vellhorn');
+  assert.equal(vellhorn.mastered, 52);
+  assert.equal(vellhorn.stage, 2);
 });
 
 test('recording mastery stores the selected branch on reward events', () => {
