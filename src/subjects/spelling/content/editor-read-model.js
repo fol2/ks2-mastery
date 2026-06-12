@@ -211,6 +211,9 @@ function compactWordList(list, wordCount, draftState = 'unchanged', totalWordCou
 
 function compactPool(pool, rows, draftState = 'unchanged') {
   const poolRows = rows.filter((row) => row.spellingPool === pool.id);
+  const activeAnyVisibilityRows = pool.active !== false && !pool.retired
+    ? poolRows.filter((row) => row.active !== false && !row.retired)
+    : [];
   const activePoolRows = pool.active !== false && !pool.retired && pool.visibility?.state === 'visible'
     ? poolRows.filter((row) => row.active !== false && !row.retired)
     : [];
@@ -227,8 +230,10 @@ function compactPool(pool, rows, draftState = 'unchanged') {
     retired: Boolean(pool.retired),
     retirement: pool.retirement || null,
     noRewardException: pool.noRewardException || null,
+    rewardTrackIds: asArray(pool.rewardTrackIds),
     rewardTrack: pool.rewardTrack || null,
     wordCount: activePoolRows.length,
+    activeWordCount: activeAnyVisibilityRows.length,
     totalWordCount: poolRows.length,
     sentenceCount: activePoolRows.reduce((sum, row) => sum + row.sentenceCount + row.variantSentenceCount, 0),
     variantCount: activePoolRows.reduce((sum, row) => sum + row.variantCount, 0),
@@ -236,6 +241,57 @@ function compactPool(pool, rows, draftState = 'unchanged') {
     draftState,
     sortIndex: Number.isInteger(Number(pool.sortIndex)) ? Number(pool.sortIndex) : 0,
   };
+}
+
+function compactRewardTrack(track, draftState = 'unchanged', {
+  hasCurrent = true,
+  hasPackageDraft = false,
+} = {}) {
+  return {
+    id: track.id,
+    poolId: track.poolId,
+    monsterId: track.monsterId,
+    progressionMode: track.progressionMode || 'parallel',
+    thresholdTemplate: track.thresholdTemplate || 'direct',
+    thresholdOverrides: asArray(track.thresholdOverrides),
+    compatibilityMode: track.compatibilityMode || '',
+    progressKey: track.progressKey || '',
+    sourceMonsterIds: asArray(track.sourceMonsterIds),
+    active: track.active !== false,
+    retired: Boolean(track.retired),
+    retirement: track.retirement || null,
+    labels: track.labels || {},
+    sequentialAfter: track.sequentialAfter || '',
+    prerequisites: asArray(track.prerequisites),
+    dependencyApproval: track.dependencyApproval || null,
+    sourceNote: track.sourceNote || '',
+    draftState,
+    hasCurrent,
+    hasPackageDraft,
+    sortIndex: Number.isInteger(Number(track.sortIndex)) ? Number(track.sortIndex) : 0,
+  };
+}
+
+function rewardTrackSummaries({ currentBundle, packageBundle }) {
+  const trackIds = new Set([
+    ...asArray(currentBundle?.draft?.rewardTracks).map((entry) => entry.id),
+    ...asArray(packageBundle?.draft?.rewardTracks).map((entry) => entry.id),
+  ]);
+  const currentById = new Map(asArray(currentBundle?.draft?.rewardTracks).map((entry) => [entry.id, entry]));
+  const packageById = new Map(asArray(packageBundle?.draft?.rewardTracks).map((entry) => [entry.id, entry]));
+  return [...trackIds].map((id) => {
+    const currentTrack = currentById.get(id) || null;
+    const packageTrack = packageById.get(id) || null;
+    const display = packageTrack || currentTrack;
+    return compactRewardTrack(
+      display,
+      packageBundle ? packageDraftState(currentTrack, packageTrack) : 'unchanged',
+      {
+        hasCurrent: Boolean(currentTrack),
+        hasPackageDraft: Boolean(packageTrack),
+      },
+    );
+  }).sort((left, right) => left.sortIndex - right.sortIndex || left.id.localeCompare(right.id));
 }
 
 function comparablePool(pool) {
@@ -250,6 +306,7 @@ function comparablePool(pool) {
     active: pool.active !== false,
     retired: Boolean(pool.retired),
     noRewardException: pool.noRewardException || null,
+    rewardTrackIds: asArray(pool.rewardTrackIds),
     rewardTrack: pool.rewardTrack || null,
   };
 }
@@ -551,6 +608,10 @@ export function buildSpellingContentBrowseModel({
       packageBundle,
       currentMaps,
       packageMaps,
+    }),
+    rewardTracks: rewardTrackSummaries({
+      currentBundle,
+      packageBundle,
     }),
     words: limitedRows,
   };

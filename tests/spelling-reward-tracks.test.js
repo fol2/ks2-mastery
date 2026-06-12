@@ -15,6 +15,7 @@ import {
 } from '../src/subjects/spelling/content/operations-model.js';
 import {
   buildSpellingPoolUpsertOperation,
+  buildSpellingRewardTrackDeleteOrRetireOperation,
   buildSpellingRewardTrackUpsertOperation,
   normaliseSpellingPoolEditorInput,
   validateSpellingRewardTrackEditorInput,
@@ -395,6 +396,65 @@ test('reward-track editor validator catches duplicate ids in context', () => {
 
   assert.equal(validation.ok, false);
   assert.ok(validation.errors.some((entry) => entry.code === 'duplicate_reward_track'));
+});
+
+test('reward-track editor operation normalises UI-submitted source monsters and inactive state', () => {
+  const operation = buildSpellingRewardTrackUpsertOperation({
+    id: 'secure-vellhorn',
+    poolId: 'secure-vocabulary',
+    monsterId: 'vellhorn',
+    thresholdOverrides: [1, 2],
+    sourceMonsterIds: 'vellhorn, inklet',
+    active: false,
+    labels: { title: 'Secure Vellhorn' },
+  }, {
+    pools: [poolFixture('secure-vocabulary', { visibilityState: 'hidden' })],
+    poolWordCounts: { 'secure-vocabulary': 2 },
+    enforceThresholdsForHiddenPools: true,
+  });
+
+  assert.equal(operation.entityType, 'spelling.rewardTrack');
+  assert.equal(operation.payload.active, false);
+  assert.deepEqual(operation.payload.sourceMonsterIds, ['vellhorn', 'inklet']);
+  assert.deepEqual(operation.payload.thresholdOverrides, [1, 2]);
+});
+
+test('reward-track editor can remove draft tracks or retire published tracks', () => {
+  const removeDraft = buildSpellingRewardTrackDeleteOrRetireOperation({
+    id: 'secure-inklet',
+    hasCurrent: false,
+  });
+  const retirePublished = buildSpellingRewardTrackDeleteOrRetireOperation({
+    id: 'secure-inklet',
+    hasCurrent: true,
+    reason: 'Replacing the track with a new monster route.',
+  }, {
+    now: () => NOW,
+  });
+  const base = rewardBundle({
+    pools: [poolFixture('secure-vocabulary', {
+      visibilityState: 'hidden',
+      rewardTrackIds: ['secure-inklet'],
+    })],
+    rewardTracks: [{
+      id: 'secure-inklet',
+      poolId: 'secure-vocabulary',
+      monsterId: 'inklet',
+      thresholdOverrides: [1],
+    }],
+    wordCounts: { 'secure-vocabulary': 1 },
+  });
+  const candidate = buildSpellingContentOperationCandidate(base, [retirePublished]);
+  const retiredTrack = candidate.validation.bundle.draft.rewardTracks.find((track) => track.id === 'secure-inklet');
+
+  assert.equal(removeDraft.action, 'remove');
+  assert.equal(removeDraft.payload, null);
+  assert.equal(retirePublished.action, 'retire');
+  assert.equal(retirePublished.payload.reason, 'Replacing the track with a new monster route.');
+  assert.equal(retirePublished.payload.retiredAt, NOW);
+  assert.equal(retiredTrack.active, false);
+  assert.equal(retiredTrack.retired, true);
+  assert.equal(retiredTrack.retirement.reason, 'Replacing the track with a new monster route.');
 });
 
 test('pool editor can clear existing formal reward-track bindings', () => {

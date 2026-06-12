@@ -12449,6 +12449,16 @@ html { scroll-behavior: smooth; }
   padding-top: 12px;
 }
 
+.content-ops-reward-impact {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.content-ops-reward-safety {
+  margin: 0;
+}
+
 .content-ops-word-editor-header,
 .content-ops-word-editor-actions,
 .content-ops-editor-actions {
@@ -12708,7 +12718,8 @@ html { scroll-behavior: smooth; }
   }
 
   .content-ops-word-editor-grid,
-  .content-ops-word-variant-row {
+  .content-ops-word-variant-row,
+  .content-ops-reward-impact {
     grid-template-columns: 1fr;
   }
 

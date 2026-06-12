@@ -1,5 +1,6 @@
 import {
   SPELLING_REWARD_TRACK_MONSTER_IDS,
+  isValidRewardTrackId,
   normaliseRewardTrackConfig,
   validateRewardTrackCollection,
 } from '../../../platform/game/reward-track-config.js';
@@ -666,6 +667,41 @@ export function buildSpellingRewardTrackUpsertOperation(rawValue = {}, options =
     fieldPath: '',
     action: 'upsert',
     payload: validation.rewardTrack,
+  };
+}
+
+export function buildSpellingRewardTrackDeleteOrRetireOperation(rawValue = {}, {
+  publishedRewardTrackIds = [],
+  reason = '',
+  now = () => Date.now(),
+} = {}) {
+  const raw = isPlainObject(rawValue) ? rawValue : {};
+  const id = normaliseString(raw.id || raw.entityId || raw.rewardTrackId || raw.trackId).toLowerCase();
+  if (!id) throw new TypeError('Reward track id is required.');
+  if (!isValidRewardTrackId(id)) throw new TypeError('Reward track id must be a stable lowercase id.');
+  const publishedSet = publishedRewardTrackIds instanceof Set
+    ? publishedRewardTrackIds
+    : new Set((Array.isArray(publishedRewardTrackIds) ? publishedRewardTrackIds : []).map((entry) => String(entry)));
+  const published = Boolean(raw.published || raw.hasCurrent || publishedSet.has(id));
+  if (!published) {
+    return {
+      entityType: 'spelling.rewardTrack',
+      entityId: id,
+      fieldPath: '',
+      action: 'remove',
+      payload: null,
+    };
+  }
+  return {
+    entityType: 'spelling.rewardTrack',
+    entityId: id,
+    fieldPath: '',
+    action: 'retire',
+    payload: {
+      reason: normaliseString(reason, normaliseString(raw.reason, 'Retired through Content Operations Centre.')),
+      retiredAt: Number(now()),
+      source: 'content-operations-centre',
+    },
   };
 }
 

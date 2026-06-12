@@ -330,8 +330,30 @@ test('spelling content operations browse exposes pool metadata and future hidden
   assert.equal(securePool.type, 'extension');
   assert.equal(securePool.visibility.state, 'hidden');
   assert.equal(securePool.wordCount, 0);
+  assert.equal(securePool.activeWordCount, 0);
   assert.equal(secureList.spellingPool, 'secure-vocabulary');
   assert.equal(secureList.coverageTier, 'secure-extension');
+});
+
+test('spelling content operations browse exposes active word counts for hidden reward validation', () => {
+  const bundle = contentBundle();
+  addFuturePoolWord(bundle, {
+    poolId: 'secure-hidden',
+    title: 'Secure hidden',
+    visibilityState: 'hidden',
+    slug: 'hiddenword',
+    word: 'hiddenword',
+  });
+
+  const browse = buildSpellingContentBrowseModel({
+    publishedContent: bundle,
+    filters: { pool: 'secure-hidden', limit: 20 },
+  });
+  const securePool = browse.pools.find((pool) => pool.id === 'secure-hidden');
+
+  assert.equal(securePool.wordCount, 0);
+  assert.equal(securePool.activeWordCount, 1);
+  assert.equal(securePool.totalWordCount, 1);
 });
 
 test('spelling published snapshot filters hidden and staged pool words but keeps visible approved pool words', () => {
