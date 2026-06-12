@@ -426,6 +426,15 @@ function serialiseReleaseHistory(history = null) {
       requiredSurfaces: Array.isArray(productionProof.requiredSurfaces) ? productionProof.requiredSurfaces : [],
       linkedSurfaces: Array.isArray(productionProof.linkedSurfaces) ? productionProof.linkedSurfaces : [],
       missingSurfaces: Array.isArray(productionProof.missingSurfaces) ? productionProof.missingSurfaces : [],
+      activation: productionProof.activation && typeof productionProof.activation === 'object' && !Array.isArray(productionProof.activation)
+        ? {
+            status: productionProof.activation.status || 'not_applicable',
+            checkedAt: Number(productionProof.activation.checkedAt) || null,
+            activated: Boolean(productionProof.activation.activated),
+            entries: Array.isArray(productionProof.activation.entries) ? productionProof.activation.entries : [],
+          }
+        : null,
+      warnings: Array.isArray(productionProof.warnings) ? productionProof.warnings : [],
     } : null,
   };
 }

@@ -14,8 +14,10 @@ import {
 import { stableHash, uid } from '../../src/platform/core/utils.js';
 import {
   backfillSpellingWordExplanations,
+  buildPublishedSnapshotFromDraft,
   buildSpellingContentSummary,
   normaliseSpellingContentBundle,
+  resolveLearnerVisibleSpellingSnapshot,
   resolveRuntimeSnapshot,
   validateSpellingContentBundle,
 } from '../../src/subjects/spelling/content/model.js';
@@ -494,7 +496,10 @@ async function mergePublicSpellingCodexState(db, accountId, subjectRows, gameSta
   const spellingRows = subjectRows.filter((row) => row.subject_id === 'spelling');
   if (!spellingRows.length) return gameState;
 
-  const snapshot = runtimeSnapshot || (await readSpellingContentForReadModels(db, accountId)).runtimeSnapshot;
+  const snapshot = runtimeSnapshot || (await readSpellingContentForReadModels(db, accountId, 'spelling', {
+    nowMs: now,
+    env,
+  })).runtimeSnapshot;
 
   for (const row of spellingRows) {
     const progress = spellingProgressFromSubjectRow(row);
@@ -790,12 +795,15 @@ function attachRuntimeMonsterAssetReferencesToVisualConfig(monsterVisualConfig, 
 async function readSpellingRuntimeContentBundle(db, accountId, subjectId = 'spelling', {
   includeAccountContent = true,
   includeGlobalContent = true,
+  nowMs = Date.now(),
+  env = {},
 } = {}) {
   if (includeGlobalContent) {
     const releaseRow = await readResolvedContentOperationReleaseRow(db, accountId, subjectId);
     if (releaseRow) {
       const cachePrefix = releaseRow.release_source === 'override' ? 'override' : 'release';
-      return readSpellingRuntimeContentReleaseBundle(db, subjectId, releaseRow, cachePrefix);
+      const runtimeContent = await readSpellingRuntimeContentReleaseBundle(db, subjectId, releaseRow, cachePrefix);
+      return resolveLearnerVisibleRuntimeContent(runtimeContent, { nowMs, env });
     }
   }
 
@@ -835,7 +843,8 @@ async function readSpellingRuntimeContentBundle(db, accountId, subjectId = 'spel
   if (includeGlobalContent) {
     const releaseRow = await readPublishedContentOperationReleaseRow(db, subjectId);
     if (releaseRow) {
-      return readSpellingRuntimeContentReleaseBundle(db, subjectId, releaseRow);
+      const runtimeContent = await readSpellingRuntimeContentReleaseBundle(db, subjectId, releaseRow);
+      return resolveLearnerVisibleRuntimeContent(runtimeContent, { nowMs, env });
     }
   }
 
@@ -1092,6 +1101,28 @@ function runtimeContentSummary(content, snapshot) {
   };
 }
 
+function resolveLearnerVisibleRuntimeContent(runtimeContent, {
+  nowMs = Date.now(),
+  env = {},
+} = {}) {
+  if (!runtimeContent?.snapshot) return runtimeContent;
+  const snapshot = resolveLearnerVisibleSpellingSnapshot(runtimeContent.snapshot, {
+    now: nowMs,
+    env,
+  });
+  return {
+    ...runtimeContent,
+    snapshot,
+    summary: runtimeContent.summary
+      ? {
+          ...runtimeContent.summary,
+          runtimeWordCount: snapshot.words.length,
+          runtimeSentenceCount: runtimeSentenceCount(snapshot),
+        }
+      : runtimeContent.summary,
+  };
+}
+
 async function buildSpellingRuntimeContent(row, subjectId) {
   if (!row) {
     return buildSeededSpellingRuntimeContent(subjectId);
@@ -1117,15 +1148,22 @@ async function buildSpellingRuntimeContentFromRelease(row, subjectId) {
   }
 
   try {
-    const seededBundle = await readSeededSpellingContentBundle();
     const snapshotJson = await decodeContentOperationSnapshot(row.snapshot_json);
     const content = normaliseSpellingContentBundle(JSON.parse(snapshotJson));
-    const snapshot = runtimeSnapshotForBundle(content, seededBundle);
+    const snapshot = buildPublishedSnapshotFromDraft(content.draft, {
+      generatedAt: Number(row.published_at) || Date.now(),
+      includeDeferredVisibility: true,
+    });
+    const baseSummary = runtimeContentSummary(content, snapshot);
     return {
       subjectId,
       content,
       snapshot,
-      summary: runtimeContentSummary(content, snapshot),
+      summary: {
+        ...baseSummary,
+        publishedReleaseId: row.release_id || baseSummary.publishedReleaseId || '',
+        publishedAt: Number(row.published_at) || baseSummary.publishedAt || 0,
+      },
     };
   } catch (error) {
     logMutation('warn', 'content_operation_release.runtime_fallback', {
@@ -2380,7 +2418,7 @@ const CONTENT_OVERVIEW_SUBJECTS = [
   { subjectKey: 'reading', displayName: 'Reading', queryLive: true },
 ];
 
-async function readSubjectContentOverviewData(db, { now, actorAccountId, actor = null } = {}) {
+async function readSubjectContentOverviewData(db, { now, actorAccountId, actor = null, env = {} } = {}) {
   if (!actor) {
     await assertAdminHubActor(db, actorAccountId);
   }
@@ -2391,7 +2429,10 @@ async function readSubjectContentOverviewData(db, { now, actorAccountId, actor =
   // and uses existing tables. We soft-fail on missing tables so the hub
   // loads before the relevant migrations land.
 
-  const spellingContentP = readSpellingContentForReadModels(db, actorAccountId).catch(() => null);
+  const spellingContentP = readSpellingContentForReadModels(db, actorAccountId, 'spelling', {
+    nowMs: nowTs,
+    env,
+  }).catch(() => null);
 
   const spellingErrorsP = scalarCountSafe(db, `
     SELECT COUNT(*) AS value
@@ -2601,10 +2642,16 @@ async function safeSignalSection(label, fn) {
   }
 }
 
-async function readContentQualitySignalsData(db, { actorAccountId, actor = null } = {}) {
+async function readContentQualitySignalsData(db, {
+  actorAccountId,
+  actor = null,
+  now,
+  env = {},
+} = {}) {
   if (!actor) {
     await assertAdminHubActor(db, actorAccountId);
   }
+  const nowTs = Number.isFinite(Number(now)) ? Number(now) : Date.now();
 
   // Grammar signals: concept coverage from GRAMMAR_AGGREGATE_CONCEPTS (18 concepts)
   // and per-concept attempt counts from the mastery_evidence table.
@@ -2687,7 +2734,10 @@ async function readContentQualitySignalsData(db, { actorAccountId, actor = null 
   const spellingSignals = await safeSignalSection('spelling', async () => {
     let wordCount = 0;
     let runtimeCoreCount = 0;
-    const spellingContent = await readSpellingContentForReadModels(db, actorAccountId);
+    const spellingContent = await readSpellingContentForReadModels(db, actorAccountId, 'spelling', {
+      nowMs: nowTs,
+      env,
+    });
     const words = Array.isArray(spellingContent.runtimeSnapshot?.words)
       ? spellingContent.runtimeSnapshot.words
       : [];
@@ -2750,7 +2800,7 @@ async function readContentQualitySignalsData(db, { actorAccountId, actor = null 
     .filter(Boolean);
 
   return {
-    generatedAt: Date.now(),
+    generatedAt: nowTs,
     subjectSignals,
   };
 }
@@ -7808,6 +7858,7 @@ async function bootstrapBundle(db, accountId, {
         ORDER BY created_at ASC, id ASC
       `, queryLearnerIds)
   ));
+  const publicReadModelNow = Date.now();
   const publicSpellingContent = await measureBootstrapPhase(capacity, BOOTSTRAP_PHASE_TIMING.readModel, () => (
     publicReadModels && subjectRows.some((row) => row.subject_id === 'spelling')
       ? (spellingContentReleaseRow
@@ -7816,11 +7867,13 @@ async function bootstrapBundle(db, accountId, {
           'spelling',
           spellingContentReleaseRow,
           spellingContentReleaseRow.release_source === 'override' ? 'override' : 'release',
-        )
+        ).then((runtimeContent) => resolveLearnerVisibleRuntimeContent(runtimeContent, {
+          nowMs: publicReadModelNow,
+          env,
+        }))
         : readSeededSpellingRuntimeContentBundle('spelling'))
       : null
   ));
-  const publicReadModelNow = Date.now();
   const subjectStates = {};
   await measureBootstrapPhase(capacity, BOOTSTRAP_PHASE_TIMING.readModel, async () => {
     for (const row of subjectRows) {
@@ -7996,7 +8049,7 @@ async function readSubjectRuntimeBundle(db, accountId, learnerId, subjectId = 's
   };
 }
 
-async function readSpellingWordBankBundle(db, accountId, learnerId, filters, nowTs) {
+async function readSpellingWordBankBundle(db, accountId, learnerId, filters, nowTs, env = {}) {
   if (!(typeof learnerId === 'string' && learnerId)) {
     throw new BadRequestError('Learner id is required for the spelling word bank.', {
       code: 'learner_id_required',
@@ -8005,6 +8058,8 @@ async function readSpellingWordBankBundle(db, accountId, learnerId, filters, now
   const runtimeRecord = await readSubjectRuntimeBundle(db, accountId, learnerId, 'spelling');
   const { snapshot } = await readSpellingRuntimeContentBundle(db, accountId, 'spelling', {
     includeAccountContent: false,
+    nowMs: nowTs,
+    env,
   });
   return buildSpellingWordBankReadModel({
     learnerId,
@@ -9792,10 +9847,14 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
       };
     },
     async readSpellingRuntimeContent(accountId, subjectId = 'spelling', options = {}) {
-      return readSpellingRuntimeContentBundle(db, accountId, subjectId, options);
+      return readSpellingRuntimeContentBundle(db, accountId, subjectId, {
+        ...options,
+        nowMs: nowFactory(),
+        env,
+      });
     },
     async readSpellingWordBank(accountId, learnerId, filters = {}) {
-      return readSpellingWordBankBundle(db, accountId, learnerId, filters, nowFactory());
+      return readSpellingWordBankBundle(db, accountId, learnerId, filters, nowFactory(), env);
     },
     // U9 → P7-U6: Punctuation telemetry read. Fires the same
     // `requireLearnerReadAccess` gate the spelling word-bank read uses
@@ -9935,7 +9994,10 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
         FROM learner_profiles l
         WHERE l.id = ?
       `, [resolvedLearnerId]);
-      const spellingContent = await readSpellingContentForReadModels(db, accountId);
+      const spellingContent = await readSpellingContentForReadModels(db, accountId, 'spelling', {
+        nowMs: nowFactory(),
+        env,
+      });
       const learnerBundle = await loadLearnerReadBundle(db, resolvedLearnerId);
       const model = buildParentHubReadModel({
         learner: learnerRowToRecord(learnerRow),
@@ -9966,7 +10028,10 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
       // depend on membership list, spelling content is an independent read
       // but must complete before buildAdminHubReadModel.
       const memberships = await listMembershipRows(db, accountId, { writableOnly: false });
-      const spellingContent = await readSpellingContentForReadModels(db, accountId);
+      const spellingContent = await readSpellingContentForReadModels(db, accountId, 'spelling', {
+        nowMs: nowFactory(),
+        env,
+      });
       const learnerBundles = {};
       for (const row of memberships) {
         learnerBundles[row.id] = await loadLearnerReadBundle(db, row.id);
@@ -10129,14 +10194,17 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
         now: nowFactory(),
         actorAccountId: accountId,
         actor,
+        env,
       });
     },
     // U7 (P6): content quality signals. Read-only; R16 compliant.
     async readContentQualitySignals(accountId) {
       const actor = await assertAdminHubActor(db, accountId);
       return readContentQualitySignalsData(db, {
+        now: nowFactory(),
         actorAccountId: accountId,
         actor,
+        env,
       });
     },
     // U8 (P3): narrow read for the denial log panel in Debugging section.
@@ -10411,6 +10479,8 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
         ? await readSpellingRuntimeContentBundle(db, accountId, 'spelling', {
           includeAccountContent: false,
           includeGlobalContent: true,
+          nowMs: now,
+          env,
         })
         : null;
       for (const row of rows) {

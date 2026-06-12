@@ -111,6 +111,26 @@ test('audio readiness scanner plans word, variant, and sentence profiles with st
   assert.equal(variantSentence.sentenceIndex, 0);
 });
 
+test('audio readiness treats deferred learner-visible pool words as required before activation', async () => {
+  const scheduledBundle = spellingBundle();
+  scheduledBundle.draft.pools[0].visibility = {
+    state: 'scheduled',
+    scheduledAt: Date.UTC(2026, 5, 18, 12, 0, 0),
+  };
+  const scheduled = await scanSpellingAudioReadiness(scheduledBundle, { scope: 'all' });
+  assert.equal(scheduled.status, 'blocked');
+  assert.equal(scheduled.totalRequired, 12);
+
+  const flaggedBundle = spellingBundle();
+  flaggedBundle.draft.pools[0].visibility = {
+    state: 'rollout-flagged',
+    rolloutFlag: 'SPELLING_AUDIO_DEFERRED_POOL',
+  };
+  const flagged = await scanSpellingAudioReadiness(flaggedBundle, { scope: 'all' });
+  assert.equal(flagged.status, 'blocked');
+  assert.equal(flagged.totalRequired, 12);
+});
+
 test('audio readiness scanner marks inventory hits present and same-scope old content keys stale', async () => {
   const baseline = await scanSpellingAudioReadiness(spellingBundle(), { scope: 'all' });
   const presentItem = baseline.items.find((item) => item.lane === 'word' && item.profileId === 'male.natural');

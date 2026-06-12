@@ -1605,7 +1605,8 @@ test('content operations API supports admin package lifecycle through separate a
 });
 
 test('content operations API requires Hero / Codex proof for hero exposure releases', async () => {
-  const server = createWorkerRepositoryServer({ now: () => NOW });
+  let currentNow = NOW;
+  const server = createWorkerRepositoryServer({ now: () => currentNow });
   try {
     seedAdultAccount(server.DB, { accountId: ADMIN_ID, platformRole: 'admin' });
     const repository = createWorkerRepository({
@@ -1628,7 +1629,7 @@ test('content operations API requires Hero / Codex proof for hero exposure relea
       action: 'upsert',
       payload: {
         state: 'scheduled',
-        surfaces: ['heroCamp', 'codex'],
+        surfaces: ['heroQuest'],
         scheduledAt: NOW + 60_000,
         rolloutFlag: 'content-operations-api-hero-proof',
         previewAllowed: true,
@@ -1653,10 +1654,28 @@ test('content operations API requires Hero / Codex proof for hero exposure relea
       published.release.history.productionProof.missingSurfaces.map((entry) => entry.key).sort(),
       ['heroCodex', 'spellingSetup', 'wordBank'].sort(),
     );
+    assert.equal(published.release.history.productionProof.activation.status, 'scheduled');
+    assert.equal(published.release.history.productionProof.warnings.length, 0);
     assert.ok(
       published.release.history.changedEntities.preview.some((entry) => (
         entry.entityType === 'spelling.heroExposure'
           && entry.entityId === rewardTrack.id
+      )),
+    );
+
+    currentNow = NOW + 60_000;
+    const activatedDetailResponse = await server.fetchAs(
+      ADMIN_ID,
+      `${BASE_URL}/api/admin/content-operations/subjects/spelling/releases/${published.release.releaseId}?includeHistory=true`,
+      { method: 'GET', headers: { 'sec-fetch-site': 'same-origin' } },
+      adminHeaders(),
+    );
+    const activatedDetail = await readPayload(activatedDetailResponse);
+    assert.equal(activatedDetailResponse.status, 200);
+    assert.equal(activatedDetail.release.history.productionProof.activation.status, 'active');
+    assert.ok(
+      activatedDetail.release.history.productionProof.warnings.some((entry) => (
+        entry.code === 'production_proof_missing_after_visibility_activation'
       )),
     );
 
@@ -1681,6 +1700,80 @@ test('content operations API requires Hero / Codex proof for hero exposure relea
       captured.release.history.productionProof.linkedSurfaces.map((entry) => entry.key).sort(),
       ['heroCodex', 'spellingSetup', 'wordBank'].sort(),
     );
+    assert.equal(captured.release.history.productionProof.warnings.length, 0);
+  } finally {
+    server.close();
+  }
+});
+
+test('content operations API requires Hero / Codex proof for field-level pool visibility releases', async () => {
+  const server = createWorkerRepositoryServer({ now: () => NOW });
+  try {
+    seedAdultAccount(server.DB, { accountId: ADMIN_ID, platformRole: 'admin' });
+    const repository = createWorkerRepository({
+      env: server.env,
+      now: () => NOW,
+    });
+    await repository.seedFirstContentOperationRelease({
+      seededByAccountId: ADMIN_ID,
+      proof: { source: 'content-operations-api-pool-visibility-proof-test' },
+    });
+
+    const created = await createPackage(server, { title: 'Pool field visibility proof package' });
+    await appendContentOperation(server, created.package.packageId, {
+      entityType: 'spelling.pool',
+      entityId: 'field-visibility-proof',
+      fieldPath: '',
+      action: 'upsert',
+      payload: {
+        id: 'field-visibility-proof',
+        title: 'Field visibility proof',
+        type: 'extension',
+        sourceNote: 'Field-level visibility proof regression fixture.',
+        provenance: { source: 'content-operations-api-test' },
+      },
+    });
+    await appendContentOperation(server, created.package.packageId, {
+      entityType: 'spelling.pool',
+      entityId: 'field-visibility-proof',
+      fieldPath: 'noRewardException.approved',
+      action: 'set',
+      payload: true,
+    });
+    await appendContentOperation(server, created.package.packageId, {
+      entityType: 'spelling.pool',
+      entityId: 'field-visibility-proof',
+      fieldPath: 'noRewardException.reason',
+      action: 'set',
+      payload: 'Pool intentionally has no reward track while visibility proof is tested.',
+    });
+    await appendContentOperation(server, created.package.packageId, {
+      entityType: 'spelling.pool',
+      entityId: 'field-visibility-proof',
+      fieldPath: 'visibility.state',
+      action: 'set',
+      payload: 'visible',
+    });
+
+    const validated = await validatePackage(server, created.package.packageId);
+    assert.equal(validated.candidate.validation.status, 'passed');
+    const approved = await approvePackage(server, created.package.packageId, validated.candidate.candidateId);
+    assert.equal(approved.approval.approvedByAccountId, ADMIN_ID);
+
+    const published = await publishPackage(server, created.package.packageId, {
+      proof: {
+        surfaces: {
+          spellingSetup: { evidence: 'setup-smoke' },
+          wordBank: { evidence: 'word-bank-smoke' },
+        },
+      },
+    });
+    assert.equal(published.release.history.productionProof.status, 'partial');
+    assert.ok(
+      published.release.history.productionProof.missingSurfaces.some((entry) => entry.key === 'heroCodex'),
+      'field-level pool visibility changes must require Hero / Codex production proof',
+    );
+    assert.equal(published.release.history.productionProof.activation.status, 'active');
   } finally {
     server.close();
   }

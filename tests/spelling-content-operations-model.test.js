@@ -14,6 +14,7 @@ import {
 } from '../src/subjects/spelling/content/operations-model.js';
 import {
   buildPublishedSnapshotFromDraft,
+  resolveLearnerVisibleSpellingSnapshot,
   validateSpellingContentBundle,
 } from '../src/subjects/spelling/content/model.js';
 import {
@@ -181,6 +182,8 @@ function addFuturePoolWord(bundle, {
   poolId,
   title,
   visibilityState = 'hidden',
+  scheduledAt = 0,
+  rolloutFlag = '',
   slug,
   word,
   noRewardException = null,
@@ -192,7 +195,7 @@ function addFuturePoolWord(bundle, {
       id: poolId,
       title,
       type: 'extension',
-      visibility: { state: visibilityState },
+      visibility: { state: visibilityState, scheduledAt, rolloutFlag },
       sourceNote: `${title} test fixture.`,
       provenance: { source: 'spelling-content-operations-model-test' },
       ...(noRewardException ? { noRewardException } : {}),
@@ -361,7 +364,7 @@ test('spelling content operations browse exposes active word counts for hidden r
   assert.equal(securePool.totalWordCount, 1);
 });
 
-test('spelling published snapshot filters hidden and staged pool words but keeps visible approved pool words', () => {
+test('spelling published snapshot stores deferred pool words and resolves learner visibility at request time', () => {
   const bundle = contentBundle();
   addFuturePoolWord(bundle, {
     poolId: 'secure-hidden',
@@ -371,11 +374,22 @@ test('spelling published snapshot filters hidden and staged pool words but keeps
     word: 'hiddenword',
   });
   addFuturePoolWord(bundle, {
-    poolId: 'secure-staged',
-    title: 'Secure staged',
-    visibilityState: 'staged',
-    slug: 'stagedword',
-    word: 'stagedword',
+    poolId: 'secure-scheduled',
+    title: 'Secure scheduled',
+    visibilityState: 'scheduled',
+    scheduledAt: NOW + 60_000,
+    slug: 'scheduledword',
+    word: 'scheduledword',
+    noRewardException: { approved: true, reason: 'Deferred visibility fixture.' },
+  });
+  addFuturePoolWord(bundle, {
+    poolId: 'secure-flagged',
+    title: 'Secure flagged',
+    visibilityState: 'rollout-flagged',
+    rolloutFlag: 'SPELLING_SECURE_FLAGGED',
+    slug: 'flaggedword',
+    word: 'flaggedword',
+    noRewardException: { approved: true, reason: 'Flagged visibility fixture.' },
   });
   addFuturePoolWord(bundle, {
     poolId: 'secure-rewarded',
@@ -387,12 +401,26 @@ test('spelling published snapshot filters hidden and staged pool words but keeps
   });
 
   const validation = validateSpellingContentBundle(bundle);
-  const snapshot = buildPublishedSnapshotFromDraft(validation.bundle.draft, { generatedAt: NOW });
+  const snapshot = buildPublishedSnapshotFromDraft(validation.bundle.draft, {
+    generatedAt: NOW,
+    includeDeferredVisibility: true,
+  });
+  const beforeActivation = resolveLearnerVisibleSpellingSnapshot(snapshot, { now: NOW });
+  const afterSchedule = resolveLearnerVisibleSpellingSnapshot(snapshot, { now: NOW + 60_000 });
+  const afterFlag = resolveLearnerVisibleSpellingSnapshot(snapshot, {
+    now: NOW,
+    env: { SPELLING_SECURE_FLAGGED: 'true' },
+  });
 
   assert.equal(validation.ok, true);
   assert.equal(snapshot.wordBySlug.hiddenword, undefined);
-  assert.equal(snapshot.wordBySlug.stagedword, undefined);
+  assert.equal(snapshot.wordBySlug.scheduledword.spellingPool, 'secure-scheduled');
+  assert.equal(snapshot.wordBySlug.flaggedword.spellingPool, 'secure-flagged');
   assert.equal(snapshot.wordBySlug.rewardedword.spellingPool, 'secure-rewarded');
+  assert.equal(beforeActivation.wordBySlug.scheduledword, undefined);
+  assert.equal(beforeActivation.wordBySlug.flaggedword, undefined);
+  assert.equal(afterSchedule.wordBySlug.scheduledword.spellingPool, 'secure-scheduled');
+  assert.equal(afterFlag.wordBySlug.flaggedword.spellingPool, 'secure-flagged');
 });
 
 test('spelling pool editor allows hidden future pools and blocks visible pools without reward exception', () => {

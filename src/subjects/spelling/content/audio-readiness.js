@@ -12,6 +12,9 @@ import {
 import {
   normaliseSpellingContentBundle,
 } from './model.js';
+import {
+  isSpellingPoolPotentiallyLearnerVisible,
+} from './pool-visibility.js';
 
 export const SPELLING_AUDIO_REQUIREMENT_PROFILE_VERSION = 'spelling-audio-profile-v1';
 
@@ -309,7 +312,11 @@ function activeVisibleWord(word, maps) {
   const list = maps.wordListsById.get(word.listId);
   if (list && (list.active === false || list.retired)) return false;
   const pool = maps.poolsById.get(word.spellingPool);
-  if (pool && (pool.active === false || pool.retired || pool.visibility?.state !== 'visible')) return false;
+  if (pool && (
+    pool.active === false
+      || pool.retired
+      || !isSpellingPoolPotentiallyLearnerVisible(pool.visibility)
+  )) return false;
   return true;
 }
 
