@@ -3879,8 +3879,13 @@ function ReleaseTable({
   rollbackAvailable = false,
   rollbackState = null,
   onRollback = null,
+  canCreatePackageRevert = false,
+  packageRevertAvailable = false,
+  packageRevertState = null,
+  onCreatePackageRevert = null,
 }) {
   const [rollbackReasons, setRollbackReasons] = React.useState({});
+  const [packageRevertReasons, setPackageRevertReasons] = React.useState({});
   if (!releases.length) {
     return (
       <div className="feedback admin-note-spaced" data-content-ops-empty-releases="true">
@@ -3944,6 +3949,26 @@ function ReleaseTable({
             const rollbackHint = isLatestRelease
               ? 'Current release'
               : (!canRollback ? 'No rollback role' : (!rollbackAvailable ? 'Rollback unavailable' : 'Requires reason'));
+            const packageRevertReason = String(packageRevertReasons[release.packageId] ?? '');
+            const packageRevertRunning = packageRevertState?.running && packageRevertState.packageId === release.packageId;
+            const packageTerminal = ['reverted', 'superseded'].includes(history?.package?.state);
+            const packageRevertTargetable = Boolean(release.packageId)
+              && !release.rollbackOfReleaseId
+              && release.status === 'published'
+              && !packageTerminal;
+            const packageRevertDisabled = !packageRevertAvailable
+              || !canCreatePackageRevert
+              || !onCreatePackageRevert
+              || !packageRevertTargetable
+              || packageRevertRunning
+              || !packageRevertReason.trim();
+            const packageRevertHint = !release.packageId
+              ? 'No package'
+              : (packageTerminal
+                  ? 'Already reverted'
+                  : (!canCreatePackageRevert
+                      ? 'No rollback role'
+                      : (!packageRevertAvailable ? 'Package revert unavailable' : 'Requires reason')));
             return (
               <tr
                 key={release.releaseId}
@@ -4044,6 +4069,42 @@ function ReleaseTable({
                     <div className="small muted">
                       {rollbackRunning ? 'Rolling back...' : rollbackHint}
                     </div>
+                    {release.packageId && !release.rollbackOfReleaseId ? (
+                      <>
+                        <textarea
+                          rows={2}
+                          value={packageRevertReason}
+                          placeholder="Package revert reason"
+                          aria-label={`Package revert reason for ${release.packageId}`}
+                          data-content-ops-package-revert-reason={release.packageId}
+                          disabled={packageRevertRunning || !canCreatePackageRevert || !packageRevertAvailable || packageTerminal}
+                          onChange={(event) => {
+                            const value = event.target.value;
+                            setPackageRevertReasons((current) => ({
+                              ...current,
+                              [release.packageId]: value,
+                            }));
+                          }}
+                        />
+                        <button
+                          type="button"
+                          className="btn secondary compact"
+                          disabled={packageRevertDisabled}
+                          aria-busy={packageRevertRunning ? 'true' : undefined}
+                          data-content-ops-package-revert-action={release.packageId}
+                          onClick={() => onCreatePackageRevert?.({
+                            packageId: release.packageId,
+                            releaseId: release.releaseId,
+                            reason: packageRevertReason.trim(),
+                          })}
+                        >
+                          Create package revert
+                        </button>
+                        <div className="small muted">
+                          {packageRevertRunning ? 'Creating package revert...' : packageRevertHint}
+                        </div>
+                      </>
+                    ) : null}
                   </div>
                 </td>
               </tr>
@@ -4059,6 +4120,16 @@ function ReleaseTable({
       {rollbackState?.error ? (
         <div className="feedback warn admin-note-spaced" data-content-ops-rollback-error="true">
           {rollbackState.error.message}
+        </div>
+      ) : null}
+      {packageRevertState?.message ? (
+        <div className="feedback good admin-note-spaced" data-content-ops-package-revert-message="true">
+          {packageRevertState.message}
+        </div>
+      ) : null}
+      {packageRevertState?.error ? (
+        <div className="feedback warn admin-note-spaced" data-content-ops-package-revert-error="true">
+          {packageRevertState.error.message}
         </div>
       ) : null}
     </div>
@@ -4146,6 +4217,15 @@ export function AdminContentOperationsSection({
     message: '',
     error: null,
     release: null,
+  });
+  const [packageRevertState, setPackageRevertState] = React.useState({
+    packageId: '',
+    releaseId: '',
+    running: false,
+    message: '',
+    error: null,
+    package: null,
+    candidate: null,
   });
   const detailRequestRef = React.useRef({ id: '', seq: 0 });
   const spellingBrowseRequestRef = React.useRef(0);
@@ -4635,6 +4715,69 @@ export function AdminContentOperationsSection({
     }
   }, [api, invalidateSpellingBrowse, overview.actor?.accountId, refresh]);
 
+  const runCreatePackageRevert = React.useCallback(async ({ packageId, releaseId, reason }) => {
+    const safePackageId = String(packageId || '').trim();
+    const safeReleaseId = String(releaseId || '').trim();
+    const safeReason = String(reason || '').trim();
+    if (!api?.createRevertPackage || !safePackageId || !safeReason) return;
+    setPackageRevertState({
+      packageId: safePackageId,
+      releaseId: safeReleaseId,
+      running: true,
+      message: '',
+      error: null,
+      package: null,
+      candidate: null,
+    });
+    try {
+      const payload = await api.createRevertPackage({
+        packageId: safePackageId,
+        reason: safeReason,
+        title: `Revert package ${safePackageId}`,
+        mutation: contentOperationMutation('package-revert', safePackageId),
+      });
+      const nextPackage = normaliseContentOperationPackage(payload?.package || null);
+      const nextCandidate = payload?.candidate
+        ? normaliseContentOperationCandidate(payload.candidate)
+        : null;
+      setPackageRevertState({
+        packageId: safePackageId,
+        releaseId: safeReleaseId,
+        running: false,
+        message: `Created package revert ${nextPackage.packageId || ''}.`.trim(),
+        error: null,
+        package: nextPackage,
+        candidate: nextCandidate,
+      });
+      if (nextPackage.packageId) {
+        setSelectedPackageId(nextPackage.packageId);
+        setActiveTab('detail');
+        setDetailPayload({
+          package: nextPackage,
+          actor: payload?.actor || overview.actor || null,
+          events: [],
+        });
+        if (api.readPackage) {
+          await loadPackageDetail(nextPackage.packageId);
+        }
+      }
+      invalidateSpellingBrowse();
+      if (api.readOverview) {
+        await refresh();
+      }
+    } catch (error) {
+      setPackageRevertState({
+        packageId: safePackageId,
+        releaseId: safeReleaseId,
+        running: false,
+        message: '',
+        error: errorEnvelope(error, 'content_operations_package_revert_failed'),
+        package: null,
+        candidate: null,
+      });
+    }
+  }, [api, invalidateSpellingBrowse, loadPackageDetail, overview.actor, refresh]);
+
   const latestRelease = overview.latestRelease;
   const primaryData = overview.openPackageCount || packages.length || releases.length || latestRelease || spellingBrowse.words.length ? {
     overview,
@@ -4768,6 +4911,10 @@ export function AdminContentOperationsSection({
           rollbackAvailable={Boolean(api?.rollbackRelease)}
           rollbackState={rollbackState}
           onRollback={runRollbackRelease}
+          canCreatePackageRevert={canRollback}
+          packageRevertAvailable={Boolean(api?.createRevertPackage)}
+          packageRevertState={packageRevertState}
+          onCreatePackageRevert={runCreatePackageRevert}
         />
       ) : null}
     </AdminPanelFrame>

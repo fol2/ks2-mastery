@@ -439,6 +439,31 @@ export function readContentOperationField(bundle, operation) {
   return getAtPath(entity, splitFieldPath(normalised.fieldPath));
 }
 
+export function readContentOperationEntity(bundle, operation) {
+  const normalised = normaliseContentOperation(operation, { now: () => 0 });
+  const normalisedBundle = normaliseSpellingContentBundle(bundle);
+  if (normalised.entityType === CONTENT_OPERATION_MONSTER_ASSET_REFERENCE_ENTITY_TYPE) {
+    return undefined;
+  }
+  if (normalised.entityType === AUDIO_REQUIREMENT_PROFILE_ENTITY_TYPE) {
+    if (normalised.entityId !== AUDIO_REQUIREMENT_PROFILE_ENTITY_ID) return undefined;
+    return Object.prototype.hasOwnProperty.call(normalisedBundle.draft, 'audioRequirementProfile')
+      ? cloneSerialisable(normalisedBundle.draft.audioRequirementProfile)
+      : undefined;
+  }
+  if (normalised.entityType === HERO_EXPOSURE_ENTITY_TYPE) {
+    const descriptor = collectionFor(normalisedBundle, 'spelling.rewardTrack');
+    if (!descriptor) return undefined;
+    const { entity } = findEntity(descriptor.collection, descriptor.idField, normalised.entityId);
+    if (!entity || !isPlainObject(entity.heroExposure)) return undefined;
+    return cloneSerialisable(entity.heroExposure);
+  }
+  const descriptor = collectionFor(normalisedBundle, normalised.entityType);
+  if (!descriptor) return undefined;
+  const { entity } = findEntity(descriptor.collection, descriptor.idField, normalised.entityId);
+  return entity ? cloneSerialisable(entity) : undefined;
+}
+
 export function applyContentOperationsToSpellingContent(baseBundle, operations = []) {
   const candidate = normaliseSpellingContentBundle(baseBundle);
   const normalisedOperations = operations.map((operation) => normaliseContentOperation(operation, { now: () => 0 }));
@@ -460,5 +485,186 @@ export function buildSpellingContentOperationCandidate(baseBundle, operations = 
     candidate,
     validation,
     conflicts: [],
+  };
+}
+
+function valuesMatch(left, right) {
+  return contentOperationValueHash(left) === contentOperationValueHash(right);
+}
+
+function buildRevertRetirementPayload({
+  reason = '',
+  now = () => Date.now(),
+  sourcePackageId = '',
+  sourceReleaseId = '',
+  operation = null,
+} = {}) {
+  return {
+    reason: normaliseString(reason, 'Reverted through Content Operations Centre.'),
+    retiredAt: Number(now()),
+    source: 'content-operations-package-revert',
+    revertOfPackageId: normaliseString(sourcePackageId) || null,
+    revertOfReleaseId: normaliseString(sourceReleaseId) || null,
+    revertOfOperationId: normaliseString(operation?.operationId) || null,
+  };
+}
+
+function buildRetiredEntityForHash(operation, afterEntity, retirementPayload) {
+  if (operation.entityType === HERO_EXPOSURE_ENTITY_TYPE) {
+    return normaliseHeroExposure({ state: 'hidden' });
+  }
+  const normalisedRetirement = {
+    reason: normaliseString(retirementPayload?.reason),
+    source: normaliseString(retirementPayload?.source),
+    retiredAt: Number.isFinite(Number(retirementPayload?.retiredAt)) ? Number(retirementPayload.retiredAt) : 0,
+  };
+  return {
+    ...cloneSerialisable(afterEntity),
+    active: false,
+    retired: true,
+    retirement: normalisedRetirement,
+  };
+}
+
+function inverseStructuralAction(operation, beforeEntity, afterEntity, options) {
+  const beforeExists = beforeEntity !== undefined;
+  const afterExists = afterEntity !== undefined;
+  if (beforeExists && afterExists && valuesMatch(beforeEntity, afterEntity)) return null;
+
+  if (operation.entityType === CONTENT_OPERATION_MONSTER_ASSET_REFERENCE_ENTITY_TYPE) {
+    return null;
+  }
+
+  if (operation.action === 'remove') {
+    if (!beforeExists) return null;
+    return {
+      entityType: operation.entityType,
+      entityId: operation.entityId,
+      fieldPath: '',
+      action: 'upsert',
+      payload: beforeEntity,
+      beforeHash: contentOperationValueHash(afterEntity),
+      afterHash: contentOperationValueHash(beforeEntity),
+    };
+  }
+
+  if (operation.action === 'retire') {
+    if (!beforeExists) return null;
+    return {
+      entityType: operation.entityType,
+      entityId: operation.entityId,
+      fieldPath: '',
+      action: operation.entityType === AUDIO_REQUIREMENT_PROFILE_ENTITY_TYPE ? 'upsert' : 'replace',
+      payload: beforeEntity,
+      beforeHash: contentOperationValueHash(afterEntity),
+      afterHash: contentOperationValueHash(beforeEntity),
+    };
+  }
+
+  if (beforeExists) {
+    return {
+      entityType: operation.entityType,
+      entityId: operation.entityId,
+      fieldPath: '',
+      action: operation.entityType === AUDIO_REQUIREMENT_PROFILE_ENTITY_TYPE ? 'upsert' : 'replace',
+      payload: beforeEntity,
+      beforeHash: contentOperationValueHash(afterEntity),
+      afterHash: contentOperationValueHash(beforeEntity),
+    };
+  }
+
+  if (!afterExists) return null;
+
+  if (operation.entityType === AUDIO_REQUIREMENT_PROFILE_ENTITY_TYPE) {
+    return {
+      entityType: operation.entityType,
+      entityId: operation.entityId,
+      fieldPath: '',
+      action: 'remove',
+      payload: null,
+      beforeHash: contentOperationValueHash(afterEntity),
+      afterHash: contentOperationValueHash(null),
+    };
+  }
+
+  const retirementPayload = buildRevertRetirementPayload({ ...options, operation });
+  const retiredEntity = buildRetiredEntityForHash(operation, afterEntity, retirementPayload);
+  return {
+    entityType: operation.entityType,
+    entityId: operation.entityId,
+    fieldPath: '',
+    action: 'retire',
+    payload: retirementPayload,
+    beforeHash: contentOperationValueHash(afterEntity),
+    afterHash: contentOperationValueHash(retiredEntity),
+  };
+}
+
+function inverseSetAction(operation, beforeSnapshot, afterSnapshot, options) {
+  const beforeValue = readContentOperationField(beforeSnapshot, operation);
+  const afterValue = readContentOperationField(afterSnapshot, operation);
+  if (valuesMatch(beforeValue, afterValue)) return null;
+
+  if (beforeValue !== undefined) {
+    return {
+      entityType: operation.entityType,
+      entityId: operation.entityId,
+      fieldPath: operation.fieldPath,
+      action: 'set',
+      payload: beforeValue,
+      beforeHash: contentOperationValueHash(afterValue),
+      afterHash: contentOperationValueHash(beforeValue),
+    };
+  }
+
+  const beforeEntity = readContentOperationEntity(beforeSnapshot, operation);
+  const afterEntity = readContentOperationEntity(afterSnapshot, operation);
+  return inverseStructuralAction(operation, beforeEntity, afterEntity, options);
+}
+
+export function buildContentOperationRevertOperations({
+  sourceBaseSnapshot,
+  operations = [],
+  reason = '',
+  now = () => Date.now(),
+  sourcePackageId = '',
+  sourceReleaseId = '',
+} = {}) {
+  const normalisedOperations = operations.map((operation) => normaliseContentOperation(operation, { now: () => 0 }));
+  let cursor = normaliseSpellingContentBundle(sourceBaseSnapshot);
+  const timeline = [];
+  for (const operation of normalisedOperations) {
+    const beforeSnapshot = cursor;
+    const afterSnapshot = applyContentOperationsToSpellingContent(beforeSnapshot, [operation]);
+    timeline.push({ operation, beforeSnapshot, afterSnapshot });
+    cursor = afterSnapshot;
+  }
+
+  const inverseOperations = [];
+  const skippedOperations = [];
+  const options = { reason, now, sourcePackageId, sourceReleaseId };
+  for (const entry of [...timeline].reverse()) {
+    const beforeEntity = readContentOperationEntity(entry.beforeSnapshot, entry.operation);
+    const afterEntity = readContentOperationEntity(entry.afterSnapshot, entry.operation);
+    const inverse = entry.operation.action === 'set'
+      ? inverseSetAction(entry.operation, entry.beforeSnapshot, entry.afterSnapshot, options)
+      : inverseStructuralAction(entry.operation, beforeEntity, afterEntity, options);
+    if (inverse) {
+      inverseOperations.push(inverse);
+    } else {
+      skippedOperations.push({
+        operationId: entry.operation.operationId,
+        entityType: entry.operation.entityType,
+        entityId: entry.operation.entityId,
+        fieldPath: entry.operation.fieldPath,
+        action: entry.operation.action,
+      });
+    }
+  }
+
+  return {
+    operations: inverseOperations,
+    skippedOperations,
+    replayedSnapshot: cursor,
   };
 }

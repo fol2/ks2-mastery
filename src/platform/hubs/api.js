@@ -432,6 +432,31 @@ export function createHubApi({
         }),
       }, authSession);
     },
+    async createContentOperationPackageRevert({
+      packageId,
+      reason = '',
+      title = '',
+      description = '',
+      includeSnapshot = false,
+      mutation,
+    } = {}) {
+      if (!packageId) throw new TypeError('Content operation package id is required.');
+      const safeReason = String(reason || '').trim();
+      if (!safeReason) throw new TypeError('Content operation package revert reason is required.');
+      const safePackageId = encodeURIComponent(String(packageId));
+      const url = buildRequestUrl(baseUrl, `/api/admin/content-operations/packages/${safePackageId}/create-revert`);
+      return fetchHubJson(fetch, url, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          reason: safeReason,
+          title,
+          description,
+          includeSnapshot: Boolean(includeSnapshot),
+          mutation,
+        }),
+      }, authSession);
+    },
     async resolveContentOperationConflict({
       packageId,
       conflictId = '',

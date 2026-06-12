@@ -1235,6 +1235,186 @@ test('Content Operations Centre mounted release history rolls back a prior relea
   assert.match(result.text, /Rollback of rel-global-1/);
 });
 
+test('Content Operations Centre mounted release history creates package-level revert drafts', async () => {
+  const packageRelease = {
+    ...release,
+    packageId: 'pkg-published-1',
+  };
+  const revertPackage = {
+    ...contentPackage,
+    packageId: 'pkg-revert-1',
+    templateId: 'package-revert',
+    title: 'Revert package pkg-published-1',
+    state: 'draft',
+    baseReleaseId: packageRelease.releaseId,
+    latestCandidate: lifecycleCandidate,
+    blockers: cleanLifecycleBlockers,
+  };
+  const revertOverview = {
+    ...overview,
+    latestRelease: packageRelease,
+    lanes: {
+      ...overview.lanes,
+      recentReleases: [packageRelease],
+      drafts: [revertPackage],
+    },
+    actor: {
+      ...overview.actor,
+      capabilities: {
+        ...overview.actor.capabilities,
+        'content_operations.rollback': true,
+      },
+    },
+  };
+  const modelWithPackageRevert = baseModel({
+    contentOperations: {
+      overview: revertOverview,
+      packages: { packages: [contentPackage] },
+      releases: { releases: [packageRelease] },
+      packageDetail: {
+        package: contentPackage,
+        events: [{ eventId: 'event-1', eventType: 'package.created', createdAt: Date.UTC(2026, 5, 11) }],
+      },
+    },
+  });
+  const output = await runClientEntry(`
+    const { JSDOM } = require('jsdom');
+
+    globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+    const dom = new JSDOM('<!doctype html><html><body><div id="root"></div></body></html>', {
+      url: 'https://ks2.eugnel.uk/admin',
+    });
+    globalThis.window = dom.window;
+    globalThis.document = dom.window.document;
+    globalThis.navigator = dom.window.navigator;
+    globalThis.HTMLElement = dom.window.HTMLElement;
+    globalThis.Event = dom.window.Event;
+
+    const React = require('react');
+    const { createRoot } = require('react-dom/client');
+    const { AdminContentOperationsSection } = require(${CONTENT_OPS_SECTION_PATH});
+    const { act } = React;
+
+    const model = ${JSON.stringify(modelWithPackageRevert)};
+    const packageRelease = ${JSON.stringify(packageRelease)};
+    const revertPackage = ${JSON.stringify(revertPackage)};
+    const candidate = ${JSON.stringify(lifecycleCandidate)};
+    const calls = [];
+    const actions = {
+      contentOperationsApi: {
+        async createRevertPackage(args) {
+          calls.push({ method: 'createRevertPackage', args });
+          return {
+            package: revertPackage,
+            candidate,
+            actor: model.contentOperations.overview.actor,
+          };
+        },
+        async readPackage({ packageId }) {
+          calls.push({ method: 'readPackage', packageId });
+          return {
+            package: revertPackage,
+            actor: model.contentOperations.overview.actor,
+            events: [{ eventId: 'event-revert', eventType: 'package.revert_created', createdAt: ${Date.UTC(2026, 5, 11, 10, 15, 0)}, event: {} }],
+          };
+        },
+        async readOverview(args) {
+          calls.push({ method: 'overview', args });
+          return {
+            ...model.contentOperations.overview,
+            lanes: {
+              ...model.contentOperations.overview.lanes,
+              drafts: [revertPackage],
+              recentReleases: [packageRelease],
+            },
+          };
+        },
+        async readPackages(args) {
+          calls.push({ method: 'packages', args });
+          return { packages: [revertPackage] };
+        },
+        async readReleases(args) {
+          calls.push({ method: 'releases', args });
+          return { releases: [packageRelease] };
+        },
+      },
+    };
+
+    async function flush() {
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      });
+    }
+
+    async function main() {
+      const root = createRoot(document.getElementById('root'));
+      await act(async () => {
+        root.render(React.createElement(AdminContentOperationsSection, {
+          model,
+          actions,
+          initialActiveTab: 'releases',
+        }));
+      });
+      await flush();
+
+      const button = document.querySelector('[data-content-ops-package-revert-action="pkg-published-1"]');
+      const buttonDisabledBeforeReason = button.disabled;
+      const reason = document.querySelector('[data-content-ops-package-revert-reason="pkg-published-1"]');
+      const valueSetter = Object.getOwnPropertyDescriptor(dom.window.HTMLTextAreaElement.prototype, 'value').set;
+      valueSetter.call(reason, 'Undo this package without rolling back later releases.');
+      await act(async () => {
+        reason.dispatchEvent(new dom.window.Event('input', { bubbles: true }));
+        reason.dispatchEvent(new dom.window.Event('change', { bubbles: true }));
+      });
+      await flush();
+
+      const buttonDisabledAfterReason = button.disabled;
+      await act(async () => {
+        button.click();
+      });
+      await flush();
+      await flush();
+      await flush();
+
+      process.stdout.write(JSON.stringify({
+        calls,
+        text: document.body.textContent,
+        buttonDisabledBeforeReason,
+        buttonDisabledAfterReason,
+        selectedDetail: document.querySelector('[data-package-detail="pkg-revert-1"]') != null,
+      }));
+
+      await act(async () => {
+        root.unmount();
+      });
+      dom.window.close();
+      process.exit(0);
+    }
+
+    main().catch((error) => {
+      process.stderr.write(error.stack || error.message);
+      process.exitCode = 1;
+    });
+  `);
+  const result = JSON.parse(output);
+  const createCall = result.calls.find((entry) => entry.method === 'createRevertPackage');
+
+  assert.equal(result.buttonDisabledBeforeReason, true);
+  assert.equal(result.buttonDisabledAfterReason, false);
+  assert.equal(createCall.args.packageId, 'pkg-published-1');
+  assert.equal(createCall.args.reason, 'Undo this package without rolling back later releases.');
+  assert.ok(createCall.args.mutation.requestId.startsWith('content-ops-package-revert-pkg-published-1-'));
+  assert.equal(result.selectedDetail, true);
+  assert.match(result.text, /Revert package pkg-published-1/);
+  assert.deepEqual(result.calls.map((entry) => entry.method), [
+    'createRevertPackage',
+    'readPackage',
+    'overview',
+    'packages',
+    'releases',
+  ]);
+});
+
 test('Content Operations Centre spelling tab browses words and loads package draft detail', async () => {
   const output = await runClientEntry(`
     const { JSDOM } = require('jsdom');

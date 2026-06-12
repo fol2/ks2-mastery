@@ -62,6 +62,11 @@ const SUPPORTED_IMAGE_TYPES = Object.freeze({
   'image/png': 'png',
   'image/webp': 'webp',
 });
+const TERMINAL_CONTENT_OPERATION_PACKAGE_STATES = new Set([
+  CONTENT_OPERATION_PACKAGE_STATES.PUBLISHED,
+  CONTENT_OPERATION_PACKAGE_STATES.REVERTED,
+  CONTENT_OPERATION_PACKAGE_STATES.SUPERSEDED,
+]);
 const MONSTER_ASSET_BODY_EXCEEDS_CAP = Symbol('monster-asset-body-exceeds-cap');
 
 function parseJson(value, fallback = null) {
@@ -209,6 +214,13 @@ async function requirePackage(db, packageId, { allowPublished = false } = {}) {
     throw new BadRequestError('Published content operation packages cannot accept draft asset uploads.', {
       code: 'content_operation_package_published',
       packageId,
+    });
+  }
+  if (!allowPublished && TERMINAL_CONTENT_OPERATION_PACKAGE_STATES.has(row.state)) {
+    throw new BadRequestError('Terminal content operation packages cannot accept draft asset uploads.', {
+      code: 'content_operation_package_terminal',
+      packageId,
+      state: row.state,
     });
   }
   return row;
@@ -1357,7 +1369,7 @@ export async function uploadContentOperationMonsterAsset({
         WHERE EXISTS (
           SELECT 1
           FROM content_operation_packages
-          WHERE package_id = ? AND state <> ?
+          WHERE package_id = ? AND state NOT IN (?, ?, ?)
         )
       `, [
         assetUploadId,
@@ -1378,6 +1390,8 @@ export async function uploadContentOperationMonsterAsset({
         nowTs,
         packageRow.package_id,
         CONTENT_OPERATION_PACKAGE_STATES.PUBLISHED,
+        CONTENT_OPERATION_PACKAGE_STATES.REVERTED,
+        CONTENT_OPERATION_PACKAGE_STATES.SUPERSEDED,
       ]),
       bindStatement(db, `
         DELETE FROM content_operation_asset_uploads
@@ -1462,7 +1476,7 @@ export async function uploadContentOperationMonsterAsset({
             updated_by_account_id = ?,
             updated_at = ?
         WHERE package_id = ?
-          AND state <> ?
+          AND state NOT IN (?, ?, ?)
           AND EXISTS (
             SELECT 1
             FROM content_operation_asset_uploads
@@ -1475,6 +1489,8 @@ export async function uploadContentOperationMonsterAsset({
         nowTs,
         packageRow.package_id,
         CONTENT_OPERATION_PACKAGE_STATES.PUBLISHED,
+        CONTENT_OPERATION_PACKAGE_STATES.REVERTED,
+        CONTENT_OPERATION_PACKAGE_STATES.SUPERSEDED,
         assetUploadId,
       ]),
       bindStatement(db, `
