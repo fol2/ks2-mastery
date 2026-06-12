@@ -81,11 +81,29 @@ function normaliseReadinessSection(value = null, fallbackStatus = 'not_scanned')
       warnings: [],
     };
   }
-  return {
+  const section = {
     status: typeof value.status === 'string' && value.status ? value.status : fallbackStatus,
     blockers: asArray(value.blockers),
     warnings: asArray(value.warnings),
   };
+  if (value.fallbackApproval && typeof value.fallbackApproval === 'object' && !Array.isArray(value.fallbackApproval)) {
+    section.fallbackApproval = value.fallbackApproval;
+  }
+  if (
+    value.strictAudioReadiness
+    && typeof value.strictAudioReadiness === 'object'
+    && !Array.isArray(value.strictAudioReadiness)
+  ) {
+    section.strictAudioReadiness = {
+      status: typeof value.strictAudioReadiness.status === 'string'
+        ? value.strictAudioReadiness.status
+        : 'not_scanned',
+      blockers: asArray(value.strictAudioReadiness.blockers),
+      affectedCount: Number(value.strictAudioReadiness.affectedCount) || 0,
+      items: asArray(value.strictAudioReadiness.items),
+    };
+  }
+  return section;
 }
 
 export function buildContentOperationBlockerEnvelope({
@@ -272,7 +290,26 @@ export function serialiseContentOperationApproval(approval = {}) {
   };
 }
 
+function releaseAudioProofFromProof(proof = null) {
+  const metadata = proof && typeof proof === 'object' && !Array.isArray(proof)
+    ? proof.contentOperationsAudio
+    : null;
+  if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) {
+    return { audioFallback: null, audioWarnings: null };
+  }
+  return {
+    audioFallback: metadata.audioFallback && typeof metadata.audioFallback === 'object' && !Array.isArray(metadata.audioFallback)
+      ? metadata.audioFallback
+      : null,
+    audioWarnings: metadata.audioWarnings && typeof metadata.audioWarnings === 'object' && !Array.isArray(metadata.audioWarnings)
+      ? metadata.audioWarnings
+      : null,
+  };
+}
+
 export function serialiseContentOperationRelease(release = {}, { includeSnapshot = false } = {}) {
+  const proof = release.proof ?? null;
+  const proofAudio = releaseAudioProofFromProof(proof);
   return {
     releaseId: release.releaseId,
     subjectId: release.subjectId || CONTENT_OPERATION_SUBJECT_ID,
@@ -283,7 +320,9 @@ export function serialiseContentOperationRelease(release = {}, { includeSnapshot
     publishedAt: release.publishedAt ?? null,
     publishedByAccountId: release.publishedByAccountId || null,
     rollbackOfReleaseId: release.rollbackOfReleaseId || null,
-    proof: release.proof ?? null,
+    proof,
+    audioFallback: release.audioFallback ?? proofAudio.audioFallback,
+    audioWarnings: release.audioWarnings ?? proofAudio.audioWarnings,
     createdAt: Number(release.createdAt) || 0,
     ...(includeSnapshot ? { snapshot: release.snapshot || null } : {}),
   };

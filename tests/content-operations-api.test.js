@@ -480,6 +480,112 @@ test('content operations generate-audio uses TTS, stores R2 audio, and records a
   assert.equal(batchOverrideRowCount, 1);
 });
 
+test('content operations audio override invalidates approval and records an audit event', async (t) => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => geminiAudioResponse();
+  const bucket = createMemoryR2Bucket();
+  const server = createWorkerRepositoryServer({
+    now: () => NOW,
+    env: {
+      GEMINI_API_KEY: 'test-gemini-key',
+      SPELLING_AUDIO_BUCKET: bucket,
+    },
+  });
+  t.after(() => {
+    globalThis.fetch = originalFetch;
+    server.close();
+  });
+
+  seedAdultAccount(server.DB, { accountId: ADMIN_ID, platformRole: 'admin' });
+  const repository = createWorkerRepository({
+    env: server.env,
+    now: () => NOW,
+  });
+  await repository.seedFirstContentOperationRelease({
+    seededByAccountId: ADMIN_ID,
+    proof: { source: 'content-operations-api-override-invalidation-test' },
+  });
+
+  const seeded = await readSeededSpellingContentBundle();
+  const word = seeded.draft.words[0];
+  const created = await createPackage(server, { title: 'Override invalidates approval package' });
+  const packageId = created.package.packageId;
+  await appendContentOperation(server, packageId, {
+    entityType: 'spelling.word',
+    entityId: word.slug,
+    fieldPath: 'word',
+    action: 'set',
+    payload: word.word,
+  });
+
+  const validated = await validatePackage(server, packageId, { includeSnapshot: true });
+  seedUploadedAudioJobs(server.DB, {
+    packageId,
+    candidateId: validated.candidate.candidateId,
+    items: validated.candidate.audioScan.items,
+  });
+  const revalidated = await validatePackage(server, packageId, { includeSnapshot: true });
+  const approved = await approvePackage(server, packageId, revalidated.candidate.candidateId);
+  assert.equal(approved.approval.candidateId, revalidated.candidate.candidateId);
+
+  const target = revalidated.candidate.audioScan.items.find((item) => item.required !== false);
+  assert.ok(target, 'expected a required audio item');
+  const overrideResponse = await server.fetchAs(
+    ADMIN_ID,
+    `${BASE_URL}/api/admin/content-operations/packages/${packageId}/generate-audio`,
+    jsonInit('POST', {
+      candidateId: revalidated.candidate.candidateId,
+      itemIds: [target.itemId],
+      limit: 1,
+      override: true,
+      reason: 'Replace clipped word audio after editorial review.',
+    }),
+    adminHeaders(),
+  );
+  const overridePayload = await readPayload(overrideResponse);
+  assert.equal(overrideResponse.status, 200);
+  assert.equal(overridePayload.audio.summary.uploaded, 1);
+
+  const packageRow = server.DB.db.prepare(`
+    SELECT state, approved_at
+    FROM content_operation_packages
+    WHERE package_id = ?
+  `).get(packageId);
+  assert.equal(packageRow.state, 'draft');
+  assert.equal(packageRow.approved_at, null);
+  const approvalCount = server.DB.db.prepare(`
+    SELECT COUNT(*) AS count
+    FROM content_operation_package_approvals
+    WHERE package_id = ?
+  `).get(packageId).count;
+  assert.equal(approvalCount, 0);
+
+  const publishResponse = await server.fetchAs(
+    ADMIN_ID,
+    `${BASE_URL}/api/admin/content-operations/packages/${packageId}/publish`,
+    jsonInit('POST', {
+      proof: { source: 'content-operations-api-override-invalidation-test' },
+    }),
+    adminHeaders(),
+  );
+  const publishPayload = await readPayload(publishResponse);
+  assert.equal(publishResponse.status, 409);
+  assert.equal(publishPayload.code, 'content_operation_package_not_approved');
+
+  const eventRow = server.DB.db.prepare(`
+    SELECT event_type, event_json
+    FROM content_operation_events
+    WHERE package_id = ? AND event_type = 'audio.override'
+    ORDER BY created_at DESC
+    LIMIT 1
+  `).get(packageId);
+  assert.equal(eventRow.event_type, 'audio.override');
+  const event = JSON.parse(eventRow.event_json);
+  assert.equal(event.reason, 'Replace clipped word audio after editorial review.');
+  assert.equal(event.invalidatedApproval, true);
+  assert.equal(event.candidateId, revalidated.candidate.candidateId);
+});
+
 test('content operations reconcile operator-script audio jobs into readiness scan', async (t) => {
   const server = createWorkerRepositoryServer({
     now: () => NOW,
@@ -1362,6 +1468,14 @@ test('content operations API blocks approval when affected sentence audio is mis
   const server = createWorkerRepositoryServer({ now: () => NOW });
   try {
     seedAdultAccount(server.DB, { accountId: ADMIN_ID, platformRole: 'admin' });
+    const repository = createWorkerRepository({
+      env: server.env,
+      now: () => NOW,
+    });
+    await repository.seedFirstContentOperationRelease({
+      seededByAccountId: ADMIN_ID,
+      proof: { source: 'content-operations-api-audio-fallback-test' },
+    });
     const seeded = await readSeededSpellingContentBundle();
     const word = seeded.draft.words.find((entry) => entry.sentenceEntryIds?.length);
     const sentenceId = word.sentenceEntryIds[0];
@@ -1422,8 +1536,121 @@ test('content operations API blocks approval when affected sentence audio is mis
       adminHeaders(),
     );
     const fallbackPayload = await readPayload(fallbackResponse);
-    assert.equal(fallbackResponse.status, 400);
-    assert.equal(fallbackPayload.code, 'content_operation_audio_fallback_not_supported');
+    assert.equal(fallbackResponse.status, 200);
+    assert.equal(fallbackPayload.approval.audioFallback.allowed, true);
+    assert.equal(fallbackPayload.approval.audioFallback.reason, 'Operator override requested.');
+    assert.equal(fallbackPayload.approval.audioFallback.approvedByAccountId, ADMIN_ID);
+    assert.equal(fallbackPayload.approval.audioFallback.approvedAt, NOW);
+    assert.equal(fallbackPayload.approval.audioFallback.affectedMatrix.affectedCount, 4);
+    assert.equal(fallbackPayload.approval.audioFallback.affectedMatrix.lanes.sentence.affectedCount, 4);
+    assert.equal(fallbackPayload.approval.audioFallback.notes, 'Attempt a temporary audio fallback.');
+
+    const approvedScanRow = server.DB.db.prepare(`
+      SELECT audio_scan_json
+      FROM content_operation_package_candidates
+      WHERE candidate_id = ?
+    `).get(validated.candidate.candidateId);
+    const approvedScan = JSON.parse(approvedScanRow.audio_scan_json);
+    assert.equal(approvedScan.status, 'warning');
+    assert.deepEqual(approvedScan.blockers, []);
+    assert.ok(approvedScan.warnings.includes('audio_fallback_approved'));
+    assert.ok(approvedScan.warnings.includes('sentence_audio_missing'));
+    assert.equal(approvedScan.strictAudioReadiness.status, 'blocked');
+    assert.equal(approvedScan.strictAudioReadiness.affectedCount, 4);
+    assert.ok(approvedScan.strictAudioReadiness.blockers.includes('sentence_audio_missing'));
+
+    const blockedPublishResponse = await server.fetchAs(
+      ADMIN_ID,
+      `${BASE_URL}/api/admin/content-operations/packages/${packageId}/publish`,
+      jsonInit('POST', {
+        proof: {
+          source: 'content-operations-api-audio-fallback-test',
+          audioFallback: { allowed: true },
+        },
+      }),
+      adminHeaders(),
+    );
+    const blockedPublishPayload = await readPayload(blockedPublishResponse);
+    assert.equal(blockedPublishResponse.status, 400);
+    assert.equal(blockedPublishPayload.code, 'content_operation_release_proof_reserved_key');
+
+    const published = await publishPackage(server, packageId, {
+      proof: { source: 'content-operations-api-audio-fallback-test' },
+    });
+    assert.equal(published.release.audioFallback.allowed, true);
+    assert.equal(published.release.audioFallback.affectedMatrix.affectedCount, 4);
+    assert.equal(published.release.audioWarnings.status, 'warning');
+    assert.ok(published.release.audioWarnings.warnings.includes('audio_fallback_approved'));
+    assert.equal(published.release.proof.contentOperationsAudio.audioFallback.allowed, true);
+    assert.equal(published.release.proof.contentOperationsAudio.audioWarnings.status, 'warning');
+
+    const releaseDetailResponse = await server.fetchAs(
+      ADMIN_ID,
+      `${BASE_URL}/api/admin/content-operations/subjects/spelling/releases/${published.release.releaseId}`,
+      { method: 'GET', headers: { 'sec-fetch-site': 'same-origin' } },
+      adminHeaders(),
+    );
+    const releaseDetail = await readPayload(releaseDetailResponse);
+    assert.equal(releaseDetailResponse.status, 200);
+    assert.equal(releaseDetail.release.audioFallback.allowed, true);
+    assert.equal(releaseDetail.release.audioWarnings.status, 'warning');
+    assert.equal(releaseDetail.release.proof.contentOperationsAudio.audioFallback.allowed, true);
+  } finally {
+    server.close();
+  }
+});
+
+test('content operations API rejects client-supplied fallback proof metadata', async () => {
+  const server = createWorkerRepositoryServer({ now: () => NOW });
+  try {
+    seedAdultAccount(server.DB, { accountId: ADMIN_ID, platformRole: 'admin' });
+    const repository = createWorkerRepository({
+      env: server.env,
+      now: () => NOW,
+    });
+    await repository.seedFirstContentOperationRelease({
+      seededByAccountId: ADMIN_ID,
+      proof: { source: 'content-operations-api-proof-reserved-key-test' },
+    });
+    const seeded = await readSeededSpellingContentBundle();
+    const word = seeded.draft.words[0];
+    const created = await createPackage(server, { title: 'Proof reserved metadata package' });
+    const packageId = created.package.packageId;
+
+    await appendContentOperation(server, packageId, {
+      entityType: 'spelling.word',
+      entityId: word.slug,
+      fieldPath: 'explanation',
+      action: 'set',
+      payload: `${word.explanation || 'Proof metadata guard.'} Reviewed editorial note.`,
+    });
+
+    const validated = await validatePackage(server, packageId);
+    assert.equal(validated.candidate.validation.status, 'passed');
+    await approvePackage(server, packageId, validated.candidate.candidateId);
+
+    const publishResponse = await server.fetchAs(
+      ADMIN_ID,
+      `${BASE_URL}/api/admin/content-operations/packages/${packageId}/publish`,
+      jsonInit('POST', {
+        proof: {
+          source: 'content-operations-api-proof-reserved-key-test',
+          audioFallback: { allowed: true, reason: 'Forged fallback proof.' },
+        },
+      }),
+      adminHeaders(),
+    );
+    const publishPayload = await readPayload(publishResponse);
+    assert.equal(publishResponse.status, 400);
+    assert.equal(publishPayload.code, 'content_operation_release_proof_reserved_key');
+    assert.deepEqual(publishPayload.reservedKeys, ['audioFallback']);
+
+    const published = await publishPackage(server, packageId, {
+      proof: { source: 'content-operations-api-proof-reserved-key-test' },
+    });
+    assert.equal(published.release.audioFallback, null);
+    assert.equal(published.release.audioWarnings, null);
+    assert.equal(Object.prototype.hasOwnProperty.call(published.release.proof, 'audioFallback'), false);
   } finally {
     server.close();
   }

@@ -126,7 +126,20 @@ const release = {
   status: 'published',
   snapshotHash: 'hash-1',
   publishedAt: Date.UTC(2026, 5, 11, 9, 0, 0),
-  proof: { source: 'test' },
+  proof: {
+    source: 'test',
+    contentOperationsAudio: {
+      audioFallback: {
+        allowed: true,
+        reason: 'Temporary runtime TTS fallback while slow sentence audio is generated.',
+        affectedMatrix: { affectedCount: 1, lanes: { sentence: { affectedCount: 1 } } },
+      },
+      audioWarnings: {
+        status: 'warning',
+        warnings: ['audio_fallback_approved', 'sentence_audio_missing'],
+      },
+    },
+  },
 };
 
 const overview = {
@@ -503,6 +516,17 @@ test('Content Operations Centre SSR renders home lanes and required top-level ar
   for (const label of ['Packages', 'Spelling', 'Audio', 'Pools &amp; Rewards', 'Monsters &amp; Assets', 'Hero / Codex', 'Approvals']) {
     assert.match(html, new RegExp(label));
   }
+});
+
+test('Content Operations Centre release history shows approved audio fallback warnings', async () => {
+  const html = await renderEntry(buildContentOpsEntry({
+    initialActiveTab: 'releases',
+  }));
+
+  assert.match(html, /Release history/);
+  assert.match(html, /Audio fallback/);
+  assert.match(html, /1 affected/);
+  assert.match(html, /sentence_audio_missing/);
 });
 
 test('Content Operations Centre SSR renders package-scoped domain tabs and audit state', async () => {

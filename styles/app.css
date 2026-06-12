@@ -12536,10 +12536,23 @@ html { scroll-behavior: smooth; }
   resize: vertical;
 }
 
+.content-ops-checkbox-row {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 0.92rem;
+}
+
 .content-ops-lifecycle-actions {
   flex-wrap: wrap;
   justify-content: flex-end;
   margin-top: 18px;
+}
+
+.content-ops-release-audio {
+  display: grid;
+  gap: 4px;
+  min-width: 160px;
 }
 
 .content-ops-conflict-resolver {

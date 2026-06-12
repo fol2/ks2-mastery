@@ -37,6 +37,7 @@ import {
   normaliseContentOperationsOverview,
   normaliseContentOperationsPackageDetail,
   normaliseContentOperationsPackageList,
+  normaliseContentOperationRelease,
   normaliseContentOperationsReleaseList,
   normaliseContentOperationsSpellingBrowse,
   normaliseContentOperationsSpellingItemDetail,
@@ -462,7 +463,20 @@ const CONTENT_OPS_OVERVIEW = {
       status: 'published',
       snapshotHash: 'hash-1',
       publishedAt: Date.UTC(2026, 5, 11, 9, 0, 0),
-      proof: { source: 'test' },
+      proof: {
+        source: 'test',
+        contentOperationsAudio: {
+          audioFallback: {
+            allowed: true,
+            reason: 'Temporary runtime TTS fallback while slow sentence audio is generated.',
+            affectedMatrix: { affectedCount: 1, lanes: { sentence: { affectedCount: 1 } } },
+          },
+          audioWarnings: {
+            status: 'warning',
+            warnings: ['audio_fallback_approved', 'sentence_audio_missing'],
+          },
+        },
+      },
     },
     packageCounts: { draft: 1, blocked: 1, approved: 1 },
     lanes: {
@@ -477,7 +491,20 @@ const CONTENT_OPS_OVERVIEW = {
           status: 'published',
           snapshotHash: 'hash-1',
           publishedAt: Date.UTC(2026, 5, 11, 9, 0, 0),
-          proof: { source: 'test' },
+          proof: {
+            source: 'test',
+            contentOperationsAudio: {
+              audioFallback: {
+                allowed: true,
+                reason: 'Temporary runtime TTS fallback while slow sentence audio is generated.',
+                affectedMatrix: { affectedCount: 1, lanes: { sentence: { affectedCount: 1 } } },
+              },
+              audioWarnings: {
+                status: 'warning',
+                warnings: ['audio_fallback_approved', 'sentence_audio_missing'],
+              },
+            },
+          },
         },
       ],
     },
@@ -646,7 +673,25 @@ describe('Content Operations Centre normalisers', () => {
     assert.equal(overview.lanes.drafts[0].blockers.warningCount, 1);
     assert.equal(overview.lanes.drafts[0].latestCandidate.candidateHash, 'candidate-hash-1');
     assert.equal(overview.recentReleases[0].proof.source, 'test');
+    assert.equal(overview.recentReleases[0].audioFallback.allowed, true);
+    assert.equal(overview.recentReleases[0].audioFallback.affectedMatrix.affectedCount, 1);
+    assert.equal(overview.recentReleases[0].audioWarnings.status, 'warning');
     assert.equal(overview.actor.capabilities['content_operations.approve'], true);
+  });
+
+  it('ignores caller-style fallback proof metadata that is not server canonical', () => {
+    const release = normaliseContentOperationRelease({
+      releaseId: 'rel-forged-proof',
+      proof: {
+        source: 'external-client',
+        audioFallback: { allowed: true, reason: 'Forged fallback proof.' },
+        audioWarnings: { status: 'warning', warnings: ['audio_fallback_approved'] },
+      },
+    });
+
+    assert.equal(release.audioFallback, null);
+    assert.equal(release.audioWarnings, null);
+    assert.equal(release.proof.audioFallback.allowed, true);
   });
 
   it('normalises package lists, release lists, and package detail array payloads', () => {
@@ -663,6 +708,8 @@ describe('Content Operations Centre normalisers', () => {
     assert.equal(packages[0].latestCandidate.candidateId, 'cand-draft-1');
     assert.equal(packages[0].blockers.blockingSections.includes('audio'), true);
     assert.equal(releases[0].releaseId, 'rel-global-1');
+    assert.equal(releases[0].audioFallback.allowed, true);
+    assert.equal(releases[0].audioWarnings.warnings[1], 'sentence_audio_missing');
     assert.equal(detail.package.operations[0].fieldPath, 'explanation');
     assert.equal(detail.package.latestCandidate.operationsHash, 'ops-hash-1');
     assert.equal(detail.events[0].eventType, 'package.created');
@@ -848,6 +895,9 @@ describe('Content Operations Centre hub API client', () => {
       packageId: 'pkg/with/slash',
       candidateId: 'cand/with/slash',
       notes: 'Reviewed candidate.',
+      audioFallback: {
+        reason: 'Temporary runtime TTS fallback while slow sentence audio is generated.',
+      },
       mutation: { requestId: 'approve-1' },
     });
     await api.publishContentOperationPackage({
@@ -871,6 +921,10 @@ describe('Content Operations Centre hub API client', () => {
     assert.equal(calls[0].body.includeSnapshot, true);
     assert.equal(calls[1].body.candidateId, 'cand/with/slash');
     assert.equal(calls[1].body.notes, 'Reviewed candidate.');
+    assert.equal(
+      calls[1].body.audioFallback.reason,
+      'Temporary runtime TTS fallback while slow sentence audio is generated.',
+    );
     assert.equal(calls[2].body.proof.source, 'test');
     assert.equal(calls[3].body.conflictId, 'conflict/with/slash');
     assert.equal(calls[3].body.resolution, 'edit');

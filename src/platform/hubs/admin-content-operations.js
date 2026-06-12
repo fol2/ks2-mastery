@@ -96,6 +96,14 @@ function normaliseBlockerSection(section = null) {
   const errors = asArray(safe.errors);
   const validationErrors = Number(safe.errorCount ?? errors.length) || 0;
   const conflictCount = Number(safe.count) || 0;
+  const strictAudioReadiness = isPlainObject(safe.strictAudioReadiness)
+    ? {
+      status: asString(safe.strictAudioReadiness.status, 'not_scanned'),
+      blockers: asArray(safe.strictAudioReadiness.blockers),
+      affectedCount: Number(safe.strictAudioReadiness.affectedCount) || 0,
+      items: asArray(safe.strictAudioReadiness.items),
+    }
+    : null;
   const count = blockers.length + validationErrors + conflictCount;
   return {
     status: asString(safe.status, 'not_run'),
@@ -106,6 +114,8 @@ function normaliseBlockerSection(section = null) {
     errorCount: validationErrors,
     warningCount: Number(safe.warningCount ?? warnings.length) || 0,
     items: asArray(safe.items),
+    fallbackApproval: isPlainObject(safe.fallbackApproval) ? safe.fallbackApproval : null,
+    strictAudioReadiness,
   };
 }
 
@@ -201,8 +211,18 @@ export function normaliseContentOperationPackage(entry = null) {
   };
 }
 
+function releaseAudioMetadataFromProof(proof = null) {
+  const metadata = isPlainObject(proof?.contentOperationsAudio) ? proof.contentOperationsAudio : null;
+  return {
+    audioFallback: isPlainObject(metadata?.audioFallback) ? metadata.audioFallback : null,
+    audioWarnings: isPlainObject(metadata?.audioWarnings) ? metadata.audioWarnings : null,
+  };
+}
+
 export function normaliseContentOperationRelease(entry = null) {
   const safe = isPlainObject(entry) ? entry : {};
+  const proof = safe.proof ?? null;
+  const proofAudio = releaseAudioMetadataFromProof(proof);
   return {
     releaseId: asString(safe.releaseId),
     subjectId: asString(safe.subjectId, 'spelling'),
@@ -213,7 +233,13 @@ export function normaliseContentOperationRelease(entry = null) {
     publishedAt: asTs(safe.publishedAt),
     publishedByAccountId: asNullableString(safe.publishedByAccountId),
     rollbackOfReleaseId: asNullableString(safe.rollbackOfReleaseId),
-    proof: safe.proof ?? null,
+    proof,
+    audioFallback: isPlainObject(safe.audioFallback)
+      ? safe.audioFallback
+      : proofAudio.audioFallback,
+    audioWarnings: isPlainObject(safe.audioWarnings)
+      ? safe.audioWarnings
+      : proofAudio.audioWarnings,
     createdAt: asTs(safe.createdAt),
   };
 }
