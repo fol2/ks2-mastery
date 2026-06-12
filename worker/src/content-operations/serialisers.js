@@ -359,7 +359,65 @@ function releaseHasCallerProof(proof = null) {
   return Object.keys(proof).some((key) => (
     key !== 'contentOperationsAudio'
     && key !== 'contentOperationsAssets'
+    && key !== 'productionProof'
   ));
+}
+
+function serialiseReleaseHistory(history = null) {
+  if (!history || typeof history !== 'object' || Array.isArray(history)) return null;
+  const productionProof = history.productionProof && typeof history.productionProof === 'object' && !Array.isArray(history.productionProof)
+    ? history.productionProof
+    : null;
+  const changedEntities = history.changedEntities && typeof history.changedEntities === 'object' && !Array.isArray(history.changedEntities)
+    ? history.changedEntities
+    : null;
+  const assetChanges = history.assetChanges && typeof history.assetChanges === 'object' && !Array.isArray(history.assetChanges)
+    ? history.assetChanges
+    : null;
+  const contentPackage = history.package && typeof history.package === 'object' && !Array.isArray(history.package)
+    ? history.package
+    : null;
+  return {
+    releaseId: history.releaseId || '',
+    package: contentPackage ? {
+      packageId: contentPackage.packageId || '',
+      title: contentPackage.title || '',
+      templateId: contentPackage.templateId || '',
+      state: contentPackage.state || '',
+    } : null,
+    approvedByAccountId: history.approvedByAccountId || null,
+    approvedAt: history.approvedAt ?? null,
+    approvalId: history.approvalId || null,
+    candidateId: history.candidateId || null,
+    candidateHash: history.candidateHash || '',
+    publishedByAccountId: history.publishedByAccountId || null,
+    publishedAt: history.publishedAt ?? null,
+    changedEntities: changedEntities ? {
+      operationCount: Number(changedEntities.operationCount) || 0,
+      entityCount: Number(changedEntities.entityCount) || 0,
+      entityTypes: Array.isArray(changedEntities.entityTypes) ? changedEntities.entityTypes : [],
+      actionCounts: changedEntities.actionCounts && typeof changedEntities.actionCounts === 'object' && !Array.isArray(changedEntities.actionCounts)
+        ? changedEntities.actionCounts
+        : {},
+      fieldPaths: Array.isArray(changedEntities.fieldPaths) ? changedEntities.fieldPaths : [],
+      preview: Array.isArray(changedEntities.preview) ? changedEntities.preview : [],
+    } : null,
+    assetChanges: assetChanges ? {
+      uploadCount: Number(assetChanges.uploadCount) || 0,
+      referenceCount: Number(assetChanges.referenceCount) || 0,
+      hash: assetChanges.hash || '',
+      preview: Array.isArray(assetChanges.preview) ? assetChanges.preview : [],
+    } : null,
+    productionProof: productionProof ? {
+      status: productionProof.status || 'unknown',
+      hasCallerProof: Boolean(productionProof.hasCallerProof),
+      capturedAt: Number(productionProof.capturedAt) || null,
+      capturedByAccountId: productionProof.capturedByAccountId || null,
+      requiredSurfaces: Array.isArray(productionProof.requiredSurfaces) ? productionProof.requiredSurfaces : [],
+      linkedSurfaces: Array.isArray(productionProof.linkedSurfaces) ? productionProof.linkedSurfaces : [],
+      missingSurfaces: Array.isArray(productionProof.missingSurfaces) ? productionProof.missingSurfaces : [],
+    } : null,
+  };
 }
 
 export function serialiseContentOperationRelease(release = {}, { includeSnapshot = false } = {}) {
@@ -382,6 +440,7 @@ export function serialiseContentOperationRelease(release = {}, { includeSnapshot
     audioWarnings: release.audioWarnings ?? proofAudio.audioWarnings,
     assetSummary: release.assetSummary ?? proofAssets.assetSummary,
     assetReferenceManifest: release.assetReferenceManifest ?? proofAssets.assetReferenceManifest,
+    history: serialiseReleaseHistory(release.history),
     createdAt: Number(release.createdAt) || 0,
     ...(includeSnapshot ? { snapshot: release.snapshot || null } : {}),
   };

@@ -1401,7 +1401,14 @@ test('content operations API supports admin package lifecycle through separate a
       ADMIN_ID,
       `${BASE_URL}/api/admin/content-operations/packages/${packageId}/publish`,
       jsonInit('POST', {
-        proof: { source: 'content-operations-api-test', reviewer: ADMIN_ID },
+        proof: {
+          source: 'content-operations-api-test',
+          reviewer: ADMIN_ID,
+          surfaces: {
+            spellingSetup: { evidence: 'setup-smoke' },
+            wordBank: { evidence: 'word-bank-smoke' },
+          },
+        },
       }),
       adminHeaders(),
     );
@@ -1409,10 +1416,99 @@ test('content operations API supports admin package lifecycle through separate a
     assert.equal(publishResponse.status, 200);
     assert.equal(published.release.packageId, packageId);
     assert.equal(published.release.publishedByAccountId, ADMIN_ID);
+    assert.equal(published.release.history.approvedByAccountId, ADMIN_ID);
+    assert.equal(published.release.history.publishedByAccountId, ADMIN_ID);
+    assert.equal(published.release.history.changedEntities.operationCount, 1);
+    assert.equal(published.release.history.changedEntities.entityCount, 1);
+    assert.equal(published.release.history.changedEntities.entityTypes[0].entityType, 'spelling.word');
+    assert.equal(published.release.history.changedEntities.preview[0].entityId, word.slug);
+    assert.equal(published.release.history.changedEntities.preview[0].actions[0], 'set');
+    assert.equal(published.release.history.changedEntities.preview[0].fields[0], 'explanation');
+    assert.equal(published.release.history.productionProof.status, 'partial');
+    assert.deepEqual(
+      published.release.history.productionProof.missingSurfaces.map((entry) => entry.key).sort(),
+      ['spellingSetup', 'wordBank'].sort(),
+    );
+
+    const capturedResponse = await server.fetchAs(
+      ADMIN_ID,
+      `${BASE_URL}/api/admin/content-operations/subjects/spelling/releases/${published.release.releaseId}/proof`,
+      jsonInit('POST', {
+        proof: {
+          source: 'content-operations-api-test',
+          surfaces: {
+            spellingSetup: { evidence: 'setup-smoke' },
+            wordBank: { evidence: 'word-bank-smoke' },
+          },
+        },
+      }),
+      adminHeaders(),
+    );
+    const captured = await readPayload(capturedResponse);
+    assert.equal(capturedResponse.status, 200);
+    assert.equal(captured.release.history.productionProof.status, 'recorded');
+    assert.equal(captured.release.history.productionProof.capturedByAccountId, ADMIN_ID);
+    assert.deepEqual(
+      captured.release.history.productionProof.linkedSurfaces.map((entry) => entry.key).sort(),
+      ['spellingSetup', 'wordBank'].sort(),
+    );
+
+    const proofWithAssetChanges = {
+      ...captured.release.proof,
+      contentOperationsAssets: {
+        assetSummary: {
+          uploadCount: 1,
+          hash: 'asset-proof-hash',
+        },
+        assetReferenceManifest: {
+          referenceCount: 1,
+          hash: 'asset-reference-proof-hash',
+          references: [{
+            assetUploadId: 'coasset-proof-1',
+            referenceId: 'coref-proof-1',
+            assetKind: 'monster-image',
+            target: {
+              monsterId: 'inklet',
+              branchId: 'default',
+              stageId: 'base',
+            },
+            validation: { status: 'passed' },
+          }],
+        },
+      },
+    };
+    server.DB.db.prepare(`
+      UPDATE content_operation_releases
+      SET proof_json = ?
+      WHERE release_id = ?
+    `).run(JSON.stringify(proofWithAssetChanges), captured.release.releaseId);
+
+    const capturedAssetProofResponse = await server.fetchAs(
+      ADMIN_ID,
+      `${BASE_URL}/api/admin/content-operations/subjects/spelling/releases/${published.release.releaseId}/proof`,
+      jsonInit('POST', {
+        proof: {
+          source: 'content-operations-api-test',
+          surfaces: {
+            spellingSetup: { evidence: 'setup-smoke' },
+            wordBank: { evidence: 'word-bank-smoke' },
+            monsterRendering: { evidence: 'monster-rendering-smoke' },
+          },
+        },
+      }),
+      adminHeaders(),
+    );
+    const capturedAssetProof = await readPayload(capturedAssetProofResponse);
+    assert.equal(capturedAssetProofResponse.status, 200);
+    assert.equal(capturedAssetProof.release.history.productionProof.status, 'recorded');
+    assert.deepEqual(
+      capturedAssetProof.release.history.productionProof.linkedSurfaces.map((entry) => entry.key).sort(),
+      ['monsterRendering', 'spellingSetup', 'wordBank'].sort(),
+    );
 
     const releaseDetailResponse = await server.fetchAs(
       ADMIN_ID,
-      `${BASE_URL}/api/admin/content-operations/subjects/spelling/releases/${published.release.releaseId}?includeSnapshot=true`,
+      `${BASE_URL}/api/admin/content-operations/subjects/spelling/releases/${published.release.releaseId}?includeSnapshot=true&includeHistory=true`,
       { method: 'GET', headers: { 'sec-fetch-site': 'same-origin' } },
       adminHeaders(),
     );
@@ -1422,6 +1518,23 @@ test('content operations API supports admin package lifecycle through separate a
       releaseDetail.release.snapshot.draft.words.find((entry) => entry.slug === word.slug).explanation,
       explanation,
     );
+    assert.equal(releaseDetail.release.history.package.title, 'API spelling edit package renamed');
+    assert.equal(releaseDetail.release.history.approvedByAccountId, ADMIN_ID);
+    assert.equal(releaseDetail.release.history.productionProof.status, 'recorded');
+    assert.equal(releaseDetail.release.history.assetChanges.uploadCount, 1);
+    assert.equal(releaseDetail.release.history.assetChanges.referenceCount, 1);
+    assert.equal(releaseDetail.release.history.assetChanges.preview[0].monsterId, 'inklet');
+    assert.equal(releaseDetail.release.history.assetChanges.preview[0].validationStatus, 'passed');
+
+    const defaultReleaseDetailResponse = await server.fetchAs(
+      ADMIN_ID,
+      `${BASE_URL}/api/admin/content-operations/subjects/spelling/releases/${published.release.releaseId}`,
+      { method: 'GET', headers: { 'sec-fetch-site': 'same-origin' } },
+      adminHeaders(),
+    );
+    const defaultReleaseDetail = await readPayload(defaultReleaseDetailResponse);
+    assert.equal(defaultReleaseDetailResponse.status, 200);
+    assert.equal(defaultReleaseDetail.release.history, null);
 
     const detailResponse = await server.fetchAs(
       ADMIN_ID,
@@ -1443,15 +1556,131 @@ test('content operations API supports admin package lifecycle through separate a
 
     const overviewResponse = await server.fetchAs(
       ADMIN_ID,
-      `${BASE_URL}/api/admin/content-operations/subjects/spelling/overview`,
+      `${BASE_URL}/api/admin/content-operations/subjects/spelling/overview?includeHistory=true`,
       { method: 'GET', headers: { 'sec-fetch-site': 'same-origin' } },
       adminHeaders(),
     );
     const overview = await readPayload(overviewResponse);
     assert.equal(overviewResponse.status, 200);
     assert.equal(overview.overview.latestRelease.releaseId, published.release.releaseId);
+    assert.equal(overview.overview.latestRelease.history.productionProof.status, 'recorded');
+    assert.equal(overview.overview.lanes.recentReleases[0].history.changedEntities.preview[0].entityId, word.slug);
     assert.equal(overview.overview.actor.capabilities['content_operations.approve'], true);
     assert.equal(overview.overview.actor.capabilities['content_operations.publish'], true);
+
+    const releaseListResponse = await server.fetchAs(
+      ADMIN_ID,
+      `${BASE_URL}/api/admin/content-operations/subjects/spelling/releases?includeHistory=true`,
+      { method: 'GET', headers: { 'sec-fetch-site': 'same-origin' } },
+      adminHeaders(),
+    );
+    const releaseList = await readPayload(releaseListResponse);
+    assert.equal(releaseListResponse.status, 200);
+    assert.equal(releaseList.releases[0].history.releaseId, captured.release.releaseId);
+    assert.equal(releaseList.releases[0].history.productionProof.status, 'recorded');
+    assert.equal(releaseList.releases[0].history.assetChanges.preview[0].monsterId, 'inklet');
+
+    const defaultReleaseListResponse = await server.fetchAs(
+      ADMIN_ID,
+      `${BASE_URL}/api/admin/content-operations/subjects/spelling/releases`,
+      { method: 'GET', headers: { 'sec-fetch-site': 'same-origin' } },
+      adminHeaders(),
+    );
+    const defaultReleaseList = await readPayload(defaultReleaseListResponse);
+    assert.equal(defaultReleaseListResponse.status, 200);
+    assert.equal(defaultReleaseList.releases[0].history, null);
+
+    const defaultOverviewResponse = await server.fetchAs(
+      ADMIN_ID,
+      `${BASE_URL}/api/admin/content-operations/subjects/spelling/overview`,
+      { method: 'GET', headers: { 'sec-fetch-site': 'same-origin' } },
+      adminHeaders(),
+    );
+    const defaultOverview = await readPayload(defaultOverviewResponse);
+    assert.equal(defaultOverviewResponse.status, 200);
+    assert.equal(defaultOverview.overview.latestRelease.history, null);
+  } finally {
+    server.close();
+  }
+});
+
+test('content operations API requires Hero / Codex proof for hero exposure releases', async () => {
+  const server = createWorkerRepositoryServer({ now: () => NOW });
+  try {
+    seedAdultAccount(server.DB, { accountId: ADMIN_ID, platformRole: 'admin' });
+    const repository = createWorkerRepository({
+      env: server.env,
+      now: () => NOW,
+    });
+    await repository.seedFirstContentOperationRelease({
+      seededByAccountId: ADMIN_ID,
+      proof: { source: 'content-operations-api-hero-proof-test' },
+    });
+    const seeded = await readSeededSpellingContentBundle();
+    const rewardTrack = seeded.draft.rewardTracks[0];
+    assert.ok(rewardTrack, 'seeded spelling content should include a reward track');
+
+    const created = await createPackage(server, { title: 'Hero exposure proof package' });
+    await appendContentOperation(server, created.package.packageId, {
+      entityType: 'spelling.heroExposure',
+      entityId: rewardTrack.id,
+      fieldPath: '',
+      action: 'upsert',
+      payload: {
+        state: 'scheduled',
+        surfaces: ['heroCamp', 'codex'],
+        scheduledAt: NOW + 60_000,
+        rolloutFlag: 'content-operations-api-hero-proof',
+        previewAllowed: true,
+      },
+    });
+
+    const validated = await validatePackage(server, created.package.packageId);
+    assert.equal(validated.candidate.validation.status, 'passed');
+    const approved = await approvePackage(server, created.package.packageId, validated.candidate.candidateId);
+    assert.equal(approved.approval.approvedByAccountId, ADMIN_ID);
+
+    const published = await publishPackage(server, created.package.packageId, {
+      proof: {
+        surfaces: {
+          spellingSetup: { evidence: 'setup-smoke' },
+          wordBank: { evidence: 'word-bank-smoke' },
+        },
+      },
+    });
+    assert.equal(published.release.history.productionProof.status, 'partial');
+    assert.deepEqual(
+      published.release.history.productionProof.missingSurfaces.map((entry) => entry.key).sort(),
+      ['heroCodex', 'spellingSetup', 'wordBank'].sort(),
+    );
+    assert.ok(
+      published.release.history.changedEntities.preview.some((entry) => (
+        entry.entityType === 'spelling.heroExposure'
+          && entry.entityId === rewardTrack.id
+      )),
+    );
+
+    const capturedResponse = await server.fetchAs(
+      ADMIN_ID,
+      `${BASE_URL}/api/admin/content-operations/subjects/spelling/releases/${published.release.releaseId}/proof`,
+      jsonInit('POST', {
+        proof: {
+          surfaces: {
+            spellingSetup: { evidence: 'setup-smoke' },
+            wordBank: { evidence: 'word-bank-smoke' },
+            heroCodex: { evidence: 'codex-and-hero-smoke' },
+          },
+        },
+      }),
+      adminHeaders(),
+    );
+    const captured = await readPayload(capturedResponse);
+    assert.equal(capturedResponse.status, 200);
+    assert.equal(captured.release.history.productionProof.status, 'recorded');
+    assert.deepEqual(
+      captured.release.history.productionProof.linkedSurfaces.map((entry) => entry.key).sort(),
+      ['heroCodex', 'spellingSetup', 'wordBank'].sort(),
+    );
   } finally {
     server.close();
   }

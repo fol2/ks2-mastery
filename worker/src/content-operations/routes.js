@@ -67,6 +67,11 @@ function includeSnapshot(url, body = {}) {
   return value === true || value === 'true' || value === '1';
 }
 
+function includeHistory(url, body = {}) {
+  const value = url.searchParams.get('includeHistory') ?? body.includeHistory;
+  return value === true || value === 'true' || value === '1';
+}
+
 function optionalQueryString(url, key) {
   const value = url.searchParams.get(key);
   return typeof value === 'string' && value.trim() ? value.trim() : '';
@@ -211,11 +216,15 @@ export async function handleContentOperationsAdminRequest({
       capability: CONTENT_OPERATION_CAPABILITIES.VIEW,
     });
     const limit = normaliseLimit(url.searchParams.get('limit'), 30, 100);
-    const [latestRelease, packages, releases] = await Promise.all([
-      repository.readLatestContentOperationRelease(CONTENT_OPERATIONS_SUBJECT_ID, { includeSnapshot: false }),
+    const history = includeHistory(url);
+    const [packages, releases] = await Promise.all([
       repository.listContentOperationPackages({ subjectId: CONTENT_OPERATIONS_SUBJECT_ID, limit }),
-      repository.listContentOperationReleases({ subjectId: CONTENT_OPERATIONS_SUBJECT_ID, limit: 10 }),
+      repository.listContentOperationReleases({ subjectId: CONTENT_OPERATIONS_SUBJECT_ID, includeHistory: history, limit: 10 }),
     ]);
+    const latestRelease = releases[0] || await repository.readLatestContentOperationRelease(CONTENT_OPERATIONS_SUBJECT_ID, {
+      includeSnapshot: false,
+      includeHistory: history,
+    });
     return json({
       ok: true,
       overview: serialiseContentOperationOverview({
@@ -331,6 +340,7 @@ export async function handleContentOperationsAdminRequest({
     const releases = await repository.listContentOperationReleases({
       subjectId: CONTENT_OPERATIONS_SUBJECT_ID,
       includeSnapshot: includeSnapshot(url),
+      includeHistory: includeHistory(url),
       limit: normaliseLimit(url.searchParams.get('limit'), 20, 100),
     });
     return json({
@@ -355,12 +365,40 @@ export async function handleContentOperationsAdminRequest({
       const releaseId = decodePathSegment(releaseMatch[1], 'release_id');
       const release = await repository.readContentOperationRelease(CONTENT_OPERATIONS_SUBJECT_ID, releaseId, {
         includeSnapshot: includeSnapshot(url),
+        includeHistory: includeHistory(url),
       });
       if (!release) return notFoundRoute();
       return json({
         ok: true,
         actor: serialiseContentOperationActor(actor),
         release: serialiseContentOperationRelease(release, { includeSnapshot: includeSnapshot(url) }),
+      });
+    }
+  }
+
+  {
+    const releaseProofMatch = /^\/subjects\/spelling\/releases\/([^/]+)\/proof$/.exec(relativePath);
+    if (request.method === 'POST' && releaseProofMatch) {
+      const actor = await requireRouteActor({
+        repository,
+        session,
+        request,
+        env,
+        capability: CONTENT_OPERATION_CAPABILITIES.PUBLISH,
+        mutation: true,
+      });
+      const releaseId = decodePathSegment(releaseProofMatch[1], 'release_id');
+      const body = normaliseBody(await readJson(request));
+      const release = await repository.captureContentOperationReleaseProof(CONTENT_OPERATIONS_SUBJECT_ID, releaseId, {
+        capturedByAccountId: actor.id,
+        proof: proofFromRequest(body, request, 'capture-production-proof'),
+      });
+      return json({
+        ok: true,
+        actor: serialiseContentOperationActor(actor),
+        release: serialiseContentOperationRelease(release, {
+          includeSnapshot: includeSnapshot(url, body),
+        }),
       });
     }
   }

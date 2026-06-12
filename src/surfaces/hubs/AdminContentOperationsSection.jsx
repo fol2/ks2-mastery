@@ -3831,6 +3831,46 @@ function PackageDetail({
   );
 }
 
+function releaseProofChipClass(status) {
+  if (status === 'recorded' || status === 'not_required') return 'good';
+  if (status === 'partial') return 'warn';
+  return 'warn';
+}
+
+function releaseProofLabel(status) {
+  if (status === 'recorded') return 'Recorded';
+  if (status === 'partial') return 'Partial';
+  if (status === 'missing') return 'Missing';
+  if (status === 'not_required') return 'Not required';
+  return 'Unknown';
+}
+
+function releaseSurfaceLabels(surfaces = []) {
+  return surfaces.map((surface) => surface.label || surface.key).filter(Boolean).join(', ');
+}
+
+function releaseChangedEntityLines(changedEntities = null) {
+  return (changedEntities?.preview || [])
+    .slice(0, 3)
+    .map((entry) => {
+      const actions = Array.isArray(entry.actions) && entry.actions.length ? entry.actions.join('/') : 'changed';
+      const fields = Array.isArray(entry.fields) && entry.fields.length ? entry.fields.join(', ') : '$';
+      return `${entry.entityType}:${entry.entityId} ${actions} ${fields}`;
+    });
+}
+
+function releaseAssetChangeLines(assetChanges = null) {
+  const uploadCount = Number(assetChanges?.uploadCount) || 0;
+  const referenceCount = Number(assetChanges?.referenceCount) || 0;
+  if (!uploadCount && !referenceCount) return [];
+  const lines = [`Assets ${uploadCount} uploads / ${referenceCount} references`];
+  for (const reference of (assetChanges?.preview || []).slice(0, 2)) {
+    const target = [reference.monsterId, reference.branchId, reference.stageId].filter(Boolean).join('/');
+    lines.push(target || reference.assetUploadId || reference.referenceId || 'asset reference');
+  }
+  return lines;
+}
+
 function ReleaseTable({ releases }) {
   if (!releases.length) {
     return (
@@ -3847,7 +3887,8 @@ function ReleaseTable({ releases }) {
             <th className="small admin-overview-th-first">Release</th>
             <th className="small admin-overview-th">Status</th>
             <th className="small admin-overview-th">Package</th>
-            <th className="small admin-overview-th">Published</th>
+            <th className="small admin-overview-th">Actors</th>
+            <th className="small admin-overview-th">Changed</th>
             <th className="small admin-overview-th">Audio</th>
             <th className="small admin-overview-th">Proof</th>
           </tr>
@@ -3862,8 +3903,27 @@ function ReleaseTable({ releases }) {
                 ?? fallback?.affectedMatrix?.affectedCount
                 ?? 0,
             ) || 0;
+            const history = release.history || null;
+            const changedEntities = history?.changedEntities || null;
+            const productionProof = history?.productionProof || null;
+            const proofStatus = productionProof?.status || (release.hasCallerProof ? 'recorded' : 'missing');
+            const missingSurfaces = releaseSurfaceLabels(productionProof?.missingSurfaces || []);
+            const linkedSurfaces = releaseSurfaceLabels(productionProof?.linkedSurfaces || []);
+            const capture = productionProof?.capturedAt
+              ? `Captured by ${productionProof.capturedByAccountId || 'unknown'} ${formatTimestamp(productionProof.capturedAt)}`
+              : '';
+            const entityTypeSummary = (changedEntities?.entityTypes || [])
+              .slice(0, 3)
+              .map((entry) => `${entry.entityType} ${entry.entityCount}`)
+              .join(', ');
+            const changedLines = releaseChangedEntityLines(changedEntities);
+            const assetLines = releaseAssetChangeLines(history?.assetChanges);
             return (
-              <tr key={release.releaseId} className="admin-overview-tbody-row">
+              <tr
+                key={release.releaseId}
+                className="admin-overview-tbody-row"
+                data-content-ops-release-history-row={release.releaseId}
+              >
                 <td className="admin-overview-td-first">
                   {release.releaseId}
                   <div className="small muted">{release.snapshotHash || 'hash pending'}</div>
@@ -3873,8 +3933,26 @@ function ReleaseTable({ releases }) {
                     {release.status}
                   </span>
                 </td>
-                <td className="admin-overview-td small">{release.packageId || 'seeded'}</td>
-                <td className="admin-overview-td small">{formatTimestamp(release.publishedAt || release.createdAt)}</td>
+                <td className="admin-overview-td small">
+                  {history?.package?.title || release.packageId || 'seeded'}
+                  <div className="small muted">{release.packageId || 'first release'}</div>
+                </td>
+                <td className="admin-overview-td small">
+                  <div>Published by {history?.publishedByAccountId || release.publishedByAccountId || 'unknown'}</div>
+                  <div className="small muted">{formatTimestamp(history?.publishedAt || release.publishedAt || release.createdAt)}</div>
+                  <div className="small muted">Approved by {history?.approvedByAccountId || 'n/a'}</div>
+                </td>
+                <td className="admin-overview-td small">
+                  <strong>{String(changedEntities?.entityCount || 0)} entities</strong>
+                  <div className="small muted">{String(changedEntities?.operationCount || 0)} operations</div>
+                  {entityTypeSummary ? <div className="small muted">{entityTypeSummary}</div> : null}
+                  {changedLines.map((line) => (
+                    <div className="small muted" key={line}>{line}</div>
+                  ))}
+                  {assetLines.map((line) => (
+                    <div className="small muted" key={line}>{line}</div>
+                  ))}
+                </td>
                 <td className="admin-overview-td">
                   {fallback?.allowed ? (
                     <div className="content-ops-release-audio">
@@ -3889,7 +3967,15 @@ function ReleaseTable({ releases }) {
                   )}
                 </td>
                 <td className="admin-overview-td">
-                  {release.hasCallerProof ? <span className="chip good">Recorded</span> : <span className="chip warn">Missing</span>}
+                  <span
+                    className={`chip ${releaseProofChipClass(proofStatus)}`}
+                    data-content-ops-release-proof-status={proofStatus}
+                  >
+                  {releaseProofLabel(proofStatus)}
+                  </span>
+                  {missingSurfaces ? <div className="small muted">Missing {missingSurfaces}</div> : null}
+                  {!missingSurfaces && linkedSurfaces ? <div className="small muted">{linkedSurfaces}</div> : null}
+                  {capture ? <div className="small muted">{capture}</div> : null}
                 </td>
               </tr>
             );
@@ -4181,9 +4267,9 @@ export function AdminContentOperationsSection({
     setRefreshError(null);
     try {
       const [nextOverview, nextPackages, nextReleases] = await Promise.all([
-        api.readOverview({ limit: 30 }),
+        api.readOverview({ limit: 30, includeHistory: true }),
         api.readPackages?.({ limit: 50 }),
-        api.readReleases?.({ limit: 20 }),
+        api.readReleases?.({ limit: 20, includeHistory: true }),
       ]);
       if (refreshRequestRef.current !== seq) return;
       setOverviewPayload(nextOverview);
