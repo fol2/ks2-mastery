@@ -24,6 +24,9 @@ import {
   readSeededSpellingPublishedSnapshot,
 } from '../worker/src/generated-spelling-content-seed.js';
 import {
+  encodeContentOperationSnapshot,
+} from '../src/subjects/spelling/content/release-snapshot-codec.js';
+import {
   isStatutoryCoreWord,
 } from '../src/subjects/spelling/content/taxonomy.js';
 import {
@@ -395,6 +398,91 @@ test('repository serves spelling runtime from the global content operations rele
     assert.equal(runtime.content.draft.words.length, seeded.draft.words.length);
     assert.equal(runtime.summary.runtimeWordCount, seeded.releases.at(-1).snapshot.words.length);
     assert.equal(accountContentReads.length, 0);
+  } finally {
+    DB.close();
+  }
+});
+
+test('repository runtime activates scheduled spelling pool visibility at request time', async () => {
+  const DB = createMigratedSqliteD1Database();
+  let currentNow = 1_777_000_000_000;
+  const repository = createWorkerRepository({ env: { DB }, now: () => currentNow });
+  try {
+    const content = JSON.parse(JSON.stringify(await readSeededSpellingContentBundle()));
+    content.draft.pools.push({
+      id: 'scheduled-runtime',
+      title: 'Scheduled runtime',
+      type: 'extension',
+      visibility: { state: 'scheduled', scheduledAt: currentNow + 60_000 },
+      noRewardException: { approved: true, reason: 'Runtime visibility regression fixture.' },
+      sourceNote: 'Runtime visibility regression fixture.',
+      provenance: { source: 'worker-subject-runtime-test' },
+      sortIndex: content.draft.pools.length,
+    });
+    content.draft.wordLists.push({
+      id: 'scheduled-runtime-list',
+      title: 'Scheduled runtime list',
+      spellingPool: 'scheduled-runtime',
+      coverageTier: 'secure-extension',
+      yearGroups: [],
+      wordSlugs: ['scheduledfocus'],
+      sourceNote: 'Runtime visibility regression fixture.',
+      provenance: { source: 'worker-subject-runtime-test' },
+      sortIndex: content.draft.wordLists.length,
+    });
+    content.draft.words.push({
+      slug: 'scheduledfocus',
+      word: 'scheduledfocus',
+      family: 'scheduled-runtime-family',
+      listId: 'scheduled-runtime-list',
+      spellingPool: 'scheduled-runtime',
+      coverageTier: 'secure-extension',
+      yearGroups: [],
+      accepted: ['scheduledfocus'],
+      tags: ['scheduled-runtime'],
+      explanation: 'Scheduledfocus is a runtime visibility regression fixture.',
+      sentenceEntryIds: ['scheduledfocus-s1'],
+      sourceNote: 'Runtime visibility regression fixture.',
+      provenance: { source: 'worker-subject-runtime-test' },
+      progressKey: 'scheduledfocus',
+      sortIndex: content.draft.words.length,
+    });
+    content.draft.sentences.push({
+      id: 'scheduledfocus-s1',
+      wordSlug: 'scheduledfocus',
+      text: 'Scheduledfocus appears only after the pool activation time.',
+      variantLabel: 'default',
+      sourceNote: 'Runtime visibility regression fixture.',
+      provenance: { source: 'worker-subject-runtime-test' },
+      sortIndex: content.draft.sentences.length,
+    });
+
+    DB.db.prepare(`
+      INSERT INTO content_operation_releases (
+        release_id, subject_id, status, snapshot_json, snapshot_hash,
+        base_release_id, package_id, published_at, published_by_account_id,
+        rollback_of_release_id, proof_json, created_at
+      )
+      VALUES (?, 'spelling', 'published', ?, ?, NULL, NULL, ?, 'admin-a', NULL, NULL, ?)
+    `).run(
+      'corel-scheduled-runtime',
+      await encodeContentOperationSnapshot(content),
+      'scheduled-runtime-hash',
+      currentNow,
+      currentNow,
+    );
+
+    const beforeActivation = await repository.readSpellingRuntimeContent('adult-a', 'spelling', {
+      includeAccountContent: false,
+    });
+    assert.equal(beforeActivation.content.draft.words.some((word) => word.slug === 'scheduledfocus'), true);
+    assert.equal(beforeActivation.snapshot.wordBySlug.scheduledfocus, undefined);
+
+    currentNow += 60_000;
+    const afterActivation = await repository.readSpellingRuntimeContent('adult-a', 'spelling', {
+      includeAccountContent: false,
+    });
+    assert.equal(afterActivation.snapshot.wordBySlug.scheduledfocus.word, 'scheduledfocus');
   } finally {
     DB.close();
   }

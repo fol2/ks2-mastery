@@ -472,8 +472,9 @@ function poolWordCountLookup(pools = []) {
 }
 
 function learnerVisiblePoolIds(pools = []) {
+  const learnerVisibilityStates = new Set(['visible', 'scheduled', 'rollout-flagged']);
   return new Set((Array.isArray(pools) ? pools : [])
-    .filter((pool) => pool?.active !== false && !pool?.retired && pool?.visibility?.state === 'visible')
+    .filter((pool) => pool?.active !== false && !pool?.retired && learnerVisibilityStates.has(pool?.visibility?.state))
     .map(spellingPoolOptionId)
     .filter(Boolean));
 }
@@ -2185,7 +2186,8 @@ function SpellingBrowsePanel({
               data-content-ops-pool-field="visibilityState"
             >
               <option value="hidden">Hidden</option>
-              <option value="staged">Staged</option>
+              <option value="scheduled">Scheduled</option>
+              <option value="rollout-flagged">Rollout flagged</option>
               <option value="visible">Visible</option>
             </select>
           </label>
@@ -3924,6 +3926,7 @@ function ReleaseTable({
             const proofStatus = productionProof?.status || (release.hasCallerProof ? 'recorded' : 'missing');
             const missingSurfaces = releaseSurfaceLabels(productionProof?.missingSurfaces || []);
             const linkedSurfaces = releaseSurfaceLabels(productionProof?.linkedSurfaces || []);
+            const proofWarnings = Array.isArray(productionProof?.warnings) ? productionProof.warnings : [];
             const capture = productionProof?.capturedAt
               ? `Captured by ${productionProof.capturedByAccountId || 'unknown'} ${formatTimestamp(productionProof.capturedAt)}`
               : '';
@@ -4034,6 +4037,15 @@ function ReleaseTable({
                   </span>
                   {missingSurfaces ? <div className="small muted">Missing {missingSurfaces}</div> : null}
                   {!missingSurfaces && linkedSurfaces ? <div className="small muted">{linkedSurfaces}</div> : null}
+                  {proofWarnings.slice(0, 2).map((warning) => (
+                    <div
+                      className="small muted"
+                      key={warning.code || warning.message}
+                      data-content-ops-release-proof-warning={warning.code || 'proof_warning'}
+                    >
+                      {warning.message || warning.code}
+                    </div>
+                  ))}
                   {capture ? <div className="small muted">{capture}</div> : null}
                 </td>
                 <td className="admin-overview-td">

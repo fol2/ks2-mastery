@@ -13,8 +13,15 @@ import {
 } from '../../../src/subjects/spelling/content/operations-model.js';
 import {
   buildSpellingContentSummary,
+  isSpellingPoolLearnerVisible,
+  normalisePoolVisibility,
   validateSpellingContentBundle,
 } from '../../../src/subjects/spelling/content/model.js';
+import {
+  HERO_EXPOSURE_SURFACES,
+  isHeroExposureVisible,
+  normaliseHeroExposure,
+} from '../../../src/platform/game/reward-track-config.js';
 import {
   audioReadinessHasBlockingItems,
 } from '../../../src/subjects/spelling/content/audio-readiness.js';
@@ -708,7 +715,15 @@ function surfaceCaptureDescriptor(key, capture = null) {
 
 function isPoolVisibilityChange(operation = {}) {
   if (operation.entityType !== 'spelling.pool') return false;
-  if (operation.fieldPath === 'visibility' || operation.fieldPath === 'rewardTrack' || operation.fieldPath === 'noRewardException') return true;
+  const fieldPath = normaliseString(operation.fieldPath);
+  if (
+    fieldPath === 'visibility'
+      || fieldPath.startsWith('visibility.')
+      || fieldPath === 'rewardTrack'
+      || fieldPath.startsWith('rewardTrack.')
+      || fieldPath === 'noRewardException'
+      || fieldPath.startsWith('noRewardException.')
+  ) return true;
   return isPlainObject(operation.payload)
     && (
       isPlainObject(operation.payload.visibility)
@@ -742,6 +757,97 @@ function requiredProductionProofSurfaceKeys(operations = [], release = {}) {
     required.add('monsterRendering');
   }
   return [...required];
+}
+
+function poolVisibilityFromOperation(operation = {}) {
+  const entityType = normaliseString(operation.entityType);
+  if (entityType !== 'spelling.pool') return null;
+  const fieldPath = normaliseString(operation.fieldPath);
+  if (isPlainObject(operation.payload?.visibility)) return normalisePoolVisibility(operation.payload.visibility);
+  if (fieldPath === 'visibility' && isPlainObject(operation.payload)) return normalisePoolVisibility(operation.payload);
+  if (fieldPath === 'visibility.state') return normalisePoolVisibility({ state: operation.payload });
+  if (fieldPath === 'visibility.scheduledAt') return normalisePoolVisibility({ state: 'scheduled', scheduledAt: operation.payload });
+  if (fieldPath === 'visibility.rolloutFlag') return normalisePoolVisibility({ state: 'rollout-flagged', rolloutFlag: operation.payload });
+  return null;
+}
+
+function heroExposureFromOperation(operation = {}) {
+  const entityType = normaliseString(operation.entityType);
+  const fieldPath = normaliseString(operation.fieldPath);
+  if (entityType === 'spelling.heroExposure') return normaliseHeroExposure(operation.payload);
+  if (entityType !== 'spelling.rewardTrack') return null;
+  if (isPlainObject(operation.payload?.heroExposure)) return normaliseHeroExposure(operation.payload.heroExposure);
+  if (fieldPath === 'heroExposure' && isPlainObject(operation.payload)) return normaliseHeroExposure(operation.payload);
+  if (fieldPath === 'heroExposure.state') return normaliseHeroExposure({ state: operation.payload });
+  if (fieldPath === 'heroExposure.scheduledAt') return normaliseHeroExposure({ state: 'scheduled', scheduledAt: operation.payload });
+  if (fieldPath === 'heroExposure.rolloutFlag') return normaliseHeroExposure({ state: 'rollout-flagged', rolloutFlag: operation.payload });
+  return null;
+}
+
+function activationDescriptorFromState({ entityType, entityId, state, scheduledAt = 0, rolloutFlag = '', learnerVisible = false }) {
+  let status = 'inactive';
+  if (learnerVisible) status = 'active';
+  else if (state === 'scheduled') status = 'scheduled';
+  else if (state === 'rollout-flagged') status = 'rollout_flagged';
+  else if (state === 'hidden') status = 'hidden';
+  return {
+    entityType,
+    entityId,
+    state,
+    status,
+    learnerVisible: Boolean(learnerVisible),
+    scheduledAt: Number(scheduledAt) || null,
+    rolloutFlag: normaliseString(rolloutFlag) || null,
+  };
+}
+
+function isHeroExposureLearnerVisible(exposure, { now = Date.now(), env = {} } = {}) {
+  return HERO_EXPOSURE_SURFACES.some((surface) => isHeroExposureVisible(exposure, { surface, now, env }));
+}
+
+function buildVisibilityActivationSummary(operations = [], {
+  now = Date.now(),
+  env = {},
+} = {}) {
+  const entries = [];
+  for (const operation of operations) {
+    const poolVisibility = poolVisibilityFromOperation(operation);
+    if (poolVisibility) {
+      entries.push(activationDescriptorFromState({
+        entityType: operation.entityType,
+        entityId: operation.entityId,
+        state: poolVisibility.state,
+        scheduledAt: poolVisibility.scheduledAt,
+        rolloutFlag: poolVisibility.rolloutFlag,
+        learnerVisible: isSpellingPoolLearnerVisible(poolVisibility, { now, env }),
+      }));
+      continue;
+    }
+    const heroExposure = heroExposureFromOperation(operation);
+    if (heroExposure) {
+      entries.push(activationDescriptorFromState({
+        entityType: operation.entityType,
+        entityId: operation.entityId,
+        state: heroExposure.state,
+        scheduledAt: heroExposure.scheduledAt,
+        rolloutFlag: heroExposure.rolloutFlag,
+        learnerVisible: isHeroExposureLearnerVisible(heroExposure, { now, env }),
+      }));
+    }
+  }
+
+  let status = 'not_applicable';
+  if (entries.some((entry) => entry.learnerVisible)) status = 'active';
+  else if (entries.some((entry) => entry.status === 'scheduled')) status = 'scheduled';
+  else if (entries.some((entry) => entry.status === 'rollout_flagged')) status = 'rollout_flagged';
+  else if (entries.length) status = 'inactive';
+
+  return {
+    status,
+    checkedAt: Number(now) || null,
+    activated: status === 'active',
+    entries,
+  };
 }
 
 function summariseContentOperationChanges(operations = []) {
@@ -809,12 +915,16 @@ function summariseReleaseAssetChanges(release = {}) {
   };
 }
 
-function buildProductionProofSummary(release = {}, operations = []) {
+function buildProductionProofSummary(release = {}, operations = [], {
+  now = Date.now(),
+  env = {},
+} = {}) {
   const requiredKeys = requiredProductionProofSurfaceKeys(operations, release);
   const capture = productionProofCaptureForRelease(release.proof, release);
   const linkedKeys = productionProofSurfaceKeys(release.proof, release);
   const missingKeys = requiredKeys.filter((key) => !linkedKeys.includes(key));
   const hasCallerProof = proofHasCallerMetadata(release.proof);
+  const activation = buildVisibilityActivationSummary(operations, { now, env });
   let status = 'not_required';
   if (requiredKeys.length) {
     if (!missingKeys.length) {
@@ -827,6 +937,14 @@ function buildProductionProofSummary(release = {}, operations = []) {
   } else if (hasCallerProof) {
     status = 'recorded';
   }
+  const warnings = [];
+  if (missingKeys.length && activation.activated) {
+    warnings.push({
+      code: 'production_proof_missing_after_visibility_activation',
+      message: 'Learner-visible activation has occurred but production proof is incomplete.',
+      missingSurfaces: missingKeys.map(surfaceDescriptor),
+    });
+  }
   return {
     status,
     hasCallerProof,
@@ -835,6 +953,8 @@ function buildProductionProofSummary(release = {}, operations = []) {
     requiredSurfaces: requiredKeys.map(surfaceDescriptor),
     linkedSurfaces: linkedKeys.map((key) => surfaceCaptureDescriptor(key, capture)),
     missingSurfaces: missingKeys.map(surfaceDescriptor),
+    activation,
+    warnings,
   };
 }
 
@@ -905,6 +1025,8 @@ function buildReleaseHistorySummary({
   contentPackage = null,
   approval = null,
   operations = [],
+  now = Date.now(),
+  env = {},
 } = {}) {
   if (!release) return null;
   return {
@@ -924,7 +1046,7 @@ function buildReleaseHistorySummary({
     publishedAt: release.publishedAt ?? null,
     changedEntities: summariseContentOperationChanges(operations),
     assetChanges: summariseReleaseAssetChanges(release),
-    productionProof: buildProductionProofSummary(release, operations),
+    productionProof: buildProductionProofSummary(release, operations, { now, env }),
   };
 }
 
@@ -1075,12 +1197,12 @@ async function readPackageRevertSource(db, packageId) {
   };
 }
 
-async function attachReleaseHistorySummary(db, release = null) {
+async function attachReleaseHistorySummary(db, release = null, context = {}) {
   if (!release) return null;
   if (!release.packageId) {
     return {
       ...release,
-      history: buildReleaseHistorySummary({ release }),
+      history: buildReleaseHistorySummary({ release, ...context }),
     };
   }
   const [packageRow, approvalRow, operations] = await Promise.all([
@@ -1105,17 +1227,18 @@ async function attachReleaseHistorySummary(db, release = null) {
       contentPackage: packageRow ? packageRowToRecord(packageRow) : null,
       approval: approvalRowToRecord(approvalRow),
       operations,
+      ...context,
     }),
   };
 }
 
-async function attachReleaseHistorySummaries(db, releases = []) {
+async function attachReleaseHistorySummaries(db, releases = [], context = {}) {
   if (!releases.length) return releases;
   const packageIds = uniqueStrings(releases.map((release) => release?.packageId).filter(Boolean));
   if (!packageIds.length) {
     return releases.map((release) => ({
       ...release,
-      history: buildReleaseHistorySummary({ release }),
+      history: buildReleaseHistorySummary({ release, ...context }),
     }));
   }
   const placeholders = packageIds.map(() => '?').join(', ');
@@ -1155,7 +1278,7 @@ async function attachReleaseHistorySummaries(db, releases = []) {
     if (!release?.packageId) {
       return {
         ...release,
-        history: buildReleaseHistorySummary({ release }),
+        history: buildReleaseHistorySummary({ release, ...context }),
       };
     }
     return {
@@ -1165,6 +1288,7 @@ async function attachReleaseHistorySummaries(db, releases = []) {
         contentPackage: packagesById.get(release.packageId) || null,
         approval: approvalsByPackageId.get(release.packageId) || null,
         operations: operationsByPackageId.get(release.packageId) || [],
+        ...context,
       }),
     };
   });
@@ -2903,6 +3027,8 @@ export function createContentOperationsRepository({ db, env = {}, now }) {
           },
           approval,
           operations,
+          now: nowTs,
+          env,
         }),
       };
     },
@@ -3125,13 +3251,13 @@ export function createContentOperationsRepository({ db, env = {}, now }) {
       return attachReleaseHistorySummary(db, {
         ...release,
         proof: nextProof,
-      });
+      }, { now: nowTs, env });
     },
 
     async readLatestContentOperationRelease(subjectId = CONTENT_OPERATION_SUBJECT_ID, { includeSnapshot = false, includeHistory = false } = {}) {
       const row = await readLatestReleaseRow(db, normaliseSubjectId(subjectId), { includeSnapshot });
       const release = await releaseRowToRecordAsync(row, { includeSnapshot });
-      return includeHistory ? attachReleaseHistorySummary(db, release) : release;
+      return includeHistory ? attachReleaseHistorySummary(db, release, { now: nowFactory(), env }) : release;
     },
 
     async readContentOperationRelease(subjectId = CONTENT_OPERATION_SUBJECT_ID, releaseId, { includeSnapshot = false, includeHistory = false } = {}) {
@@ -3139,7 +3265,7 @@ export function createContentOperationsRepository({ db, env = {}, now }) {
         includeSnapshot,
       });
       const release = await releaseRowToRecordAsync(row, { includeSnapshot });
-      return includeHistory ? attachReleaseHistorySummary(db, release) : release;
+      return includeHistory ? attachReleaseHistorySummary(db, release, { now: nowFactory(), env }) : release;
     },
 
     async listContentOperationReleases({
@@ -3161,7 +3287,7 @@ export function createContentOperationsRepository({ db, env = {}, now }) {
         LIMIT ?
       `, [normaliseSubjectId(subjectId), safeLimit]);
       const releases = await Promise.all(rows.map((row) => releaseRowToRecordAsync(row, { includeSnapshot })));
-      return includeHistory ? attachReleaseHistorySummaries(db, releases) : releases;
+      return includeHistory ? attachReleaseHistorySummaries(db, releases, { now: nowFactory(), env }) : releases;
     },
 
     async listContentOperationEvents({ packageId = null, releaseId = null, subjectId = CONTENT_OPERATION_SUBJECT_ID, limit = 50 } = {}) {

@@ -8,11 +8,15 @@ import {
   normaliseRewardTrackConfig,
   validateRewardTrackCollection,
 } from '../../../platform/game/reward-track-config.js';
+import {
+  isKnownSpellingPoolVisibilityState,
+  isSpellingPoolPotentiallyLearnerVisible,
+  normalisePoolVisibility as normaliseContentPoolVisibility,
+} from './pool-visibility.js';
 
 const LEGACY_SPELLING_POOLS = new Set(['core', 'extra']);
 const RESERVED_POOL_IDS = new Set(['all']);
 const VALID_POOL_TYPES = new Set(['statutory', 'enrichment', 'extension', 'custom']);
-const VALID_POOL_VISIBILITY_STATES = new Set(['visible', 'hidden', 'staged']);
 const DEFAULT_COVERAGE_BY_POOL = Object.freeze({
   core: 'statutory-core',
   extra: 'enrichment-extra',
@@ -454,19 +458,7 @@ export function validateSpellingWordListEditorInput(rawValue = {}, options = {})
 }
 
 function normalisePoolVisibility(rawValue = {}, existingVisibility = null) {
-  const raw = isPlainObject(rawValue) ? rawValue : {};
-  const existing = isPlainObject(existingVisibility) ? existingVisibility : {};
-  const state = VALID_POOL_VISIBILITY_STATES.has(normaliseString(raw.state, existing.state).toLowerCase())
-    ? normaliseString(raw.state, existing.state).toLowerCase()
-    : 'hidden';
-  return {
-    state,
-    learnerVisible: state === 'visible',
-    scheduledAt: Number.isFinite(Number(raw.scheduledAt ?? existing.scheduledAt)) && Number(raw.scheduledAt ?? existing.scheduledAt) >= 0
-      ? Number(raw.scheduledAt ?? existing.scheduledAt)
-      : 0,
-    rolloutFlag: normaliseString(raw.rolloutFlag, existing.rolloutFlag),
-  };
+  return normaliseContentPoolVisibility(rawValue, existingVisibility);
 }
 
 function normaliseNoRewardException(rawValue = {}, existingException = null) {
@@ -560,14 +552,17 @@ export function validateSpellingPoolEditorInput(rawValue = {}, options = {}) {
   if (!hasExplicitProvenance(raw, existing)) {
     errors.push(issue('provenance', 'Pool provenance or source notes are required.', 'invalid_pool_operation'));
   }
-  if (pool.retired && pool.visibility.state === 'visible') {
+  if (raw.visibility?.state && !isKnownSpellingPoolVisibilityState(raw.visibility.state)) {
+    errors.push(issue('visibility.state', 'Pool visibility state is invalid.', 'invalid_pool_operation'));
+  }
+  if (pool.retired && isSpellingPoolPotentiallyLearnerVisible(pool.visibility)) {
     errors.push(issue('visibility.state', 'Retired pools cannot be learner-visible.', 'invalid_pool_operation'));
   }
   if (pool.id !== 'core' && pool.type === 'statutory') {
     errors.push(issue('type', 'Only the core pool can use statutory type.', 'invalid_pool_operation'));
   }
   if (
-    pool.visibility.state === 'visible'
+    isSpellingPoolPotentiallyLearnerVisible(pool.visibility)
     && !LEGACY_SPELLING_POOLS.has(pool.id)
     && pool.noRewardException?.approved !== true
     && !(Array.isArray(pool.rewardTrackIds) && pool.rewardTrackIds.length > 0)
@@ -575,8 +570,11 @@ export function validateSpellingPoolEditorInput(rawValue = {}, options = {}) {
   ) {
     errors.push(issue('visibility.state', 'Learner-visible future pools require a reward track or approved no-reward exception.', 'pool_reward_required'));
   }
-  if (pool.visibility.state === 'staged' && !pool.visibility.scheduledAt && !pool.visibility.rolloutFlag) {
-    warnings.push(issue('visibility.state', 'Staged pools should include a schedule or rollout flag before publish.', 'invalid_pool_operation'));
+  if (pool.visibility.state === 'scheduled' && !pool.visibility.scheduledAt) {
+    errors.push(issue('visibility.scheduledAt', 'Scheduled pool visibility requires a timestamp.', 'pool_visibility_schedule_required'));
+  }
+  if (pool.visibility.state === 'rollout-flagged' && !pool.visibility.rolloutFlag) {
+    errors.push(issue('visibility.rolloutFlag', 'Rollout-flagged pool visibility requires a rollout flag.', 'pool_visibility_flag_required'));
   }
 
   return poolValidationResult(errors, warnings, pool);

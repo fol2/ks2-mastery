@@ -6,11 +6,26 @@ import {
 } from '../../../platform/game/reward-track-config.js';
 import { PATTERN_LAUNCH_THRESHOLD, SPELLING_PATTERN_IDS, SPELLING_PATTERNS } from './patterns.js';
 import {
+  SPELLING_POOL_VISIBILITY_STATES,
+  isKnownSpellingPoolVisibilityState,
+  isSpellingPoolLearnerVisible,
+  isSpellingPoolPotentiallyLearnerVisible,
+  normalisePoolVisibility,
+} from './pool-visibility.js';
+import {
   coverageTierForWord,
   coverageTierCounts,
   isStatutoryCoreWord,
   normaliseCoverageTier,
 } from './taxonomy.js';
+
+export {
+  SPELLING_POOL_VISIBILITY_STATES,
+  isKnownSpellingPoolVisibilityState,
+  isSpellingPoolLearnerVisible,
+  isSpellingPoolPotentiallyLearnerVisible,
+  normalisePoolVisibility,
+};
 
 export const SPELLING_CONTENT_SUBJECT_ID = 'spelling';
 /**
@@ -32,7 +47,6 @@ const LEGACY_SPELLING_POOLS = new Set(SPELLING_CONTENT_POOLS);
 const VALID_DRAFT_STATES = new Set(['draft']);
 const VALID_RELEASE_STATES = new Set(['published']);
 const VALID_POOL_TYPES = new Set(['statutory', 'enrichment', 'extension', 'custom']);
-const VALID_POOL_VISIBILITY_STATES = new Set(['visible', 'hidden', 'staged']);
 const RESERVED_POOL_IDS = new Set(['all']);
 const MIN_WORD_EXPLANATION_LENGTH = 12;
 
@@ -176,22 +190,6 @@ function defaultCoverageTierForPool(poolId, pool = null) {
   if (poolId === 'core') return 'statutory-core';
   if (poolId === 'extra' || pool?.type === 'enrichment') return 'enrichment-extra';
   return 'secure-extension';
-}
-
-function normalisePoolVisibility(rawValue = null, fallback = null) {
-  const raw = isPlainObject(rawValue) ? rawValue : {};
-  const safeFallback = isPlainObject(fallback) ? fallback : {};
-  const state = VALID_POOL_VISIBILITY_STATES.has(normaliseString(raw.state).toLowerCase())
-    ? normaliseString(raw.state).toLowerCase()
-    : (VALID_POOL_VISIBILITY_STATES.has(normaliseString(safeFallback.state).toLowerCase())
-        ? normaliseString(safeFallback.state).toLowerCase()
-        : 'hidden');
-  return {
-    state,
-    learnerVisible: state === 'visible',
-    scheduledAt: normaliseTimestamp(raw.scheduledAt ?? safeFallback.scheduledAt, 0),
-    rolloutFlag: normaliseString(raw.rolloutFlag, safeFallback.rolloutFlag || ''),
-  };
 }
 
 function normaliseNoRewardException(rawValue = null) {
@@ -464,6 +462,34 @@ function normalisePublishedSnapshot(rawValue, {
   };
 }
 
+export function resolveLearnerVisibleSpellingSnapshot(rawSnapshot, {
+  now = Date.now(),
+  env = {},
+} = {}) {
+  const snapshot = normalisePublishedSnapshot(rawSnapshot);
+  const visiblePoolIds = new Set(snapshot.pools
+    .filter((pool) => (
+      pool.active !== false
+        && !pool.retired
+        && isSpellingPoolLearnerVisible(pool.visibility, { now, env })
+    ))
+    .map((pool) => pool.id));
+  const pools = snapshot.pools.filter((pool) => visiblePoolIds.has(pool.id));
+  const rewardTracks = snapshot.rewardTracks.filter((track) => (
+    track.active !== false
+      && !track.retired
+      && visiblePoolIds.has(track.poolId)
+  ));
+  const words = snapshot.words.filter((word) => visiblePoolIds.has(word.spellingPool));
+  return {
+    ...snapshot,
+    pools,
+    rewardTracks,
+    words,
+    wordBySlug: Object.fromEntries(words.map((word) => [word.slug, word])),
+  };
+}
+
 function normaliseDraft(rawValue) {
   const raw = isPlainObject(rawValue) ? rawValue : {};
   const updatedAt = normaliseTimestamp(raw.updatedAt, 0);
@@ -600,7 +626,7 @@ function issue(severity, code, path, message) {
 
 function buildLearnerVisiblePoolIds(pools = []) {
   return new Set((Array.isArray(pools) ? pools : [])
-    .filter((pool) => pool.active !== false && !pool.retired && pool.visibility?.state === 'visible')
+    .filter((pool) => pool.active !== false && !pool.retired && isSpellingPoolPotentiallyLearnerVisible(pool.visibility))
     .map((pool) => pool.id));
 }
 
@@ -656,8 +682,14 @@ export function validateSpellingContentBundle(rawBundle) {
     if (pool.id !== 'core' && pool.type === 'statutory') {
       errors.push(issue('error', 'pool_type_mismatch', `draft.pools[${index}].type`, `Only the core pool can use statutory type.`));
     }
-    if (pool.retired && pool.visibility?.state === 'visible') {
+    if (pool.retired && isSpellingPoolPotentiallyLearnerVisible(pool.visibility)) {
       warnings.push(issue('warn', 'retired_pool_visible', `draft.pools[${index}].visibility.state`, `Retired pool "${pool.id}" keeps visible metadata for history but is hidden from new sessions.`));
+    }
+    if (pool.visibility?.state === 'scheduled' && !pool.visibility.scheduledAt) {
+      errors.push(issue('error', 'pool_visibility_schedule_required', `draft.pools[${index}].visibility.scheduledAt`, `Pool "${pool.id}" requires a schedule timestamp for scheduled visibility.`));
+    }
+    if (pool.visibility?.state === 'rollout-flagged' && !pool.visibility.rolloutFlag) {
+      errors.push(issue('error', 'pool_visibility_flag_required', `draft.pools[${index}].visibility.rolloutFlag`, `Pool "${pool.id}" requires a rollout flag for flagged visibility.`));
     }
   });
 
@@ -996,7 +1028,10 @@ function orderedDraftWords(draft) {
   return ordered;
 }
 
-export function buildPublishedSnapshotFromDraft(rawDraft, { generatedAt = Date.now() } = {}) {
+export function buildPublishedSnapshotFromDraft(rawDraft, {
+  generatedAt = Date.now(),
+  includeDeferredVisibility = false,
+} = {}) {
   const draft = normaliseDraft(rawDraft);
   const poolById = new Map(draft.pools.map((entry) => [entry.id, entry]));
   const listById = new Map(draft.wordLists.map((entry) => [entry.id, entry]));
@@ -1006,7 +1041,12 @@ export function buildPublishedSnapshotFromDraft(rawDraft, { generatedAt = Date.n
     .filter((word) => {
       if (word.active === false || word.retired) return false;
       const pool = poolById.get(word.spellingPool);
-      if (pool && (pool.active === false || pool.retired || pool.visibility?.state !== 'visible')) return false;
+      if (pool && (pool.active === false || pool.retired)) return false;
+      if (pool && includeDeferredVisibility) {
+        if (!isSpellingPoolPotentiallyLearnerVisible(pool.visibility)) return false;
+      } else if (pool && !isSpellingPoolLearnerVisible(pool.visibility, { now: generatedAt })) {
+        return false;
+      }
       const list = listById.get(word.listId);
       if (list && (list.active === false || list.retired)) return false;
       return true;
