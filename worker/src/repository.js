@@ -252,6 +252,13 @@ const MONSTER_VISUAL_SCOPE_TYPE = 'platform';
 const MONSTER_VISUAL_SCOPE_ID = 'monster-visual-config';
 const CONTENT_OPERATION_ASSET_PROOF_KEY = 'contentOperationsAssets';
 const CONTENT_OPERATION_MONSTER_ASSET_RUNTIME_ROUTE = '/api/content-operations/assets/monster-image';
+const LEGACY_SPELLING_CONTENT_CUTOVER_COMPATIBILITY = Object.freeze({
+  legacyExportRoute: '/api/content/spelling',
+  legacyExportMode: 'read_only_after_global_release',
+  legacyWriteRoute: '/api/content/spelling',
+  legacyWriteMode: 'disabled_after_global_release',
+  mutationPath: 'content_operations_package_approval',
+});
 
 // safeJsonParse, asTs, isMissingTableError → repository-helpers.js
 
@@ -9809,6 +9816,7 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
             releaseId: globalRelease.release_id,
             snapshotHash: globalRelease.snapshot_hash,
             legacyWriteDisabled: true,
+            ...LEGACY_SPELLING_CONTENT_CUTOVER_COMPATIBILITY,
           },
           mutation: {
             policyVersion: MUTATION_POLICY_VERSION,
@@ -9926,6 +9934,9 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
           code: 'subject_content_legacy_write_cutover',
           subjectId,
           releaseId: globalRelease.release_id,
+          snapshotHash: globalRelease.snapshot_hash,
+          publishedAt: Number(globalRelease.published_at) || 0,
+          compatibility: LEGACY_SPELLING_CONTENT_CUTOVER_COMPATIBILITY,
         });
       }
       const seededBundle = await readSeededSpellingContentBundle();

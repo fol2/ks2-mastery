@@ -20,6 +20,7 @@ function createFakeWrangler() {
       'writeFileSync(process.env.WRANGLER_FAKE_CAPTURE_PATH, JSON.stringify({',
       '  argv: process.argv.slice(2),',
       "  token: Object.hasOwn(process.env, 'CLOUDFLARE_API_TOKEN') ? process.env.CLOUDFLARE_API_TOKEN : null,",
+      "  ci: process.env.CI || null,",
       "  workersCi: process.env.WORKERS_CI || null,",
       '}));',
     ].join('\n'),
@@ -66,6 +67,39 @@ function runWrapper(fake, extraEnv = {}) {
   );
 }
 
+function runCiWrapper(fake, extraEnv = {}) {
+  const env = {
+    ...process.env,
+    ...extraEnv,
+    WRANGLER_FAKE_CAPTURE_PATH: fake.capturePath,
+    WRANGLER_OAUTH_WRANGLER_JS: fake.scriptPath,
+  };
+
+  if (!('CI' in extraEnv)) {
+    delete env.CI;
+  }
+  if (!('WORKERS_CI' in extraEnv)) {
+    delete env.WORKERS_CI;
+  }
+
+  return spawnSync(
+    process.execPath,
+    [
+      'scripts/wrangler-ci.mjs',
+      'd1',
+      'migrations',
+      'apply',
+      'ks2-mastery-db',
+      '--remote',
+    ],
+    {
+      cwd: ROOT,
+      env,
+      encoding: 'utf8',
+    },
+  );
+}
+
 describe('Hero Mode pA7 Wrangler OAuth wrapper', () => {
   it('preserves argv boundaries for D1 --command SQL and strips API tokens locally', () => {
     const fake = createFakeWrangler();
@@ -101,6 +135,27 @@ describe('Hero Mode pA7 Wrangler OAuth wrapper', () => {
       assert.equal(result.status, 0, result.stderr || result.stdout);
       assert.equal(fake.readCapture().token, 'workers-build-token');
       assert.equal(fake.readCapture().workersCi, '1');
+    } finally {
+      fake.cleanup();
+    }
+  });
+
+  it('sets CI for remote migration scripts without leaking local API tokens', () => {
+    const fake = createFakeWrangler();
+    try {
+      const result = runCiWrapper(fake, { CLOUDFLARE_API_TOKEN: 'must-not-leak' });
+
+      assert.equal(result.status, 0, result.stderr || result.stdout);
+      const capture = fake.readCapture();
+      assert.equal(capture.ci, 'true');
+      assert.equal(capture.token, null);
+      assert.deepEqual(capture.argv.slice(0, 6), [
+        'd1',
+        'migrations',
+        'apply',
+        'ks2-mastery-db',
+        '--remote',
+      ]);
     } finally {
       fake.cleanup();
     }

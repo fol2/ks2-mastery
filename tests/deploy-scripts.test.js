@@ -33,3 +33,12 @@ test('Cloudflare tail scripts keep package-script OAuth routing and explicit for
     assert.equal(script.match(/--format\b/g)?.length, 1, `${name} must set exactly one tail format`);
   }
 });
+
+test('remote D1 migration script is Windows compatible and OAuth routed', async () => {
+  const pkg = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'));
+  const script = pkg.scripts?.['db:migrate:remote'] || '';
+
+  assert.equal(script, 'node ./scripts/wrangler-ci.mjs d1 migrations apply ks2-mastery-db --remote');
+  assert.doesNotMatch(script, /\bCI=true\b/);
+  assert.doesNotMatch(script, /\bnpx\s+wrangler\b/);
+});

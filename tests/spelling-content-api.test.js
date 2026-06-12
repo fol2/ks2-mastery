@@ -346,6 +346,15 @@ test('worker spelling content legacy write route is frozen after global release 
     assert.equal(response.status, 409);
     assert.equal(payload.code, 'subject_content_legacy_write_cutover');
     assert.equal(payload.releaseId, seedRelease.releaseId);
+    assert.equal(payload.snapshotHash, seedRelease.snapshotHash);
+    assert.equal(payload.publishedAt, seedRelease.publishedAt);
+    assert.deepEqual(payload.compatibility, {
+      legacyExportRoute: '/api/content/spelling',
+      legacyExportMode: 'read_only_after_global_release',
+      legacyWriteRoute: '/api/content/spelling',
+      legacyWriteMode: 'disabled_after_global_release',
+      mutationPath: 'content_operations_package_approval',
+    });
   } finally {
     server.close();
   }
