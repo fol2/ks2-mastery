@@ -4,6 +4,7 @@ import { formatTimestamp } from './hub-utils.js';
 import {
   CONTENT_OPERATION_DETAIL_TABS,
   CONTENT_OPERATION_LANES,
+  normaliseContentOperationAudioScan,
   normaliseContentOperationCandidate,
   normaliseContentOperationPackage,
   normaliseContentOperationsOverview,
@@ -529,6 +530,58 @@ function statusLabel(status) {
   return String(status || 'unknown').replace(/_/g, ' ');
 }
 
+const AUDIO_STATUS_FILTERS = Object.freeze([
+  { value: 'actionable', label: 'Actionable gaps' },
+  { value: 'all', label: 'All states' },
+  { value: 'missing', label: 'Missing' },
+  { value: 'failed', label: 'Failed' },
+  { value: 'stale', label: 'Stale' },
+  { value: 'generated', label: 'Generated' },
+  { value: 'skipped', label: 'Skipped' },
+  { value: 'override_requested', label: 'Override requested' },
+  { value: 'present', label: 'Present' },
+]);
+
+function audioStatusChipClass(status) {
+  if (status === 'present' || status === 'passed') return 'good';
+  if (status === 'missing' || status === 'failed' || status === 'blocked') return 'bad';
+  if (['stale', 'generated', 'skipped', 'override_requested', 'warning'].includes(status)) return 'warn';
+  return '';
+}
+
+function filterAudioItems(items, { laneFilter, statusFilter }) {
+  return items.filter((item) => {
+    if (laneFilter !== 'all' && item.lane !== laneFilter) return false;
+    if (statusFilter === 'actionable') return item.canGenerate;
+    if (statusFilter !== 'all' && item.status !== statusFilter) return false;
+    return true;
+  });
+}
+
+function audioItemDetail(item) {
+  const parts = [
+    item.voiceRole ? `${item.voiceRole} voice` : '',
+    item.paceId || item.speedId || '',
+    item.profileId || '',
+  ].filter(Boolean);
+  return parts.join(' / ');
+}
+
+function audioGenerationMessage(action, payload) {
+  if (action === 'scan') return 'Audio scan refreshed.';
+  const summary = payload?.audio?.summary || {};
+  const uploaded = Number(summary.uploaded) || 0;
+  const failed = Number(summary.failed) || 0;
+  const skipped = (Number(summary.skippedExisting) || 0)
+    + (Number(summary.skippedPresent) || 0)
+    + (Number(summary.skippedDueLimit) || 0);
+  return `Audio generation finished: ${String(uploaded)} uploaded, ${String(failed)} failed, ${String(skipped)} skipped.`;
+}
+
+function audioItemSelectable(item) {
+  return Boolean(item?.canGenerate || item?.canOverride);
+}
+
 function CentreTabNav({ activeTab, onSelect }) {
   return (
     <div className="content-ops-tabs" role="tablist" aria-label="Content operations views">
@@ -681,6 +734,291 @@ function BlockerSummary({ blockers, sectionKey }) {
   );
 }
 
+function AudioOperationsPanel({
+  contentPackage,
+  actor,
+  audioState,
+  actionAvailability = {},
+  onRunAction,
+}) {
+  const candidate = latestCandidateForPackage(contentPackage, audioState);
+  const scan = normaliseContentOperationAudioScan(candidate?.audioScan);
+  const audioSection = candidate?.blockers?.audio || contentPackage.blockers.audio;
+  const strictReadiness = audioSection?.strictAudioReadiness || null;
+  const fallbackApproval = audioSection?.fallbackApproval || null;
+  const canEdit = actorCan(actor, CONTENT_OPERATION_CAPABILITIES.EDIT);
+  const isRunning = Boolean(
+    audioState?.running
+      && audioState.packageId === contentPackage.packageId
+  );
+  const activeAction = isRunning ? audioState.action : '';
+  const actionError = audioState?.packageId === contentPackage.packageId ? audioState.error : null;
+  const actionMessageText = audioState?.packageId === contentPackage.packageId ? audioState.message : '';
+  const [laneFilter, setLaneFilter] = React.useState('all');
+  const [statusFilter, setStatusFilter] = React.useState('actionable');
+  const [selectedItemIds, setSelectedItemIds] = React.useState([]);
+  const [overrideReason, setOverrideReason] = React.useState('');
+
+  React.useEffect(() => {
+    setSelectedItemIds([]);
+    setOverrideReason('');
+  }, [contentPackage.packageId, candidate?.candidateId]);
+
+  const filteredItems = React.useMemo(
+    () => filterAudioItems(scan.items, { laneFilter, statusFilter }),
+    [laneFilter, scan.items, statusFilter],
+  );
+  const selectedSet = React.useMemo(() => new Set(selectedItemIds), [selectedItemIds]);
+  const selectedItems = scan.items.filter((item) => selectedSet.has(item.itemId));
+  const selectedGeneratableIds = selectedItems
+    .filter((item) => item.canGenerate)
+    .map((item) => item.itemId);
+  const selectedOverrideIds = selectedItems
+    .filter((item) => item.canOverride)
+    .map((item) => item.itemId);
+  const visibleSelectableIds = filteredItems
+    .filter(audioItemSelectable)
+    .map((item) => item.itemId)
+    .filter(Boolean);
+  const allVisibleSelected = visibleSelectableIds.length > 0
+    && visibleSelectableIds.every((itemId) => selectedSet.has(itemId));
+  const batchCount = scan.actionableItems.length;
+  const overrideReady = overrideReason.trim().length > 0;
+  const run = (action, extra = {}) => {
+    if (!onRunAction) return;
+    onRunAction(action, {
+      packageId: contentPackage.packageId,
+      candidateId: candidate?.candidateId || '',
+      ...extra,
+    });
+  };
+  const toggleVisibleSelection = () => {
+    setSelectedItemIds((current) => {
+      if (allVisibleSelected) {
+        const visible = new Set(visibleSelectableIds);
+        return current.filter((itemId) => !visible.has(itemId));
+      }
+      return [...new Set([...current, ...visibleSelectableIds])];
+    });
+  };
+  const toggleItem = (itemId) => {
+    setSelectedItemIds((current) => (
+      current.includes(itemId)
+        ? current.filter((entry) => entry !== itemId)
+        : [...current, itemId]
+    ));
+  };
+  const scanDisabled = !canEdit || !actionAvailability.scan || isRunning || contentPackage.state === 'published';
+  const generateSelectedDisabled = !canEdit
+    || !actionAvailability.generate
+    || isRunning
+    || selectedGeneratableIds.length === 0
+    || contentPackage.state === 'published';
+  const batchDisabled = !canEdit
+    || !actionAvailability.generate
+    || isRunning
+    || batchCount === 0
+    || contentPackage.state === 'published';
+  const overrideDisabled = !canEdit
+    || !actionAvailability.generate
+    || isRunning
+    || !candidate?.candidateId
+    || !overrideReady
+    || contentPackage.state === 'published';
+
+  return (
+    <section className="content-ops-audio-panel" data-content-ops-audio-panel="true">
+      <div className="content-ops-detail-header">
+        <div>
+          <div className="eyebrow">Audio operations</div>
+          <h5>Scan, generate, override</h5>
+          <p className="small muted admin-note-spaced">
+            {candidate?.candidateId ? `Candidate ${candidate.candidateId}` : 'Run validation to build an audio scan'}
+          </p>
+        </div>
+        <div className="chip-row content-ops-chip-wrap">
+          <span className={`chip ${audioStatusChipClass(scan.status)}`}>{statusLabel(scan.status)}</span>
+          <span className="chip">{String(scan.summary.totalRequired)} required</span>
+          {fallbackApproval?.allowed ? <span className="chip warn">Fallback approved</span> : null}
+        </div>
+      </div>
+
+      <div className="content-ops-metric-grid">
+        <MetricTile label="Word audio" value={String(scan.lanes.word.totalRequired)} detail={`${String(scan.lanes.word.missingCount)} missing`} />
+        <MetricTile label="Sentence audio" value={String(scan.lanes.sentence.totalRequired)} detail={`${String(scan.lanes.sentence.missingCount)} missing`} />
+        <MetricTile label="Present" value={String(scan.summary.presentCount)} detail={`${String(scan.actionableItems.length)} actionable`} />
+        <MetricTile label="Failures" value={String(scan.summary.failedCount)} detail={`${String(scan.summary.staleCount)} stale`} />
+      </div>
+
+      <div className="content-ops-audio-controls">
+        <div className="content-ops-audio-filter-row">
+          <label>
+            <span className="small muted">Lane</span>
+            <select
+              value={laneFilter}
+              onChange={(event) => setLaneFilter(event.target.value)}
+              data-content-ops-audio-lane-filter="true"
+            >
+              <option value="all">All lanes</option>
+              <option value="word">Word</option>
+              <option value="sentence">Sentence</option>
+            </select>
+          </label>
+          <label>
+            <span className="small muted">State</span>
+            <select
+              value={statusFilter}
+              onChange={(event) => setStatusFilter(event.target.value)}
+              data-content-ops-audio-status-filter="true"
+            >
+              {AUDIO_STATUS_FILTERS.map((entry) => (
+                <option key={entry.value} value={entry.value}>{entry.label}</option>
+              ))}
+            </select>
+          </label>
+          <button
+            type="button"
+            className="btn secondary compact"
+            onClick={toggleVisibleSelection}
+            disabled={!visibleSelectableIds.length}
+            data-content-ops-audio-select-visible="true"
+          >
+            {allVisibleSelected ? 'Clear visible' : 'Select visible'}
+          </button>
+        </div>
+        <div className="actions content-ops-lifecycle-actions">
+          <button
+            type="button"
+            className="btn secondary"
+            disabled={scanDisabled}
+            aria-busy={activeAction === 'scan' ? 'true' : undefined}
+            data-content-ops-audio-action="scan"
+            onClick={() => run('scan')}
+          >
+            Refresh scan
+          </button>
+          <button
+            type="button"
+            className="btn secondary"
+            disabled={generateSelectedDisabled}
+            aria-busy={activeAction === 'generate-selected' ? 'true' : undefined}
+            data-content-ops-audio-action="generate-selected"
+            onClick={() => run('generate-selected', {
+              itemIds: selectedGeneratableIds,
+              limit: Math.max(1, selectedGeneratableIds.length),
+            })}
+          >
+            Generate selected
+          </button>
+          <button
+            type="button"
+            className="btn primary"
+            disabled={batchDisabled}
+            aria-busy={activeAction === 'generate-batch' ? 'true' : undefined}
+            data-content-ops-audio-action="generate-batch"
+            onClick={() => run('generate-batch', { itemIds: [], limit: 25 })}
+          >
+            Batch generate gaps
+          </button>
+        </div>
+      </div>
+
+      <div className="content-ops-audio-override">
+        <label className="content-ops-notes-field">
+          <span className="small muted">Override reason</span>
+          <textarea
+            value={overrideReason}
+            onChange={(event) => setOverrideReason(event.target.value)}
+            rows={2}
+            data-content-ops-audio-override-reason="true"
+          />
+        </label>
+        <button
+          type="button"
+          className="btn secondary"
+          disabled={overrideDisabled}
+          aria-busy={activeAction === 'override' ? 'true' : undefined}
+          data-content-ops-audio-action="override"
+          onClick={() => run('override', {
+            itemIds: selectedOverrideIds,
+            limit: selectedOverrideIds.length ? selectedOverrideIds.length : 25,
+            override: true,
+            reason: overrideReason.trim(),
+          })}
+        >
+          Regenerate selected or package
+        </button>
+      </div>
+
+      {strictReadiness ? (
+        <div className="feedback warn admin-note-spaced" data-content-ops-audio-strict-readiness="true">
+          Strict audio readiness: {statusLabel(strictReadiness.status)} - {String(strictReadiness.affectedCount)} affected
+        </div>
+      ) : null}
+      <BlockerSummary blockers={{ audio: audioSection }} sectionKey="audio" />
+
+      <div className="content-ops-table-scroll">
+        <table className="admin-overview-table content-ops-table content-ops-audio-table" aria-label="Content operation audio matrix">
+          <thead>
+            <tr className="admin-overview-thead-row">
+              <th className="small admin-overview-th-first">Item</th>
+              <th className="small admin-overview-th">Lane</th>
+              <th className="small admin-overview-th">State</th>
+              <th className="small admin-overview-th">Voice</th>
+              <th className="small admin-overview-th">Storage</th>
+              <th className="small admin-overview-th">Select</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredItems.length ? filteredItems.slice(0, 80).map((item) => (
+              <tr key={item.itemId} className="admin-overview-tbody-row" data-audio-status={item.status}>
+                <td className="admin-overview-td-first">
+                  <strong>{item.label}</strong>
+                  <div className="small muted">{item.lane === 'sentence' ? (item.sentence || 'Sentence') : (item.word || 'Word')}</div>
+                </td>
+                <td className="admin-overview-td small">{item.lane}</td>
+                <td className="admin-overview-td">
+                  <span className={`chip ${audioStatusChipClass(item.status)}`}>{item.statusLabel}</span>
+                  {item.blocker ? <div className="small muted">{item.blocker}</div> : null}
+                </td>
+                <td className="admin-overview-td small">{audioItemDetail(item) || 'Profile pending'}</td>
+                <td className="admin-overview-td small">{item.r2Key || 'No R2 key'}</td>
+                <td className="admin-overview-td">
+                  <input
+                    type="checkbox"
+                    checked={selectedSet.has(item.itemId)}
+                    disabled={!audioItemSelectable(item)}
+                    onChange={() => toggleItem(item.itemId)}
+                    aria-label={`Select ${item.itemId}`}
+                    data-content-ops-audio-item={item.itemId}
+                  />
+                </td>
+              </tr>
+            )) : (
+              <tr className="admin-overview-tbody-row">
+                <td className="admin-overview-td-first" colSpan={6}>
+                  <span className="small muted">No audio items match the current filters.</span>
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {actionError ? (
+        <div className="feedback warn admin-note-spaced" data-content-ops-audio-error="true">
+          <strong>{actionError.code}</strong>
+          <div>{actionError.message}</div>
+        </div>
+      ) : actionMessageText ? (
+        <div className="feedback good admin-note-spaced" data-content-ops-audio-message="true">
+          {actionMessageText}
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
 function PackageTable({ packages, selectedPackageId, onSelectPackage }) {
   if (!packages.length) {
     return (
@@ -739,9 +1077,29 @@ function PackageTable({ packages, selectedPackageId, onSelectPackage }) {
   );
 }
 
-function PublishedAreaPanel({ activeTab, latestRelease, selectedPackageId, selectedSummary }) {
+function PublishedAreaPanel({
+  activeTab,
+  latestRelease,
+  selectedPackageId,
+  selectedSummary,
+  actor,
+  audioState,
+  audioActionAvailability,
+  onRunAudioAction,
+}) {
   const tab = CENTRE_TABS.find((entry) => entry.key === activeTab);
   const blockerSection = DETAIL_TAB_BLOCKER_SECTIONS[activeTab] || null;
+  if (activeTab === 'audio' && selectedSummary) {
+    return (
+      <AudioOperationsPanel
+        contentPackage={selectedSummary}
+        actor={actor}
+        audioState={audioState}
+        actionAvailability={audioActionAvailability}
+        onRunAction={onRunAudioAction}
+      />
+    );
+  }
   return (
     <div className="content-ops-area-panel" data-content-ops-area={activeTab}>
       <div className="content-ops-detail-header">
@@ -2415,7 +2773,15 @@ function PackageLifecyclePanel({
   );
 }
 
-function PackageDetailBody({ contentPackage, activeTab, events }) {
+function PackageDetailBody({
+  contentPackage,
+  activeTab,
+  events,
+  actor,
+  audioState,
+  audioActionAvailability,
+  onRunAudioAction,
+}) {
   if (activeTab === 'spelling') {
     return (
       <div>
@@ -2472,6 +2838,18 @@ function PackageDetailBody({ contentPackage, activeTab, events }) {
     );
   }
 
+  if (activeTab === 'audio') {
+    return (
+      <AudioOperationsPanel
+        contentPackage={contentPackage}
+        actor={actor}
+        audioState={audioState}
+        actionAvailability={audioActionAvailability}
+        onRunAction={onRunAudioAction}
+      />
+    );
+  }
+
   const tab = CONTENT_OPERATION_DETAIL_TABS.find((entry) => entry.key === activeTab);
   const blockerSection = DETAIL_TAB_BLOCKER_SECTIONS[activeTab];
   return (
@@ -2496,6 +2874,9 @@ function PackageDetail({
   lifecycleState,
   lifecycleActionAvailability,
   onRunLifecycleAction,
+  audioState,
+  audioActionAvailability,
+  onRunAudioAction,
 }) {
   const contentPackage = detail?.package || null;
   if (!selectedPackageId) {
@@ -2552,6 +2933,10 @@ function PackageDetail({
           contentPackage={contentPackage}
           activeTab={activeTab}
           events={events}
+          actor={actor}
+          audioState={audioState}
+          audioActionAvailability={audioActionAvailability}
+          onRunAudioAction={onRunAudioAction}
         />
       </div>
     </div>
@@ -2686,6 +3071,14 @@ export function AdminContentOperationsSection({
     candidate: null,
     approval: null,
     release: null,
+  });
+  const [audioOperationState, setAudioOperationState] = React.useState({
+    packageId: '',
+    action: '',
+    running: false,
+    message: '',
+    error: null,
+    candidate: null,
   });
   const [spellingOperationState, setSpellingOperationState] = React.useState({
     packageId: '',
@@ -2955,6 +3348,22 @@ export function AdminContentOperationsSection({
     selectedPackageId,
   ]);
 
+  React.useEffect(() => {
+    if (activeTab !== 'audio') return;
+    if (!selectedPackageId || !api?.readPackage) return;
+    if (loadingDetailId === selectedPackageId || detailErrorId === selectedPackageId) return;
+    if (detail.package?.packageId === selectedPackageId) return;
+    loadPackageDetail(selectedPackageId);
+  }, [
+    activeTab,
+    api,
+    detail.package?.packageId,
+    detailErrorId,
+    loadPackageDetail,
+    loadingDetailId,
+    selectedPackageId,
+  ]);
+
   const runLifecycleAction = React.useCallback(async (action, {
     packageId,
     candidateId = '',
@@ -3051,6 +3460,74 @@ export function AdminContentOperationsSection({
     }
   }, [api, invalidateSpellingBrowse, loadPackageDetail, refresh]);
 
+  const runAudioOperation = React.useCallback(async (action, {
+    packageId,
+    candidateId = '',
+    itemIds = [],
+    limit = null,
+    override = false,
+    reason = '',
+  } = {}) => {
+    if (!api || !packageId) return;
+    setAudioOperationState({
+      packageId,
+      action,
+      running: true,
+      message: '',
+      error: null,
+      candidate: null,
+    });
+    try {
+      let payload = null;
+      if (action === 'scan') {
+        if (!api.validatePackage) throw new Error('Audio scan action is not available.');
+        payload = await api.validatePackage({
+          packageId,
+          includeSnapshot: false,
+          mutation: contentOperationMutation('audio-scan', packageId),
+        });
+      } else {
+        if (!api.generateAudio) throw new Error('Audio generation action is not available.');
+        payload = await api.generateAudio({
+          packageId,
+          candidateId,
+          itemIds,
+          limit,
+          override,
+          reason,
+          mutation: contentOperationMutation(`audio-${action}`, packageId),
+        });
+      }
+      const nextCandidate = payload?.candidate
+        ? normaliseContentOperationCandidate(payload.candidate)
+        : null;
+      setAudioOperationState({
+        packageId,
+        action,
+        running: false,
+        message: audioGenerationMessage(action, payload),
+        error: null,
+        candidate: nextCandidate,
+      });
+      invalidateSpellingBrowse();
+      if (api.readPackage) {
+        await loadPackageDetail(packageId);
+      }
+      if (api.readOverview) {
+        await refresh();
+      }
+    } catch (error) {
+      setAudioOperationState({
+        packageId,
+        action,
+        running: false,
+        message: '',
+        error: errorEnvelope(error, `content_operations_audio_${action}_failed`),
+        candidate: null,
+      });
+    }
+  }, [api, invalidateSpellingBrowse, loadPackageDetail, refresh]);
+
   const latestRelease = overview.latestRelease;
   const primaryData = overview.openPackageCount || packages.length || releases.length || latestRelease || spellingBrowse.words.length ? {
     overview,
@@ -3066,14 +3543,20 @@ export function AdminContentOperationsSection({
     : (!api?.readPackage && selectedSummary
       ? { package: normaliseContentOperationPackage(selectedSummary), events: [] }
       : { package: null, events: [] });
+  const selectedPackageForAudio = safeDetail.package || selectedSummary;
   const warningSectionCount = packages.reduce((sum, entry) => sum + entry.blockers.warningCount, 0);
   const detailActor = safeDetail.actor?.accountId ? safeDetail.actor : overview.actor;
   const spellingActor = spellingBrowse.actor?.accountId ? spellingBrowse.actor : overview.actor;
+  const audioActor = safeDetail.actor?.accountId ? safeDetail.actor : overview.actor;
   const lifecycleActionAvailability = {
     validate: Boolean(api?.validatePackage),
     resolveConflict: Boolean(api?.resolveConflict),
     approve: Boolean(api?.approvePackage),
     publish: Boolean(api?.publishPackage),
+  };
+  const audioActionAvailability = {
+    scan: Boolean(api?.validatePackage),
+    generate: Boolean(api?.generateAudio),
   };
 
   return (
@@ -3142,7 +3625,11 @@ export function AdminContentOperationsSection({
           activeTab={activeTab}
           latestRelease={latestRelease}
           selectedPackageId={selectedPackageId}
-          selectedSummary={selectedSummary}
+          selectedSummary={selectedPackageForAudio}
+          actor={audioActor}
+          audioState={audioOperationState}
+          audioActionAvailability={audioActionAvailability}
+          onRunAudioAction={runAudioOperation}
         />
       ) : null}
 
@@ -3158,6 +3645,9 @@ export function AdminContentOperationsSection({
           lifecycleState={lifecycleState}
           lifecycleActionAvailability={lifecycleActionAvailability}
           onRunLifecycleAction={runLifecycleAction}
+          audioState={audioOperationState}
+          audioActionAvailability={audioActionAvailability}
+          onRunAudioAction={runAudioOperation}
         />
       ) : null}
 

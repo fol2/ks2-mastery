@@ -554,6 +554,13 @@ test('button labels: every statically extractable label is classified', () => {
     'Edit pool',
     'New pool',
     'Save pool',
+    // Content Operations Centre T16: audio operations controls are
+    // package-scoped and need explicit scan/generate/regenerate wording so
+    // operators can distinguish missing-audio generation from override.
+    'Refresh scan',
+    'Generate selected',
+    'Batch generate gaps',
+    'Regenerate selected or package',
     // Reasoning launch: delayed SATs-style sets use "Mark set" and "Save
     // answers" to distinguish full-set marking from single-question submit.
     // "Partly worked support" is the child-facing scaffold request, matching

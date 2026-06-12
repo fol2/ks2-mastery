@@ -363,6 +363,31 @@ export function createHubApi({
         }),
       }, authSession);
     },
+    async generateContentOperationAudio({
+      packageId,
+      candidateId = '',
+      itemIds = [],
+      limit = null,
+      override = false,
+      reason = '',
+      mutation,
+    } = {}) {
+      if (!packageId) throw new TypeError('Content operation package id is required.');
+      const safePackageId = encodeURIComponent(String(packageId));
+      const url = buildRequestUrl(baseUrl, `/api/admin/content-operations/packages/${safePackageId}/generate-audio`);
+      return fetchHubJson(fetch, url, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          candidateId,
+          itemIds: Array.isArray(itemIds) ? itemIds : [],
+          limit,
+          override: Boolean(override),
+          reason,
+          mutation,
+        }),
+      }, authSession);
+    },
     async approveContentOperationPackage({
       packageId,
       candidateId,
