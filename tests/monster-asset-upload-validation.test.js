@@ -881,6 +881,7 @@ test('published monster image assets are runtime-readable with draft isolation a
     });
     const rollback = await repository.rollbackContentOperationRelease('spelling', published.release.releaseId, {
       rolledBackByAccountId: ADMIN_ID,
+      reason: 'Restore the published monster image release for rollback retention coverage.',
       proof: { source: 'monster-asset-upload-validation-test' },
     });
     assert.equal(rollback.assetReferenceManifest.referenceCount, 1);

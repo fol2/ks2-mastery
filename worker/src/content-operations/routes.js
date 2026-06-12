@@ -797,6 +797,7 @@ export async function handleContentOperationsAdminRequest({
       const body = normaliseBody(await readJson(request));
       const release = await repository.rollbackContentOperationRelease(CONTENT_OPERATIONS_SUBJECT_ID, releaseId, {
         rolledBackByAccountId: actor.id,
+        reason: body.reason,
         proof: proofFromRequest(body, request, 'rollback'),
       });
       return json({

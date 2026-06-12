@@ -153,6 +153,7 @@ test('content operations repository rollback writes a new latest release pointin
 
     const rollback = await repository.rollbackContentOperationRelease('spelling', seedRelease.releaseId, {
       rolledBackByAccountId: 'admin-a',
+      reason: 'Restore the seeded content after a test edit.',
       proof: { source: 'rollback-test' },
     });
     const latest = await repository.readLatestContentOperationRelease('spelling', {
@@ -161,6 +162,9 @@ test('content operations repository rollback writes a new latest release pointin
 
     assert.equal(rollback.rollbackOfReleaseId, seedRelease.releaseId);
     assert.equal(rollback.baseReleaseId, changed.release.releaseId);
+    assert.equal(rollback.proof.rollback.reason, 'Restore the seeded content after a test edit.');
+    assert.equal(rollback.proof.rollback.approvedByAccountId, 'admin-a');
+    assert.equal(rollback.proof.rollback.publishedByAccountId, 'admin-a');
     assert.equal(rollback.snapshotHash, seedRelease.snapshotHash);
     assert.deepEqual(rollback.snapshot, seedRelease.snapshot);
     assert.equal(latest.releaseId, rollback.releaseId);

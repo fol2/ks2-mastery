@@ -317,6 +317,59 @@ const release = {
   },
 };
 
+const rollbackRelease = {
+  ...release,
+  releaseId: 'rel-rollback-1',
+  snapshotHash: 'hash-rollback-1',
+  baseReleaseId: 'rel-global-2',
+  packageId: null,
+  publishedAt: Date.UTC(2026, 5, 11, 9, 30, 0),
+  publishedByAccountId: 'admin-a',
+  rollbackOfReleaseId: 'rel-global-1',
+  proof: {
+    source: 'test',
+    reason: 'Restore the previous global spelling release.',
+    rollback: {
+      targetReleaseId: 'rel-global-1',
+      targetSnapshotHash: 'hash-1',
+      previousLatestReleaseId: 'rel-global-2',
+      reason: 'Restore the previous global spelling release.',
+      approvedByAccountId: 'admin-a',
+      publishedByAccountId: 'admin-a',
+      approvalMode: 'same-role-placeholder',
+      proofRequirement: 'production-proof-after-rollback',
+    },
+  },
+  history: {
+    releaseId: 'rel-rollback-1',
+    package: null,
+    approvedByAccountId: null,
+    approvedAt: null,
+    publishedByAccountId: 'admin-a',
+    publishedAt: Date.UTC(2026, 5, 11, 9, 30, 0),
+    changedEntities: {
+      operationCount: 0,
+      entityCount: 0,
+      entityTypes: [],
+      actionCounts: {},
+      fieldPaths: [],
+      preview: [],
+    },
+    assetChanges: {
+      uploadCount: 0,
+      referenceCount: 0,
+      preview: [],
+    },
+    productionProof: {
+      status: 'missing',
+      hasCallerProof: false,
+      requiredSurfaces: [{ key: 'spellingSetup', label: 'Spelling setup' }, { key: 'wordBank', label: 'Word Bank' }],
+      linkedSurfaces: [],
+      missingSurfaces: [{ key: 'spellingSetup', label: 'Spelling setup' }, { key: 'wordBank', label: 'Word Bank' }],
+    },
+  },
+};
+
 const overview = {
   subjectId: 'spelling',
   latestRelease: release,
@@ -745,6 +798,43 @@ test('Content Operations Centre release history shows approved audio fallback wa
   assert.match(html, /Captured by admin-publisher/);
 });
 
+test('Content Operations Centre release history shows rollback lineage', async () => {
+  const rollbackOverview = {
+    ...overview,
+    latestRelease: rollbackRelease,
+    lanes: {
+      ...overview.lanes,
+      recentReleases: [rollbackRelease, release],
+    },
+    actor: {
+      ...overview.actor,
+      capabilities: {
+        ...overview.actor.capabilities,
+        'content_operations.rollback': true,
+      },
+    },
+  };
+  const html = await renderEntry(buildContentOpsEntry({
+    model: baseModel({
+      contentOperations: {
+        overview: rollbackOverview,
+        packages: { packages: [contentPackage] },
+        releases: { releases: [rollbackRelease, release] },
+        packageDetail: {
+          package: contentPackage,
+          events: [{ eventId: 'event-1', eventType: 'package.created', createdAt: Date.UTC(2026, 5, 11) }],
+        },
+      },
+    }),
+    initialActiveTab: 'releases',
+  }));
+
+  assert.match(html, /Rollback release/);
+  assert.match(html, /Rollback of rel-global-1/);
+  assert.match(html, /Reason: Restore the previous global spelling release\./);
+  assert.match(html, /data-content-ops-rollback-lineage="rel-global-1"/);
+});
+
 test('Content Operations Centre SSR renders package-scoped domain tabs and audit state', async () => {
   const html = await renderEntry(buildContentOpsEntry({
     initialActiveTab: 'detail',
@@ -988,6 +1078,161 @@ test('Content Operations Centre mounted shell loads API data without implicit pa
   assert.match(result.overviewText, /rel-global-1/);
   assert.match(result.packageTableText, /Pending/);
   assert.equal(result.selectedRows, 0);
+});
+
+test('Content Operations Centre mounted release history rolls back a prior release with reason', async () => {
+  const currentRelease = {
+    ...release,
+    releaseId: 'rel-global-2',
+    snapshotHash: 'hash-2',
+    baseReleaseId: 'rel-global-1',
+    publishedAt: Date.UTC(2026, 5, 11, 9, 20, 0),
+  };
+  const rollbackEnabledOverview = {
+    ...overview,
+    latestRelease: currentRelease,
+    lanes: {
+      ...overview.lanes,
+      recentReleases: [currentRelease, release],
+    },
+    actor: {
+      ...overview.actor,
+      capabilities: {
+        ...overview.actor.capabilities,
+        'content_operations.rollback': true,
+      },
+    },
+  };
+  const modelWithRollback = baseModel({
+    contentOperations: {
+      overview: rollbackEnabledOverview,
+      packages: { packages: [contentPackage] },
+      releases: { releases: [currentRelease, release] },
+      packageDetail: {
+        package: contentPackage,
+        events: [{ eventId: 'event-1', eventType: 'package.created', createdAt: Date.UTC(2026, 5, 11) }],
+      },
+    },
+  });
+  const output = await runClientEntry(`
+    const { JSDOM } = require('jsdom');
+
+    globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+    const dom = new JSDOM('<!doctype html><html><body><div id="root"></div></body></html>', {
+      url: 'https://ks2.eugnel.uk/admin',
+    });
+    globalThis.window = dom.window;
+    globalThis.document = dom.window.document;
+    globalThis.navigator = dom.window.navigator;
+    globalThis.HTMLElement = dom.window.HTMLElement;
+    globalThis.Event = dom.window.Event;
+
+    const React = require('react');
+    const { createRoot } = require('react-dom/client');
+    const { AdminContentOperationsSection } = require(${CONTENT_OPS_SECTION_PATH});
+    const { act } = React;
+
+    const model = ${JSON.stringify(modelWithRollback)};
+    const rollbackRelease = ${JSON.stringify(rollbackRelease)};
+    const currentRelease = ${JSON.stringify(currentRelease)};
+    const oldRelease = ${JSON.stringify(release)};
+    const calls = [];
+    const actions = {
+      contentOperationsApi: {
+        async rollbackRelease(args) {
+          calls.push({ method: 'rollback', args });
+          return { release: rollbackRelease };
+        },
+        async readOverview(args) {
+          calls.push({ method: 'overview', args });
+          return {
+            ...model.contentOperations.overview,
+            latestRelease: rollbackRelease,
+            lanes: {
+              ...model.contentOperations.overview.lanes,
+              recentReleases: [rollbackRelease, currentRelease, oldRelease],
+            },
+          };
+        },
+        async readPackages(args) {
+          calls.push({ method: 'packages', args });
+          return model.contentOperations.packages;
+        },
+        async readReleases(args) {
+          calls.push({ method: 'releases', args });
+          return { releases: [rollbackRelease, currentRelease, oldRelease] };
+        },
+      },
+    };
+
+    async function flush() {
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      });
+    }
+
+    async function main() {
+      const root = createRoot(document.getElementById('root'));
+      await act(async () => {
+        root.render(React.createElement(AdminContentOperationsSection, {
+          model,
+          actions,
+          initialActiveTab: 'releases',
+        }));
+      });
+      await flush();
+
+      const button = document.querySelector('[data-content-ops-rollback-action="rel-global-1"]');
+      const buttonDisabledBeforeReason = button.disabled;
+      const reason = document.querySelector('[data-content-ops-rollback-reason="rel-global-1"]');
+      const valueSetter = Object.getOwnPropertyDescriptor(dom.window.HTMLTextAreaElement.prototype, 'value').set;
+      valueSetter.call(reason, 'Restore the previous global spelling release.');
+      await act(async () => {
+        reason.dispatchEvent(new dom.window.Event('input', { bubbles: true }));
+        reason.dispatchEvent(new dom.window.Event('change', { bubbles: true }));
+      });
+      await flush();
+
+      const buttonDisabledAfterReason = button.disabled;
+      await act(async () => {
+        button.click();
+      });
+      await flush();
+      await flush();
+      await flush();
+
+      process.stdout.write(JSON.stringify({
+        calls,
+        text: document.body.textContent,
+        buttonDisabledBeforeReason,
+        buttonDisabledAfterReason,
+      }));
+
+      await act(async () => {
+        root.unmount();
+      });
+      dom.window.close();
+      process.exit(0);
+    }
+
+    main().catch((error) => {
+      process.stderr.write(error.stack || error.message);
+      process.exitCode = 1;
+    });
+  `);
+  const result = JSON.parse(output);
+  const rollbackCall = result.calls.find((entry) => entry.method === 'rollback');
+
+  assert.equal(result.buttonDisabledBeforeReason, true);
+  assert.equal(result.buttonDisabledAfterReason, false);
+  assert.equal(rollbackCall.args.releaseId, 'rel-global-1');
+  assert.equal(rollbackCall.args.reason, 'Restore the previous global spelling release.');
+  assert.equal(rollbackCall.args.proof.rollback.approvalMode, 'same-role-placeholder');
+  assert.equal(rollbackCall.args.proof.rollback.proofRequirement, 'production-proof-after-rollback');
+  assert.ok(rollbackCall.args.mutation.requestId.startsWith('content-ops-rollback-rel-global-1-'));
+  assert.deepEqual(result.calls.map((entry) => entry.method), ['rollback', 'overview', 'packages', 'releases']);
+  assert.match(result.text, /Rolled back to rel-global-1\./);
+  assert.match(result.text, /Rollback of rel-global-1/);
 });
 
 test('Content Operations Centre spelling tab browses words and loads package draft detail', async () => {

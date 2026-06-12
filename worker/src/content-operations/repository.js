@@ -2540,11 +2540,23 @@ export function createContentOperationsRepository({ db, env = {}, now }) {
 
     async rollbackContentOperationRelease(subjectId = CONTENT_OPERATION_SUBJECT_ID, releaseId, {
       rolledBackByAccountId,
+      reason = '',
       proof = null,
     } = {}) {
       const resolvedSubjectId = normaliseSubjectId(subjectId);
       const actor = normaliseString(rolledBackByAccountId);
       if (!actor) throw new BadRequestError('Content operation rollback requires an actor account id.');
+      const suppliedRollbackProof = isPlainObject(proof?.rollback) ? proof.rollback : {};
+      const rollbackReason = normaliseString(reason)
+        || normaliseString(proof?.reason)
+        || normaliseString(suppliedRollbackProof.reason);
+      if (!rollbackReason) {
+        throw new BadRequestError('Content operation rollback requires a reason.', {
+          code: 'content_operation_rollback_reason_required',
+          subjectId: resolvedSubjectId,
+          releaseId,
+        });
+      }
       const targetRow = await readReleaseRowById(db, resolvedSubjectId, normaliseString(releaseId), {
         includeSnapshot: true,
       });
@@ -2581,9 +2593,15 @@ export function createContentOperationsRepository({ db, env = {}, now }) {
           },
         } : {}),
         rollback: {
+          ...cloneSerialisable(suppliedRollbackProof),
           targetReleaseId: target.releaseId,
           targetSnapshotHash: target.snapshotHash,
           previousLatestReleaseId: currentRow?.release_id || null,
+          reason: rollbackReason,
+          approvedByAccountId: normaliseString(suppliedRollbackProof.approvedByAccountId, actor),
+          publishedByAccountId: normaliseString(suppliedRollbackProof.publishedByAccountId, actor),
+          approvalMode: normaliseString(suppliedRollbackProof.approvalMode, 'same-role-placeholder'),
+          proofRequirement: normaliseString(suppliedRollbackProof.proofRequirement, 'production-proof-after-rollback'),
         },
       };
 
@@ -2632,6 +2650,7 @@ export function createContentOperationsRepository({ db, env = {}, now }) {
             rollbackOfReleaseId: target.releaseId,
             previousLatestReleaseId: currentRow?.release_id || null,
             snapshotHash,
+            reason: rollbackReason,
           }),
           nowTs,
           rollbackReleaseId,

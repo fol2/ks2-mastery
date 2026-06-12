@@ -499,6 +499,29 @@ export function createHubApi({
         body: JSON.stringify({ proof }),
       }, authSession);
     },
+    async rollbackContentOperationRelease({
+      releaseId,
+      reason = '',
+      proof = null,
+      includeSnapshot = false,
+      mutation,
+    } = {}) {
+      if (!releaseId) throw new TypeError('Content operation release id is required.');
+      const safeReason = String(reason || '').trim();
+      if (!safeReason) throw new TypeError('Content operation rollback reason is required.');
+      const safeReleaseId = encodeURIComponent(String(releaseId));
+      const url = buildRequestUrl(baseUrl, `/api/admin/content-operations/releases/${safeReleaseId}/rollback`);
+      return fetchHubJson(fetch, url, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          reason: safeReason,
+          proof,
+          includeSnapshot: Boolean(includeSnapshot),
+          mutation,
+        }),
+      }, authSession);
+    },
     async readAdminOpsKpi() {
       const url = buildRequestUrl(baseUrl, '/api/admin/ops/kpi');
       return fetchHubJson(fetch, url, { method: 'GET' }, authSession);
