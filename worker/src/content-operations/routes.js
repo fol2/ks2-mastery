@@ -112,6 +112,7 @@ function badContentOperation(error) {
   const message = String(error?.message || error || 'Invalid content operation.');
   if (
     message.startsWith('Unsupported content operation')
+    || message.startsWith('Unsupported audio requirement profile')
     || message.startsWith('Content operations require')
     || message.startsWith('Set operations require')
     || message.startsWith('Cannot ')
@@ -573,10 +574,16 @@ export async function handleContentOperationsAdminRequest({
             packageId,
           });
         }
+        if (body.audioFallback != null) {
+          throw new BadRequestError('Content operation audio fallback approvals are not supported.', {
+            code: 'content_operation_audio_fallback_not_supported',
+            packageId,
+            candidateId,
+          });
+        }
         const approval = await repository.approveContentOperationCandidate(packageId, candidateId, {
           approvedByAccountId: actor.id,
           notes: body.notes,
-          audioFallback: body.audioFallback ?? null,
           assetSummary: body.assetSummary ?? null,
         });
         return json({

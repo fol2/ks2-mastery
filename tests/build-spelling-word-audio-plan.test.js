@@ -45,6 +45,9 @@ import {
 } from '../scripts/build-spelling-word-audio.mjs';
 import { WORDS } from '../src/subjects/spelling/data/word-data.js';
 import { SEEDED_SPELLING_PUBLISHED_SNAPSHOT } from '../src/subjects/spelling/data/content-data.js';
+import {
+  computeSpellingWordAudioContentKey,
+} from '../src/subjects/spelling/content/audio-readiness.js';
 
 // Pinned fixture values — same digests/keys assertion `tests/spelling-word-prompt.test.js`
 // pins on the worker side. If the encoding or hash input shape changes,
@@ -327,6 +330,13 @@ test('computeWordContentKey applies cleanText collapse identically to Worker', a
   const clean = await computeWordContentKey('accident', 'accident demo');
   assert.equal(dirty, clean);
   assert.equal(dirty, ACCIDENT_DEMO_DIGEST);
+});
+
+test('content-operations audio readiness word content key matches the batch generator', async () => {
+  const scriptKey = await computeWordContentKey('accident', 'accident');
+  const scannerKey = await computeSpellingWordAudioContentKey('accident', 'accident');
+  assert.equal(scannerKey, scriptKey);
+  assert.equal(scannerKey, ACCIDENT_DIGEST);
 });
 
 // INTEGRATION: R2 key byte-equality vs `buildWordAudioAssetKey` (shared helper).

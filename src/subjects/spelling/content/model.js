@@ -458,6 +458,9 @@ function normaliseDraft(rawValue) {
     provenance: normaliseProvenance(raw.provenance, raw.sourceNote || 'spelling draft'),
     createdAt: normaliseTimestamp(raw.createdAt, updatedAt),
     updatedAt,
+    ...(isPlainObject(raw.audioRequirementProfile)
+      ? { audioRequirementProfile: cloneSerialisable(raw.audioRequirementProfile) }
+      : {}),
     pools,
     wordLists,
     words: (Array.isArray(raw.words) ? raw.words : []).map((entry, index) => normaliseWordEntry(entry, index, wordListsById)),

@@ -5,6 +5,9 @@ import { createWorkerRepository } from '../worker/src/repository.js';
 import {
   readSeededSpellingContentBundle,
 } from '../worker/src/generated-spelling-content-seed.js';
+import {
+  listContentOperationAudioJobs,
+} from '../worker/src/content-operations/audio.js';
 import { createWorkerRepositoryServer } from './helpers/worker-server.js';
 
 const BASE_URL = 'https://repo.test';
@@ -131,6 +134,60 @@ async function publishPackage(server, packageId, body = {}) {
   return readPayload(response);
 }
 
+function seedUploadedAudioJobs(DB, {
+  packageId,
+  candidateId,
+  items = [],
+  accountId = ADMIN_ID,
+  now = NOW,
+  status = 'uploaded',
+} = {}) {
+  const requiredItems = items.filter((item) => item?.required !== false);
+  const statement = DB.db.prepare(`
+    INSERT INTO content_operation_audio_jobs (
+      job_id,
+      package_id,
+      candidate_id,
+      lane,
+      entity_type,
+      entity_id,
+      voice_id,
+      pace_id,
+      model_id,
+      profile_version,
+      content_key,
+      status,
+      r2_key,
+      error_json,
+      requested_by_account_id,
+      completed_at,
+      created_at
+    )
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?)
+  `);
+  for (const [index, item] of requiredItems.entries()) {
+    const lane = item.lane === 'sentence' ? 'sentence' : 'word';
+    statement.run(
+      `audio-job-${packageId}-${index}`,
+      packageId,
+      candidateId,
+      lane,
+      lane === 'sentence' ? 'spelling.sentenceEntry' : 'spelling.word',
+      lane === 'sentence' ? item.sentenceId : item.slug,
+      item.voiceId,
+      item.paceId || item.speedId || 'natural',
+      item.modelId,
+      item.profileVersion,
+      item.contentKey,
+      status,
+      item.r2Key,
+      accountId,
+      now + index,
+      now + index,
+    );
+  }
+}
+
 async function resolveConflictResponse(server, packageId, body = {}) {
   return server.fetchAs(
     ADMIN_ID,
@@ -145,6 +202,54 @@ async function resolveConflict(server, packageId, body = {}) {
   assert.equal(response.status, 200);
   return readPayload(response);
 }
+
+test('content operation audio job listing returns the full package ledger by default', async () => {
+  const server = createWorkerRepositoryServer({ now: () => NOW });
+  try {
+    const packageId = 'copkg-audio-ledger-full';
+    const statement = server.DB.db.prepare(`
+      INSERT INTO content_operation_audio_jobs (
+        job_id,
+        package_id,
+        candidate_id,
+        lane,
+        entity_type,
+        entity_id,
+        voice_id,
+        pace_id,
+        model_id,
+        profile_version,
+        content_key,
+        status,
+        r2_key,
+        error_json,
+        requested_by_account_id,
+        completed_at,
+        created_at
+      )
+      VALUES (?, ?, ?, 'word', 'spelling.word', ?, 'puck', 'natural', 'gemini-2.5-flash-preview-tts',
+        'spelling-audio-profile-v1', ?, 'uploaded', ?, NULL, ?, ?, ?)
+    `);
+    for (let index = 0; index < 1005; index += 1) {
+      statement.run(
+        `audio-ledger-job-${index}`,
+        packageId,
+        'cocand-audio-ledger',
+        `word-${index}`,
+        `content-key-${index}`,
+        `spelling/audio/word-${index}.wav`,
+        ADMIN_ID,
+        NOW + index,
+        NOW + index,
+      );
+    }
+
+    const jobs = await listContentOperationAudioJobs(server.DB, { packageId });
+    assert.equal(jobs.length, 1005);
+  } finally {
+    server.close();
+  }
+});
 
 test('content operations API requires the admin platform role', async () => {
   const server = createWorkerRepositoryServer({ now: () => NOW });
@@ -353,10 +458,62 @@ test('content operations API publishes linked sentence-entry operations through 
       payload: [...word.sentenceEntryIds, sentenceId],
     });
 
-    const validated = await validatePackage(server, packageId);
+    const blocked = await validatePackage(server, packageId);
+    assert.equal(blocked.candidate.validation.status, 'passed');
+    assert.equal(blocked.candidate.blockers.audio.status, 'blocked');
+
+    seedUploadedAudioJobs(server.DB, {
+      packageId,
+      candidateId: blocked.candidate.candidateId,
+      items: blocked.candidate.audioScan.items,
+    });
+
+    const validated = await validatePackage(server, packageId, { includeSnapshot: true });
     assert.equal(validated.candidate.validation.status, 'passed');
+    assert.equal(validated.candidate.blockers.audio.status, 'passed');
 
     await approvePackage(server, packageId, validated.candidate.candidateId);
+    server.DB.db.prepare(`
+      UPDATE content_operation_audio_jobs
+      SET status = 'failed', error_json = ?
+      WHERE package_id = ?
+        AND job_id = (
+          SELECT job_id
+          FROM content_operation_audio_jobs
+          WHERE package_id = ?
+          ORDER BY created_at ASC, job_id ASC
+          LIMIT 1
+        )
+    `).run(JSON.stringify({ message: 'Regression guard failed.' }), packageId, packageId);
+
+    const blockedPublishResponse = await server.fetchAs(
+      ADMIN_ID,
+      `${BASE_URL}/api/admin/content-operations/packages/${packageId}/publish`,
+      jsonInit('POST', {
+        includeSnapshot: false,
+        proof: { source: 'content-operations-api-linked-sentence-drift-test' },
+      }),
+      adminHeaders(),
+    );
+    const blockedPublishPayload = await readPayload(blockedPublishResponse);
+    assert.equal(blockedPublishResponse.status, 409);
+    assert.equal(blockedPublishPayload.code, 'content_operation_candidate_audio_blocked');
+    assert.equal(blockedPublishPayload.audioScan.failedCount, 1);
+
+    const persistedBlockedPublishRow = server.DB.db.prepare(`
+      SELECT audio_scan_json
+      FROM content_operation_package_candidates
+      WHERE candidate_id = ?
+    `).get(validated.candidate.candidateId);
+    const persistedBlockedPublishScan = JSON.parse(persistedBlockedPublishRow.audio_scan_json);
+    assert.equal(persistedBlockedPublishScan.failedCount, 1);
+
+    server.DB.db.prepare(`
+      UPDATE content_operation_audio_jobs
+      SET status = 'uploaded', error_json = NULL
+      WHERE package_id = ?
+    `).run(packageId);
+
     const published = await publishPackage(server, packageId, {
       includeSnapshot: true,
       proof: { source: 'content-operations-api-linked-sentence-test' },
@@ -367,6 +524,87 @@ test('content operations API publishes linked sentence-entry operations through 
     assert.ok(publishedWord.sentenceEntryIds.includes(sentenceId));
     assert.equal(publishedSentence.text, sentenceText);
     assert.equal(publishedSentence.wordSlug, word.slug);
+  } finally {
+    server.close();
+  }
+});
+
+test('content operations API applies package-scoped audio requirement profiles to candidates', async () => {
+  const server = createWorkerRepositoryServer({ now: () => NOW });
+  try {
+    seedAdultAccount(server.DB, { accountId: ADMIN_ID, platformRole: 'admin' });
+    const repository = createWorkerRepository({
+      env: server.env,
+      now: () => NOW,
+    });
+    await repository.seedFirstContentOperationRelease({
+      seededByAccountId: ADMIN_ID,
+      proof: { source: 'content-operations-api-audio-profile-test' },
+    });
+
+    const profile = {
+      wordProfiles: ['male.natural'],
+      sentenceProfiles: ['female.slow'],
+    };
+    const created = await createPackage(server, { title: 'Audio profile package' });
+    const packageId = created.package.packageId;
+
+    await appendContentOperation(server, packageId, {
+      entityType: 'spelling.audioRequirementProfile',
+      entityId: 'default',
+      fieldPath: '',
+      action: 'replace',
+      payload: profile,
+    });
+
+    const validated = await validatePackage(server, packageId, { includeSnapshot: true });
+    assert.equal(validated.candidate.validation.status, 'passed');
+    assert.equal(validated.candidate.blockers.audio.status, 'blocked');
+    assert.deepEqual(validated.candidate.audioScan.profile.wordProfiles.map((entry) => entry.profileId), ['male.natural']);
+    assert.deepEqual(validated.candidate.audioScan.profile.sentenceProfiles.map((entry) => entry.profileId), ['female.slow']);
+    assert.deepEqual(validated.candidate.candidate.draft.audioRequirementProfile, profile);
+    assert.equal(
+      validated.candidate.audioScan.totalRequired,
+      validated.candidate.audioScan.lanes.word.totalRequired + validated.candidate.audioScan.lanes.sentence.totalRequired,
+    );
+  } finally {
+    server.close();
+  }
+});
+
+test('content operations API returns a content-operation envelope for unsupported audio profile ids', async () => {
+  const server = createWorkerRepositoryServer({ now: () => NOW });
+  try {
+    seedAdultAccount(server.DB, { accountId: ADMIN_ID, platformRole: 'admin' });
+    const repository = createWorkerRepository({
+      env: server.env,
+      now: () => NOW,
+    });
+    await repository.seedFirstContentOperationRelease({
+      seededByAccountId: ADMIN_ID,
+      proof: { source: 'content-operations-api-invalid-audio-profile-test' },
+    });
+
+    const created = await createPackage(server, { title: 'Invalid audio profile package' });
+    const packageId = created.package.packageId;
+    await appendContentOperation(server, packageId, {
+      entityType: 'spelling.audioRequirementProfile',
+      entityId: 'secondary',
+      fieldPath: '',
+      action: 'replace',
+      payload: { wordProfiles: ['male.natural'] },
+    });
+
+    const response = await server.fetchAs(
+      ADMIN_ID,
+      `${BASE_URL}/api/admin/content-operations/packages/${packageId}/validate`,
+      jsonInit('POST', { includeSnapshot: true }),
+      adminHeaders(),
+    );
+    const payload = await readPayload(response);
+    assert.equal(response.status, 400);
+    assert.equal(payload.code, 'content_operation_invalid');
+    assert.match(payload.detail, /Unsupported audio requirement profile/);
   } finally {
     server.close();
   }
@@ -607,8 +845,8 @@ test('content operations API supports admin package lifecycle through separate a
       WHERE candidate_id = ?
     `).run(
       JSON.stringify({
-        status: 'blocked',
-        blockers: ['word_audio_missing'],
+        status: 'warning',
+        blockers: [],
         warnings: ['slow_sentence_missing'],
       }),
       JSON.stringify({
@@ -628,7 +866,7 @@ test('content operations API supports admin package lifecycle through separate a
     const packageList = await readPayload(packageListResponse);
     assert.equal(packageListResponse.status, 200);
     const packageSummary = packageList.packages.find((entry) => entry.packageId === packageId);
-    assert.deepEqual(packageSummary.blockers.audio.blockers, ['word_audio_missing']);
+    assert.deepEqual(packageSummary.blockers.audio.blockers, []);
     assert.deepEqual(packageSummary.blockers.audio.warnings, ['slow_sentence_missing']);
     assert.deepEqual(packageSummary.blockers.assets.warnings, ['monster_asset_pending']);
 
@@ -647,7 +885,7 @@ test('content operations API supports admin package lifecycle through separate a
     const approvedSummary = prePublishOverview.overview.lanes.approvedPendingPublish.find(
       (entry) => entry.packageId === packageId,
     );
-    assert.deepEqual(approvedSummary.blockers.audio.blockers, ['word_audio_missing']);
+    assert.deepEqual(approvedSummary.blockers.audio.blockers, []);
     assert.deepEqual(approvedSummary.blockers.assets.warnings, ['monster_asset_pending']);
 
     const publishResponse = await server.fetchAs(
@@ -705,6 +943,77 @@ test('content operations API supports admin package lifecycle through separate a
     assert.equal(overview.overview.latestRelease.releaseId, published.release.releaseId);
     assert.equal(overview.overview.actor.capabilities['content_operations.approve'], true);
     assert.equal(overview.overview.actor.capabilities['content_operations.publish'], true);
+  } finally {
+    server.close();
+  }
+});
+
+test('content operations API blocks approval when affected sentence audio is missing', async () => {
+  const server = createWorkerRepositoryServer({ now: () => NOW });
+  try {
+    seedAdultAccount(server.DB, { accountId: ADMIN_ID, platformRole: 'admin' });
+    const seeded = await readSeededSpellingContentBundle();
+    const word = seeded.draft.words.find((entry) => entry.sentenceEntryIds?.length);
+    const sentenceId = word.sentenceEntryIds[0];
+    const sentence = seeded.draft.sentences.find((entry) => entry.id === sentenceId);
+    const created = await createPackage(server, { title: 'Sentence audio blocker package' });
+    const packageId = created.package.packageId;
+
+    await appendContentOperation(server, packageId, {
+      entityType: 'spelling.sentenceEntry',
+      entityId: sentenceId,
+      fieldPath: 'text',
+      action: 'set',
+      payload: `${sentence.text} This edited sentence needs regenerated speech.`,
+    });
+
+    const validated = await validatePackage(server, packageId);
+    assert.equal(validated.candidate.validation.status, 'passed');
+    assert.equal(validated.candidate.blockers.audio.status, 'blocked');
+    assert.ok(validated.candidate.blockers.audio.blockers.includes('sentence_audio_missing'));
+    assert.equal(validated.candidate.audioScan.lanes.sentence.totalRequired, 4);
+
+    server.DB.db.prepare(`
+      UPDATE content_operation_package_candidates
+      SET audio_scan_json = NULL
+      WHERE candidate_id = ?
+    `).run(validated.candidate.candidateId);
+
+    const approveResponse = await server.fetchAs(
+      ADMIN_ID,
+      `${BASE_URL}/api/admin/content-operations/packages/${packageId}/approve`,
+      jsonInit('POST', {
+        candidateId: validated.candidate.candidateId,
+        notes: 'Audio has not been generated yet.',
+      }),
+      adminHeaders(),
+    );
+    const approvePayload = await readPayload(approveResponse);
+    assert.equal(approveResponse.status, 409);
+    assert.equal(approvePayload.code, 'content_operation_candidate_audio_blocked');
+    assert.equal(approvePayload.audioScan.lanes.sentence.missingCount, 4);
+
+    const persistedScanRow = server.DB.db.prepare(`
+      SELECT audio_scan_json
+      FROM content_operation_package_candidates
+      WHERE candidate_id = ?
+    `).get(validated.candidate.candidateId);
+    const persistedScan = JSON.parse(persistedScanRow.audio_scan_json);
+    assert.equal(persistedScan.lanes.sentence.missingCount, 4);
+
+    const fallbackResponse = await server.fetchAs(
+      ADMIN_ID,
+      `${BASE_URL}/api/admin/content-operations/packages/${packageId}/approve`,
+      jsonInit('POST', {
+        candidateId: validated.candidate.candidateId,
+        notes: 'Attempt a temporary audio fallback.',
+        audioFallback: { reason: 'Operator override requested.' },
+      }),
+      adminHeaders(),
+    );
+    const fallbackPayload = await readPayload(fallbackResponse);
+    assert.equal(fallbackResponse.status, 400);
+    assert.equal(fallbackPayload.code, 'content_operation_audio_fallback_not_supported');
   } finally {
     server.close();
   }

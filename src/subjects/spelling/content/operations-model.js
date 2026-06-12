@@ -19,6 +19,7 @@ export const CONTENT_OPERATION_PACKAGE_STATES = Object.freeze({
 });
 
 export const CONTENT_OPERATION_ENTITY_TYPES = Object.freeze([
+  'spelling.audioRequirementProfile',
   'spelling.pool',
   'spelling.word',
   'spelling.sentenceEntry',
@@ -37,6 +38,8 @@ export const CONTENT_OPERATION_ACTIONS = Object.freeze([
 const ENTITY_TYPE_SET = new Set(CONTENT_OPERATION_ENTITY_TYPES);
 const ACTION_SET = new Set(CONTENT_OPERATION_ACTIONS);
 const STRUCTURAL_ACTIONS = new Set(['create', 'upsert', 'replace', 'remove', 'retire']);
+const AUDIO_REQUIREMENT_PROFILE_ENTITY_TYPE = 'spelling.audioRequirementProfile';
+const AUDIO_REQUIREMENT_PROFILE_ENTITY_ID = 'default';
 
 const EDITABLE_COLLECTIONS = Object.freeze({
   'spelling.pool': Object.freeze({ collectionPath: ['draft', 'pools'], idField: 'id' }),
@@ -118,6 +121,32 @@ function findEntity(collection, idField, entityId) {
 }
 
 function applyCollectionOperation(bundle, operation) {
+  if (operation.entityType === AUDIO_REQUIREMENT_PROFILE_ENTITY_TYPE) {
+    if (operation.entityId !== AUDIO_REQUIREMENT_PROFILE_ENTITY_ID) {
+      throw new Error(`Unsupported audio requirement profile "${operation.entityId}".`);
+    }
+    if (['create', 'upsert', 'replace'].includes(operation.action)) {
+      bundle.draft.audioRequirementProfile = cloneSerialisable(operation.payload) || {};
+      return;
+    }
+    if (operation.action === 'remove' || operation.action === 'retire') {
+      delete bundle.draft.audioRequirementProfile;
+      return;
+    }
+    if (operation.action === 'set') {
+      const pathParts = splitFieldPath(operation.fieldPath);
+      if (!pathParts.length) {
+        throw new Error('Set operations require a fieldPath.');
+      }
+      const next = isPlainObject(bundle.draft.audioRequirementProfile)
+        ? cloneSerialisable(bundle.draft.audioRequirementProfile)
+        : {};
+      setAtPath(next, pathParts, operation.payload);
+      bundle.draft.audioRequirementProfile = next;
+      return;
+    }
+  }
+
   const descriptor = collectionFor(bundle, operation.entityType);
   if (!descriptor) {
     throw new Error(`Unsupported content operation entity type "${operation.entityType}".`);
@@ -311,6 +340,13 @@ export function detectContentOperationConflicts(leftOperations = [], rightOperat
 
 export function readContentOperationField(bundle, operation) {
   const normalised = normaliseContentOperation(operation, { now: () => 0 });
+  if (normalised.entityType === AUDIO_REQUIREMENT_PROFILE_ENTITY_TYPE) {
+    if (normalised.entityId !== AUDIO_REQUIREMENT_PROFILE_ENTITY_ID) return undefined;
+    return getAtPath(
+      normaliseSpellingContentBundle(bundle).draft.audioRequirementProfile || {},
+      splitFieldPath(normalised.fieldPath),
+    );
+  }
   const descriptor = collectionFor(normaliseSpellingContentBundle(bundle), normalised.entityType);
   if (!descriptor) return undefined;
   const { entity } = findEntity(descriptor.collection, descriptor.idField, normalised.entityId);

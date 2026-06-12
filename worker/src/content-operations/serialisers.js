@@ -242,6 +242,7 @@ export function serialiseContentOperationCandidate(candidate = {}, { includeSnap
     operationsHash: candidate.operationsHash || '',
     candidateHash: candidate.candidateHash || '',
     validation: normaliseValidation(candidate.validation),
+    audioScan: candidate.audioScan || null,
     blockers: buildContentOperationBlockerEnvelope({
       validation: candidate.validation,
       conflicts: candidate.conflicts,

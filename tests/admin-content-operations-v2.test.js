@@ -670,12 +670,18 @@ describe('Content Operations Centre normalisers', () => {
 
   it('normalises candidate review metadata for lifecycle controls', () => {
     const candidate = normaliseContentOperationCandidate(CONTENT_OPS_PACKAGE.latestCandidate);
+    const snapshotCandidate = normaliseContentOperationCandidate({
+      ...CONTENT_OPS_PACKAGE.latestCandidate,
+      candidate: { draft: { words: [{ slug: 'accident' }] } },
+    });
 
     assert.equal(candidate.candidateId, 'cand-draft-1');
     assert.equal(candidate.candidateHash, 'candidate-hash-1');
     assert.equal(candidate.validation.status, 'passed');
     assert.deepEqual(candidate.blockers.blockingSections, ['publishReadiness']);
     assert.equal(candidate.blockers.publishReadiness.blockers[0], 'approval_required');
+    assert.equal(Object.prototype.hasOwnProperty.call(candidate, 'candidate'), false);
+    assert.deepEqual(snapshotCandidate.candidate, { draft: { words: [{ slug: 'accident' }] } });
   });
 
   it('keeps compact package operation counts unknown instead of inventing zero', () => {

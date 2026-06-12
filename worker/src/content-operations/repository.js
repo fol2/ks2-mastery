@@ -15,6 +15,9 @@ import {
   validateSpellingContentBundle,
 } from '../../../src/subjects/spelling/content/model.js';
 import {
+  audioReadinessHasBlockingItems,
+} from '../../../src/subjects/spelling/content/audio-readiness.js';
+import {
   decodeContentOperationSnapshot,
   encodeContentOperationSnapshot,
 } from '../../../src/subjects/spelling/content/release-snapshot-codec.js';
@@ -33,6 +36,9 @@ import {
   ConflictError,
   NotFoundError,
 } from '../errors.js';
+import {
+  buildContentOperationAudioScan,
+} from './audio.js';
 
 function parseJson(value, fallback = null) {
   if (value == null || value === '') return fallback;
@@ -127,6 +133,18 @@ async function candidateRowToRecordAsync(row, { includeSnapshot = false } = {}) 
     ...record,
     candidate: parseJson(snapshotJson, null),
   };
+}
+
+async function persistCandidateAudioScan(db, candidateId, audioScan) {
+  if (!candidateId) return;
+  await run(db, `
+    UPDATE content_operation_package_candidates
+    SET audio_scan_json = ?
+    WHERE candidate_id = ?
+  `, [
+    JSON.stringify(audioScan || null),
+    candidateId,
+  ]);
 }
 
 async function readLatestCandidateForPackage(db, packageId) {
@@ -1040,6 +1058,12 @@ export function createContentOperationsRepository({ db, now }) {
         ...releaseConflicts,
         driftConflict,
       ].filter(Boolean);
+      const audioScan = await buildContentOperationAudioScan({
+        db,
+        packageId,
+        candidate: candidate.candidate,
+        operations,
+      });
       const candidateId = uid('cocand');
       const nowTs = Number(nowFactory());
       const validationSummary = {
@@ -1059,7 +1083,7 @@ export function createContentOperationsRepository({ db, now }) {
             validation_json, audio_scan_json, asset_scan_json, reward_scan_json,
             visibility_scan_json, conflicts_json, created_at
           )
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, NULL, NULL, ?, ?)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, NULL, ?, ?)
         `, [
           candidateId,
           packageId,
@@ -1069,6 +1093,7 @@ export function createContentOperationsRepository({ db, now }) {
           candidate.candidateHash,
           encodedCandidateSnapshot,
           JSON.stringify(validationSummary),
+          JSON.stringify(audioScan),
           JSON.stringify(conflicts),
           nowTs,
         ]),
@@ -1098,6 +1123,11 @@ export function createContentOperationsRepository({ db, now }) {
             candidateHash: candidate.candidateHash,
             operationsHash: candidate.operationsHash,
             validation: validationSummary,
+            audio: {
+              status: audioScan.status,
+              blockers: audioScan.blockers,
+              requiredCount: audioScan.requiredCount,
+            },
           }),
           nowTs,
         ]),
@@ -1112,6 +1142,7 @@ export function createContentOperationsRepository({ db, now }) {
         candidateHash: candidate.candidateHash,
         candidate: candidate.candidate,
         validation: validationSummary,
+        audioScan,
         conflicts,
         createdAt: nowTs,
       };
@@ -1246,7 +1277,14 @@ export function createContentOperationsRepository({ db, now }) {
           candidateId,
         });
       }
-      const candidate = candidateRowToRecord(candidateRow);
+      const candidate = await candidateRowToRecordAsync(candidateRow, { includeSnapshot: true });
+      if (!candidate?.candidate) {
+        throw new ConflictError('Content operation candidate snapshot is unavailable.', {
+          code: 'content_operation_candidate_snapshot_missing',
+          packageId,
+          candidateId,
+        });
+      }
       if (candidate.operationsHash !== currentOperationsHash) {
         throw new ConflictError('Content operation candidate was built from stale package operations.', {
           code: 'content_operation_candidate_operations_stale',
@@ -1273,6 +1311,21 @@ export function createContentOperationsRepository({ db, now }) {
           validation: candidate.validation,
         });
       }
+      const currentAudioScan = await buildContentOperationAudioScan({
+        db,
+        packageId,
+        candidate: candidate.candidate,
+        operations,
+      });
+      if (audioReadinessHasBlockingItems(currentAudioScan)) {
+        await persistCandidateAudioScan(db, candidateId, currentAudioScan);
+        throw new ConflictError('Content operation candidate has audio readiness blockers.', {
+          code: 'content_operation_candidate_audio_blocked',
+          packageId,
+          candidateId,
+          audioScan: currentAudioScan,
+        });
+      }
       if (Array.isArray(candidate.conflicts) && candidate.conflicts.length) {
         throw new ConflictError('Content operation candidate has unresolved conflicts.', {
           code: 'content_operation_candidate_conflicted',
@@ -1289,6 +1342,14 @@ export function createContentOperationsRepository({ db, now }) {
           DELETE FROM content_operation_package_approvals
           WHERE package_id = ?
         `, [packageId]),
+        bindStatement(db, `
+          UPDATE content_operation_package_candidates
+          SET audio_scan_json = ?
+          WHERE candidate_id = ?
+        `, [
+          JSON.stringify(currentAudioScan),
+          candidateId,
+        ]),
         bindStatement(db, `
           INSERT INTO content_operation_package_approvals (
             approval_id, package_id, candidate_id, candidate_hash,
@@ -1337,6 +1398,11 @@ export function createContentOperationsRepository({ db, now }) {
             candidateHash: candidate.candidateHash,
             notes: normaliseString(notes),
             validationSummary: candidate.validation,
+            audio: {
+              status: currentAudioScan.status,
+              blockers: currentAudioScan.blockers,
+              requiredCount: currentAudioScan.requiredCount,
+            },
             audioFallback,
             assetSummary,
           }),
@@ -1399,6 +1465,17 @@ export function createContentOperationsRepository({ db, now }) {
           packageId,
         });
       }
+      const operations = await listPackageOperations(db, packageId);
+      const currentOperationsHash = packageOperationsHash(operations);
+      if (candidate.operationsHash !== currentOperationsHash) {
+        throw new ConflictError('Content operation candidate was built from stale package operations.', {
+          code: 'content_operation_candidate_operations_stale',
+          packageId,
+          candidateId: candidate.candidateId,
+          candidateOperationsHash: candidate.operationsHash,
+          currentOperationsHash,
+        });
+      }
       const currentReleaseRow = await readLatestReleaseRow(db, packageRow.subject_id);
       if (!currentReleaseRow) {
         throw new ConflictError('First global content operation release must be seeded before package publish.', {
@@ -1421,6 +1498,21 @@ export function createContentOperationsRepository({ db, now }) {
           code: 'content_operation_candidate_invalid',
           packageId,
           validation,
+        });
+      }
+      const currentAudioScan = await buildContentOperationAudioScan({
+        db,
+        packageId,
+        candidate: candidate.candidate,
+        operations,
+      });
+      if (audioReadinessHasBlockingItems(currentAudioScan)) {
+        await persistCandidateAudioScan(db, candidate.candidateId, currentAudioScan);
+        throw new ConflictError('Approved candidate has audio readiness blockers.', {
+          code: 'content_operation_candidate_audio_blocked',
+          packageId,
+          candidateId: candidate.candidateId,
+          audioScan: currentAudioScan,
         });
       }
       const releaseId = uid('corel');
@@ -1459,6 +1551,14 @@ export function createContentOperationsRepository({ db, now }) {
             CONTENT_OPERATION_PACKAGE_STATES.APPROVED,
             currentReleaseRow.release_id,
             packageRow.subject_id,
+          ]),
+          bindStatement(db, `
+            UPDATE content_operation_package_candidates
+            SET audio_scan_json = ?
+            WHERE candidate_id = ?
+          `, [
+            JSON.stringify(currentAudioScan),
+            candidate.candidateId,
           ]),
           bindStatement(db, `
             UPDATE content_operation_packages
@@ -1518,7 +1618,7 @@ export function createContentOperationsRepository({ db, now }) {
         throw error;
       }
 
-      if (mutationChangeCount(publishResults[0]) < 1 || mutationChangeCount(publishResults[1]) < 1) {
+      if (mutationChangeCount(publishResults[0]) < 1 || mutationChangeCount(publishResults[2]) < 1) {
         const latestPackageRow = await requirePackage(db, packageId);
         if (latestPackageRow.state === CONTENT_OPERATION_PACKAGE_STATES.PUBLISHED) {
           throw new ConflictError('Content operation package was already published.', {
