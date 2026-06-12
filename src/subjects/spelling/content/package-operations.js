@@ -91,8 +91,30 @@ function validationResult(errors, warnings, word = null) {
   };
 }
 
+function sentenceValidationResult(errors, warnings, sentence = null) {
+  return {
+    ok: errors.length === 0,
+    errors,
+    warnings,
+    sentence,
+  };
+}
+
+function wordListValidationResult(errors, warnings, wordList = null) {
+  return {
+    ok: errors.length === 0,
+    errors,
+    warnings,
+    wordList,
+  };
+}
+
 function findWordList(wordLists, listId) {
   return (Array.isArray(wordLists) ? wordLists : []).find((entry) => entry?.id === listId) || null;
+}
+
+function findWord(words, slug) {
+  return (Array.isArray(words) ? words : []).find((entry) => entry?.slug === slug) || null;
 }
 
 function normaliseAcceptedSpellings(rawValue, existingValue, defaultValue) {
@@ -246,6 +268,118 @@ export function validateSpellingWordEditorInput(rawValue = {}, options = {}) {
   return validationResult(errors, warnings, word);
 }
 
+export function normaliseSpellingSentenceEditorInput(rawValue = {}, {
+  existingSentence = null,
+} = {}) {
+  const raw = isPlainObject(rawValue) ? rawValue : {};
+  const existing = isPlainObject(existingSentence) ? existingSentence : {};
+  return {
+    id: normaliseString(raw.id, existing.id),
+    wordSlug: normaliseString(raw.wordSlug, existing.wordSlug).toLowerCase(),
+    text: normaliseString(raw.text, existing.text),
+    variantLabel: normaliseString(raw.variantLabel, existing.variantLabel || 'default'),
+    tags: uniqueStrings(hasExplicitList(raw.tags) ? raw.tags : existing.tags, { lowerCase: true }),
+    sourceNote: normaliseString(raw.sourceNote, existing.sourceNote),
+    provenance: normaliseProvenance(raw.provenance, existing.provenance),
+    sortIndex: Number.isInteger(Number(raw.sortIndex)) && Number(raw.sortIndex) >= 0
+      ? Number(raw.sortIndex)
+      : (Number.isInteger(Number(existing.sortIndex)) ? Number(existing.sortIndex) : 0),
+  };
+}
+
+export function validateSpellingSentenceEditorInput(rawValue = {}, options = {}) {
+  const errors = [];
+  const warnings = [];
+  const raw = isPlainObject(rawValue) ? rawValue : {};
+  const existing = isPlainObject(options.existingSentence) ? options.existingSentence : null;
+  const sentence = normaliseSpellingSentenceEditorInput(raw, options);
+  const word = findWord(options.words, sentence.wordSlug);
+
+  if (!sentence.id) errors.push(issue('id', 'Sentence id is required.', 'invalid_sentence_operation'));
+  if (!sentence.wordSlug) {
+    errors.push(issue('wordSlug', 'Sentence word slug is required.', 'invalid_sentence_operation'));
+  } else if (Array.isArray(options.words) && !word) {
+    errors.push(issue('wordSlug', `Sentence must point at an existing word slug "${sentence.wordSlug}".`, 'invalid_sentence_operation'));
+  } else if (word && (word.active === false || word.retired)) {
+    errors.push(issue('wordSlug', `Sentence cannot point at retired word "${sentence.wordSlug}".`, 'invalid_sentence_operation'));
+  }
+  if (!sentence.text || sentence.text.length < 12) {
+    errors.push(issue('text', 'Sentence text is required.', 'invalid_sentence_operation'));
+  }
+  if (!hasExplicitProvenance(raw, existing)) {
+    errors.push(issue('provenance', 'Sentence provenance or source notes are required.', 'invalid_sentence_operation'));
+  }
+
+  return sentenceValidationResult(errors, warnings, sentence);
+}
+
+export function normaliseSpellingWordListEditorInput(rawValue = {}, {
+  existingWordList = null,
+} = {}) {
+  const raw = isPlainObject(rawValue) ? rawValue : {};
+  const existing = isPlainObject(existingWordList) ? existingWordList : {};
+  const spellingPool = normaliseSpellingPool(raw.spellingPool, existing.spellingPool || 'core');
+  return {
+    id: normaliseString(raw.id, existing.id),
+    title: normaliseString(raw.title, existing.title),
+    spellingPool,
+    coverageTier: normaliseCoverageTier(raw.coverageTier, existing.coverageTier, spellingPool),
+    yearGroups: uniqueStrings(hasExplicitList(raw.yearGroups) ? raw.yearGroups : existing.yearGroups),
+    tags: uniqueStrings(hasExplicitList(raw.tags) ? raw.tags : existing.tags, { lowerCase: true }),
+    wordSlugs: uniqueStrings(hasExplicitList(raw.wordSlugs) ? raw.wordSlugs : existing.wordSlugs, { lowerCase: true }),
+    sourceNote: normaliseString(raw.sourceNote, existing.sourceNote),
+    provenance: normaliseProvenance(raw.provenance, existing.provenance),
+    sortIndex: Number.isInteger(Number(raw.sortIndex)) && Number(raw.sortIndex) >= 0
+      ? Number(raw.sortIndex)
+      : (Number.isInteger(Number(existing.sortIndex)) ? Number(existing.sortIndex) : 0),
+  };
+}
+
+export function validateSpellingWordListEditorInput(rawValue = {}, options = {}) {
+  const errors = [];
+  const warnings = [];
+  const raw = isPlainObject(rawValue) ? rawValue : {};
+  const existing = isPlainObject(options.existingWordList) ? options.existingWordList : null;
+  const wordList = normaliseSpellingWordListEditorInput(raw, options);
+  const wordsBySlug = new Map((Array.isArray(options.words) ? options.words : []).map((entry) => [entry.slug, entry]));
+
+  if (!wordList.id) errors.push(issue('id', 'Word-list id is required.', 'invalid_word_list_operation'));
+  if (!wordList.title) errors.push(issue('title', 'Word-list title is required.', 'invalid_word_list_operation'));
+  if (wordList.spellingPool === 'core' && !wordList.yearGroups.length) {
+    errors.push(issue('yearGroups', 'Core word lists require year-group metadata.', 'invalid_word_list_operation'));
+  }
+  if (wordList.spellingPool === 'extra' && wordList.coverageTier !== 'enrichment-extra') {
+    errors.push(issue('coverageTier', 'Extra word lists must use enrichment-extra coverage.', 'invalid_word_list_operation'));
+  }
+  if (wordList.spellingPool === 'core' && wordList.coverageTier === 'enrichment-extra') {
+    errors.push(issue('coverageTier', 'Core word lists cannot use enrichment-extra coverage.', 'invalid_word_list_operation'));
+  }
+  if (!hasExplicitProvenance(raw, existing)) {
+    errors.push(issue('provenance', 'Word-list provenance or source notes are required.', 'invalid_word_list_operation'));
+  }
+  if (Array.isArray(options.words)) {
+    wordList.wordSlugs.forEach((slug) => {
+      const word = wordsBySlug.get(slug);
+      if (!word) {
+        errors.push(issue('wordSlugs', `Word-list membership references missing word slug "${slug}".`, 'invalid_word_list_operation'));
+        return;
+      }
+      if (word.active === false || word.retired) {
+        errors.push(issue('wordSlugs', `Word-list membership references retired word "${slug}".`, 'invalid_word_list_operation'));
+        return;
+      }
+      if (word.spellingPool !== wordList.spellingPool) {
+        errors.push(issue('wordSlugs', `Word "${slug}" uses pool "${word.spellingPool}", not "${wordList.spellingPool}".`, 'invalid_word_list_operation'));
+      }
+      if (word.coverageTier !== wordList.coverageTier) {
+        errors.push(issue('wordSlugs', `Word "${slug}" uses coverage "${word.coverageTier}", not "${wordList.coverageTier}".`, 'invalid_word_list_operation'));
+      }
+    });
+  }
+
+  return wordListValidationResult(errors, warnings, wordList);
+}
+
 function throwIfInvalid(validation) {
   if (validation.ok) return;
   const error = new TypeError(validation.errors[0]?.message || 'Spelling word operation is invalid.');
@@ -262,6 +396,30 @@ export function buildSpellingWordUpsertOperation(rawValue = {}, options = {}) {
     fieldPath: '',
     action: 'upsert',
     payload: validation.word,
+  };
+}
+
+export function buildSpellingSentenceUpsertOperation(rawValue = {}, options = {}) {
+  const validation = validateSpellingSentenceEditorInput(rawValue, options);
+  throwIfInvalid(validation);
+  return {
+    entityType: 'spelling.sentenceEntry',
+    entityId: validation.sentence.id,
+    fieldPath: '',
+    action: 'upsert',
+    payload: validation.sentence,
+  };
+}
+
+export function buildSpellingWordListUpsertOperation(rawValue = {}, options = {}) {
+  const validation = validateSpellingWordListEditorInput(rawValue, options);
+  throwIfInvalid(validation);
+  return {
+    entityType: 'spelling.wordList',
+    entityId: validation.wordList.id,
+    fieldPath: '',
+    action: 'upsert',
+    payload: validation.wordList,
   };
 }
 
@@ -289,6 +447,74 @@ export function buildSpellingWordDeleteOrRetireOperation(rawValue = {}, {
   return {
     entityType: 'spelling.word',
     entityId: slug,
+    fieldPath: '',
+    action: 'retire',
+    payload: {
+      reason: normaliseString(reason, normaliseString(raw.reason, 'Retired through Content Operations Centre.')),
+      retiredAt: Number(now()),
+      source: 'content-operations-centre',
+    },
+  };
+}
+
+export function buildSpellingSentenceDeleteOrRetireOperation(rawValue = {}, {
+  publishedSentenceIds = [],
+  reason = '',
+  now = () => Date.now(),
+} = {}) {
+  const raw = isPlainObject(rawValue) ? rawValue : {};
+  const id = normaliseString(raw.id || raw.entityId || raw.sentenceId);
+  if (!id) throw new TypeError('Sentence id is required.');
+  const publishedSet = publishedSentenceIds instanceof Set
+    ? publishedSentenceIds
+    : new Set((Array.isArray(publishedSentenceIds) ? publishedSentenceIds : []).map((entry) => String(entry)));
+  const published = Boolean(raw.published || raw.hasCurrent || publishedSet.has(id));
+  if (!published) {
+    return {
+      entityType: 'spelling.sentenceEntry',
+      entityId: id,
+      fieldPath: '',
+      action: 'remove',
+      payload: null,
+    };
+  }
+  return {
+    entityType: 'spelling.sentenceEntry',
+    entityId: id,
+    fieldPath: '',
+    action: 'retire',
+    payload: {
+      reason: normaliseString(reason, normaliseString(raw.reason, 'Retired through Content Operations Centre.')),
+      retiredAt: Number(now()),
+      source: 'content-operations-centre',
+    },
+  };
+}
+
+export function buildSpellingWordListDeleteOrRetireOperation(rawValue = {}, {
+  publishedWordListIds = [],
+  reason = '',
+  now = () => Date.now(),
+} = {}) {
+  const raw = isPlainObject(rawValue) ? rawValue : {};
+  const id = normaliseString(raw.id || raw.entityId || raw.listId);
+  if (!id) throw new TypeError('Word-list id is required.');
+  const publishedSet = publishedWordListIds instanceof Set
+    ? publishedWordListIds
+    : new Set((Array.isArray(publishedWordListIds) ? publishedWordListIds : []).map((entry) => String(entry)));
+  const published = Boolean(raw.published || raw.hasCurrent || publishedSet.has(id));
+  if (!published) {
+    return {
+      entityType: 'spelling.wordList',
+      entityId: id,
+      fieldPath: '',
+      action: 'remove',
+      payload: null,
+    };
+  }
+  return {
+    entityType: 'spelling.wordList',
+    entityId: id,
     fieldPath: '',
     action: 'retire',
     payload: {

@@ -14,6 +14,10 @@ import {
   normaliseContentOperationsSpellingItemDetail,
 } from '../../platform/hubs/admin-content-operations.js';
 import {
+  buildSpellingSentenceDeleteOrRetireOperation,
+  buildSpellingSentenceUpsertOperation,
+  buildSpellingWordListDeleteOrRetireOperation,
+  buildSpellingWordListUpsertOperation,
   buildSpellingWordDeleteOrRetireOperation,
   buildSpellingWordUpsertOperation,
 } from '../../subjects/spelling/content/package-operations.js';
@@ -157,6 +161,104 @@ function operationInputFromWordForm(form) {
       },
       progressKey: variant.progressKey,
     })),
+  };
+}
+
+function emptySentenceEditorForm(selectedRow = null) {
+  return {
+    id: '',
+    wordSlug: selectedRow?.slug || '',
+    text: '',
+    variantLabel: 'default',
+    tags: '',
+    sourceNote: '',
+    provenanceSource: '',
+    provenanceNote: '',
+    retirementReason: '',
+  };
+}
+
+function sentenceEditorFormFromSentence(sentence, selectedRow = null) {
+  if (!sentence) return emptySentenceEditorForm(selectedRow);
+  return {
+    id: sentence.id || '',
+    wordSlug: sentence.wordSlug || selectedRow?.slug || '',
+    text: sentence.text || '',
+    variantLabel: sentence.variantLabel || 'default',
+    tags: csvValue(sentence.tags),
+    sourceNote: sentence.sourceNote || '',
+    provenanceSource: provenanceField(sentence.provenance, 'source'),
+    provenanceNote: provenanceField(sentence.provenance, 'note'),
+    retirementReason: '',
+  };
+}
+
+function operationInputFromSentenceForm(form) {
+  return {
+    id: form.id,
+    wordSlug: form.wordSlug,
+    text: form.text,
+    variantLabel: form.variantLabel,
+    tags: form.tags,
+    sourceNote: form.sourceNote,
+    provenance: {
+      source: form.provenanceSource,
+      note: form.provenanceNote,
+    },
+  };
+}
+
+function emptyWordListEditorForm(wordLists = [], selectedRow = null) {
+  const preferredList = selectedRow?.listId
+    ? wordLists.find((entry) => entry.id === selectedRow.listId)
+    : wordLists[0];
+  const spellingPool = preferredList?.spellingPool || selectedRow?.spellingPool || 'core';
+  return {
+    id: '',
+    title: '',
+    spellingPool,
+    coverageTier: preferredList?.coverageTier || selectedRow?.coverageTier || (spellingPool === 'extra' ? 'enrichment-extra' : 'statutory-core'),
+    yearGroups: spellingPool === 'core' ? 'Y3, Y4' : '',
+    tags: '',
+    wordSlugs: selectedRow?.slug || '',
+    sourceNote: '',
+    provenanceSource: '',
+    provenanceNote: '',
+    retirementReason: '',
+  };
+}
+
+function wordListEditorFormFromList(list, selectedRow = null, wordLists = []) {
+  if (!list) return emptyWordListEditorForm(wordLists, selectedRow);
+  return {
+    id: list.id || '',
+    title: list.title || '',
+    spellingPool: list.spellingPool || selectedRow?.spellingPool || 'core',
+    coverageTier: list.coverageTier || selectedRow?.coverageTier || '',
+    yearGroups: csvValue(list.yearGroups),
+    tags: csvValue(list.tags),
+    wordSlugs: csvValue(list.wordSlugs),
+    sourceNote: list.sourceNote || '',
+    provenanceSource: provenanceField(list.provenance, 'source'),
+    provenanceNote: provenanceField(list.provenance, 'note'),
+    retirementReason: '',
+  };
+}
+
+function operationInputFromWordListForm(form) {
+  return {
+    id: form.id,
+    title: form.title,
+    spellingPool: form.spellingPool,
+    coverageTier: form.coverageTier,
+    yearGroups: form.yearGroups,
+    tags: form.tags,
+    wordSlugs: form.wordSlugs,
+    sourceNote: form.sourceNote,
+    provenance: {
+      source: form.provenanceSource,
+      note: form.provenanceNote,
+    },
   };
 }
 
@@ -575,15 +677,15 @@ function SpellingBrowsePanel({
   selectedWordSlug,
   selectedPackageId,
   canEdit,
-  wordOperationAvailable,
-  wordOperationState,
+  spellingOperationAvailable,
+  spellingOperationState,
   loadingBrowse,
   loadingItem,
   error,
   onFilterChange,
   onApplyFilters,
   onSelectWord,
-  onSubmitWordOperation,
+  onSubmitSpellingOperation,
 }) {
   const selectedRow = browse.words.find((row) => row.slug === selectedWordSlug) || browse.words[0] || null;
   const packageDraft = browse.packageDraft;
@@ -597,19 +699,41 @@ function SpellingBrowsePanel({
   const currentWord = selectedDetail?.current || null;
   const packageWord = selectedDetail?.packageValue || null;
   const editorSourceWord = packageWord || currentWord || null;
+  const selectedList = browse.wordLists.find((list) => list.id === selectedRow?.listId) || browse.wordLists[0] || null;
+  const sentenceOptions = React.useMemo(() => {
+    const seen = new Set();
+    const output = [];
+    for (const sentence of [
+      ...((packageWord?.sentences || [])),
+      ...((currentWord?.sentences || [])),
+    ]) {
+      if (!sentence?.id || seen.has(sentence.id)) continue;
+      seen.add(sentence.id);
+      output.push(sentence);
+    }
+    return output;
+  }, [currentWord, packageWord]);
   const releaseLabel = browse.release.releaseId || 'bundled fallback';
   const detailValidation = selectedDetail?.validationState || selectedRow?.validationState || packageDraft.validation;
   const [editorMode, setEditorMode] = React.useState('edit');
   const [wordForm, setWordForm] = React.useState(() => emptyWordEditorForm(browse.wordLists, selectedRow));
+  const [sentenceMode, setSentenceMode] = React.useState('edit');
+  const [selectedSentenceId, setSelectedSentenceId] = React.useState('');
+  const [sentenceForm, setSentenceForm] = React.useState(() => emptySentenceEditorForm(selectedRow));
+  const [wordListMode, setWordListMode] = React.useState('edit');
+  const [wordListForm, setWordListForm] = React.useState(() => emptyWordListEditorForm(browse.wordLists, selectedRow));
   const [formError, setFormError] = React.useState('');
   const formDisabled = !selectedPackageId
     || !canEdit
-    || !wordOperationAvailable
-    || Boolean(wordOperationState?.running);
+    || !spellingOperationAvailable
+    || Boolean(spellingOperationState?.running);
   const formBlockedReason = !selectedPackageId
     ? 'Select a package'
-    : (!canEdit ? 'Edit locked' : (!wordOperationAvailable ? 'API unavailable' : ''));
+    : (!canEdit ? 'Edit locked' : (!spellingOperationAvailable ? 'API unavailable' : ''));
   const removeLabel = selectedRow?.hasCurrent ? 'Retire word' : 'Delete draft';
+  const selectedSentence = sentenceOptions.find((sentence) => sentence.id === selectedSentenceId)
+    || sentenceOptions[0]
+    || null;
 
   React.useEffect(() => {
     if (editorMode === 'create') return;
@@ -621,6 +745,32 @@ function SpellingBrowsePanel({
     editorSourceWord,
     selectedRow,
     selectedRow?.slug,
+  ]);
+
+  React.useEffect(() => {
+    if (sentenceMode === 'create') return;
+    setFormError('');
+    const nextSentence = selectedSentence || sentenceOptions[0] || null;
+    setSelectedSentenceId(nextSentence?.id || '');
+    setSentenceForm(sentenceEditorFormFromSentence(nextSentence, selectedRow));
+  }, [
+    sentenceMode,
+    selectedRow,
+    selectedRow?.slug,
+    selectedSentence,
+    sentenceOptions,
+  ]);
+
+  React.useEffect(() => {
+    if (wordListMode === 'create') return;
+    setFormError('');
+    setWordListForm(wordListEditorFormFromList(selectedList, selectedRow, browse.wordLists));
+  }, [
+    browse.wordLists,
+    selectedList,
+    selectedRow,
+    selectedRow?.listId,
+    wordListMode,
   ]);
 
   const updateWordForm = React.useCallback((patch) => {
@@ -637,6 +787,23 @@ function SpellingBrowsePanel({
       return next;
     });
   }, [browse.wordLists]);
+
+  const updateSentenceForm = React.useCallback((patch) => {
+    setFormError('');
+    setSentenceForm((current) => ({ ...current, ...patch }));
+  }, []);
+
+  const updateWordListForm = React.useCallback((patch) => {
+    setFormError('');
+    setWordListForm((current) => {
+      const next = { ...current, ...patch };
+      if (Object.prototype.hasOwnProperty.call(patch, 'spellingPool')) {
+        next.coverageTier = patch.spellingPool === 'extra' ? 'enrichment-extra' : 'statutory-core';
+        if (patch.spellingPool === 'extra') next.yearGroups = '';
+      }
+      return next;
+    });
+  }, []);
 
   const updateVariant = React.useCallback((index, patch) => {
     setFormError('');
@@ -690,22 +857,49 @@ function SpellingBrowsePanel({
     setWordForm(wordEditorFormFromWord(editorSourceWord, selectedRow, browse.wordLists));
   }, [browse.wordLists, editorSourceWord, selectedRow]);
 
+  const startCreateSentence = React.useCallback(() => {
+    setSentenceMode('create');
+    setSelectedSentenceId('');
+    setFormError('');
+    setSentenceForm(emptySentenceEditorForm(selectedRow));
+  }, [selectedRow]);
+
+  const startEditSentence = React.useCallback((sentenceId = '') => {
+    const nextSentence = sentenceOptions.find((sentence) => sentence.id === sentenceId) || sentenceOptions[0] || null;
+    setSentenceMode('edit');
+    setSelectedSentenceId(nextSentence?.id || '');
+    setFormError('');
+    setSentenceForm(sentenceEditorFormFromSentence(nextSentence, selectedRow));
+  }, [selectedRow, sentenceOptions]);
+
+  const startCreateWordList = React.useCallback(() => {
+    setWordListMode('create');
+    setFormError('');
+    setWordListForm(emptyWordListEditorForm(browse.wordLists, selectedRow));
+  }, [browse.wordLists, selectedRow]);
+
+  const startEditWordList = React.useCallback(() => {
+    setWordListMode('edit');
+    setFormError('');
+    setWordListForm(wordListEditorFormFromList(selectedList, selectedRow, browse.wordLists));
+  }, [browse.wordLists, selectedList, selectedRow]);
+
   const submitWordForm = React.useCallback((event) => {
     event?.preventDefault?.();
-    if (!onSubmitWordOperation) return;
+    if (!onSubmitSpellingOperation) return;
     try {
       const operation = buildSpellingWordUpsertOperation(operationInputFromWordForm(wordForm), {
         existingWord: editorMode === 'edit' ? editorSourceWord : null,
         wordLists: browse.wordLists,
       });
-      onSubmitWordOperation(operation, { slug: operation.entityId, action: 'word-upsert' });
+      onSubmitSpellingOperation(operation, { slug: operation.entityId, action: 'word-upsert' });
     } catch (submitError) {
       setFormError(submitError?.validation?.errors?.[0]?.message || submitError?.message || 'Word operation is invalid.');
     }
-  }, [browse.wordLists, editorMode, editorSourceWord, onSubmitWordOperation, wordForm]);
+  }, [browse.wordLists, editorMode, editorSourceWord, onSubmitSpellingOperation, wordForm]);
 
   const submitRemoval = React.useCallback(() => {
-    if (!onSubmitWordOperation || !selectedRow) return;
+    if (!onSubmitSpellingOperation || !selectedRow) return;
     try {
       const operation = buildSpellingWordDeleteOrRetireOperation({
         slug: wordForm.slug || selectedRow.slug,
@@ -714,11 +908,70 @@ function SpellingBrowsePanel({
       }, {
         reason: wordForm.retirementReason,
       });
-      onSubmitWordOperation(operation, { slug: operation.entityId, action: operation.action });
+      onSubmitSpellingOperation(operation, { slug: operation.entityId, action: operation.action });
     } catch (submitError) {
       setFormError(submitError?.message || 'Word operation is invalid.');
     }
-  }, [onSubmitWordOperation, selectedRow, wordForm.retirementReason, wordForm.slug]);
+  }, [onSubmitSpellingOperation, selectedRow, wordForm.retirementReason, wordForm.slug]);
+
+  const submitSentenceForm = React.useCallback((event) => {
+    event?.preventDefault?.();
+    if (!onSubmitSpellingOperation) return;
+    try {
+      const operation = buildSpellingSentenceUpsertOperation(operationInputFromSentenceForm(sentenceForm), {
+        existingSentence: sentenceMode === 'edit' ? selectedSentence : null,
+      });
+      onSubmitSpellingOperation(operation, { slug: sentenceForm.wordSlug || selectedRow?.slug, action: 'sentence-upsert' });
+    } catch (submitError) {
+      setFormError(submitError?.validation?.errors?.[0]?.message || submitError?.message || 'Sentence operation is invalid.');
+    }
+  }, [onSubmitSpellingOperation, selectedRow?.slug, selectedSentence, sentenceForm, sentenceMode]);
+
+  const submitSentenceRemoval = React.useCallback(() => {
+    if (!onSubmitSpellingOperation || !selectedSentence) return;
+    try {
+      const hasCurrent = Boolean(currentWord?.sentences?.some((sentence) => sentence.id === selectedSentence.id));
+      const operation = buildSpellingSentenceDeleteOrRetireOperation({
+        id: sentenceForm.id || selectedSentence.id,
+        hasCurrent,
+        reason: sentenceForm.retirementReason,
+      }, {
+        reason: sentenceForm.retirementReason,
+      });
+      onSubmitSpellingOperation(operation, { slug: selectedSentence.wordSlug || selectedRow?.slug, action: `sentence-${operation.action}` });
+    } catch (submitError) {
+      setFormError(submitError?.message || 'Sentence operation is invalid.');
+    }
+  }, [currentWord?.sentences, onSubmitSpellingOperation, selectedRow?.slug, selectedSentence, sentenceForm.id, sentenceForm.retirementReason]);
+
+  const submitWordListForm = React.useCallback((event) => {
+    event?.preventDefault?.();
+    if (!onSubmitSpellingOperation) return;
+    try {
+      const operation = buildSpellingWordListUpsertOperation(operationInputFromWordListForm(wordListForm), {
+        existingWordList: wordListMode === 'edit' ? selectedList : null,
+      });
+      onSubmitSpellingOperation(operation, { slug: selectedRow?.slug, action: 'word-list-upsert' });
+    } catch (submitError) {
+      setFormError(submitError?.validation?.errors?.[0]?.message || submitError?.message || 'Word-list operation is invalid.');
+    }
+  }, [onSubmitSpellingOperation, selectedList, selectedRow?.slug, wordListForm, wordListMode]);
+
+  const submitWordListRemoval = React.useCallback(() => {
+    if (!onSubmitSpellingOperation || !selectedList) return;
+    try {
+      const operation = buildSpellingWordListDeleteOrRetireOperation({
+        id: wordListForm.id || selectedList.id,
+        hasCurrent: selectedList.draftState !== 'added',
+        reason: wordListForm.retirementReason,
+      }, {
+        reason: wordListForm.retirementReason,
+      });
+      onSubmitSpellingOperation(operation, { slug: selectedRow?.slug, action: `word-list-${operation.action}` });
+    } catch (submitError) {
+      setFormError(submitError?.message || 'Word-list operation is invalid.');
+    }
+  }, [onSubmitSpellingOperation, selectedList, selectedRow?.slug, wordListForm.id, wordListForm.retirementReason]);
 
   return (
     <div className="content-ops-area-panel" data-content-ops-area="spelling" data-content-ops-spelling-browse="true">
@@ -943,14 +1196,14 @@ function SpellingBrowsePanel({
                     {formBlockedReason}
                   </div>
                 ) : null}
-                {formError || wordOperationState?.error ? (
+                {formError || spellingOperationState?.error ? (
                   <div className="feedback warn" data-content-ops-word-editor-error="true">
-                    {formError || wordOperationState.error.message}
+                    {formError || spellingOperationState.error.message}
                   </div>
                 ) : null}
-                {wordOperationState?.message ? (
+                {spellingOperationState?.message ? (
                   <div className="feedback good" data-content-ops-word-editor-message="true">
-                    {wordOperationState.message}
+                    {spellingOperationState.message}
                   </div>
                 ) : null}
                 <div className="content-ops-word-editor-grid">
@@ -1227,6 +1480,277 @@ function SpellingBrowsePanel({
                     data-content-ops-word-remove="true"
                   >
                     {removeLabel}
+                  </button>
+                </div>
+              </form>
+              <form
+                className="content-ops-word-editor"
+                data-content-ops-sentence-editor="true"
+                onSubmit={submitSentenceForm}
+              >
+                <div className="content-ops-word-editor-header">
+                  <div>
+                    <div className="eyebrow">Sentence editor</div>
+                    <strong>{sentenceMode === 'create' ? 'New sentence' : (sentenceForm.id || 'Selected sentence')}</strong>
+                  </div>
+                  <div className="chip-row content-ops-chip-wrap">
+                    {sentenceOptions.length ? (
+                      <select
+                        value={selectedSentence?.id || ''}
+                        onChange={(event) => startEditSentence(event.target.value)}
+                        disabled={formDisabled}
+                        data-content-ops-sentence-select="true"
+                      >
+                        {sentenceOptions.map((sentence) => (
+                          <option key={sentence.id} value={sentence.id}>{sentence.id}</option>
+                        ))}
+                      </select>
+                    ) : null}
+                    <button type="button" className="btn secondary compact" onClick={() => startEditSentence(selectedSentence?.id)} disabled={!sentenceOptions.length}>
+                      Edit sentence
+                    </button>
+                    <button type="button" className="btn secondary compact" onClick={startCreateSentence}>
+                      New sentence
+                    </button>
+                  </div>
+                </div>
+                <div className="content-ops-word-editor-grid">
+                  <label>
+                    <span className="small muted">Sentence ID</span>
+                    <input
+                      value={sentenceForm.id}
+                      onChange={(event) => updateSentenceForm({ id: event.target.value })}
+                      disabled={formDisabled || sentenceMode !== 'create'}
+                      data-content-ops-sentence-field="id"
+                    />
+                  </label>
+                  <label>
+                    <span className="small muted">Word slug</span>
+                    <input
+                      value={sentenceForm.wordSlug}
+                      onChange={(event) => updateSentenceForm({ wordSlug: event.target.value })}
+                      disabled={formDisabled}
+                      data-content-ops-sentence-field="wordSlug"
+                    />
+                  </label>
+                  <label>
+                    <span className="small muted">Variant label</span>
+                    <input
+                      value={sentenceForm.variantLabel}
+                      onChange={(event) => updateSentenceForm({ variantLabel: event.target.value })}
+                      disabled={formDisabled}
+                      data-content-ops-sentence-field="variantLabel"
+                    />
+                  </label>
+                  <label>
+                    <span className="small muted">Tags</span>
+                    <input
+                      value={sentenceForm.tags}
+                      onChange={(event) => updateSentenceForm({ tags: event.target.value })}
+                      disabled={formDisabled}
+                      data-content-ops-sentence-field="tags"
+                    />
+                  </label>
+                  <label className="content-ops-word-editor-wide">
+                    <span className="small muted">Sentence text</span>
+                    <textarea
+                      value={sentenceForm.text}
+                      onChange={(event) => updateSentenceForm({ text: event.target.value })}
+                      disabled={formDisabled}
+                      rows={2}
+                      data-content-ops-sentence-field="text"
+                    />
+                  </label>
+                  <label className="content-ops-word-editor-wide">
+                    <span className="small muted">Source notes</span>
+                    <textarea
+                      value={sentenceForm.sourceNote}
+                      onChange={(event) => updateSentenceForm({ sourceNote: event.target.value })}
+                      disabled={formDisabled}
+                      rows={2}
+                      data-content-ops-sentence-field="sourceNote"
+                    />
+                  </label>
+                  <label>
+                    <span className="small muted">Provenance source</span>
+                    <input
+                      value={sentenceForm.provenanceSource}
+                      onChange={(event) => updateSentenceForm({ provenanceSource: event.target.value })}
+                      disabled={formDisabled}
+                      data-content-ops-sentence-field="provenanceSource"
+                    />
+                  </label>
+                  <label>
+                    <span className="small muted">Provenance note</span>
+                    <input
+                      value={sentenceForm.provenanceNote}
+                      onChange={(event) => updateSentenceForm({ provenanceNote: event.target.value })}
+                      disabled={formDisabled}
+                      data-content-ops-sentence-field="provenanceNote"
+                    />
+                  </label>
+                  <label className="content-ops-word-editor-wide">
+                    <span className="small muted">Retirement reason</span>
+                    <input
+                      value={sentenceForm.retirementReason}
+                      onChange={(event) => updateSentenceForm({ retirementReason: event.target.value })}
+                      disabled={formDisabled || sentenceMode === 'create'}
+                      data-content-ops-sentence-field="retirementReason"
+                    />
+                  </label>
+                </div>
+                <div className="content-ops-word-editor-actions">
+                  <button type="submit" className="btn primary compact" disabled={formDisabled}>
+                    Save sentence
+                  </button>
+                  <button
+                    type="button"
+                    className="btn secondary compact"
+                    onClick={submitSentenceRemoval}
+                    disabled={formDisabled || sentenceMode === 'create' || !selectedSentence}
+                    data-content-ops-sentence-remove="true"
+                  >
+                    {currentWord?.sentences?.some((sentence) => sentence.id === selectedSentence?.id) ? 'Retire sentence' : 'Delete draft sentence'}
+                  </button>
+                </div>
+              </form>
+              <form
+                className="content-ops-word-editor"
+                data-content-ops-word-list-editor="true"
+                onSubmit={submitWordListForm}
+              >
+                <div className="content-ops-word-editor-header">
+                  <div>
+                    <div className="eyebrow">Word-list editor</div>
+                    <strong>{wordListMode === 'create' ? 'New word list' : (wordListForm.title || selectedList?.title || 'Selected list')}</strong>
+                  </div>
+                  <div className="chip-row content-ops-chip-wrap">
+                    <button type="button" className="btn secondary compact" onClick={startEditWordList} disabled={!selectedList}>
+                      Edit list
+                    </button>
+                    <button type="button" className="btn secondary compact" onClick={startCreateWordList}>
+                      New list
+                    </button>
+                  </div>
+                </div>
+                <div className="content-ops-word-editor-grid">
+                  <label>
+                    <span className="small muted">List ID</span>
+                    <input
+                      value={wordListForm.id}
+                      onChange={(event) => updateWordListForm({ id: event.target.value })}
+                      disabled={formDisabled || wordListMode !== 'create'}
+                      data-content-ops-word-list-field="id"
+                    />
+                  </label>
+                  <label>
+                    <span className="small muted">Title</span>
+                    <input
+                      value={wordListForm.title}
+                      onChange={(event) => updateWordListForm({ title: event.target.value })}
+                      disabled={formDisabled}
+                      data-content-ops-word-list-field="title"
+                    />
+                  </label>
+                  <label>
+                    <span className="small muted">Pool</span>
+                    <select
+                      value={wordListForm.spellingPool}
+                      onChange={(event) => updateWordListForm({ spellingPool: event.target.value })}
+                      disabled={formDisabled}
+                      data-content-ops-word-list-field="spellingPool"
+                    >
+                      <option value="core">Core</option>
+                      <option value="extra">Extra</option>
+                    </select>
+                  </label>
+                  <label>
+                    <span className="small muted">Coverage</span>
+                    <input
+                      value={wordListForm.coverageTier}
+                      onChange={(event) => updateWordListForm({ coverageTier: event.target.value })}
+                      disabled={formDisabled}
+                      data-content-ops-word-list-field="coverageTier"
+                    />
+                  </label>
+                  <label>
+                    <span className="small muted">Year groups</span>
+                    <input
+                      value={wordListForm.yearGroups}
+                      onChange={(event) => updateWordListForm({ yearGroups: event.target.value })}
+                      disabled={formDisabled}
+                      data-content-ops-word-list-field="yearGroups"
+                    />
+                  </label>
+                  <label>
+                    <span className="small muted">Tags</span>
+                    <input
+                      value={wordListForm.tags}
+                      onChange={(event) => updateWordListForm({ tags: event.target.value })}
+                      disabled={formDisabled}
+                      data-content-ops-word-list-field="tags"
+                    />
+                  </label>
+                  <label className="content-ops-word-editor-wide">
+                    <span className="small muted">Word slugs</span>
+                    <textarea
+                      value={wordListForm.wordSlugs}
+                      onChange={(event) => updateWordListForm({ wordSlugs: event.target.value })}
+                      disabled={formDisabled}
+                      rows={2}
+                      data-content-ops-word-list-field="wordSlugs"
+                    />
+                  </label>
+                  <label className="content-ops-word-editor-wide">
+                    <span className="small muted">Source notes</span>
+                    <textarea
+                      value={wordListForm.sourceNote}
+                      onChange={(event) => updateWordListForm({ sourceNote: event.target.value })}
+                      disabled={formDisabled}
+                      rows={2}
+                      data-content-ops-word-list-field="sourceNote"
+                    />
+                  </label>
+                  <label>
+                    <span className="small muted">Provenance source</span>
+                    <input
+                      value={wordListForm.provenanceSource}
+                      onChange={(event) => updateWordListForm({ provenanceSource: event.target.value })}
+                      disabled={formDisabled}
+                      data-content-ops-word-list-field="provenanceSource"
+                    />
+                  </label>
+                  <label>
+                    <span className="small muted">Provenance note</span>
+                    <input
+                      value={wordListForm.provenanceNote}
+                      onChange={(event) => updateWordListForm({ provenanceNote: event.target.value })}
+                      disabled={formDisabled}
+                      data-content-ops-word-list-field="provenanceNote"
+                    />
+                  </label>
+                  <label className="content-ops-word-editor-wide">
+                    <span className="small muted">Retirement reason</span>
+                    <input
+                      value={wordListForm.retirementReason}
+                      onChange={(event) => updateWordListForm({ retirementReason: event.target.value })}
+                      disabled={formDisabled || wordListMode === 'create'}
+                      data-content-ops-word-list-field="retirementReason"
+                    />
+                  </label>
+                </div>
+                <div className="content-ops-word-editor-actions">
+                  <button type="submit" className="btn primary compact" disabled={formDisabled}>
+                    Save list
+                  </button>
+                  <button
+                    type="button"
+                    className="btn secondary compact"
+                    onClick={submitWordListRemoval}
+                    disabled={formDisabled || wordListMode === 'create' || !selectedList}
+                    data-content-ops-word-list-remove="true"
+                  >
+                    {selectedList?.draftState === 'added' ? 'Delete draft list' : 'Retire list'}
                   </button>
                 </div>
               </form>
@@ -1741,7 +2265,7 @@ export function AdminContentOperationsSection({
     approval: null,
     release: null,
   });
-  const [wordOperationState, setWordOperationState] = React.useState({
+  const [spellingOperationState, setSpellingOperationState] = React.useState({
     packageId: '',
     action: '',
     running: false,
@@ -1900,12 +2424,12 @@ export function AdminContentOperationsSection({
     loadSpellingBrowse();
   }, [loadSpellingBrowse]);
 
-  const runSpellingWordOperation = React.useCallback(async (operation, {
+  const runSpellingOperation = React.useCallback(async (operation, {
     slug = '',
-    action = 'word-operation',
+    action = 'spelling-operation',
   } = {}) => {
     if (!api?.appendOperation || !selectedPackageId) return;
-    setWordOperationState({
+    setSpellingOperationState({
       packageId: selectedPackageId,
       action,
       running: true,
@@ -1918,13 +2442,16 @@ export function AdminContentOperationsSection({
         operation,
         mutation: contentOperationMutation(action, selectedPackageId),
       });
-      setWordOperationState({
+      const noun = operation.entityType === 'spelling.sentenceEntry'
+        ? 'Sentence'
+        : (operation.entityType === 'spelling.wordList' ? 'Word list' : 'Word');
+      setSpellingOperationState({
         packageId: selectedPackageId,
         action,
         running: false,
         message: operation.action === 'remove'
-          ? 'Draft word deleted.'
-          : (operation.action === 'retire' ? 'Word retired.' : 'Word operation saved.'),
+          ? `Draft ${noun.toLowerCase()} deleted.`
+          : (operation.action === 'retire' ? `${noun} retired.` : `${noun} operation saved.`),
         error: null,
       });
       if (api.readPackage) {
@@ -1935,12 +2462,12 @@ export function AdminContentOperationsSection({
         await selectSpellingWord(slug);
       }
     } catch (opError) {
-      setWordOperationState({
+      setSpellingOperationState({
         packageId: selectedPackageId,
         action,
         running: false,
         message: '',
-        error: errorEnvelope(opError, 'content_operations_word_operation_failed'),
+        error: errorEnvelope(opError, 'content_operations_spelling_operation_failed'),
       });
     }
   }, [api, loadPackageDetail, loadSpellingBrowse, selectSpellingWord, selectedPackageId]);
@@ -2172,15 +2699,15 @@ export function AdminContentOperationsSection({
           selectedWordSlug={selectedWordSlug}
           selectedPackageId={selectedPackageId}
           canEdit={actorCan(spellingActor, CONTENT_OPERATION_CAPABILITIES.EDIT)}
-          wordOperationAvailable={Boolean(api?.appendOperation)}
-          wordOperationState={wordOperationState}
+          spellingOperationAvailable={Boolean(api?.appendOperation)}
+          spellingOperationState={spellingOperationState}
           loadingBrowse={loadingSpellingBrowse}
           loadingItem={loadingSpellingItem}
           error={spellingError}
           onFilterChange={updateSpellingFilters}
           onApplyFilters={applySpellingFilters}
           onSelectWord={selectSpellingWord}
-          onSubmitWordOperation={runSpellingWordOperation}
+          onSubmitSpellingOperation={runSpellingOperation}
         />
       ) : null}
 

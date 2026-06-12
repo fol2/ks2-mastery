@@ -910,6 +910,254 @@ test('Content Operations Centre spelling word editor appends word upsert operati
   assert.match(result.text, /Word operation saved/);
 });
 
+test('Content Operations Centre spelling sentence editor appends sentence upsert operations', async () => {
+  const output = await runClientEntry(`
+    const { JSDOM } = require('jsdom');
+
+    globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+    const dom = new JSDOM('<!doctype html><html><body><div id="root"></div></body></html>', {
+      url: 'https://ks2.eugnel.uk/admin',
+    });
+    globalThis.window = dom.window;
+    globalThis.document = dom.window.document;
+    globalThis.navigator = dom.window.navigator;
+    globalThis.HTMLElement = dom.window.HTMLElement;
+    globalThis.Event = dom.window.Event;
+
+    const React = require('react');
+    const { createRoot } = require('react-dom/client');
+    const { AdminContentOperationsSection } = require(${CONTENT_OPS_SECTION_PATH});
+    const { act } = React;
+
+    const calls = [];
+    const model = ${JSON.stringify(baseModel({
+      contentOperations: {
+        overview,
+        packages: { packages: [contentPackage] },
+        releases: { releases: [release] },
+        spellingBrowse,
+        spellingItemDetail: null,
+      },
+    }))};
+    const actions = {
+      contentOperationsApi: {
+        async readSpellingWord(args) {
+          calls.push({ method: 'readSpellingWord', args });
+          return ${JSON.stringify(spellingWordDetail)};
+        },
+        async appendOperation(args) {
+          calls.push({ method: 'appendOperation', args });
+          return { ok: true, operation: { operationId: 'op-sentence-save-1', ...args.operation } };
+        },
+      },
+    };
+
+    async function flush() {
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      });
+    }
+
+    async function setControl(selector, value) {
+      const control = document.querySelector(selector);
+      const prototype = control.tagName === 'TEXTAREA'
+        ? dom.window.HTMLTextAreaElement.prototype
+        : dom.window.HTMLInputElement.prototype;
+      const valueSetter = Object.getOwnPropertyDescriptor(prototype, 'value').set;
+      valueSetter.call(control, value);
+      await act(async () => {
+        control.dispatchEvent(new dom.window.Event('input', { bubbles: true }));
+        control.dispatchEvent(new dom.window.Event('change', { bubbles: true }));
+      });
+    }
+
+    async function main() {
+      const root = createRoot(document.getElementById('root'));
+      await act(async () => {
+        root.render(React.createElement(AdminContentOperationsSection, {
+          model,
+          actions,
+          initialActiveTab: 'spelling',
+          initialSelectedPackageId: 'pkg-draft-1',
+        }));
+      });
+      await flush();
+
+      const wordButton = document.querySelector('[data-content-ops-spelling-word="metamorphosis"]');
+      await act(async () => {
+        wordButton.click();
+      });
+      await flush();
+
+      const newSentenceButton = Array.from(document.querySelectorAll('button'))
+        .find((button) => button.textContent === 'New sentence');
+      await act(async () => {
+        newSentenceButton.click();
+      });
+      await setControl('[data-content-ops-sentence-field="id"]', 'meta-s2');
+      await setControl('[data-content-ops-sentence-field="wordSlug"]', 'metamorphosis');
+      await setControl('[data-content-ops-sentence-field="text"]', 'The moth completes metamorphosis in the summer.');
+      await setControl('[data-content-ops-sentence-field="variantLabel"]', 'default');
+      await setControl('[data-content-ops-sentence-field="tags"]', 'dictation, extra');
+      await setControl('[data-content-ops-sentence-field="sourceNote"]', 'Added in Content Operations Centre.');
+      await setControl('[data-content-ops-sentence-field="provenanceSource"]', 'admin-editor');
+      const saveButton = Array.from(document.querySelectorAll('button'))
+        .find((button) => button.textContent === 'Save sentence');
+      await act(async () => {
+        saveButton.click();
+      });
+      await flush();
+      await flush();
+
+      process.stdout.write(JSON.stringify({
+        calls,
+        text: document.body.textContent,
+      }));
+
+      await act(async () => {
+        root.unmount();
+      });
+      dom.window.close();
+      process.exit(0);
+    }
+
+    main().catch((error) => {
+      process.stderr.write(error.stack || error.message);
+      process.exitCode = 1;
+    });
+  `);
+  const result = JSON.parse(output);
+  const appendCall = result.calls.find((entry) => entry.method === 'appendOperation');
+
+  assert.ok(appendCall, 'sentence editor should append an operation');
+  assert.equal(appendCall.args.packageId, 'pkg-draft-1');
+  assert.equal(appendCall.args.operation.entityType, 'spelling.sentenceEntry');
+  assert.equal(appendCall.args.operation.action, 'upsert');
+  assert.equal(appendCall.args.operation.entityId, 'meta-s2');
+  assert.equal(appendCall.args.operation.payload.wordSlug, 'metamorphosis');
+  assert.equal(appendCall.args.operation.payload.text, 'The moth completes metamorphosis in the summer.');
+  assert.deepEqual(appendCall.args.operation.payload.tags, ['dictation', 'extra']);
+  assert.equal(appendCall.args.mutation.requestId.startsWith('content-ops-sentence-upsert-pkg-draft-1-'), true);
+  assert.match(result.text, /Sentence operation saved/);
+});
+
+test('Content Operations Centre spelling word-list editor appends list upsert operations', async () => {
+  const output = await runClientEntry(`
+    const { JSDOM } = require('jsdom');
+
+    globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+    const dom = new JSDOM('<!doctype html><html><body><div id="root"></div></body></html>', {
+      url: 'https://ks2.eugnel.uk/admin',
+    });
+    globalThis.window = dom.window;
+    globalThis.document = dom.window.document;
+    globalThis.navigator = dom.window.navigator;
+    globalThis.HTMLElement = dom.window.HTMLElement;
+    globalThis.Event = dom.window.Event;
+
+    const React = require('react');
+    const { createRoot } = require('react-dom/client');
+    const { AdminContentOperationsSection } = require(${CONTENT_OPS_SECTION_PATH});
+    const { act } = React;
+
+    const calls = [];
+    const model = ${JSON.stringify(baseModel({
+      contentOperations: {
+        overview,
+        packages: { packages: [contentPackage] },
+        releases: { releases: [release] },
+        spellingBrowse,
+        spellingItemDetail: spellingWordDetail,
+      },
+    }))};
+    const actions = {
+      contentOperationsApi: {
+        async readSpellingWord(args) {
+          calls.push({ method: 'readSpellingWord', args });
+          return ${JSON.stringify(spellingWordDetail)};
+        },
+        async appendOperation(args) {
+          calls.push({ method: 'appendOperation', args });
+          return { ok: true, operation: { operationId: 'op-list-save-1', ...args.operation } };
+        },
+      },
+    };
+
+    async function flush() {
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      });
+    }
+
+    async function setControl(selector, value) {
+      const control = document.querySelector(selector);
+      const prototype = control.tagName === 'TEXTAREA'
+        ? dom.window.HTMLTextAreaElement.prototype
+        : dom.window.HTMLInputElement.prototype;
+      const valueSetter = Object.getOwnPropertyDescriptor(prototype, 'value').set;
+      valueSetter.call(control, value);
+      await act(async () => {
+        control.dispatchEvent(new dom.window.Event('input', { bubbles: true }));
+        control.dispatchEvent(new dom.window.Event('change', { bubbles: true }));
+      });
+    }
+
+    async function main() {
+      const root = createRoot(document.getElementById('root'));
+      await act(async () => {
+        root.render(React.createElement(AdminContentOperationsSection, {
+          model,
+          actions,
+          initialActiveTab: 'spelling',
+          initialSelectedPackageId: 'pkg-draft-1',
+        }));
+      });
+      await flush();
+
+      await setControl('[data-content-ops-word-list-field="title"]', 'Extra Greek roots revised');
+      await setControl('[data-content-ops-word-list-field="wordSlugs"]', 'metamorphosis');
+      await setControl('[data-content-ops-word-list-field="sourceNote"]', 'Edited in Content Operations Centre.');
+      await setControl('[data-content-ops-word-list-field="provenanceSource"]', 'admin-editor');
+      const saveButton = Array.from(document.querySelectorAll('button'))
+        .find((button) => button.textContent === 'Save list');
+      await act(async () => {
+        saveButton.click();
+      });
+      await flush();
+      await flush();
+
+      process.stdout.write(JSON.stringify({
+        calls,
+        text: document.body.textContent,
+      }));
+
+      await act(async () => {
+        root.unmount();
+      });
+      dom.window.close();
+      process.exit(0);
+    }
+
+    main().catch((error) => {
+      process.stderr.write(error.stack || error.message);
+      process.exitCode = 1;
+    });
+  `);
+  const result = JSON.parse(output);
+  const appendCall = result.calls.find((entry) => entry.method === 'appendOperation');
+
+  assert.ok(appendCall, 'word-list editor should append an operation');
+  assert.equal(appendCall.args.packageId, 'pkg-draft-1');
+  assert.equal(appendCall.args.operation.entityType, 'spelling.wordList');
+  assert.equal(appendCall.args.operation.action, 'upsert');
+  assert.equal(appendCall.args.operation.entityId, 'extra-greek');
+  assert.equal(appendCall.args.operation.payload.title, 'Extra Greek roots revised');
+  assert.deepEqual(appendCall.args.operation.payload.wordSlugs, ['metamorphosis']);
+  assert.equal(Object.prototype.hasOwnProperty.call(appendCall.args.operation.payload, 'sentences'), false);
+  assert.equal(appendCall.args.mutation.requestId.startsWith('content-ops-word-list-upsert-pkg-draft-1-'), true);
+  assert.match(result.text, /Word list operation saved/);
+});
+
 test('Content Operations Centre spelling tab reloads browse data after package selection changes', async () => {
   const packageB = {
     ...contentPackage,

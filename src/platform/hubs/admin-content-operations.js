@@ -313,6 +313,9 @@ function normaliseSpellingBrowseWord(row = null) {
     variantWords: asArray(safe.variantWords),
     variantAccepted: asArray(safe.variantAccepted),
     familySize: Number(safe.familySize) || 0,
+    active: safe.active === false ? false : true,
+    retired: Boolean(safe.retired),
+    retirement: isPlainObject(safe.retirement) ? { ...safe.retirement } : null,
     draftState: asString(safe.draftState, 'unchanged'),
     validationState: normaliseBlockerSection(safe.validationState),
     hasCurrent: safe.hasCurrent !== false,
@@ -330,7 +333,15 @@ function normaliseSpellingWordList(row = null) {
     spellingPool: asString(safe.spellingPool, 'core'),
     coverageTier: asString(safe.coverageTier),
     yearGroups: asArray(safe.yearGroups),
+    tags: asArray(safe.tags),
+    wordSlugs: asArray(safe.wordSlugs),
+    sourceNote: asString(safe.sourceNote),
+    provenance: isPlainObject(safe.provenance) ? { ...safe.provenance } : null,
+    active: safe.active === false ? false : true,
+    retired: Boolean(safe.retired),
+    retirement: isPlainObject(safe.retirement) ? { ...safe.retirement } : null,
     wordCount: Number(safe.wordCount) || 0,
+    totalWordCount: Number(safe.totalWordCount ?? safe.wordCount) || 0,
     draftState: asString(safe.draftState, 'unchanged'),
   };
 }
@@ -340,6 +351,7 @@ function normaliseSpellingPoolSummary(row = null) {
   return {
     pool: asString(safe.pool, 'core'),
     wordCount: Number(safe.wordCount) || 0,
+    totalWordCount: Number(safe.totalWordCount ?? safe.wordCount) || 0,
     sentenceCount: Number(safe.sentenceCount) || 0,
     variantCount: Number(safe.variantCount) || 0,
     draftStateCounts: isPlainObject(safe.draftStateCounts) ? { ...safe.draftStateCounts } : {},
@@ -409,6 +421,11 @@ function normaliseSpellingSentence(sentence = null) {
     text: asString(safe.text),
     variantLabel: asString(safe.variantLabel),
     tags: asArray(safe.tags),
+    sourceNote: asString(safe.sourceNote),
+    provenance: isPlainObject(safe.provenance) ? { ...safe.provenance } : null,
+    active: safe.active === false ? false : true,
+    retired: Boolean(safe.retired),
+    retirement: isPlainObject(safe.retirement) ? { ...safe.retirement } : null,
     word: isPlainObject(safe.word) ? { ...safe.word } : null,
   };
 }

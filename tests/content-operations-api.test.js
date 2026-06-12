@@ -80,6 +80,17 @@ async function appendWordExplanationOperation(server, packageId, word, payload) 
   return readPayload(response);
 }
 
+async function appendContentOperation(server, packageId, operation) {
+  const response = await server.fetchAs(
+    ADMIN_ID,
+    `${BASE_URL}/api/admin/content-operations/packages/${packageId}/operations`,
+    jsonInit('POST', { operation }),
+    adminHeaders(),
+  );
+  assert.equal(response.status, 201);
+  return readPayload(response);
+}
+
 async function validatePackage(server, packageId, body = {}) {
   const response = await server.fetchAs(
     ADMIN_ID,
@@ -294,6 +305,138 @@ test('content operations API exposes spelling browse and item detail with packag
     assert.equal(missingSentenceResponse.status, 404);
     assert.equal(missingSentencePayload.code, 'spelling_content_sentence_not_found');
     assert.equal(missingSentencePayload.message, 'Spelling content sentence was not found.');
+  } finally {
+    server.close();
+  }
+});
+
+test('content operations API publishes linked sentence-entry operations through the package workflow', async () => {
+  const server = createWorkerRepositoryServer({ now: () => NOW });
+  try {
+    seedAdultAccount(server.DB, { accountId: ADMIN_ID, platformRole: 'admin' });
+    const repository = createWorkerRepository({
+      env: server.env,
+      now: () => NOW,
+    });
+    await repository.seedFirstContentOperationRelease({
+      seededByAccountId: ADMIN_ID,
+      proof: { source: 'content-operations-api-sentence-test' },
+    });
+    const seeded = await readSeededSpellingContentBundle();
+    const word = seeded.draft.words[0];
+    const sentenceId = `${word.slug}-t11-api-sentence`;
+    const sentenceText = `The ${word.word} sentence was added through content operations.`;
+
+    const created = await createPackage(server, { title: 'API sentence package' });
+    const packageId = created.package.packageId;
+
+    await appendContentOperation(server, packageId, {
+      entityType: 'spelling.sentenceEntry',
+      entityId: sentenceId,
+      fieldPath: '',
+      action: 'upsert',
+      payload: {
+        id: sentenceId,
+        wordSlug: word.slug,
+        text: sentenceText,
+        variantLabel: 'default',
+        tags: ['api-test'],
+        sourceNote: 'Added by content operations API test.',
+        provenance: { source: 'api-test', note: 'T11 linked sentence' },
+      },
+    });
+    await appendContentOperation(server, packageId, {
+      entityType: 'spelling.word',
+      entityId: word.slug,
+      fieldPath: 'sentenceEntryIds',
+      action: 'set',
+      payload: [...word.sentenceEntryIds, sentenceId],
+    });
+
+    const validated = await validatePackage(server, packageId);
+    assert.equal(validated.candidate.validation.status, 'passed');
+
+    await approvePackage(server, packageId, validated.candidate.candidateId);
+    const published = await publishPackage(server, packageId, {
+      includeSnapshot: true,
+      proof: { source: 'content-operations-api-linked-sentence-test' },
+    });
+    const publishedWord = published.release.snapshot.draft.words.find((entry) => entry.slug === word.slug);
+    const publishedSentence = published.release.snapshot.draft.sentences.find((entry) => entry.id === sentenceId);
+
+    assert.ok(publishedWord.sentenceEntryIds.includes(sentenceId));
+    assert.equal(publishedSentence.text, sentenceText);
+    assert.equal(publishedSentence.wordSlug, word.slug);
+  } finally {
+    server.close();
+  }
+});
+
+test('content operations API blocks referenced sentence and active word-list retirements', async () => {
+  const server = createWorkerRepositoryServer({ now: () => NOW });
+  try {
+    seedAdultAccount(server.DB, { accountId: ADMIN_ID, platformRole: 'admin' });
+    const repository = createWorkerRepository({
+      env: server.env,
+      now: () => NOW,
+    });
+    await repository.seedFirstContentOperationRelease({
+      seededByAccountId: ADMIN_ID,
+      proof: { source: 'content-operations-api-retirement-test' },
+    });
+    const seeded = await readSeededSpellingContentBundle();
+    const baseWord = seeded.draft.words.find((entry) => entry.sentenceEntryIds.length);
+    const variantWord = seeded.draft.words.find((entry) => entry.variants?.some((variant) => variant.sentenceEntryIds?.length));
+    const variantSentenceId = variantWord?.variants?.find((variant) => variant.sentenceEntryIds?.length)?.sentenceEntryIds[0];
+    assert.ok(baseWord, 'seeded spelling content should include a base sentence reference');
+    assert.ok(variantWord, 'seeded spelling content should include a variant sentence reference');
+    assert.ok(variantSentenceId, 'seeded variant should include a sentence reference');
+
+    const sentencePackage = await createPackage(server, { title: 'Retire referenced sentence package' });
+    await appendContentOperation(server, sentencePackage.package.packageId, {
+      entityType: 'spelling.sentenceEntry',
+      entityId: baseWord.sentenceEntryIds[0],
+      fieldPath: '',
+      action: 'retire',
+      payload: {
+        reason: 'API test retirement should be blocked.',
+        source: 'content-operations-api-test',
+        retiredAt: NOW,
+      },
+    });
+    await appendContentOperation(server, sentencePackage.package.packageId, {
+      entityType: 'spelling.sentenceEntry',
+      entityId: variantSentenceId,
+      fieldPath: '',
+      action: 'retire',
+      payload: {
+        reason: 'API test variant retirement should be blocked.',
+        source: 'content-operations-api-test',
+        retiredAt: NOW,
+      },
+    });
+    const sentenceValidated = await validatePackage(server, sentencePackage.package.packageId);
+    assert.equal(sentenceValidated.candidate.validation.status, 'blocked');
+    assert.ok(sentenceValidated.candidate.validation.errors.some((entry) => entry.code === 'retired_sentence_reference'));
+    assert.ok(sentenceValidated.candidate.validation.errors.some((entry) => (
+      entry.code === 'retired_sentence_reference' && entry.path.includes('variants')
+    )));
+
+    const listPackage = await createPackage(server, { title: 'Retire active word-list package' });
+    await appendContentOperation(server, listPackage.package.packageId, {
+      entityType: 'spelling.wordList',
+      entityId: baseWord.listId,
+      fieldPath: '',
+      action: 'retire',
+      payload: {
+        reason: 'API test list retirement should be blocked.',
+        source: 'content-operations-api-test',
+        retiredAt: NOW,
+      },
+    });
+    const listValidated = await validatePackage(server, listPackage.package.packageId);
+    assert.equal(listValidated.candidate.validation.status, 'blocked');
+    assert.ok(listValidated.candidate.validation.errors.some((entry) => entry.code === 'retired_word_list_reference'));
   } finally {
     server.close();
   }

@@ -167,6 +167,9 @@ function normaliseWordList(rawValue, index = 0) {
     wordSlugs: uniqueStrings(raw.wordSlugs, { lowerCase: true }),
     sourceNote: normaliseString(raw.sourceNote),
     provenance: normaliseProvenance(raw.provenance, raw.sourceNote || 'spelling word list'),
+    active: raw.active === false ? false : true,
+    retired: Boolean(raw.retired),
+    ...(raw.retired || raw.active === false || raw.retirement ? { retirement: normaliseRetirement(raw.retirement) } : {}),
     sortIndex: Number.isInteger(Number(raw.sortIndex)) && Number(raw.sortIndex) >= 0 ? Number(raw.sortIndex) : index,
   };
 }
@@ -234,6 +237,9 @@ function normaliseSentenceEntry(rawValue, index = 0) {
     tags: normaliseTags(raw.tags),
     sourceNote: normaliseString(raw.sourceNote),
     provenance: normaliseProvenance(raw.provenance, raw.sourceNote || 'spelling sentence'),
+    active: raw.active === false ? false : true,
+    retired: Boolean(raw.retired),
+    ...(raw.retired || raw.active === false || raw.retirement ? { retirement: normaliseRetirement(raw.retirement) } : {}),
     sortIndex: Number.isInteger(Number(raw.sortIndex)) && Number(raw.sortIndex) >= 0 ? Number(raw.sortIndex) : index,
   };
 }
@@ -499,6 +505,8 @@ export function validateSpellingContentBundle(rawBundle) {
     const wordList = word.listId ? wordListsById.get(word.listId) : null;
     if (!word.listId || !wordList) {
       errors.push(issue('error', 'malformed_entry', `draft.words[${index}].listId`, `Word "${word.slug}" must point at a valid word list.`));
+    } else if (wordList.active === false || wordList.retired) {
+      errors.push(issue('error', 'retired_word_list_reference', `draft.words[${index}].listId`, `Word "${word.slug}" points at retired word list "${word.listId}".`));
     } else if (word.spellingPool !== wordList.spellingPool) {
       errors.push(issue('error', 'pool_mismatch', `draft.words[${index}].spellingPool`, `Word "${word.slug}" uses pool "${word.spellingPool}" but list "${word.listId}" uses pool "${wordList.spellingPool}".`));
     } else if (word.coverageTier !== wordList.coverageTier) {
@@ -566,6 +574,10 @@ export function validateSpellingContentBundle(rawBundle) {
         errors.push(issue('error', 'broken_sentence_reference', `draft.words[${index}].sentenceEntryIds[${position}]`, `Word "${word.slug}" references missing sentence id "${sentenceId}".`));
         return;
       }
+      if (sentence.active === false || sentence.retired) {
+        errors.push(issue('error', 'retired_sentence_reference', `draft.words[${index}].sentenceEntryIds[${position}]`, `Word "${word.slug}" references retired sentence id "${sentenceId}".`));
+        return;
+      }
       if (sentence.wordSlug !== word.slug) {
         errors.push(issue('error', 'broken_sentence_reference', `draft.words[${index}].sentenceEntryIds[${position}]`, `Sentence "${sentenceId}" belongs to word "${sentence.wordSlug}", not "${word.slug}".`));
       }
@@ -576,6 +588,10 @@ export function validateSpellingContentBundle(rawBundle) {
         const sentence = sentencesById.get(sentenceId);
         if (!sentence) {
           errors.push(issue('error', 'broken_sentence_reference', `draft.words[${index}].variants[${variantIndex}].sentenceEntryIds[${position}]`, `Variant "${variant.word || variantIndex + 1}" for word "${word.slug}" references missing sentence id "${sentenceId}".`));
+          return;
+        }
+        if (sentence.active === false || sentence.retired) {
+          errors.push(issue('error', 'retired_sentence_reference', `draft.words[${index}].variants[${variantIndex}].sentenceEntryIds[${position}]`, `Variant "${variant.word || variantIndex + 1}" for word "${word.slug}" references retired sentence id "${sentenceId}".`));
           return;
         }
         if (sentence.wordSlug !== word.slug) {
