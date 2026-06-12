@@ -7,6 +7,7 @@ import {
 } from '../worker/src/generated-spelling-content-seed.js';
 import {
   listContentOperationAudioJobs,
+  reconcileContentOperationAudioJobs,
 } from '../worker/src/content-operations/audio.js';
 import { createWorkerRepositoryServer } from './helpers/worker-server.js';
 
@@ -47,6 +48,51 @@ function adminHeaders() {
 
 async function readPayload(response) {
   return response.json();
+}
+
+function geminiAudioResponse(bytes = [1, 2, 3, 4]) {
+  return new Response(JSON.stringify({
+    candidates: [{
+      content: {
+        parts: [{
+          inlineData: {
+            data: Buffer.from(bytes).toString('base64'),
+            mimeType: 'audio/L16;rate=24000',
+          },
+        }],
+      },
+    }],
+  }), {
+    status: 200,
+    headers: { 'content-type': 'application/json' },
+  });
+}
+
+function createMemoryR2Bucket() {
+  const objects = new Map();
+  return {
+    gets: [],
+    puts: [],
+    async get(key) {
+      this.gets.push(key);
+      const entry = objects.get(key);
+      if (!entry) return null;
+      return {
+        body: entry.bytes,
+        httpMetadata: { contentType: entry.contentType },
+        customMetadata: entry.customMetadata,
+      };
+    },
+    async put(key, bytes, options = {}) {
+      const storedBytes = bytes instanceof ArrayBuffer ? new Uint8Array(bytes) : bytes;
+      this.puts.push({ key, bytes: storedBytes, options });
+      objects.set(key, {
+        bytes: storedBytes,
+        contentType: options.httpMetadata?.contentType || 'application/octet-stream',
+        customMetadata: options.customMetadata || {},
+      });
+    },
+  };
 }
 
 async function createPackage(server, body = {}) {
@@ -249,6 +295,370 @@ test('content operation audio job listing returns the full package ledger by def
   } finally {
     server.close();
   }
+});
+
+test('content operations generate-audio uses TTS, stores R2 audio, and records authoritative provenance', async (t) => {
+  const originalFetch = globalThis.fetch;
+  const providerCalls = [];
+  globalThis.fetch = async (url, init = {}) => {
+    providerCalls.push({
+      url,
+      headers: init.headers,
+      body: JSON.parse(init.body),
+    });
+    return geminiAudioResponse();
+  };
+  const bucket = createMemoryR2Bucket();
+  const server = createWorkerRepositoryServer({
+    now: () => NOW,
+    env: {
+      GEMINI_API_KEY: 'test-gemini-key',
+      SPELLING_AUDIO_BUCKET: bucket,
+    },
+  });
+  t.after(() => {
+    globalThis.fetch = originalFetch;
+    server.close();
+  });
+
+  seedAdultAccount(server.DB, { accountId: ADMIN_ID, platformRole: 'admin' });
+  const repository = createWorkerRepository({
+    env: server.env,
+    now: () => NOW,
+  });
+  await repository.seedFirstContentOperationRelease({
+    seededByAccountId: ADMIN_ID,
+    proof: { source: 'content-operations-api-generate-audio-test' },
+  });
+
+  const created = await createPackage(server, { title: 'Generate audio package' });
+  const packageId = created.package.packageId;
+  await appendContentOperation(server, packageId, {
+    entityType: 'spelling.audioRequirementProfile',
+    entityId: 'default',
+    fieldPath: '',
+    action: 'replace',
+    payload: {
+      wordProfiles: ['male.natural'],
+      sentenceProfiles: [{ profileId: 'female.slow', required: false }],
+    },
+  });
+  const validated = await validatePackage(server, packageId, { includeSnapshot: true });
+  const target = validated.candidate.audioScan.items.find((item) => item.lane === 'word' && item.required);
+  assert.ok(target, 'expected a required word audio item');
+
+  const response = await server.fetchAs(
+    ADMIN_ID,
+    `${BASE_URL}/api/admin/content-operations/packages/${packageId}/generate-audio`,
+    jsonInit('POST', {
+      candidateId: validated.candidate.candidateId,
+      itemIds: [target.itemId],
+      limit: 1,
+    }),
+    adminHeaders(),
+  );
+  const payload = await readPayload(response);
+  assert.equal(response.status, 200);
+  assert.equal(payload.ok, true);
+  assert.equal(payload.audio.summary.uploaded, 1);
+  assert.equal(payload.audio.summary.failed, 0);
+  assert.equal(providerCalls.length, 1);
+  assert.match(providerCalls[0].url, /generativelanguage\.googleapis\.com/);
+  assert.equal(providerCalls[0].headers['x-goog-api-key'], 'test-gemini-key');
+  assert.equal(providerCalls[0].body.generationConfig.speechConfig.voiceConfig.prebuiltVoiceConfig.voiceName, target.voiceId);
+  assert.equal(bucket.puts.length, 1);
+
+  const row = server.DB.db.prepare(`
+    SELECT *
+    FROM content_operation_audio_jobs
+    WHERE package_id = ?
+  `).get(packageId);
+  assert.equal(row.status, 'uploaded');
+  assert.equal(row.r2_key, bucket.puts[0].key);
+  assert.equal(row.requested_by_account_id, ADMIN_ID);
+  assert.ok(row.idempotency_key.includes(target.contentKey));
+  assert.equal(row.source_kind, 'content-operations-tts');
+  assert.equal(row.attempt_count, 1);
+  const provenance = JSON.parse(row.provenance_json);
+  assert.equal(provenance.sourceIdentity, 'content-operations-tts');
+  assert.equal(provenance.generatedByAccountId, ADMIN_ID);
+  assert.equal(provenance.lane, target.lane);
+  assert.equal(provenance.voiceId, target.voiceId);
+  assert.equal(provenance.modelId, target.modelId);
+  assert.equal(provenance.profileVersion, target.profileVersion);
+  assert.equal(provenance.contentKey, target.contentKey);
+
+  const refreshed = await validatePackage(server, packageId, { includeSnapshot: true });
+  const refreshedItem = refreshed.candidate.audioScan.items.find((item) => item.itemId === target.itemId);
+  assert.equal(refreshedItem.status, 'present');
+
+  const duplicateResponse = await server.fetchAs(
+    ADMIN_ID,
+    `${BASE_URL}/api/admin/content-operations/packages/${packageId}/generate-audio`,
+    jsonInit('POST', {
+      candidateId: refreshed.candidate.candidateId,
+      itemIds: [target.itemId],
+      limit: 1,
+    }),
+    adminHeaders(),
+  );
+  const duplicatePayload = await readPayload(duplicateResponse);
+  assert.equal(duplicateResponse.status, 200);
+  assert.equal(duplicatePayload.audio.summary.requested, 1);
+  assert.equal(duplicatePayload.audio.summary.uploaded, 0);
+  assert.equal(duplicatePayload.audio.summary.skippedExisting, 1);
+  assert.deepEqual(duplicatePayload.audio.jobs, []);
+  assert.equal(providerCalls.length, 1, 'idempotent duplicate should not call the provider again');
+  const rowCount = server.DB.db.prepare(`
+    SELECT COUNT(*) AS count
+    FROM content_operation_audio_jobs
+    WHERE package_id = ?
+  `).get(packageId).count;
+  assert.equal(rowCount, 1);
+
+  const overrideResponse = await server.fetchAs(
+    ADMIN_ID,
+    `${BASE_URL}/api/admin/content-operations/packages/${packageId}/generate-audio`,
+    jsonInit('POST', {
+      candidateId: refreshed.candidate.candidateId,
+      itemIds: [target.itemId],
+      limit: 1,
+      override: true,
+      reason: 'Refresh generated audio after editorial review.',
+    }),
+    adminHeaders(),
+  );
+  const overridePayload = await readPayload(overrideResponse);
+  assert.equal(overrideResponse.status, 200);
+  assert.equal(overridePayload.audio.summary.uploaded, 1);
+  assert.equal(overridePayload.audio.summary.skippedExisting, 0);
+  assert.equal(providerCalls.length, 2, 'override should bypass the cached R2 object and call the provider again');
+  assert.equal(bucket.puts.length, 2, 'override should overwrite the R2 object through the approved storage path');
+  const overrideRow = server.DB.db.prepare(`
+    SELECT *
+    FROM content_operation_audio_jobs
+    WHERE package_id = ?
+  `).get(packageId);
+  assert.equal(overrideRow.attempt_count, 2);
+  const overrideProvenance = JSON.parse(overrideRow.provenance_json);
+  assert.equal(overrideProvenance.override, true);
+  assert.equal(overrideProvenance.overrideReason, 'Refresh generated audio after editorial review.');
+  const overrideRowCount = server.DB.db.prepare(`
+    SELECT COUNT(*) AS count
+    FROM content_operation_audio_jobs
+    WHERE package_id = ?
+  `).get(packageId).count;
+  assert.equal(overrideRowCount, 1);
+
+  const batchOverrideResponse = await server.fetchAs(
+    ADMIN_ID,
+    `${BASE_URL}/api/admin/content-operations/packages/${packageId}/generate-audio`,
+    jsonInit('POST', {
+      limit: 1,
+      override: true,
+      reason: 'Refresh all generated audio after voice profile review.',
+    }),
+    adminHeaders(),
+  );
+  const batchOverridePayload = await readPayload(batchOverrideResponse);
+  assert.equal(batchOverrideResponse.status, 200);
+  assert.equal(batchOverridePayload.audio.summary.uploaded, 1);
+  assert.equal(batchOverridePayload.audio.summary.skippedExisting, 0);
+  assert.equal(providerCalls.length, 3, 'batch override should include present assets when itemIds are omitted');
+  assert.equal(bucket.puts.length, 3);
+  const batchOverrideRow = server.DB.db.prepare(`
+    SELECT *
+    FROM content_operation_audio_jobs
+    WHERE package_id = ?
+  `).get(packageId);
+  assert.equal(batchOverrideRow.attempt_count, 3);
+  const batchOverrideRowCount = server.DB.db.prepare(`
+    SELECT COUNT(*) AS count
+    FROM content_operation_audio_jobs
+    WHERE package_id = ?
+  `).get(packageId).count;
+  assert.equal(batchOverrideRowCount, 1);
+});
+
+test('content operations reconcile operator-script audio jobs into readiness scan', async (t) => {
+  const server = createWorkerRepositoryServer({
+    now: () => NOW,
+  });
+  t.after(() => server.close());
+
+  seedAdultAccount(server.DB, { accountId: ADMIN_ID, platformRole: 'admin' });
+  const repository = createWorkerRepository({
+    env: server.env,
+    now: () => NOW,
+  });
+  await repository.seedFirstContentOperationRelease({
+    seededByAccountId: ADMIN_ID,
+    proof: { source: 'content-operations-api-audio-reconcile-test' },
+  });
+
+  const created = await createPackage(server, { title: 'Operator audio package' });
+  const packageId = created.package.packageId;
+  await appendContentOperation(server, packageId, {
+    entityType: 'spelling.audioRequirementProfile',
+    entityId: 'default',
+    fieldPath: '',
+    action: 'replace',
+    payload: {
+      wordProfiles: ['male.natural'],
+      sentenceProfiles: [{ profileId: 'female.slow', required: false }],
+    },
+  });
+  const validated = await validatePackage(server, packageId, { includeSnapshot: true });
+  const target = validated.candidate.audioScan.items.find((item) => item.lane === 'word' && item.required);
+  assert.ok(target, 'expected a required word audio item');
+
+  const reconciliation = await reconcileContentOperationAudioJobs(server.DB, {
+    packageId,
+    candidateId: validated.candidate.candidateId,
+    requestedByAccountId: ADMIN_ID,
+    sourceKind: 'operator-script',
+    now: NOW,
+    entries: [{
+      itemId: target.itemId,
+      lane: target.lane,
+      slug: target.slug,
+      voiceId: target.voiceId,
+      paceId: target.paceId,
+      modelId: target.modelId,
+      profileVersion: target.profileVersion,
+      contentKey: target.contentKey,
+      r2Key: target.r2Key,
+      sourceIdentity: 'operator-script',
+      generatedByAccountId: ADMIN_ID,
+      generatedAt: NOW,
+    }],
+  });
+
+  assert.equal(reconciliation.summary.uploaded, 1);
+  assert.equal(reconciliation.jobs[0].sourceKind, 'operator-script');
+
+  const row = server.DB.db.prepare(`
+    SELECT *
+    FROM content_operation_audio_jobs
+    WHERE package_id = ?
+  `).get(packageId);
+  assert.equal(row.status, 'uploaded');
+  assert.equal(row.r2_key, target.r2Key);
+  assert.equal(row.source_kind, 'operator-script');
+  const provenance = JSON.parse(row.provenance_json);
+  assert.equal(provenance.sourceIdentity, 'operator-script');
+  assert.equal(provenance.generatedByAccountId, ADMIN_ID);
+  assert.equal(provenance.generatedAt, NOW);
+  assert.equal(provenance.lane, 'word');
+  assert.equal(provenance.voiceId, target.voiceId);
+  assert.equal(provenance.paceId, target.paceId);
+  assert.equal(provenance.modelId, target.modelId);
+  assert.equal(provenance.profileVersion, target.profileVersion);
+  assert.equal(provenance.r2Key, target.r2Key);
+
+  await reconcileContentOperationAudioJobs(server.DB, {
+    packageId,
+    candidateId: validated.candidate.candidateId,
+    requestedByAccountId: ADMIN_ID,
+    sourceKind: 'operator-script',
+    now: NOW + 1,
+    entries: [{
+      itemId: `word:${target.slug}:${target.voiceId}:${target.contentKey}`,
+      lane: target.lane,
+      slug: target.slug,
+      voiceId: target.voiceId,
+      paceId: target.paceId,
+      modelId: target.modelId,
+      profileVersion: target.profileVersion,
+      contentKey: target.contentKey,
+      r2Key: target.r2Key,
+      sourceIdentity: 'operator-script',
+      generatedByAccountId: ADMIN_ID,
+      generatedAt: NOW + 1,
+    }],
+  });
+  const rowCount = server.DB.db.prepare(`
+    SELECT COUNT(*) AS count
+    FROM content_operation_audio_jobs
+    WHERE package_id = ?
+  `).get(packageId).count;
+  assert.equal(rowCount, 1);
+
+  const refreshed = await validatePackage(server, packageId, { includeSnapshot: true });
+  const refreshedItem = refreshed.candidate.audioScan.items.find((item) => item.itemId === target.itemId);
+  assert.equal(refreshedItem.status, 'present');
+});
+
+test('content operations generate-audio records provider failures as retryable failed jobs', async (t) => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => new Response(JSON.stringify({ error: { message: 'quota exceeded' } }), {
+    status: 429,
+    headers: { 'content-type': 'application/json' },
+  });
+  const server = createWorkerRepositoryServer({
+    now: () => NOW,
+    env: {
+      GEMINI_API_KEY: 'test-gemini-key',
+      SPELLING_AUDIO_BUCKET: createMemoryR2Bucket(),
+    },
+  });
+  t.after(() => {
+    globalThis.fetch = originalFetch;
+    server.close();
+  });
+
+  seedAdultAccount(server.DB, { accountId: ADMIN_ID, platformRole: 'admin' });
+  const repository = createWorkerRepository({
+    env: server.env,
+    now: () => NOW,
+  });
+  await repository.seedFirstContentOperationRelease({
+    seededByAccountId: ADMIN_ID,
+    proof: { source: 'content-operations-api-generate-audio-failure-test' },
+  });
+
+  const created = await createPackage(server, { title: 'Failed audio package' });
+  const packageId = created.package.packageId;
+  await appendContentOperation(server, packageId, {
+    entityType: 'spelling.audioRequirementProfile',
+    entityId: 'default',
+    fieldPath: '',
+    action: 'replace',
+    payload: { wordProfiles: ['male.natural'] },
+  });
+  const validated = await validatePackage(server, packageId, { includeSnapshot: true });
+  const target = validated.candidate.audioScan.items.find((item) => item.lane === 'word' && item.required);
+
+  const response = await server.fetchAs(
+    ADMIN_ID,
+    `${BASE_URL}/api/admin/content-operations/packages/${packageId}/generate-audio`,
+    jsonInit('POST', {
+      candidateId: validated.candidate.candidateId,
+      itemIds: [target.itemId],
+      limit: 1,
+    }),
+    adminHeaders(),
+  );
+  const payload = await readPayload(response);
+  assert.equal(response.status, 200);
+  assert.equal(payload.audio.summary.failed, 1);
+  assert.equal(payload.audio.jobs[0].status, 'failed');
+
+  const row = server.DB.db.prepare(`
+    SELECT status, error_json, attempt_count
+    FROM content_operation_audio_jobs
+    WHERE package_id = ?
+  `).get(packageId);
+  assert.equal(row.status, 'failed');
+  assert.equal(row.attempt_count, 1);
+  const error = JSON.parse(row.error_json);
+  assert.equal(error.provider, 'gemini');
+  assert.equal(error.providerStatus, 429);
+
+  const refreshed = await validatePackage(server, packageId, { includeSnapshot: true });
+  const failedItem = refreshed.candidate.audioScan.items.find((item) => item.itemId === target.itemId);
+  assert.equal(failedItem.status, 'failed');
+  assert.equal(failedItem.error.providerStatus, 429);
 });
 
 test('content operations API requires the admin platform role', async () => {
