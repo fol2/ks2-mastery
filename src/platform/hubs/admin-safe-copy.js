@@ -22,6 +22,8 @@ export const COPY_AUDIENCE = Object.freeze({
 // ---------------------------------------------------------------------------
 
 const SENSITIVE_HEADER_KEYS = ['cookie', 'authorization', 'x-auth-token', 'set-cookie'];
+const ACCOUNT_ID_FIELD_RE = /(?:^accountId$|AccountId$|_account_id$|^account_id$)/;
+const LEARNER_ID_FIELD_RE = /(?:^learnerId$|LearnerId$|^learner_id$|_learner_id$|^childId$|ChildId$|^child_id$|_child_id$)/;
 
 function isSensitiveHeaderKey(key) {
   return SENSITIVE_HEADER_KEYS.includes(String(key).toLowerCase());
@@ -140,7 +142,7 @@ function maskAllAccountIds(obj) {
     return obj;
   }
   for (const key of Object.keys(obj)) {
-    if (key === 'accountId' && typeof obj[key] === 'string') {
+    if (ACCOUNT_ID_FIELD_RE.test(key) && typeof obj[key] === 'string') {
       obj[key] = maskId(obj[key]);
     } else if (typeof obj[key] === 'object') {
       maskAllAccountIds(obj[key]);
@@ -157,7 +159,7 @@ function stripChildIds(obj) {
     return obj;
   }
   for (const key of Object.keys(obj)) {
-    if (key === 'learnerId' || key === 'learner_id' || key === 'childId') {
+    if (LEARNER_ID_FIELD_RE.test(key)) {
       delete obj[key];
     } else if (typeof obj[key] === 'object') {
       stripChildIds(obj[key]);
@@ -356,6 +358,9 @@ export function prepareSafeCopy(data, audience) {
 
       stripInternalNotes(working);
       redactedFields.push('internal_notes');
+
+      stripChildIds(working);
+      redactedFields.push('child_ids');
     }
     let text = typeof working === 'string' ? working : JSON.stringify(working, null, 2);
     // Defence-in-depth: scan serialised output for PII in non-canonical keys.

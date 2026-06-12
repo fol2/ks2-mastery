@@ -88,6 +88,55 @@ test('admin_only audience preserves content operations blocker envelopes', () =>
   assert.deepEqual(parsed.blockers.audio.blockers, ['word_audio_missing']);
 });
 
+test('ops_safe redacts content operations package and release history identifiers', () => {
+  const data = {
+    title: 'Content operations release export',
+    package: {
+      packageId: 'copkg-release-export',
+      createdByAccountId: 'adult-created-account-123456',
+      updatedByAccountId: 'adult-updated-account-123456',
+      targetLearnerId: 'learner-target-123456',
+    },
+    release: {
+      releaseId: 'corel-release-export',
+      publishedByAccountId: 'adult-published-account-123456',
+      selectedLearnerId: 'lrn-selected-abc123',
+      history: {
+        approvedByAccountId: 'adult-approved-account-123456',
+        productionProof: {
+          capturedByAccountId: 'adult-proof-account-123456',
+          linkedSurfaces: [{
+            key: 'spellingSetup',
+            learnerId: 'learner-sensitive-123456',
+            linkedLearnerId: 'lrn-linked-abc123',
+            evidenceEmail: 'parent@example.test',
+          }],
+        },
+      },
+    },
+  };
+
+  const result = prepareSafeCopy(data, COPY_AUDIENCE.OPS_SAFE);
+
+  assert.equal(result.ok, true);
+  const parsed = JSON.parse(result.text);
+  assert.equal(parsed.package.packageId, 'copkg-release-export');
+  assert.equal(parsed.release.releaseId, 'corel-release-export');
+  assert.equal(parsed.package.createdByAccountId, '****t-123456');
+  assert.equal(parsed.package.updatedByAccountId, '****t-123456');
+  assert.equal(parsed.release.publishedByAccountId, '****t-123456');
+  assert.equal(parsed.release.history.approvedByAccountId, '****t-123456');
+  assert.equal(parsed.release.history.productionProof.capturedByAccountId, '****t-123456');
+  assert.equal(parsed.package.targetLearnerId, undefined);
+  assert.equal(parsed.release.selectedLearnerId, undefined);
+  assert.equal(parsed.release.history.productionProof.linkedSurfaces[0].learnerId, undefined);
+  assert.equal(parsed.release.history.productionProof.linkedSurfaces[0].linkedLearnerId, undefined);
+  assert.equal(parsed.release.history.productionProof.linkedSurfaces[0].evidenceEmail, '****e.test');
+  assert.ok(result.redactedFields.includes('account_ids_masked'));
+  assert.ok(result.redactedFields.includes('child_ids'));
+  assert.ok(result.redactedFields.includes('emails_masked'));
+});
+
 // ---------------------------------------------------------------------------
 // 2. ops_safe — masked email, masked account ID, no internal notes
 // ---------------------------------------------------------------------------
