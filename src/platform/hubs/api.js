@@ -323,6 +323,33 @@ export function createHubApi({
       const url = buildRequestUrl(baseUrl, `/api/admin/content-operations/packages/${safePackageId}`);
       return fetchHubJson(fetch, url, { method: 'GET' }, authSession);
     },
+    async appendContentOperation({ packageId, operation, mutation } = {}) {
+      if (!packageId) throw new TypeError('Content operation package id is required.');
+      if (!operation || typeof operation !== 'object' || Array.isArray(operation)) {
+        throw new TypeError('Content operation payload is required.');
+      }
+      const safePackageId = encodeURIComponent(String(packageId));
+      const url = buildRequestUrl(baseUrl, `/api/admin/content-operations/packages/${safePackageId}/operations`);
+      return fetchHubJson(fetch, url, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          operation,
+          mutation,
+        }),
+      }, authSession);
+    },
+    async deleteContentOperation({ packageId, operationId } = {}) {
+      if (!packageId) throw new TypeError('Content operation package id is required.');
+      if (!operationId) throw new TypeError('Content operation id is required.');
+      const safePackageId = encodeURIComponent(String(packageId));
+      const safeOperationId = encodeURIComponent(String(operationId));
+      const url = buildRequestUrl(
+        baseUrl,
+        `/api/admin/content-operations/packages/${safePackageId}/operations/${safeOperationId}`,
+      );
+      return fetchHubJson(fetch, url, { method: 'DELETE' }, authSession);
+    },
     async validateContentOperationPackage({ packageId, includeSnapshot = false, mutation } = {}) {
       if (!packageId) throw new TypeError('Content operation package id is required.');
       const safePackageId = encodeURIComponent(String(packageId));

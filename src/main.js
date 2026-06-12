@@ -2720,6 +2720,8 @@ function buildSurfaceActions() {
     readSpellingSentence: hubApi.readContentOperationSpellingSentence?.bind(hubApi),
     readPackages: hubApi.readContentOperationPackages?.bind(hubApi),
     readPackage: hubApi.readContentOperationPackage?.bind(hubApi),
+    appendOperation: hubApi.appendContentOperation?.bind(hubApi),
+    deleteOperation: hubApi.deleteContentOperation?.bind(hubApi),
     validatePackage: hubApi.validateContentOperationPackage?.bind(hubApi),
     approvePackage: hubApi.approveContentOperationPackage?.bind(hubApi),
     publishPackage: hubApi.publishContentOperationPackage?.bind(hubApi),
