@@ -1,4 +1,5 @@
 import { requireMutationCapability } from '../auth.js';
+import { requireDatabase } from '../d1.js';
 import { requireSameOrigin } from '../demo/sessions.js';
 import {
   BadRequestError,
@@ -22,13 +23,15 @@ import {
   readSpellingContentSentenceDetailModel,
   readSpellingContentWordDetailModel,
 } from './read-models.js';
+import {
+  generateContentOperationPackageAudio,
+} from './audio.js';
 
 const CONTENT_OPERATIONS_ROUTE_PREFIX = '/api/admin/content-operations';
 const CONTENT_OPERATIONS_SUBJECT_ID = 'spelling';
 const STUBBED_CONTENT_OPERATION_ROUTES = Object.freeze({
   rebase: { ticket: 'T6', capability: CONTENT_OPERATION_CAPABILITIES.EDIT },
   'scan-audio': { ticket: 'T7', capability: CONTENT_OPERATION_CAPABILITIES.EDIT },
-  'generate-audio': { ticket: 'T7', capability: CONTENT_OPERATION_CAPABILITIES.EDIT },
   'upload-monster-asset': { ticket: 'T8', capability: CONTENT_OPERATION_CAPABILITIES.EDIT },
   'create-revert': { ticket: 'T9', capability: CONTENT_OPERATION_CAPABILITIES.ROLLBACK },
 });
@@ -563,6 +566,37 @@ export async function handleContentOperationsAdminRequest({
           candidate: serialiseContentOperationCandidate(result.candidate, {
             includeSnapshot: includeSnapshot(url, body),
           }),
+        });
+      }
+
+      if (action === 'generate-audio') {
+        let candidate;
+        try {
+          candidate = await repository.buildContentOperationCandidate(packageId, {
+            actorAccountId: actor.id,
+          });
+        } catch (error) {
+          badContentOperation(error);
+        }
+        const audio = await generateContentOperationPackageAudio({
+          db: requireDatabase(env),
+          env,
+          packageId,
+          candidate,
+          candidateId: body.candidateId || body.candidate_id || candidate.candidateId,
+          requestedByAccountId: actor.id,
+          itemIds: body.itemIds || body.item_ids || [],
+          limit: body.limit,
+          override: body.override === true,
+          overrideReason: body.reason || body.overrideReason || body.override_reason || '',
+        });
+        return json({
+          ok: true,
+          actor: serialiseContentOperationActor(actor),
+          candidate: serialiseContentOperationCandidate(candidate, {
+            includeSnapshot: includeSnapshot(url, body),
+          }),
+          audio,
         });
       }
 

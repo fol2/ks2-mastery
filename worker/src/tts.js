@@ -495,7 +495,7 @@ async function storeBufferedGeminiAudio(env, payload, response, options = {}) {
       metadata: cacheSlot?.metadata || null,
     };
   }
-  if (cacheSlot.object) {
+  if (cacheSlot.object && !options.force) {
     return {
       response: cachedGeminiAudioResponse(cacheSlot),
       cacheState: 'hit',
@@ -579,6 +579,71 @@ function geminiPrompt(payload = {}) {
 // the only consumer; production callers continue to reach `bufferedAudioKey`
 // only through `handleTextToSpeechRequest`.
 export { bufferedAudioMetadata, bufferedAudioKey, geminiPrompt };
+
+export async function generateBufferedSpellingAudio({
+  env,
+  payload,
+  accountId = '',
+  model = SPELLING_AUDIO_MODEL,
+  voice = '',
+  force = false,
+  fetchFn = fetch,
+} = {}) {
+  const generationPayload = {
+    ...(payload && typeof payload === 'object' ? payload : {}),
+    accountId: cleanText(accountId || payload?.accountId),
+    provider: 'gemini',
+    bufferedGeminiVoice: normaliseBufferedGeminiVoice(voice || payload?.bufferedGeminiVoice || payload?.cachedVoice),
+  };
+  const gemini = geminiConfig(env);
+  const config = {
+    ...gemini,
+    model: cleanGeminiModel(model) || gemini.model,
+    voice: generationPayload.bufferedGeminiVoice || gemini.voice,
+  };
+  if (!config.apiKey) throw missingProviderConfig('gemini');
+
+  const cacheHit = await readBufferedGeminiAudio(env, generationPayload, { model: config.model });
+  if (cacheHit?.cacheUnavailable) {
+    throw new BackendUnavailableError('Spelling audio R2 cache is not available.', {
+      code: 'tts_cache_unavailable',
+      provider: 'gemini',
+    });
+  }
+  if (!cacheHit?.metadata) {
+    throw new BadRequestError('Spelling audio payload is not cacheable.', {
+      code: 'tts_payload_uncacheable',
+      provider: 'gemini',
+    });
+  }
+  if (cacheHit.object && !force) {
+    return {
+      cacheState: 'hit',
+      key: cacheHit.key,
+      metadata: cacheHit.metadata,
+      contentType: cacheHit.contentType,
+    };
+  }
+
+  const response = await requestGeminiSpeech({ config, payload: generationPayload, fetchFn });
+  const stored = await storeBufferedGeminiAudio(env, generationPayload, response, {
+    model: config.model,
+    force,
+  });
+  if (stored.cacheState !== 'stored' && stored.cacheState !== 'hit') {
+    throw new BackendUnavailableError('Spelling audio could not be stored in R2.', {
+      code: 'tts_cache_store_failed',
+      provider: 'gemini',
+      cacheState: stored.cacheState,
+    });
+  }
+  return {
+    cacheState: stored.cacheState,
+    key: stored.key,
+    metadata: stored.metadata,
+    contentType: stored.response?.headers?.get?.('content-type') || 'audio/wav',
+  };
+}
 
 function base64ToBytes(value) {
   const binary = atob(value);

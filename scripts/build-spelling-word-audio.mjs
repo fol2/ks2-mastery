@@ -35,6 +35,7 @@ import { fileURLToPath } from 'node:url';
 
 import { WORDS } from '../src/subjects/spelling/data/word-data.js';
 import { SEEDED_SPELLING_PUBLISHED_SNAPSHOT } from '../src/subjects/spelling/data/content-data.js';
+import { SPELLING_AUDIO_REQUIREMENT_PROFILE_VERSION } from '../src/subjects/spelling/content/audio-readiness.js';
 import {
   buildAudioAssetKey,
   buildBufferedDictationTranscript,
@@ -122,6 +123,9 @@ export function parseArgs(argv) {
     dryRun: false,
     skipUpload: false,
     fromR2Inventory: false,
+    packageId: '',
+    candidateId: '',
+    requestedByAccountId: '',
     json: false,
   };
 
@@ -178,6 +182,18 @@ export function parseArgs(argv) {
       }
       case '--run-id':
         flags.runId = readValue(index, arg);
+        index += 1;
+        break;
+      case '--package-id':
+        flags.packageId = readValue(index, arg);
+        index += 1;
+        break;
+      case '--candidate-id':
+        flags.candidateId = readValue(index, arg);
+        index += 1;
+        break;
+      case '--requested-by-account-id':
+        flags.requestedByAccountId = readValue(index, arg);
         index += 1;
         break;
       case '--dry-run':
@@ -517,6 +533,44 @@ export function summariseState(entries) {
     else totals.pending += 1;
   }
   return totals;
+}
+
+export function buildContentOperationAudioLedgerEntries({
+  entries = [],
+  requestedByAccountId = '',
+  generatedAt = Date.now(),
+  sourceIdentity = 'operator-script',
+  model = SPELLING_AUDIO_MODEL,
+  profileVersion = SPELLING_AUDIO_REQUIREMENT_PROFILE_VERSION,
+} = {}) {
+  const accountId = cleanText(requestedByAccountId);
+  const generatedAtMs = Number.isFinite(Number(generatedAt)) ? Number(generatedAt) : Date.now();
+  return entries
+    .filter((entry) => entry?.status === 'uploaded')
+    .map((entry) => {
+      const slug = cleanText(entry.slug).toLowerCase();
+      const voiceId = cleanText(entry.voice);
+      const contentKey = cleanText(entry.contentKey);
+      const r2Key = cleanText(entry.key);
+      if (!slug || !voiceId || !contentKey || !r2Key) return null;
+      return {
+        itemId: `word:${slug}:${voiceId}:${contentKey}`,
+        lane: 'word',
+        entityId: slug,
+        slug,
+        voiceId,
+        paceId: 'natural',
+        speedId: '',
+        modelId: cleanText(entry.model || model),
+        profileVersion: cleanText(entry.profileVersion || profileVersion),
+        contentKey,
+        r2Key,
+        sourceIdentity,
+        generatedByAccountId: accountId,
+        generatedAt: generatedAtMs,
+      };
+    })
+    .filter(Boolean);
 }
 
 // `auditTokenMatches` pins the substring-match contract that
@@ -989,6 +1043,42 @@ export async function commandStatus({ runId } = {}) {
   return { runId, statePath, summary, failures };
 }
 
+export async function commandContentOperationAudioLedger({
+  runId,
+  packageId,
+  candidateId = '',
+  requestedByAccountId,
+  now = Date.now(),
+} = {}) {
+  if (!runId) throw new Error('--run-id is required for content-operations-ledger.');
+  if (!packageId) throw new Error('--package-id is required for content-operations-ledger.');
+  if (!requestedByAccountId) throw new Error('--requested-by-account-id is required for content-operations-ledger.');
+  const statePath = statePathFor(runId);
+  const state = await readStateFile(statePath);
+  if (!state) throw new Error(`No state file for run ${runId} (expected ${statePath}).`);
+  const entries = buildContentOperationAudioLedgerEntries({
+    entries: state.entries || [],
+    requestedByAccountId,
+    generatedAt: now,
+    model: state.model || SPELLING_AUDIO_MODEL,
+    profileVersion: state.profileVersion || SPELLING_AUDIO_REQUIREMENT_PROFILE_VERSION,
+  });
+  return {
+    packageId,
+    candidateId: candidateId || null,
+    requestedByAccountId,
+    sourceKind: 'operator-script',
+    runId,
+    statePath,
+    summary: {
+      ...summariseState(state.entries || []),
+      ledgerEntries: entries.length,
+      skippedNotUploaded: Math.max(0, (state.entries || []).length - entries.length),
+    },
+    entries,
+  };
+}
+
 // `commandGenerate` is the production driver. With `dryRun: true` it stops
 // just before the Gemini call (writes the planned state file). With normal
 // flags it runs the pipeline with concurrency + retry. Side effects are all
@@ -1237,6 +1327,8 @@ function printUsage() {
     '                                          [--concurrency 4] [--max-retries 3] [--dry-run]',
     '                                          [--skip-upload] [--from-r2-inventory] [--run-id <id>]',
     '  npm run spelling:word-audio -- status --run-id <id>',
+    '  npm run spelling:word-audio -- content-operations-ledger --run-id <id> --package-id <id>',
+    '                                          --requested-by-account-id <id> [--candidate-id <id>]',
     '',
     'Reads GEMINI_API_KEY (+ GEMINI_API_KEY_2..GEMINI_API_KEY_20, GEMINI_API_KEYS) from the environment.',
     'Reconcile + --from-r2-inventory require CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_API_TOKEN.',
@@ -1314,6 +1406,16 @@ async function runCli(argv) {
       }
       case 'status': {
         const result = await commandStatus({ runId: parsed.flags.runId });
+        console.log(JSON.stringify(result, null, 2));
+        break;
+      }
+      case 'content-operations-ledger': {
+        const result = await commandContentOperationAudioLedger({
+          runId: parsed.flags.runId,
+          packageId: parsed.flags.packageId,
+          candidateId: parsed.flags.candidateId,
+          requestedByAccountId: parsed.flags.requestedByAccountId,
+        });
         console.log(JSON.stringify(result, null, 2));
         break;
       }

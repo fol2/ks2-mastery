@@ -33,12 +33,14 @@ import {
   applyInventoryToEntries,
   mergeWithExistingState,
   summariseState,
+  buildContentOperationAudioLedgerEntries,
   auditTokenMatches,
   listR2Objects,
   processEntry,
   commandList,
   commandGenerate,
   commandReconcile,
+  commandContentOperationAudioLedger,
   readStateFile,
   writeStateFile,
   statePathFor,
@@ -60,6 +62,7 @@ const ACCIDENT_KEY_IAPETUS = `spelling-audio/v1/${SPELLING_AUDIO_MODEL}/Iapetus/
 const ACCIDENT_KEY_SULAFAT = `spelling-audio/v1/${SPELLING_AUDIO_MODEL}/Sulafat/word/${ACCIDENT_DIGEST}/accident.mp3`;
 const ACCIDENTALLY_KEY_IAPETUS = `spelling-audio/v1/${SPELLING_AUDIO_MODEL}/Iapetus/word/${ACCIDENTALLY_DIGEST}/accidentally.mp3`;
 const ACCIDENTALLY_KEY_SULAFAT = `spelling-audio/v1/${SPELLING_AUDIO_MODEL}/Sulafat/word/${ACCIDENTALLY_DIGEST}/accidentally.mp3`;
+const LEDGER_NOW = Date.UTC(2026, 5, 12, 10, 0, 0);
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -188,10 +191,25 @@ test('audit substring matcher catches GEMINI_API_KEY_2 / _20 / GEMINI_API_KEYS /
 
 // PARSE ARGS: smoke for the CSV slug split + unknown flag behaviour.
 test('parseArgs splits CSV --slug values and rejects unknown flags', () => {
-  const parsed = parseArgs(['dry-run', '--slug', 'accident,beginning', '--voice', 'Iapetus']);
+  const parsed = parseArgs([
+    'dry-run',
+    '--slug',
+    'accident,beginning',
+    '--voice',
+    'Iapetus',
+    '--package-id',
+    'copkg-test',
+    '--candidate-id',
+    'cocand-test',
+    '--requested-by-account-id',
+    'admin-a',
+  ]);
   assert.equal(parsed.command, 'dry-run');
   assert.deepEqual(parsed.flags.slug, ['accident', 'beginning']);
   assert.equal(parsed.flags.voice, 'Iapetus');
+  assert.equal(parsed.flags.packageId, 'copkg-test');
+  assert.equal(parsed.flags.candidateId, 'cocand-test');
+  assert.equal(parsed.flags.requestedByAccountId, 'admin-a');
 
   assert.throws(
     () => parseArgs(['generate', '--made-up-flag']),
@@ -374,6 +392,89 @@ test('summariseState counts pending / generated / uploaded / failed correctly', 
     { status: 'failed' },
   ]);
   assert.deepEqual(summary, { planned: 5, pending: 2, generated: 1, uploaded: 1, failed: 1 });
+});
+
+test('buildContentOperationAudioLedgerEntries exports uploaded word audio provenance only', () => {
+  const entries = buildContentOperationAudioLedgerEntries({
+    requestedByAccountId: 'admin-a',
+    generatedAt: LEDGER_NOW,
+    entries: [
+      {
+        slug: 'accident',
+        voice: 'Iapetus',
+        key: ACCIDENT_KEY_IAPETUS,
+        contentKey: ACCIDENT_DIGEST,
+        status: 'uploaded',
+      },
+      {
+        slug: 'accidentally',
+        voice: 'Sulafat',
+        key: ACCIDENTALLY_KEY_SULAFAT,
+        contentKey: ACCIDENTALLY_DIGEST,
+        status: 'generated',
+      },
+    ],
+  });
+
+  assert.equal(entries.length, 1);
+  assert.deepEqual(entries[0], {
+    itemId: `word:accident:Iapetus:${ACCIDENT_DIGEST}`,
+    lane: 'word',
+    entityId: 'accident',
+    slug: 'accident',
+    voiceId: 'Iapetus',
+    paceId: 'natural',
+    speedId: '',
+    modelId: SPELLING_AUDIO_MODEL,
+    profileVersion: 'spelling-audio-profile-v1',
+    contentKey: ACCIDENT_DIGEST,
+    r2Key: ACCIDENT_KEY_IAPETUS,
+    sourceIdentity: 'operator-script',
+    generatedByAccountId: 'admin-a',
+    generatedAt: LEDGER_NOW,
+  });
+});
+
+test('content operations ledger command reads uploaded run state', async (t) => {
+  const runId = 'content-ops-ledger-fixture';
+  const statePath = statePathFor(runId);
+  t.after(async () => rm(path.dirname(statePath), { recursive: true, force: true }));
+
+  await writeStateFile(statePath, {
+    runId,
+    model: SPELLING_AUDIO_MODEL,
+    entries: [
+      {
+        slug: 'accident',
+        voice: 'Iapetus',
+        key: ACCIDENT_KEY_IAPETUS,
+        contentKey: ACCIDENT_DIGEST,
+        status: 'uploaded',
+      },
+      {
+        slug: 'accidentally',
+        voice: 'Sulafat',
+        key: ACCIDENTALLY_KEY_SULAFAT,
+        contentKey: ACCIDENTALLY_DIGEST,
+        status: 'failed',
+      },
+    ],
+  });
+
+  const result = await commandContentOperationAudioLedger({
+    runId,
+    packageId: 'copkg-test',
+    candidateId: 'cocand-test',
+    requestedByAccountId: 'admin-a',
+    now: LEDGER_NOW,
+  });
+
+  assert.equal(result.packageId, 'copkg-test');
+  assert.equal(result.candidateId, 'cocand-test');
+  assert.equal(result.requestedByAccountId, 'admin-a');
+  assert.equal(result.summary.ledgerEntries, 1);
+  assert.equal(result.summary.skippedNotUploaded, 1);
+  assert.equal(result.entries[0].r2Key, ACCIDENT_KEY_IAPETUS);
 });
 
 // CLEAN TEXT: parity with the Worker copy. NBSP is the canary.
