@@ -4,6 +4,25 @@
 
 This runbook records how capacity is certified for `/api/bootstrap`, subject commands, D1-backed read models, and client recovery paths. Capacity claims must be based on dated measurements from this repository, not planning estimates.
 
+## Content Operations Centre envelope
+
+Content Operations Centre endpoints are production-sensitive admin paths, but they are not learner-capacity certification paths. TTS generation, package candidate rebuilds, R2 writes, and monster image uploads are operator actions; do not use them to promote or demote classroom learner capacity tiers.
+
+Current guardrails:
+
+- JSON body caps:
+  - package metadata: 32 KiB
+  - package operations and conflict resolution: 256 KiB
+  - package actions: 128 KiB
+  - release proof and rollback: 64 KiB
+- package and release list endpoints return compact summaries; they do not inline full snapshots, release proof blobs, conflict item arrays, strict audio readiness item arrays, or raw scan payloads
+- release snapshots are rejected on list calls and must be fetched through the dedicated full-snapshot endpoint
+- `generate-audio` is account-rate-limited to 4 actions per minute and the limit is checked before any TTS provider call
+- `upload-monster-asset` is account-rate-limited to 12 actions per 10 minutes and the limit is checked before reading the multipart body
+- admin safe-copy redaction masks account identifiers and removes learner or child identifiers before hub payloads leave the Worker
+
+These constraints keep editorial and asset operations bounded enough for normal admin use. They are separate from `/api/bootstrap`, subject-command, and classroom load gates below.
+
 ## P1 Evidence Attribution Artefacts
 
 System Hardening Optimisation P1 adds diagnostic CPU/D1 attribution without changing the certification boundary. The canonical operator guide is `docs/operations/capacity-cpu-d1-evidence.md`; the non-certifying 1000-learner modelling worksheet is `docs/operations/capacity-1000-learner-free-tier-budget.md`; and its machine-readable latest artefact is `reports/capacity/latest-1000-learner-budget.json`.

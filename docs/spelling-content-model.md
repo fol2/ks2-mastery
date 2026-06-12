@@ -117,6 +117,8 @@ Extra words publish with runtime `year: 'extra'`, `yearLabel: 'Extra'`, and no s
 
 Extra words may define `variants` for opt-in word-family practice. A variant supplies its own dictated word, accepted spellings, learner-facing explanation, and sentence references, but it does not publish as a separate runtime word. The learner still secures the base Extra word slug. Core words must continue to model statutory variants as their existing separate word rows, preserving the original KS2 parity.
 
+In the Content Operations Centre this is edited as part of the parent word. Operators should add, change, or retire word-family variants in the same package operation set as the base word so validation can scan the combined word, sentence, and audio requirements before approval.
+
 ### Sentence entries / variants
 
 ```txt
@@ -257,6 +259,23 @@ The compatibility route state after cutover is:
 
 The seed helper `scripts/migrate-spelling-content-to-global-release.mjs` generates first-release-only SQL. Re-running it against an environment that already has a published spelling global release is a no-op; local or remote dry-runs report the detected release and the post-cutover compatibility policy.
 
+## Content Operations packages and global releases
+
+Current production editorial work uses the Content Operations Centre rather than the legacy Spelling Settings import/publish card.
+
+Primary tables:
+
+- `content_operation_packages` hold draft editorial intent, approval state, base release identity, and publish metadata.
+- `content_operation_package_operations` hold ordered changes to words, sentence entries, word lists, pools, reward tracks, hero exposure, audio requirement profiles, and monster asset references.
+- `content_operation_package_candidates` hold rebuilt candidate snapshots plus validation, audio, asset, reward, visibility, and conflict scan results.
+- `content_operation_releases` hold immutable global spelling snapshots, release proof, rollback links, and publication history.
+
+Package states are `draft`, `ready_for_approval`, `approved`, `published`, `rejected`, `blocked`, `reverted`, and `superseded`. A package can be edited and approved by the same current admin role, but the capability contract is already split into view, edit, approve, publish, and rollback so future role separation does not require a data-model change.
+
+Publishing a package creates a new immutable global release. Learner runtime, admin hubs, content-quality signals, and the compatibility export endpoint resolve that release first. Direct mutation of the old account-scoped spelling bundle is intentionally blocked after cutover.
+
+One pool can have zero, one, or many reward tracks. A reward track chooses its monster id, exposure state, surfaces, stage behaviour, and related asset references. Do not model the data as exactly one pool equals exactly one monster.
+
 ## Repository and service boundary
 
 The content layer is deliberately separate from the subject engine.
@@ -347,21 +366,20 @@ Validation currently catches:
 
 Those checks run in both the content service and the Worker route.
 
-## Minimal operator-facing management hooks
+## Content Operations Centre management surface
 
-The shell now exposes a thin Spelling Settings card for content operations.
+The operator-facing management surface is now the Content Operations Centre at `/api/admin/content-operations` and the corresponding admin UI.
 
 Current hooks:
 
-- view content counts and validation status
-- view published release id/version
-- export content
-- import content
-- publish current draft
-- reset to the bundled baseline
+- create, list, inspect, edit, approve, publish, revert, and roll back spelling content packages
+- add, change, retire, or remove words, word-family variants, sentence entries, word lists, pools, reward tracks, hero exposure, and monster asset references
+- rebuild package candidates and view validation, audio, asset, reward, visibility, and conflict scan summaries
+- generate package-scoped TTS audio into R2 for missing or explicitly overridden word and sentence variants
+- upload package-scoped monster image assets, attach them through asset-reference operations, and publish only after scan validation passes
+- view compact release history and retrieve a full release snapshot only through the dedicated snapshot endpoint
 
-This is intentionally a placeholder operator surface, not a CMS.
-It is enough to prove the content boundary and future administration direction without widening the UI into an editorial system.
+The UI exposes edit and approval actions to the same current platform admin role. The underlying capability keys remain split so a future role model can separate editors, approvers, publishers, and rollback operators without changing package or release records.
 
 ## Seeded legacy baseline
 
@@ -376,14 +394,11 @@ This pass changes the storage and publication shape, not the underlying spelling
 
 ## Remaining deltas / limitations
 
-These are still intentionally simple after this pass:
+The current model is intentionally scoped:
 
-- there is no full editorial CMS
-- there is no release rollback UI yet
-- there is no per-row audit trail beyond bundle-level provenance/source notes
-- there is no content diff viewer yet
-- only English Spelling content is modelled this way today
-- signed-in production boot uses the API content repository; direct file/local development mode uses the local content repository
+- only English Spelling content is modelled through Content Operations packages today
+- package `rebase` and explicit `scan-audio` routes are reserved and return `501` until their implementation lands
+- direct file/local development mode still uses the local content repository; signed-in production runtime uses the global release path
+- production proof automation and close-out gates are documented separately from the content model
 
-That is enough for this pass.
-The repo now has a manageable content boundary with explicit draft/publish/release rules, while the learner runtime stays deterministic and pinned to published snapshots.
+The repo now has a manageable content boundary with explicit package, approval, publish, release, revert, and rollback rules, while the learner runtime stays deterministic and pinned to immutable published snapshots.
