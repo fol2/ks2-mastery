@@ -1128,7 +1128,11 @@ describe('Content Operations Centre hub API client', () => {
     });
     await api.readContentOperationSpellingWord({ slug: 'meta/morphosis', packageId: 'pkg/with/slash' });
     await api.readContentOperationSpellingSentence({ sentenceId: 'sentence/1', packageId: 'pkg/with/slash' });
-    await api.readContentOperationReleases({ limit: 5, includeSnapshot: true });
+    await api.readContentOperationReleases({ limit: 5 });
+    await assert.rejects(
+      () => api.readContentOperationReleases({ includeSnapshot: true }),
+      /cannot include snapshots/,
+    );
     await api.readContentOperationRelease({ releaseId: 'rel/with/slash', includeSnapshot: true });
     await api.readContentOperationReleases({ limit: 6, includeHistory: true });
     await api.readContentOperationRelease({ releaseId: 'rel/with/slash', includeHistory: true });
@@ -1151,7 +1155,7 @@ describe('Content Operations Centre hub API client', () => {
     assert.equal(new URL(calls[5].url).searchParams.get('packageId'), 'pkg/with/slash');
     assert.equal(new URL(calls[6].url).pathname, '/api/admin/content-operations/subjects/spelling/sentences/sentence%2F1');
     assert.equal(new URL(calls[7].url).pathname, '/api/admin/content-operations/subjects/spelling/releases');
-    assert.equal(new URL(calls[7].url).searchParams.get('includeSnapshot'), 'true');
+    assert.equal(new URL(calls[7].url).searchParams.get('includeSnapshot'), null);
     assert.equal(new URL(calls[7].url).searchParams.get('includeHistory'), null);
     assert.equal(new URL(calls[8].url).pathname, '/api/admin/content-operations/subjects/spelling/releases/rel%2Fwith%2Fslash');
     assert.equal(new URL(calls[8].url).searchParams.get('includeSnapshot'), 'true');

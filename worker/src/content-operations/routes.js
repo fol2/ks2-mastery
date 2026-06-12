@@ -7,8 +7,13 @@ import { requireSameOrigin } from '../demo/sessions.js';
 import {
   BadRequestError,
   ForbiddenError,
+  HttpError,
 } from '../errors.js';
-import { json, readJson } from '../http.js';
+import { json, readJsonBounded } from '../http.js';
+import {
+  consumeRateLimit,
+  rateLimitResponse,
+} from '../rate-limit.js';
 import {
   CONTENT_OPERATION_CAPABILITIES,
   serialiseContentOperation,
@@ -38,6 +43,20 @@ import {
 
 const CONTENT_OPERATIONS_ROUTE_PREFIX = '/api/admin/content-operations';
 const CONTENT_OPERATIONS_SUBJECT_ID = 'spelling';
+const CONTENT_OPERATION_PACKAGE_BODY_MAX_BYTES = 32 * 1024;
+const CONTENT_OPERATION_OPERATION_BODY_MAX_BYTES = 256 * 1024;
+const CONTENT_OPERATION_ACTION_BODY_MAX_BYTES = 128 * 1024;
+const CONTENT_OPERATION_PROOF_BODY_MAX_BYTES = 64 * 1024;
+const CONTENT_OPERATION_AUDIO_GENERATION_RATE_LIMIT = Object.freeze({
+  bucket: 'content-operations-audio-generation',
+  limit: 4,
+  windowMs: 60 * 1000,
+});
+const CONTENT_OPERATION_ASSET_UPLOAD_RATE_LIMIT = Object.freeze({
+  bucket: 'content-operations-asset-upload',
+  limit: 12,
+  windowMs: 10 * 60 * 1000,
+});
 const STUBBED_CONTENT_OPERATION_ROUTES = Object.freeze({
   rebase: { ticket: 'T6', capability: CONTENT_OPERATION_CAPABILITIES.EDIT },
   'scan-audio': { ticket: 'T7', capability: CONTENT_OPERATION_CAPABILITIES.EDIT },
@@ -69,6 +88,14 @@ function includeSnapshot(url, body = {}) {
 function includeHistory(url, body = {}) {
   const value = url.searchParams.get('includeHistory') ?? body.includeHistory;
   return value === true || value === 'true' || value === '1';
+}
+
+function assertNoSnapshotOnList(url, surface) {
+  if (!includeSnapshot(url)) return;
+  throw new BadRequestError('Content operation snapshots are only available from release or candidate detail endpoints.', {
+    code: 'content_operation_snapshot_list_forbidden',
+    surface,
+  });
 }
 
 function optionalQueryString(url, key) {
@@ -113,6 +140,70 @@ function operationPayloadFromBody(body) {
     beforeHash: body.beforeHash,
     afterHash: body.afterHash,
   };
+}
+
+function contentOperationBodyLimitForAction(action) {
+  switch (action) {
+    case 'resolve-conflict':
+      return CONTENT_OPERATION_OPERATION_BODY_MAX_BYTES;
+    case 'validate':
+    case 'approve':
+    case 'publish':
+    case 'create-revert':
+    case 'generate-audio':
+      return CONTENT_OPERATION_ACTION_BODY_MAX_BYTES;
+    default:
+      return CONTENT_OPERATION_ACTION_BODY_MAX_BYTES;
+  }
+}
+
+async function readContentOperationJson(request, {
+  maxBytes = CONTENT_OPERATION_ACTION_BODY_MAX_BYTES,
+  action = '',
+  packageId = '',
+  surface = '',
+} = {}) {
+  try {
+    return normaliseBody(await readJsonBounded(request, maxBytes));
+  } catch (error) {
+    if (error?.code === 'ops_error_payload_too_large') {
+      throw new HttpError(413, 'Content operation request body is too large.', {
+        ok: false,
+        code: 'content_operation_payload_too_large',
+        maxBytes,
+        action,
+        packageId,
+        surface,
+      });
+    }
+    throw error;
+  }
+}
+
+async function consumeContentOperationActionLimit(env, actor, limitConfig, {
+  action = '',
+  packageId = '',
+} = {}) {
+  const accountId = actor?.id || actor?.accountId || '';
+  const result = await consumeRateLimit(env, {
+    bucket: limitConfig.bucket,
+    identifier: accountId,
+    limit: limitConfig.limit,
+    windowMs: limitConfig.windowMs,
+  });
+  if (result.allowed) return null;
+  return rateLimitResponse({
+    code: 'content_operation_rate_limited',
+    retryAfterSeconds: result.retryAfterSeconds,
+    extra: {
+      message: 'Content operation action rate limit exceeded.',
+      action,
+      packageId,
+      bucket: limitConfig.bucket,
+      limit: limitConfig.limit,
+      windowMs: limitConfig.windowMs,
+    },
+  });
 }
 
 function proofFromRequest(body, request, action) {
@@ -216,6 +307,7 @@ export async function handleContentOperationsAdminRequest({
     });
     const limit = normaliseLimit(url.searchParams.get('limit'), 30, 100);
     const history = includeHistory(url);
+    assertNoSnapshotOnList(url, 'spelling_overview');
     const [packages, releases] = await Promise.all([
       repository.listContentOperationPackages({ subjectId: CONTENT_OPERATIONS_SUBJECT_ID, limit }),
       repository.listContentOperationReleases({ subjectId: CONTENT_OPERATIONS_SUBJECT_ID, includeHistory: history, limit: 10 }),
@@ -336,18 +428,17 @@ export async function handleContentOperationsAdminRequest({
       env,
       capability: CONTENT_OPERATION_CAPABILITIES.VIEW,
     });
+    assertNoSnapshotOnList(url, 'release_list');
     const releases = await repository.listContentOperationReleases({
       subjectId: CONTENT_OPERATIONS_SUBJECT_ID,
-      includeSnapshot: includeSnapshot(url),
+      includeSnapshot: false,
       includeHistory: includeHistory(url),
       limit: normaliseLimit(url.searchParams.get('limit'), 20, 100),
     });
     return json({
       ok: true,
       actor: serialiseContentOperationActor(actor),
-      releases: releases.map((release) => serialiseContentOperationRelease(release, {
-        includeSnapshot: includeSnapshot(url),
-      })),
+      releases: releases.map((release) => serialiseContentOperationRelease(release, { compact: true })),
     });
   }
 
@@ -387,7 +478,11 @@ export async function handleContentOperationsAdminRequest({
         mutation: true,
       });
       const releaseId = decodePathSegment(releaseProofMatch[1], 'release_id');
-      const body = normaliseBody(await readJson(request));
+      const body = await readContentOperationJson(request, {
+        maxBytes: CONTENT_OPERATION_PROOF_BODY_MAX_BYTES,
+        action: 'capture-production-proof',
+        surface: 'release_proof',
+      });
       const release = await repository.captureContentOperationReleaseProof(CONTENT_OPERATIONS_SUBJECT_ID, releaseId, {
         capturedByAccountId: actor.id,
         proof: proofFromRequest(body, request, 'capture-production-proof'),
@@ -411,7 +506,11 @@ export async function handleContentOperationsAdminRequest({
       capability: CONTENT_OPERATION_CAPABILITIES.EDIT,
       mutation: true,
     });
-    const body = normaliseBody(await readJson(request));
+    const body = await readContentOperationJson(request, {
+      maxBytes: CONTENT_OPERATION_PACKAGE_BODY_MAX_BYTES,
+      action: 'create-package',
+      surface: 'package_create',
+    });
     const contentPackage = await repository.createContentOperationPackage({
       subjectId: CONTENT_OPERATIONS_SUBJECT_ID,
       templateId: body.templateId,
@@ -476,7 +575,12 @@ export async function handleContentOperationsAdminRequest({
         mutation: true,
       });
       const packageId = decodePathSegment(packageDetailMatch[1], 'package_id');
-      const body = normaliseBody(await readJson(request));
+      const body = await readContentOperationJson(request, {
+        maxBytes: CONTENT_OPERATION_PACKAGE_BODY_MAX_BYTES,
+        action: 'update-package',
+        packageId,
+        surface: 'package_update',
+      });
       const contentPackage = await repository.updateContentOperationPackage(packageId, {
         templateId: body.templateId,
         title: body.title,
@@ -504,7 +608,12 @@ export async function handleContentOperationsAdminRequest({
         mutation: true,
       });
       const packageId = decodePathSegment(operationsMatch[1], 'package_id');
-      const body = normaliseBody(await readJson(request));
+      const body = await readContentOperationJson(request, {
+        maxBytes: CONTENT_OPERATION_OPERATION_BODY_MAX_BYTES,
+        action: 'append-operation',
+        packageId,
+        surface: 'package_operation',
+      });
       try {
         const operation = await repository.appendContentOperation(packageId, operationPayloadFromBody(body), {
           actorAccountId: actor.id,
@@ -633,6 +742,11 @@ export async function handleContentOperationsAdminRequest({
       }
 
       if (action === 'upload-monster-asset') {
+        const rateLimited = await consumeContentOperationActionLimit(env, actor, CONTENT_OPERATION_ASSET_UPLOAD_RATE_LIMIT, {
+          action,
+          packageId,
+        });
+        if (rateLimited) return rateLimited;
         const upload = await uploadContentOperationMonsterAsset({
           db: routeDatabase(env, capacity),
           env,
@@ -647,7 +761,12 @@ export async function handleContentOperationsAdminRequest({
         }, 201);
       }
 
-      const body = normaliseBody(await readJson(request));
+      const body = await readContentOperationJson(request, {
+        maxBytes: contentOperationBodyLimitForAction(action),
+        action,
+        packageId,
+        surface: 'package_action',
+      });
       if (action === 'create-revert') {
         const result = await repository.createContentOperationPackageRevert(packageId, {
           createdByAccountId: actor.id,
@@ -715,6 +834,11 @@ export async function handleContentOperationsAdminRequest({
       }
 
       if (action === 'generate-audio') {
+        const rateLimited = await consumeContentOperationActionLimit(env, actor, CONTENT_OPERATION_AUDIO_GENERATION_RATE_LIMIT, {
+          action,
+          packageId,
+        });
+        if (rateLimited) return rateLimited;
         let candidate;
         try {
           candidate = await repository.buildContentOperationCandidate(packageId, {
@@ -816,7 +940,12 @@ export async function handleContentOperationsAdminRequest({
         mutation: true,
       });
       const releaseId = decodePathSegment(rollbackMatch[1], 'release_id');
-      const body = normaliseBody(await readJson(request));
+      const body = await readContentOperationJson(request, {
+        maxBytes: CONTENT_OPERATION_PROOF_BODY_MAX_BYTES,
+        action: 'rollback',
+        packageId: releaseId,
+        surface: 'release_rollback',
+      });
       const release = await repository.rollbackContentOperationRelease(CONTENT_OPERATIONS_SUBJECT_ID, releaseId, {
         rolledBackByAccountId: actor.id,
         reason: body.reason,

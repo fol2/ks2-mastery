@@ -484,12 +484,14 @@ export function createHubApi({
       }, authSession);
     },
     async readContentOperationReleases({ limit = 20, includeSnapshot = false, includeHistory = false } = {}) {
+      if (includeSnapshot) {
+        throw new TypeError('Content operation release lists cannot include snapshots. Use readContentOperationRelease with includeSnapshot for release detail.');
+      }
       const url = buildRequestUrl(
         baseUrl,
         '/api/admin/content-operations/subjects/spelling/releases',
         {
           limit,
-          includeSnapshot: includeSnapshot ? 'true' : null,
           includeHistory: includeHistory ? 'true' : null,
         },
       );

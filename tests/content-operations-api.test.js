@@ -767,6 +767,118 @@ test('content operations generate-audio records provider failures as retryable f
   assert.equal(failedItem.error.providerStatus, 429);
 });
 
+test('content operations generate-audio is account rate limited before extra provider calls', async (t) => {
+  const originalFetch = globalThis.fetch;
+  let providerCalls = 0;
+  globalThis.fetch = async () => {
+    providerCalls += 1;
+    return geminiAudioResponse([providerCalls, 2, 3, 4]);
+  };
+  const server = createWorkerRepositoryServer({
+    now: () => NOW,
+    env: {
+      GEMINI_API_KEY: 'test-gemini-key',
+      SPELLING_AUDIO_BUCKET: createMemoryR2Bucket(),
+    },
+  });
+  t.after(() => {
+    globalThis.fetch = originalFetch;
+    server.close();
+  });
+
+  seedAdultAccount(server.DB, { accountId: ADMIN_ID, platformRole: 'admin' });
+  const repository = createWorkerRepository({
+    env: server.env,
+    now: () => NOW,
+  });
+  await repository.seedFirstContentOperationRelease({
+    seededByAccountId: ADMIN_ID,
+    proof: { source: 'content-operations-api-generate-audio-rate-limit-test' },
+  });
+
+  const created = await createPackage(server, { title: 'Rate-limited audio package' });
+  const packageId = created.package.packageId;
+  await appendContentOperation(server, packageId, {
+    entityType: 'spelling.audioRequirementProfile',
+    entityId: 'default',
+    fieldPath: '',
+    action: 'replace',
+    payload: { wordProfiles: ['male.natural'] },
+  });
+  const validated = await validatePackage(server, packageId, { includeSnapshot: true });
+  const target = validated.candidate.audioScan.items.find((item) => item.lane === 'word' && item.required);
+
+  const body = {
+    candidateId: validated.candidate.candidateId,
+    itemIds: [target.itemId],
+    limit: 1,
+    override: true,
+    reason: 'Rate-limit regression test.',
+  };
+  for (let i = 0; i < 4; i += 1) {
+    const response = await server.fetchAs(
+      ADMIN_ID,
+      `${BASE_URL}/api/admin/content-operations/packages/${packageId}/generate-audio`,
+      jsonInit('POST', body),
+      adminHeaders(),
+    );
+    assert.equal(response.status, 200);
+  }
+
+  const blockedResponse = await server.fetchAs(
+    ADMIN_ID,
+    `${BASE_URL}/api/admin/content-operations/packages/${packageId}/generate-audio`,
+    jsonInit('POST', body),
+    adminHeaders(),
+  );
+  const blocked = await readPayload(blockedResponse);
+  assert.equal(blockedResponse.status, 429);
+  assert.equal(blocked.code, 'content_operation_rate_limited');
+  assert.equal(blocked.action, 'generate-audio');
+  assert.equal(blocked.bucket, 'content-operations-audio-generation');
+  assert.equal(blockedResponse.headers.get('retry-after'), String(blocked.retryAfterSeconds));
+  assert.equal(providerCalls, 4);
+});
+
+test('content operations upload-monster-asset is account rate limited before multipart parsing', async () => {
+  const server = createWorkerRepositoryServer({
+    now: () => NOW,
+    env: { SPELLING_AUDIO_BUCKET: createMemoryR2Bucket() },
+  });
+  try {
+    seedAdultAccount(server.DB, { accountId: ADMIN_ID, platformRole: 'admin' });
+    const created = await createPackage(server, { title: 'Rate-limited asset package' });
+    const url = `${BASE_URL}/api/admin/content-operations/packages/${created.package.packageId}/upload-monster-asset`;
+
+    for (let i = 0; i < 12; i += 1) {
+      const response = await server.fetchAs(
+        ADMIN_ID,
+        url,
+        jsonInit('POST', { notMultipart: true }),
+        adminHeaders(),
+      );
+      const payload = await readPayload(response);
+      assert.equal(response.status, 400);
+      assert.equal(payload.code, 'content_operation_monster_asset_multipart_required');
+    }
+
+    const blockedResponse = await server.fetchAs(
+      ADMIN_ID,
+      url,
+      jsonInit('POST', { notMultipart: true }),
+      adminHeaders(),
+    );
+    const blocked = await readPayload(blockedResponse);
+    assert.equal(blockedResponse.status, 429);
+    assert.equal(blocked.code, 'content_operation_rate_limited');
+    assert.equal(blocked.action, 'upload-monster-asset');
+    assert.equal(blocked.bucket, 'content-operations-asset-upload');
+    assert.equal(blockedResponse.headers.get('retry-after'), String(blocked.retryAfterSeconds));
+  } finally {
+    server.close();
+  }
+});
+
 test('content operations API requires the admin platform role', async () => {
   const server = createWorkerRepositoryServer({ now: () => NOW });
   try {
@@ -787,6 +899,82 @@ test('content operations API requires the admin platform role', async () => {
     assert.equal(payload.code, 'content_operations_forbidden');
     assert.equal(payload.capability, 'content_operations.view');
     assert.equal(payload.required, 'platform_role:admin');
+  } finally {
+    server.close();
+  }
+});
+
+test('content operations API rejects oversized package JSON bodies', async () => {
+  const server = createWorkerRepositoryServer({ now: () => NOW });
+  try {
+    seedAdultAccount(server.DB, { accountId: ADMIN_ID, platformRole: 'admin' });
+    const response = await server.fetchAs(
+      ADMIN_ID,
+      `${BASE_URL}/api/admin/content-operations/subjects/spelling/packages`,
+      jsonInit('POST', {
+        title: 'Oversized package body',
+        description: 'x'.repeat(40 * 1024),
+      }),
+      adminHeaders(),
+    );
+    const payload = await readPayload(response);
+
+    assert.equal(response.status, 413);
+    assert.equal(payload.code, 'content_operation_payload_too_large');
+    assert.equal(payload.surface, 'package_create');
+    assert.equal(payload.maxBytes, 32 * 1024);
+  } finally {
+    server.close();
+  }
+});
+
+test('content operations API rejects oversized package operation JSON bodies', async () => {
+  const server = createWorkerRepositoryServer({ now: () => NOW });
+  try {
+    seedAdultAccount(server.DB, { accountId: ADMIN_ID, platformRole: 'admin' });
+    const created = await createPackage(server, { title: 'Oversized operation package' });
+    const response = await server.fetchAs(
+      ADMIN_ID,
+      `${BASE_URL}/api/admin/content-operations/packages/${created.package.packageId}/operations`,
+      jsonInit('POST', {
+        operation: {
+          entityType: 'spelling.word',
+          entityId: 'accommodate',
+          fieldPath: 'explanation',
+          action: 'set',
+          payload: 'x'.repeat(300 * 1024),
+        },
+      }),
+      adminHeaders(),
+    );
+    const payload = await readPayload(response);
+
+    assert.equal(response.status, 413);
+    assert.equal(payload.code, 'content_operation_payload_too_large');
+    assert.equal(payload.surface, 'package_operation');
+    assert.equal(payload.packageId, created.package.packageId);
+    assert.equal(payload.maxBytes, 256 * 1024);
+  } finally {
+    server.close();
+  }
+});
+
+test('content operations API keeps release lists compact by rejecting snapshot expansion', async () => {
+  const server = createWorkerRepositoryServer({ now: () => NOW });
+  try {
+    seedAdultAccount(server.DB, { accountId: ADMIN_ID, platformRole: 'admin' });
+
+    const response = await server.fetchAs(
+      ADMIN_ID,
+      `${BASE_URL}/api/admin/content-operations/subjects/spelling/releases?includeSnapshot=true`,
+      { method: 'GET', headers: { 'sec-fetch-site': 'same-origin' } },
+      adminHeaders(),
+    );
+    const payload = await readPayload(response);
+
+    assert.equal(response.status, 400);
+    assert.equal(payload.code, 'content_operation_snapshot_list_forbidden');
+    assert.equal(payload.surface, 'release_list');
   } finally {
     server.close();
   }
@@ -1364,6 +1552,20 @@ test('content operations API supports admin package lifecycle through separate a
         status: 'warning',
         blockers: [],
         warnings: ['slow_sentence_missing'],
+        items: [{
+          itemId: 'word:accommodate:male:natural',
+          itemText: 'accommodate',
+          status: 'missing',
+        }],
+        strictAudioReadiness: {
+          status: 'blocked',
+          blockers: ['missing_required_audio'],
+          affectedCount: 1,
+          items: [{
+            itemId: 'word:accommodate:male:natural',
+            r2Key: 'content-operations/private/audio-key.wav',
+          }],
+        },
       }),
       validated.candidate.candidateId,
     );
@@ -1377,8 +1579,12 @@ test('content operations API supports admin package lifecycle through separate a
     const packageList = await readPayload(packageListResponse);
     assert.equal(packageListResponse.status, 200);
     const packageSummary = packageList.packages.find((entry) => entry.packageId === packageId);
+    assert.equal(packageSummary.latestCandidate.audioScan, undefined);
+    assert.equal(packageSummary.latestCandidate.assetScan, undefined);
+    assert.equal(packageSummary.latestCandidate.conflicts, undefined);
     assert.deepEqual(packageSummary.blockers.audio.blockers, []);
     assert.deepEqual(packageSummary.blockers.audio.warnings, ['slow_sentence_missing']);
+    assert.equal(packageSummary.blockers.audio.strictAudioReadiness.items, undefined);
 
     const approved = await approvePackage(server, packageId, validated.candidate.candidateId);
     assert.equal(approved.approval.candidateId, validated.candidate.candidateId);
@@ -1563,8 +1769,12 @@ test('content operations API supports admin package lifecycle through separate a
     const overview = await readPayload(overviewResponse);
     assert.equal(overviewResponse.status, 200);
     assert.equal(overview.overview.latestRelease.releaseId, published.release.releaseId);
+    assert.equal(overview.overview.latestRelease.proof, undefined);
     assert.equal(overview.overview.latestRelease.history.productionProof.status, 'recorded');
+    assert.equal(overview.overview.latestRelease.history.productionProof.linkedSurfaces, undefined);
+    assert.equal(overview.overview.latestRelease.history.productionProof.linkedSurfaceCount, 3);
     assert.equal(overview.overview.lanes.recentReleases[0].history.changedEntities.preview[0].entityId, word.slug);
+    assert.equal(overview.overview.lanes.recentReleases[0].proof, undefined);
     assert.equal(overview.overview.actor.capabilities['content_operations.approve'], true);
     assert.equal(overview.overview.actor.capabilities['content_operations.publish'], true);
 
@@ -1577,7 +1787,10 @@ test('content operations API supports admin package lifecycle through separate a
     const releaseList = await readPayload(releaseListResponse);
     assert.equal(releaseListResponse.status, 200);
     assert.equal(releaseList.releases[0].history.releaseId, captured.release.releaseId);
+    assert.equal(releaseList.releases[0].proof, undefined);
     assert.equal(releaseList.releases[0].history.productionProof.status, 'recorded');
+    assert.equal(releaseList.releases[0].history.productionProof.linkedSurfaces, undefined);
+    assert.equal(releaseList.releases[0].history.productionProof.linkedSurfaceCount, 3);
     assert.equal(releaseList.releases[0].history.assetChanges.preview[0].monsterId, 'inklet');
 
     const defaultReleaseListResponse = await server.fetchAs(

@@ -58,7 +58,7 @@ function normaliseValidation(validation = null) {
   };
 }
 
-function normaliseConflictSection(conflicts = null) {
+function normaliseConflictSection(conflicts = null, { compact = false } = {}) {
   if (!Array.isArray(conflicts)) {
     return {
       status: 'not_run',
@@ -69,11 +69,11 @@ function normaliseConflictSection(conflicts = null) {
   return {
     status: conflicts.length ? 'blocked' : 'passed',
     count: conflicts.length,
-    items: conflicts,
+    items: compact ? [] : conflicts,
   };
 }
 
-function normaliseReadinessSection(value = null, fallbackStatus = 'not_scanned') {
+function normaliseReadinessSection(value = null, fallbackStatus = 'not_scanned', { compact = false } = {}) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
     return {
       status: fallbackStatus,
@@ -100,7 +100,7 @@ function normaliseReadinessSection(value = null, fallbackStatus = 'not_scanned')
         : 'not_scanned',
       blockers: asArray(value.strictAudioReadiness.blockers),
       affectedCount: Number(value.strictAudioReadiness.affectedCount) || 0,
-      items: asArray(value.strictAudioReadiness.items),
+      ...(compact ? {} : { items: asArray(value.strictAudioReadiness.items) }),
     };
   }
   return section;
@@ -115,14 +115,15 @@ export function buildContentOperationBlockerEnvelope({
   visibility = null,
   exposure = null,
   publishReadiness = null,
+  compact = false,
 } = {}) {
   const validationSection = normaliseValidation(validation);
-  const conflictSection = normaliseConflictSection(conflicts);
-  const audioSection = normaliseReadinessSection(audio);
-  const assetSection = normaliseReadinessSection(assets);
-  const rewardSection = normaliseReadinessSection(rewards);
-  const visibilitySection = normaliseReadinessSection(visibility);
-  const exposureSection = normaliseReadinessSection(exposure);
+  const conflictSection = normaliseConflictSection(conflicts, { compact });
+  const audioSection = normaliseReadinessSection(audio, 'not_scanned', { compact });
+  const assetSection = normaliseReadinessSection(assets, 'not_scanned', { compact });
+  const rewardSection = normaliseReadinessSection(rewards, 'not_scanned', { compact });
+  const visibilitySection = normaliseReadinessSection(visibility, 'not_scanned', { compact });
+  const exposureSection = normaliseReadinessSection(exposure, 'not_scanned', { compact });
   const blockingSections = [
     validationSection.errorCount ? 'validation' : null,
     conflictSection.count ? 'conflicts' : null,
@@ -133,7 +134,7 @@ export function buildContentOperationBlockerEnvelope({
     exposureSection.blockers.length ? 'exposure' : null,
   ].filter(Boolean);
   const readinessSection = publishReadiness
-    ? normaliseReadinessSection(publishReadiness, 'not_ready')
+    ? normaliseReadinessSection(publishReadiness, 'not_ready', { compact })
     : {
       status: blockingSections.length ? 'blocked' : 'not_ready',
       blockers: blockingSections,
@@ -217,6 +218,7 @@ export function serialiseContentOperationPackage(contentPackage = {}, { compact 
     rewards: latestCandidate?.rewardScan || null,
     visibility: latestCandidate?.visibilityScan || null,
     publishReadiness: packagePublishReadiness(contentPackage),
+    compact,
   });
   const base = {
     packageId: contentPackage.packageId,
@@ -235,7 +237,7 @@ export function serialiseContentOperationPackage(contentPackage = {}, { compact 
     publishedAt: contentPackage.publishedAt ?? null,
     supersededByPackageId: contentPackage.supersededByPackageId || null,
     operationCount: Array.isArray(contentPackage.operations) ? contentPackage.operations.length : undefined,
-    latestCandidate: latestCandidate ? serialiseContentOperationCandidate(latestCandidate) : null,
+    latestCandidate: latestCandidate ? serialiseContentOperationCandidate(latestCandidate, { compact }) : null,
     blockers: envelope,
   };
   if (!compact && Array.isArray(contentPackage.operations)) {
@@ -261,8 +263,8 @@ export function serialiseContentOperation(operation = {}) {
   };
 }
 
-export function serialiseContentOperationCandidate(candidate = {}, { includeSnapshot = false } = {}) {
-  return {
+export function serialiseContentOperationCandidate(candidate = {}, { includeSnapshot = false, compact = false } = {}) {
+  const base = {
     candidateId: candidate.candidateId,
     packageId: candidate.packageId,
     baseReleaseId: candidate.baseReleaseId || null,
@@ -270,8 +272,6 @@ export function serialiseContentOperationCandidate(candidate = {}, { includeSnap
     operationsHash: candidate.operationsHash || '',
     candidateHash: candidate.candidateHash || '',
     validation: normaliseValidation(candidate.validation),
-    audioScan: candidate.audioScan || null,
-    assetScan: candidate.assetScan || null,
     blockers: buildContentOperationBlockerEnvelope({
       validation: candidate.validation,
       conflicts: candidate.conflicts,
@@ -279,11 +279,17 @@ export function serialiseContentOperationCandidate(candidate = {}, { includeSnap
       assets: candidate.assetScan,
       rewards: candidate.rewardScan,
       visibility: candidate.visibilityScan,
+      compact,
     }),
-    conflicts: asArray(candidate.conflicts),
     createdAt: Number(candidate.createdAt) || 0,
     ...(includeSnapshot ? { candidate: candidate.candidate || null } : {}),
   };
+  if (!compact) {
+    base.audioScan = candidate.audioScan || null;
+    base.assetScan = candidate.assetScan || null;
+    base.conflicts = asArray(candidate.conflicts);
+  }
+  return base;
 }
 
 export function serialiseContentOperationAssetUpload(upload = {}) {
@@ -373,7 +379,27 @@ function releaseHasCallerProof(proof = null) {
   ));
 }
 
-function serialiseReleaseHistory(history = null) {
+function serialiseProductionProofSummary(productionProof = {}) {
+  return {
+    status: productionProof.status || 'unknown',
+    hasCallerProof: Boolean(productionProof.hasCallerProof),
+    capturedAt: Number(productionProof.capturedAt) || null,
+    requiredSurfaceCount: Array.isArray(productionProof.requiredSurfaces) ? productionProof.requiredSurfaces.length : 0,
+    linkedSurfaceCount: Array.isArray(productionProof.linkedSurfaces) ? productionProof.linkedSurfaces.length : 0,
+    missingSurfaceCount: Array.isArray(productionProof.missingSurfaces) ? productionProof.missingSurfaces.length : 0,
+    warningCount: Array.isArray(productionProof.warnings) ? productionProof.warnings.length : 0,
+    activation: productionProof.activation && typeof productionProof.activation === 'object' && !Array.isArray(productionProof.activation)
+      ? {
+          status: productionProof.activation.status || 'not_applicable',
+          checkedAt: Number(productionProof.activation.checkedAt) || null,
+          activated: Boolean(productionProof.activation.activated),
+          entryCount: Array.isArray(productionProof.activation.entries) ? productionProof.activation.entries.length : 0,
+        }
+      : null,
+  };
+}
+
+function serialiseReleaseHistory(history = null, { compact = false } = {}) {
   if (!history || typeof history !== 'object' || Array.isArray(history)) return null;
   const productionProof = history.productionProof && typeof history.productionProof === 'object' && !Array.isArray(history.productionProof)
     ? history.productionProof
@@ -418,7 +444,7 @@ function serialiseReleaseHistory(history = null) {
       hash: assetChanges.hash || '',
       preview: Array.isArray(assetChanges.preview) ? assetChanges.preview : [],
     } : null,
-    productionProof: productionProof ? {
+    productionProof: productionProof ? (compact ? serialiseProductionProofSummary(productionProof) : {
       status: productionProof.status || 'unknown',
       hasCallerProof: Boolean(productionProof.hasCallerProof),
       capturedAt: Number(productionProof.capturedAt) || null,
@@ -435,15 +461,15 @@ function serialiseReleaseHistory(history = null) {
           }
         : null,
       warnings: Array.isArray(productionProof.warnings) ? productionProof.warnings : [],
-    } : null,
+    }) : null,
   };
 }
 
-export function serialiseContentOperationRelease(release = {}, { includeSnapshot = false } = {}) {
+export function serialiseContentOperationRelease(release = {}, { includeSnapshot = false, compact = false } = {}) {
   const proof = release.proof ?? null;
   const proofAudio = releaseAudioProofFromProof(proof);
   const proofAssets = releaseAssetProofFromProof(proof);
-  return {
+  const base = {
     releaseId: release.releaseId,
     subjectId: release.subjectId || CONTENT_OPERATION_SUBJECT_ID,
     status: release.status || 'unknown',
@@ -453,16 +479,17 @@ export function serialiseContentOperationRelease(release = {}, { includeSnapshot
     publishedAt: release.publishedAt ?? null,
     publishedByAccountId: release.publishedByAccountId || null,
     rollbackOfReleaseId: release.rollbackOfReleaseId || null,
-    proof,
+    proof: compact ? undefined : proof,
     hasCallerProof: releaseHasCallerProof(proof),
     audioFallback: release.audioFallback ?? proofAudio.audioFallback,
     audioWarnings: release.audioWarnings ?? proofAudio.audioWarnings,
     assetSummary: release.assetSummary ?? proofAssets.assetSummary,
     assetReferenceManifest: release.assetReferenceManifest ?? proofAssets.assetReferenceManifest,
-    history: serialiseReleaseHistory(release.history),
+    history: serialiseReleaseHistory(release.history, { compact }),
     createdAt: Number(release.createdAt) || 0,
     ...(includeSnapshot ? { snapshot: release.snapshot || null } : {}),
   };
+  return Object.fromEntries(Object.entries(base).filter(([, value]) => value !== undefined));
 }
 
 export function serialiseContentOperationEvent(event = {}) {
@@ -493,14 +520,14 @@ export function serialiseContentOperationOverview({
 
   return {
     subjectId,
-    latestRelease: latestRelease ? serialiseContentOperationRelease(latestRelease) : null,
+    latestRelease: latestRelease ? serialiseContentOperationRelease(latestRelease, { compact: true }) : null,
     packageCounts,
     lanes: {
       blocked: packages.filter((entry) => entry.state === CONTENT_OPERATION_PACKAGE_STATES.BLOCKED).map((entry) => serialiseContentOperationPackage(entry, { compact: true })),
       readyForApproval: packages.filter((entry) => entry.state === CONTENT_OPERATION_PACKAGE_STATES.READY_FOR_APPROVAL).map((entry) => serialiseContentOperationPackage(entry, { compact: true })),
       approvedPendingPublish: packages.filter((entry) => entry.state === CONTENT_OPERATION_PACKAGE_STATES.APPROVED).map((entry) => serialiseContentOperationPackage(entry, { compact: true })),
       drafts: packages.filter((entry) => entry.state === CONTENT_OPERATION_PACKAGE_STATES.DRAFT).map((entry) => serialiseContentOperationPackage(entry, { compact: true })),
-      recentReleases: releases.map((entry) => serialiseContentOperationRelease(entry)),
+      recentReleases: releases.map((entry) => serialiseContentOperationRelease(entry, { compact: true })),
     },
     actor: actor ? serialiseContentOperationActor(actor) : null,
     sections: [...CONTENT_OPERATION_SECTION_KEYS],
