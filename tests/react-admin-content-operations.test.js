@@ -37,6 +37,74 @@ function normaliseLineEndings(value) {
   return String(value).replace(/\r\n/g, '\n').replace(/\r/g, '\n');
 }
 
+const audioScan = {
+  status: 'blocked',
+  profileVersion: 'spelling-audio-profile-v1',
+  modelId: 'gemini-tts',
+  scope: 'affected',
+  totalRequired: 3,
+  presentCount: 1,
+  missingCount: 1,
+  failedCount: 1,
+  blockers: ['word_audio_missing', 'sentence_audio_failed'],
+  lanes: {
+    word: { status: 'blocked', totalRequired: 1, missingCount: 1, blockers: ['word_audio_missing'] },
+    sentence: { status: 'blocked', totalRequired: 2, presentCount: 1, failedCount: 1, blockers: ['sentence_audio_failed'] },
+  },
+  items: [
+    {
+      itemId: 'word:metamorphosis:base:male.natural',
+      lane: 'word',
+      status: 'missing',
+      required: true,
+      slug: 'metamorphosis',
+      word: 'metamorphosis',
+      voiceRole: 'male',
+      paceId: 'natural',
+      profileId: 'male.natural',
+      blocker: 'word_audio_missing',
+    },
+    {
+      itemId: 'sentence:metamorphosis:meta-s1:base:female.slow',
+      lane: 'sentence',
+      status: 'failed',
+      required: true,
+      slug: 'metamorphosis',
+      sentenceId: 'meta-s1',
+      sentence: 'The tadpole changes completely.',
+      voiceRole: 'female',
+      paceId: 'slow',
+      profileId: 'female.slow',
+      blocker: 'sentence_audio_failed',
+    },
+    {
+      itemId: 'sentence:metamorphosis:meta-s1:base:male.normal',
+      lane: 'sentence',
+      status: 'present',
+      required: true,
+      slug: 'metamorphosis',
+      sentenceId: 'meta-s1',
+      sentence: 'The tadpole changes completely.',
+      voiceRole: 'male',
+      paceId: 'standard',
+      profileId: 'male.normal',
+      r2Key: 'spelling-audio/metamorphosis.wav',
+    },
+    {
+      itemId: 'sentence:metamorphosis:meta-s2:optional:female.slow',
+      lane: 'sentence',
+      status: 'skipped',
+      required: false,
+      slug: 'metamorphosis',
+      sentenceId: 'meta-s2',
+      sentence: 'Optional practice copy.',
+      voiceRole: 'female',
+      paceId: 'slow',
+      profileId: 'female.slow',
+    },
+  ],
+};
+
 const contentPackage = {
   packageId: 'pkg-draft-1',
   subjectId: 'spelling',
@@ -62,6 +130,28 @@ const contentPackage = {
     visibility: { status: 'passed', blockers: [], warnings: [] },
     exposure: { status: 'passed', blockers: [], warnings: [] },
     publishReadiness: { status: 'not_ready', blockers: ['approval_required'], warnings: [] },
+  },
+  latestCandidate: {
+    candidateId: 'cand-draft-1',
+    packageId: 'pkg-draft-1',
+    baseReleaseId: 'rel-global-1',
+    currentReleaseId: 'rel-global-1',
+    operationsHash: 'ops-hash-1',
+    candidateHash: 'candidate-hash-1',
+    validation: { ok: true, errorCount: 0, warningCount: 0, errors: [], warnings: [] },
+    blockers: {
+      validation: { status: 'passed', errorCount: 0, warningCount: 0, errors: [], warnings: [] },
+      conflicts: { status: 'passed', count: 0, items: [] },
+      audio: { status: 'blocked', blockers: ['word_audio_missing'], warnings: [] },
+      assets: { status: 'passed', blockers: [], warnings: [] },
+      rewards: { status: 'passed', blockers: [], warnings: [] },
+      visibility: { status: 'passed', blockers: [], warnings: [] },
+      exposure: { status: 'passed', blockers: [], warnings: [] },
+      publishReadiness: { status: 'not_ready', blockers: ['approval_required'], warnings: [] },
+    },
+    audioScan,
+    conflicts: [],
+    createdAt: Date.UTC(2026, 5, 11, 10, 5, 0),
   },
 };
 
@@ -545,6 +635,21 @@ test('Content Operations Centre SSR renders package-scoped domain tabs and audit
   }
 });
 
+test('Content Operations Centre SSR renders package audio operations matrix', async () => {
+  const html = await renderEntry(buildContentOpsEntry({
+    initialActiveTab: 'detail',
+    initialDetailTab: 'audio',
+  }));
+
+  assert.match(html, /data-content-ops-audio-panel="true"/);
+  assert.match(html, /Audio operations/);
+  assert.match(html, /Refresh scan/);
+  assert.match(html, /Generate selected/);
+  assert.match(html, /Regenerate selected or package/);
+  assert.match(html, /sentence:metamorphosis:meta-s1:base:female\.slow/);
+  assert.match(html, /sentence_audio_failed/);
+});
+
 test('Content Operations Centre area pages browse without package mutation controls', async () => {
   const html = await renderEntry(buildContentOpsEntry({
     model: baseModel({
@@ -575,17 +680,19 @@ test('Content Operations Centre area pages browse without package mutation contr
   assert.doesNotMatch(html, /generate-audio/);
 });
 
-test('Content Operations Centre area pages show selected package readiness without mutation controls', async () => {
+test('Content Operations Centre area pages show selected package audio operations and non-audio readiness', async () => {
   const audioHtml = await renderEntry(buildContentOpsEntry({
     initialActiveTab: 'audio',
     initialSelectedPackageId: 'pkg-draft-1',
   }));
-  assert.match(audioHtml, /Published state/);
-  assert.match(audioHtml, /Package pkg-draft-1/);
+  assert.match(audioHtml, /Audio operations/);
+  assert.match(audioHtml, /Scan, generate, override/);
+  assert.match(audioHtml, /word:metamorphosis:base:male\.natural/);
+  assert.match(audioHtml, /Batch generate gaps/);
   assert.match(audioHtml, /blocked/);
   assert.match(audioHtml, /1 blockers/);
   assert.match(audioHtml, /word_audio_missing/);
-  assert.match(audioHtml, /No mutation controls/);
+  assert.doesNotMatch(audioHtml, /No mutation controls/);
 
   const assetHtml = await renderEntry(buildContentOpsEntry({
     initialActiveTab: 'monstersAssets',
@@ -1730,6 +1837,173 @@ test('Content Operations Centre mounted package detail runs validate, approve, a
   assert.equal(result.publishDisabledAfterApprove, false);
   assert.match(result.textAfterPublish, /Package published/);
   assert.match(result.textAfterPublish, /rel-published-1/);
+});
+
+test('Content Operations Centre mounted audio panel scans, generates selected items, and requires override reason', async () => {
+  const output = await runClientEntry(`
+    const { JSDOM } = require('jsdom');
+
+    globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+    const dom = new JSDOM('<!doctype html><html><body><div id="root"></div></body></html>', {
+      url: 'https://ks2.eugnel.uk/admin',
+    });
+    globalThis.window = dom.window;
+    globalThis.document = dom.window.document;
+    globalThis.navigator = dom.window.navigator;
+    globalThis.HTMLElement = dom.window.HTMLElement;
+    globalThis.Event = dom.window.Event;
+
+    const React = require('react');
+    const { createRoot } = require('react-dom/client');
+    const { AdminContentOperationsSection } = require(${CONTENT_OPS_SECTION_PATH});
+    const { act } = React;
+
+    const model = ${JSON.stringify(baseModel())};
+    const basePackage = ${JSON.stringify(contentPackage)};
+    const candidate = basePackage.latestCandidate;
+    const calls = [];
+    const actions = {
+      contentOperationsApi: {
+        async validatePackage(args) {
+          calls.push({ method: 'validate', args });
+          return { candidate: { ...candidate, candidateId: 'cand-audio-scan-1' } };
+        },
+        async generateAudio(args) {
+          calls.push({ method: 'generateAudio', args });
+          return {
+            candidate,
+            audio: {
+              summary: {
+                requested: args.itemIds && args.itemIds.length ? args.itemIds.length : 3,
+                uploaded: 1,
+                failed: 0,
+                queued: 0,
+                skippedExisting: 0,
+                skippedPresent: 0,
+                skippedDueLimit: 0,
+              },
+              jobs: [{ jobId: 'audio-job-1', status: 'uploaded' }],
+            },
+          };
+        },
+        async readPackage({ packageId }) {
+          calls.push({ method: 'readPackage', packageId });
+          return {
+            package: basePackage,
+            actor: model.contentOperations.overview.actor,
+            events: [],
+          };
+        },
+        async readOverview(args) {
+          calls.push({ method: 'overview', args });
+          return model.contentOperations.overview;
+        },
+        async readPackages(args) {
+          calls.push({ method: 'packages', args });
+          return model.contentOperations.packages;
+        },
+        async readReleases(args) {
+          calls.push({ method: 'releases', args });
+          return model.contentOperations.releases;
+        },
+      },
+    };
+
+    async function flush() {
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      });
+    }
+
+    async function click(selector) {
+      const element = document.querySelector(selector);
+      await act(async () => {
+        element.click();
+      });
+      await flush();
+      await flush();
+      await flush();
+    }
+
+    async function selectValue(selector, value) {
+      const element = document.querySelector(selector);
+      const valueSetter = Object.getOwnPropertyDescriptor(dom.window.HTMLSelectElement.prototype, 'value').set;
+      valueSetter.call(element, value);
+      await act(async () => {
+        element.dispatchEvent(new dom.window.Event('input', { bubbles: true }));
+        element.dispatchEvent(new dom.window.Event('change', { bubbles: true }));
+      });
+      await flush();
+    }
+
+    async function main() {
+      const root = createRoot(document.getElementById('root'));
+      await act(async () => {
+        root.render(React.createElement(AdminContentOperationsSection, {
+          model,
+          actions,
+          initialActiveTab: 'audio',
+          initialSelectedPackageId: 'pkg-draft-1',
+        }));
+      });
+      await flush();
+
+      const overrideButtonBeforeReason = document.querySelector('[data-content-ops-audio-action="override"]').disabled;
+      await click('[data-content-ops-audio-action="scan"]');
+      await selectValue('[data-content-ops-audio-status-filter="true"]', 'all');
+      await click('[data-content-ops-audio-select-visible="true"]');
+      await click('[data-content-ops-audio-action="generate-selected"]');
+
+      const reason = document.querySelector('[data-content-ops-audio-override-reason="true"]');
+      const valueSetter = Object.getOwnPropertyDescriptor(dom.window.HTMLTextAreaElement.prototype, 'value').set;
+      valueSetter.call(reason, 'Replace clipped generated audio.');
+      await act(async () => {
+        reason.dispatchEvent(new dom.window.Event('input', { bubbles: true }));
+        reason.dispatchEvent(new dom.window.Event('change', { bubbles: true }));
+      });
+      const overrideButtonAfterReason = document.querySelector('[data-content-ops-audio-action="override"]').disabled;
+      await click('[data-content-ops-audio-select-visible="true"]');
+      await click('[data-content-ops-audio-action="override"]');
+
+      process.stdout.write(JSON.stringify({
+        calls,
+        text: document.body.textContent,
+        overrideButtonBeforeReason,
+        overrideButtonAfterReason,
+      }));
+
+      await act(async () => {
+        root.unmount();
+      });
+      dom.window.close();
+      process.exit(0);
+    }
+
+    main().catch((error) => {
+      process.stderr.write(error.stack || error.message);
+      process.exitCode = 1;
+    });
+  `);
+  const result = JSON.parse(output);
+  const audioCalls = result.calls.filter((entry) => ['validate', 'generateAudio'].includes(entry.method));
+
+  assert.deepEqual(audioCalls.map((entry) => entry.method), ['validate', 'generateAudio', 'generateAudio']);
+  assert.equal(audioCalls[0].args.packageId, 'pkg-draft-1');
+  assert.deepEqual(audioCalls[1].args.itemIds, [
+    'word:metamorphosis:base:male.natural',
+    'sentence:metamorphosis:meta-s1:base:female.slow',
+  ]);
+  assert.equal(audioCalls[1].args.override, false);
+  assert.equal(audioCalls[2].args.override, true);
+  assert.deepEqual(audioCalls[2].args.itemIds, [
+    'word:metamorphosis:base:male.natural',
+    'sentence:metamorphosis:meta-s1:base:female.slow',
+    'sentence:metamorphosis:meta-s1:base:male.normal',
+  ]);
+  assert.equal(audioCalls[2].args.reason, 'Replace clipped generated audio.');
+  assert.equal(result.overrideButtonBeforeReason, true);
+  assert.equal(result.overrideButtonAfterReason, false);
+  assert.match(result.text, /Audio generation finished: 1 uploaded, 0 failed, 0 skipped/);
 });
 
 test('Content Operations Centre mounted package detail resolves same-field conflicts', async () => {

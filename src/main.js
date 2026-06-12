@@ -2723,6 +2723,7 @@ function buildSurfaceActions() {
     appendOperation: hubApi.appendContentOperation?.bind(hubApi),
     deleteOperation: hubApi.deleteContentOperation?.bind(hubApi),
     validatePackage: hubApi.validateContentOperationPackage?.bind(hubApi),
+    generateAudio: hubApi.generateContentOperationAudio?.bind(hubApi),
     approvePackage: hubApi.approveContentOperationPackage?.bind(hubApi),
     publishPackage: hubApi.publishContentOperationPackage?.bind(hubApi),
     resolveConflict: hubApi.resolveContentOperationConflict?.bind(hubApi),

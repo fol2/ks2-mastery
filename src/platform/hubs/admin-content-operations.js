@@ -68,6 +68,15 @@ const BLOCKER_SECTION_KEYS = Object.freeze([
   'publishReadiness',
 ]);
 
+const GENERATABLE_AUDIO_STATUSES = new Set([
+  'missing',
+  'stale',
+  'generated',
+  'failed',
+  'skipped',
+  'override_requested',
+]);
+
 function isPlainObject(value) {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 }
@@ -306,6 +315,110 @@ function normaliseAudioReadiness(value = null) {
     wordAudioRequired: Number(safe.wordAudioRequired) || 0,
     sentenceAudioRequired: Number(safe.sentenceAudioRequired) || 0,
     totalRequired: Number(safe.totalRequired) || 0,
+  };
+}
+
+function normaliseAudioLaneSummary(value = null) {
+  const safe = isPlainObject(value) ? value : {};
+  return {
+    status: asString(safe.status, 'not_scanned'),
+    blockers: asArray(safe.blockers),
+    warnings: asArray(safe.warnings),
+    requiredCount: Number(safe.requiredCount ?? safe.totalRequired) || 0,
+    totalRequired: Number(safe.totalRequired ?? safe.requiredCount) || 0,
+    presentCount: Number(safe.presentCount) || 0,
+    missingCount: Number(safe.missingCount) || 0,
+    staleCount: Number(safe.staleCount) || 0,
+    generatedCount: Number(safe.generatedCount) || 0,
+    failedCount: Number(safe.failedCount) || 0,
+    skippedCount: Number(safe.skippedCount) || 0,
+    overrideRequestedCount: Number(safe.overrideRequestedCount) || 0,
+    statusCounts: isPlainObject(safe.statusCounts) ? { ...safe.statusCounts } : {},
+  };
+}
+
+function audioItemLabel(item) {
+  if (item.lane === 'sentence') {
+    return item.sentenceId
+      ? `${item.slug} / ${item.sentenceId}`
+      : `${item.slug} / sentence`;
+  }
+  if (item.surface && item.surface !== 'base') return `${item.slug} / ${item.surface}`;
+  return item.slug || 'word';
+}
+
+function normaliseAudioScanItem(item = null) {
+  const safe = isPlainObject(item) ? item : {};
+  const status = asString(safe.status, 'unknown');
+  const lane = safe.lane === 'sentence' ? 'sentence' : 'word';
+  const itemId = asString(safe.itemId);
+  const required = safe.required === false ? false : true;
+  return {
+    itemId,
+    lane,
+    status,
+    statusLabel: status.replace(/_/g, ' '),
+    required,
+    canGenerate: required && GENERATABLE_AUDIO_STATUSES.has(status),
+    canOverride: required,
+    blocker: asString(safe.blocker),
+    slug: asString(safe.slug),
+    word: asString(safe.word),
+    sentenceId: asString(safe.sentenceId),
+    sentence: asString(safe.sentence),
+    profileId: asString(safe.profileId),
+    voiceId: asString(safe.voiceId),
+    voiceRole: asString(safe.voiceRole, 'unknown'),
+    paceId: asString(safe.paceId),
+    speedId: asString(safe.speedId),
+    slow: Boolean(safe.slow),
+    surface: asString(safe.surface, 'base'),
+    variantIndex: safe.variantIndex === null || safe.variantIndex === undefined ? null : Number(safe.variantIndex),
+    variantWord: asString(safe.variantWord),
+    modelId: asString(safe.modelId),
+    profileVersion: asString(safe.profileVersion),
+    contentKey: asString(safe.contentKey),
+    r2Key: asString(safe.r2Key),
+    error: isPlainObject(safe.error) ? { ...safe.error } : null,
+    label: audioItemLabel({
+      lane,
+      slug: asString(safe.slug),
+      sentenceId: asString(safe.sentenceId),
+      surface: asString(safe.surface, 'base'),
+    }),
+  };
+}
+
+export function normaliseContentOperationAudioScan(value = null) {
+  const safe = isPlainObject(value) ? value : {};
+  const items = asArray(safe.items).map(normaliseAudioScanItem).filter((item) => item.itemId);
+  const lanes = isPlainObject(safe.lanes) ? safe.lanes : {};
+  const summary = normaliseAudioLaneSummary(safe);
+  const actionableItems = items.filter((item) => item.canGenerate);
+  const presentItems = items.filter((item) => item.required && item.status === 'present');
+  const failedItems = items.filter((item) => item.required && item.status === 'failed');
+  return {
+    status: asString(safe.status, summary.status),
+    profileVersion: asString(safe.profileVersion),
+    modelId: asString(safe.modelId),
+    scope: asString(safe.scope, 'unknown'),
+    operationCount: Number(safe.operationCount) || 0,
+    scannedWordCount: Number(safe.scannedWordCount) || 0,
+    profile: isPlainObject(safe.profile) ? safe.profile : null,
+    summary,
+    lanes: {
+      word: normaliseAudioLaneSummary(lanes.word),
+      sentence: normaliseAudioLaneSummary(lanes.sentence),
+    },
+    items,
+    actionableItems,
+    actionableItemIds: actionableItems.map((item) => item.itemId),
+    presentItems,
+    failedItems,
+    blockers: asArray(safe.blockers),
+    warnings: asArray(safe.warnings),
+    bySlug: isPlainObject(safe.bySlug) ? { ...safe.bySlug } : {},
+    hasScan: Boolean(safe.status || items.length),
   };
 }
 

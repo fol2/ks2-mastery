@@ -32,6 +32,7 @@ import { createHubApi } from '../src/platform/hubs/api.js';
 import {
   CONTENT_OPERATION_DETAIL_TABS,
   CONTENT_OPERATION_LANES,
+  normaliseContentOperationAudioScan,
   normaliseContentOperationCandidate,
   normaliseContentOperationPackage,
   normaliseContentOperationsOverview,
@@ -731,6 +732,74 @@ describe('Content Operations Centre normalisers', () => {
     assert.deepEqual(snapshotCandidate.candidate, { draft: { words: [{ slug: 'accident' }] } });
   });
 
+  it('normalises audio scans into filterable item matrices', () => {
+    const scan = normaliseContentOperationAudioScan({
+      status: 'blocked',
+      profileVersion: 'spelling-audio-profile-v1',
+      modelId: 'gemini-tts',
+      scope: 'affected',
+      totalRequired: 3,
+      presentCount: 1,
+      missingCount: 1,
+      failedCount: 1,
+      blockers: ['word_audio_missing', 'sentence_audio_failed'],
+      lanes: {
+        word: { status: 'blocked', totalRequired: 1, missingCount: 1, blockers: ['word_audio_missing'] },
+        sentence: { status: 'blocked', totalRequired: 2, presentCount: 1, failedCount: 1, blockers: ['sentence_audio_failed'] },
+      },
+      items: [
+        {
+          itemId: 'word:metamorphosis:base:male.natural',
+          lane: 'word',
+          status: 'missing',
+          required: true,
+          slug: 'metamorphosis',
+          word: 'metamorphosis',
+          voiceRole: 'male',
+          paceId: 'natural',
+          profileId: 'male.natural',
+          blocker: 'word_audio_missing',
+        },
+        {
+          itemId: 'sentence:metamorphosis:meta-s1:base:female.slow',
+          lane: 'sentence',
+          status: 'failed',
+          required: true,
+          slug: 'metamorphosis',
+          sentenceId: 'meta-s1',
+          sentence: 'A tadpole changes completely.',
+          voiceRole: 'female',
+          paceId: 'slow',
+          profileId: 'female.slow',
+          blocker: 'sentence_audio_failed',
+        },
+        {
+          itemId: 'sentence:metamorphosis:meta-s1:base:male.normal',
+          lane: 'sentence',
+          status: 'present',
+          required: true,
+          slug: 'metamorphosis',
+          sentenceId: 'meta-s1',
+          voiceRole: 'male',
+          paceId: 'standard',
+          profileId: 'male.normal',
+          r2Key: 'spelling-audio/metamorphosis.wav',
+        },
+      ],
+    });
+
+    assert.equal(scan.status, 'blocked');
+    assert.equal(scan.summary.totalRequired, 3);
+    assert.equal(scan.lanes.word.missingCount, 1);
+    assert.equal(scan.lanes.sentence.failedCount, 1);
+    assert.deepEqual(scan.actionableItemIds, [
+      'word:metamorphosis:base:male.natural',
+      'sentence:metamorphosis:meta-s1:base:female.slow',
+    ]);
+    assert.equal(scan.presentItems[0].canGenerate, false);
+    assert.equal(scan.items[1].label, 'metamorphosis / meta-s1');
+  });
+
   it('keeps compact package operation counts unknown instead of inventing zero', () => {
     const missingCountPackage = normaliseContentOperationPackage({
       packageId: 'pkg-summary-only',
@@ -891,6 +960,15 @@ describe('Content Operations Centre hub API client', () => {
       includeSnapshot: true,
       mutation: { requestId: 'validate-1' },
     });
+    await api.generateContentOperationAudio({
+      packageId: 'pkg/with/slash',
+      candidateId: 'cand/with/slash',
+      itemIds: ['word:meta:base:male.natural'],
+      limit: 1,
+      override: true,
+      reason: 'Replace clipped word audio.',
+      mutation: { requestId: 'generate-1' },
+    });
     await api.approveContentOperationPackage({
       packageId: 'pkg/with/slash',
       candidateId: 'cand/with/slash',
@@ -914,21 +992,27 @@ describe('Content Operations Centre hub API client', () => {
     });
 
     assert.equal(new URL(calls[0].url).pathname, '/api/admin/content-operations/packages/pkg%2Fwith%2Fslash/validate');
-    assert.equal(new URL(calls[1].url).pathname, '/api/admin/content-operations/packages/pkg%2Fwith%2Fslash/approve');
-    assert.equal(new URL(calls[2].url).pathname, '/api/admin/content-operations/packages/pkg%2Fwith%2Fslash/publish');
-    assert.equal(new URL(calls[3].url).pathname, '/api/admin/content-operations/packages/pkg%2Fwith%2Fslash/resolve-conflict');
-    assert.deepEqual(calls.map((call) => call.method), ['POST', 'POST', 'POST', 'POST']);
+    assert.equal(new URL(calls[1].url).pathname, '/api/admin/content-operations/packages/pkg%2Fwith%2Fslash/generate-audio');
+    assert.equal(new URL(calls[2].url).pathname, '/api/admin/content-operations/packages/pkg%2Fwith%2Fslash/approve');
+    assert.equal(new URL(calls[3].url).pathname, '/api/admin/content-operations/packages/pkg%2Fwith%2Fslash/publish');
+    assert.equal(new URL(calls[4].url).pathname, '/api/admin/content-operations/packages/pkg%2Fwith%2Fslash/resolve-conflict');
+    assert.deepEqual(calls.map((call) => call.method), ['POST', 'POST', 'POST', 'POST', 'POST']);
     assert.equal(calls[0].body.includeSnapshot, true);
     assert.equal(calls[1].body.candidateId, 'cand/with/slash');
-    assert.equal(calls[1].body.notes, 'Reviewed candidate.');
+    assert.deepEqual(calls[1].body.itemIds, ['word:meta:base:male.natural']);
+    assert.equal(calls[1].body.limit, 1);
+    assert.equal(calls[1].body.override, true);
+    assert.equal(calls[1].body.reason, 'Replace clipped word audio.');
+    assert.equal(calls[2].body.candidateId, 'cand/with/slash');
+    assert.equal(calls[2].body.notes, 'Reviewed candidate.');
     assert.equal(
-      calls[1].body.audioFallback.reason,
+      calls[2].body.audioFallback.reason,
       'Temporary runtime TTS fallback while slow sentence audio is generated.',
     );
-    assert.equal(calls[2].body.proof.source, 'test');
-    assert.equal(calls[3].body.conflictId, 'conflict/with/slash');
-    assert.equal(calls[3].body.resolution, 'edit');
-    assert.equal(calls[3].body.value, 'Merged value.');
+    assert.equal(calls[3].body.proof.source, 'test');
+    assert.equal(calls[4].body.conflictId, 'conflict/with/slash');
+    assert.equal(calls[4].body.resolution, 'edit');
+    assert.equal(calls[4].body.value, 'Merged value.');
   });
 
   it('calls content operation append and delete endpoints', async () => {
@@ -994,6 +1078,10 @@ describe('Content Operations Centre hub API client', () => {
     );
     await assert.rejects(
       () => api.validateContentOperationPackage({ packageId: '' }),
+      /Content operation package id is required/,
+    );
+    await assert.rejects(
+      () => api.generateContentOperationAudio({ packageId: '' }),
       /Content operation package id is required/,
     );
     await assert.rejects(
