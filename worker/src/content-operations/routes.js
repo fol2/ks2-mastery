@@ -710,6 +710,14 @@ export async function handleContentOperationsAdminRequest({
             packageId,
           });
         }
+        const callerAssetSummary = body.assetSummary ?? body.asset_summary ?? null;
+        if (callerAssetSummary != null) {
+          throw new BadRequestError('Content operation approval asset summaries are derived by the server.', {
+            code: 'content_operation_approval_asset_summary_readonly',
+            packageId,
+            candidateId,
+          });
+        }
         const approval = await repository.approveContentOperationCandidate(packageId, candidateId, {
           approvedByAccountId: actor.id,
           notes: body.notes,

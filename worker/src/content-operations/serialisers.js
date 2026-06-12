@@ -350,6 +350,14 @@ function releaseAssetProofFromProof(proof = null) {
   };
 }
 
+function releaseHasCallerProof(proof = null) {
+  if (!proof || typeof proof !== 'object' || Array.isArray(proof)) return false;
+  return Object.keys(proof).some((key) => (
+    key !== 'contentOperationsAudio'
+    && key !== 'contentOperationsAssets'
+  ));
+}
+
 export function serialiseContentOperationRelease(release = {}, { includeSnapshot = false } = {}) {
   const proof = release.proof ?? null;
   const proofAudio = releaseAudioProofFromProof(proof);
@@ -365,6 +373,7 @@ export function serialiseContentOperationRelease(release = {}, { includeSnapshot
     publishedByAccountId: release.publishedByAccountId || null,
     rollbackOfReleaseId: release.rollbackOfReleaseId || null,
     proof,
+    hasCallerProof: releaseHasCallerProof(proof),
     audioFallback: release.audioFallback ?? proofAudio.audioFallback,
     audioWarnings: release.audioWarnings ?? proofAudio.audioWarnings,
     assetSummary: release.assetSummary ?? proofAssets.assetSummary,

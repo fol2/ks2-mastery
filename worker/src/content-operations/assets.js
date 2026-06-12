@@ -39,6 +39,7 @@ const SUPPORTED_IMAGE_TYPES = Object.freeze({
   'image/png': 'png',
   'image/webp': 'webp',
 });
+const MONSTER_ASSET_BODY_EXCEEDS_CAP = Symbol('monster-asset-body-exceeds-cap');
 
 function parseJson(value, fallback = null) {
   if (value == null || value === '') return fallback;
@@ -91,6 +92,60 @@ function assertContentOperationAssetBucket(env = {}) {
     });
   }
   return bucket;
+}
+
+function overflowError() {
+  const error = new Error('monster-asset-body-exceeds-cap');
+  error.code = MONSTER_ASSET_BODY_EXCEEDS_CAP;
+  return error;
+}
+
+async function readRequestBodyWithCap(request, cap) {
+  const reader = request.body?.getReader?.();
+  if (!reader) {
+    if (typeof request.arrayBuffer !== 'function') return null;
+    const buffer = await request.arrayBuffer();
+    if (buffer.byteLength > cap) throw overflowError();
+    return new Uint8Array(buffer);
+  }
+
+  const chunks = [];
+  let read = 0;
+  try {
+    while (true) {
+      // eslint-disable-next-line no-await-in-loop
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (!value) continue;
+      read += value.byteLength;
+      if (read > cap) {
+        try { reader.cancel(); } catch { /* ignore */ }
+        throw overflowError();
+      }
+      chunks.push(value);
+    }
+  } finally {
+    try { reader.releaseLock(); } catch { /* ignore */ }
+  }
+
+  const output = new Uint8Array(read);
+  let offset = 0;
+  for (const chunk of chunks) {
+    output.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return output;
+}
+
+async function readMultipartFormWithCap(request, cap) {
+  const bytes = await readRequestBodyWithCap(request, cap);
+  if (!bytes) return request.formData().catch(() => null);
+  const formRequest = new Request('https://content-operations.local/monster-asset-upload', {
+    method: 'POST',
+    headers: request.headers,
+    body: bytes,
+  });
+  return formRequest.formData().catch(() => null);
 }
 
 function assetUploadRowToRecord(row) {
@@ -196,6 +251,80 @@ function crc32(bytes, start = 0, end = bytes.length) {
   return (crc ^ 0xffffffff) >>> 0;
 }
 
+function concatByteArrays(chunks) {
+  const length = chunks.reduce((sum, chunk) => sum + chunk.length, 0);
+  const output = new Uint8Array(length);
+  let offset = 0;
+  for (const chunk of chunks) {
+    output.set(chunk, offset);
+    offset += chunk.length;
+  }
+  return output;
+}
+
+async function inflateDeflateBytes(bytes) {
+  if (typeof DecompressionStream !== 'function') return null;
+  try {
+    const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate'));
+    return new Uint8Array(await new Response(stream).arrayBuffer());
+  } catch {
+    return null;
+  }
+}
+
+function pngBitsPerPixel(bitDepth, colourType) {
+  const samplesByColourType = {
+    0: 1,
+    2: 3,
+    3: 1,
+    4: 2,
+    6: 4,
+  };
+  const samples = samplesByColourType[colourType] || 0;
+  return samples * bitDepth;
+}
+
+function adam7PassSize(size, start, step) {
+  return size > start ? Math.floor((size - start + step - 1) / step) : 0;
+}
+
+function validatePngInflatedRows(inflated, {
+  width,
+  height,
+  bitDepth,
+  colourType,
+  interlace,
+}) {
+  const bitsPerPixel = pngBitsPerPixel(bitDepth, colourType);
+  if (!bitsPerPixel || width <= 0 || height <= 0) return false;
+  const passes = interlace === 1
+    ? [
+      [0, 0, 8, 8],
+      [4, 0, 8, 8],
+      [0, 4, 4, 8],
+      [2, 0, 4, 4],
+      [0, 2, 2, 4],
+      [1, 0, 2, 2],
+      [0, 1, 1, 2],
+    ]
+    : [[0, 0, 1, 1]];
+
+  let offset = 0;
+  for (const [startX, startY, stepX, stepY] of passes) {
+    const passWidth = adam7PassSize(width, startX, stepX);
+    const passHeight = adam7PassSize(height, startY, stepY);
+    if (!passWidth || !passHeight) continue;
+    const rowBytes = Math.ceil((passWidth * bitsPerPixel) / 8);
+    const stride = rowBytes + 1;
+    for (let row = 0; row < passHeight; row += 1) {
+      if (offset + stride > inflated.length) return false;
+      if (inflated[offset] > 4) return false;
+      offset += stride;
+    }
+  }
+  return offset === inflated.length;
+}
+
 function isValidPngIhdr(bytes, dataOffset) {
   const bitDepth = bytes[dataOffset + 8];
   const colourType = bytes[dataOffset + 9];
@@ -217,16 +346,20 @@ function isValidPngIhdr(bytes, dataOffset) {
   );
 }
 
-function parsePngDimensions(bytes) {
+async function parsePngDimensions(bytes) {
   if (bytes.length < 45) return null;
   const signature = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
   if (!signature.every((value, index) => bytes[index] === value)) return null;
 
   let offset = 8;
   let dimensions = null;
+  let bitDepth = 0;
+  let colourType = 0;
+  let interlace = 0;
   let sawIdat = false;
   let sawIend = false;
   let chunkIndex = 0;
+  const idatChunks = [];
 
   while (offset + 12 <= bytes.length) {
     const chunkLength = readUint32BE(bytes, offset);
@@ -247,13 +380,27 @@ function parsePngDimensions(bytes) {
         width: readUint32BE(bytes, dataOffset),
         height: readUint32BE(bytes, dataOffset + 4),
       };
+      bitDepth = bytes[dataOffset + 8];
+      colourType = bytes[dataOffset + 9];
+      interlace = bytes[dataOffset + 12];
     } else if (chunkType === 'IDAT') {
       if (!dimensions || chunkLength < 1) return null;
       sawIdat = true;
+      idatChunks.push(bytes.slice(dataOffset, dataEnd));
     } else if (chunkType === 'IEND') {
       if (chunkLength !== 0 || !dimensions || !sawIdat) return null;
       sawIend = true;
-      return nextOffset === bytes.length ? dimensions : null;
+      if (nextOffset !== bytes.length) return null;
+      const inflated = await inflateDeflateBytes(concatByteArrays(idatChunks));
+      if (!inflated || !validatePngInflatedRows(inflated, {
+        ...dimensions,
+        bitDepth,
+        colourType,
+        interlace,
+      })) {
+        return null;
+      }
+      return dimensions;
     }
 
     offset = nextOffset;
@@ -288,7 +435,7 @@ function parseWebpDimensions(bytes) {
         height: readUint24LE(bytes, dataOffset + 7) + 1,
       };
     } else if (chunk === 'VP8L') {
-      if (chunkLength < 5 || bytes[dataOffset] !== 0x2f) return null;
+      if (chunkLength <= 5 || bytes[dataOffset] !== 0x2f) return null;
       const b1 = bytes[dataOffset + 1];
       const b2 = bytes[dataOffset + 2];
       const b3 = bytes[dataOffset + 3];
@@ -299,7 +446,7 @@ function parseWebpDimensions(bytes) {
       };
     } else if (chunk === 'VP8 ') {
       if (
-        chunkLength < 10
+        chunkLength <= 10
         || bytes[dataOffset + 3] !== 0x9d
         || bytes[dataOffset + 4] !== 0x01
         || bytes[dataOffset + 5] !== 0x2a
@@ -437,6 +584,7 @@ function validateJpegEntropyScan(bytes, offset) {
       return {
         ok: entropyBytes > 0,
         eoiOffset: markerOffset,
+        entropyBytes,
       };
     }
     return { ok: false, eoiOffset: -1 };
@@ -490,7 +638,10 @@ function parseJpegDimensions(bytes) {
       if (!dimensions || !sawQuantisationTable || !sawHuffmanTable) return null;
       if (!validateJpegStartOfScan(bytes, dataOffset, dataLength)) return null;
       const scan = validateJpegEntropyScan(bytes, offset + segmentLength);
-      if (!scan.ok) return null;
+      const minEntropyBytes = dimensions
+        ? Math.max(16, Math.ceil((dimensions.width * dimensions.height) / 1024))
+        : 16;
+      if (!scan.ok || scan.entropyBytes < minEntropyBytes) return null;
       sawScan = true;
       offset = scan.eoiOffset + 2;
       break;
@@ -500,7 +651,7 @@ function parseJpegDimensions(bytes) {
   return dimensions && sawScan && offset === bytes.length ? dimensions : null;
 }
 
-function parseImageDimensions(bytes, contentType) {
+async function parseImageDimensions(bytes, contentType) {
   if (contentType === 'image/png') return parsePngDimensions(bytes);
   if (contentType === 'image/webp') return parseWebpDimensions(bytes);
   if (contentType === 'image/jpeg') return parseJpegDimensions(bytes);
@@ -610,10 +761,11 @@ function previewUrlForUpload({ packageId, assetUploadId }) {
   return `/api/admin/content-operations/packages/${encodeURIComponent(packageId)}/monster-assets/${encodeURIComponent(assetUploadId)}/preview`;
 }
 
-function assetUploadScanItem(upload) {
+function assetUploadScanItem(upload, storage = null) {
   const validation = upload.validation && typeof upload.validation === 'object' && !Array.isArray(upload.validation)
     ? upload.validation
     : { ok: false, status: 'blocked', errors: [], warnings: [] };
+  const storageErrors = Array.isArray(storage?.errors) ? storage.errors : [];
   return {
     assetUploadId: upload.assetUploadId,
     assetKind: upload.assetKind || CONTENT_OPERATION_MONSTER_ASSET_KIND,
@@ -625,7 +777,8 @@ function assetUploadScanItem(upload) {
     validationOk: Boolean(validation.ok),
     errorCodes: (Array.isArray(validation.errors) ? validation.errors : [])
       .map((entry) => normaliseString(entry?.code))
-      .filter(Boolean),
+      .filter(Boolean)
+      .concat(storageErrors.map((entry) => normaliseString(entry?.code)).filter(Boolean)),
     warningCodes: (Array.isArray(validation.warnings) ? validation.warnings : [])
       .map((entry) => normaliseString(entry?.code))
       .filter(Boolean),
@@ -636,11 +789,97 @@ function assetUploadScanItem(upload) {
       height: upload.height == null ? null : Number(upload.height),
     },
     createdAt: Number(upload.createdAt) || 0,
+    storage: storage ? {
+      status: storage.status,
+      byteSize: storage.byteSize,
+      contentType: storage.contentType,
+    } : {
+      status: 'not_checked',
+      byteSize: null,
+      contentType: '',
+    },
+  };
+}
+
+async function bytesFromR2Object(object) {
+  if (!object) return null;
+  if (object.body instanceof Uint8Array) return object.body;
+  if (object.body && typeof object.body.getReader === 'function') {
+    return new Uint8Array(await new Response(object.body).arrayBuffer());
+  }
+  if (typeof object.arrayBuffer === 'function') {
+    return new Uint8Array(await object.arrayBuffer());
+  }
+  return null;
+}
+
+async function verifyStoredAssetUpload(bucket, upload) {
+  const object = await bucket.get(upload.r2Key).catch(() => null);
+  if (!object) {
+    return {
+      status: 'missing',
+      byteSize: null,
+      contentType: '',
+      errors: [{
+        code: 'content_operation_asset_object_missing',
+        message: 'Monster image upload is missing from asset storage.',
+      }],
+    };
+  }
+
+  const bytes = await bytesFromR2Object(object);
+  const byteSize = bytes ? bytes.byteLength : Number(object.size) || null;
+  const contentType = normaliseString(object.httpMetadata?.contentType).toLowerCase();
+  const errors = [];
+  if (byteSize !== Number(upload.byteSize)) {
+    errors.push({
+      code: 'content_operation_asset_object_size_mismatch',
+      expected: Number(upload.byteSize),
+      actual: byteSize,
+    });
+  }
+  if (contentType && contentType !== upload.contentType) {
+    errors.push({
+      code: 'content_operation_asset_object_content_type_mismatch',
+      expected: upload.contentType,
+      actual: contentType,
+    });
+  }
+  if (!bytes) {
+    errors.push({
+      code: 'content_operation_asset_object_unreadable',
+      message: 'Monster image upload could not be read from asset storage.',
+    });
+  } else {
+    const dimensions = await parseImageDimensions(bytes, upload.contentType);
+    if (
+      !dimensions
+      || dimensions.width !== Number(upload.width)
+      || dimensions.height !== Number(upload.height)
+    ) {
+      errors.push({
+        code: 'content_operation_asset_object_image_mismatch',
+        expected: {
+          width: Number(upload.width) || null,
+          height: Number(upload.height) || null,
+        },
+        actual: dimensions,
+      });
+    }
+  }
+
+  return {
+    status: errors.length ? 'mismatch' : 'present',
+    byteSize,
+    contentType,
+    errors,
   };
 }
 
 export async function buildContentOperationAssetScan(db, {
   packageId,
+  env = null,
+  verifyStorage = false,
 } = {}) {
   const safePackageId = normaliseString(packageId);
   if (!safePackageId) {
@@ -655,13 +894,41 @@ export async function buildContentOperationAssetScan(db, {
     WHERE package_id = ?
     ORDER BY created_at ASC, asset_upload_id ASC
   `, [safePackageId]);
-  const items = rows.map(assetUploadRowToRecord).map(assetUploadScanItem);
+  const uploads = rows.map(assetUploadRowToRecord);
+  const bucket = verifyStorage && uploads.length ? contentOperationAssetBucket(env || {}) : null;
+  const storageByUploadId = new Map();
+  if (verifyStorage && uploads.length && !bucket) {
+    for (const upload of uploads) {
+      storageByUploadId.set(upload.assetUploadId, {
+        status: 'unavailable',
+        byteSize: null,
+        contentType: '',
+        errors: [{
+          code: 'content_operation_asset_storage_unavailable',
+          message: 'Content operation asset storage is not available for readiness verification.',
+        }],
+      });
+    }
+  } else if (verifyStorage && bucket) {
+    for (const upload of uploads) {
+      // eslint-disable-next-line no-await-in-loop
+      storageByUploadId.set(upload.assetUploadId, await verifyStoredAssetUpload(bucket, upload));
+    }
+  }
+  const items = uploads.map((upload) => assetUploadScanItem(
+    upload,
+    storageByUploadId.get(upload.assetUploadId) || null,
+  ));
   const blockers = [];
   const warnings = [];
   const targetCounts = new Map();
 
   for (const item of items) {
-    if (!item.validationOk || item.validationStatus === 'blocked') {
+    if (
+      !item.validationOk
+      || item.validationStatus === 'blocked'
+      || ['missing', 'mismatch', 'unavailable'].includes(item.storage?.status)
+    ) {
       blockers.push({
         code: 'content_operation_asset_upload_invalid',
         assetUploadId: item.assetUploadId,
@@ -748,7 +1015,18 @@ export async function uploadContentOperationMonsterAsset({
     });
   }
 
-  const form = await request.formData().catch(() => null);
+  let form;
+  try {
+    form = await readMultipartFormWithCap(request, CONTENT_OPERATION_MONSTER_ASSET_MAX_MULTIPART_BYTES);
+  } catch (error) {
+    if (error?.code === MONSTER_ASSET_BODY_EXCEEDS_CAP) {
+      throw new BadRequestError('Monster image upload request exceeds the maximum multipart size.', {
+        code: 'content_operation_monster_asset_request_too_large',
+        maxBytes: CONTENT_OPERATION_MONSTER_ASSET_MAX_MULTIPART_BYTES,
+      });
+    }
+    throw error;
+  }
   if (!form) {
     throw new BadRequestError('Monster image upload form data could not be read.', {
       code: 'content_operation_monster_asset_form_invalid',
@@ -795,7 +1073,7 @@ export async function uploadContentOperationMonsterAsset({
   }
 
   const bytes = new Uint8Array(await file.arrayBuffer());
-  const dimensions = parseImageDimensions(bytes, contentType);
+  const dimensions = await parseImageDimensions(bytes, contentType);
   const rendererValidation = validateRendererCompatibility(dimensions);
   if (!rendererValidation.ok) {
     throw new BadRequestError('Monster image upload is not compatible with the renderer.', {
@@ -803,6 +1081,22 @@ export async function uploadContentOperationMonsterAsset({
       validation: rendererValidation,
     });
   }
+
+  const replacedUploads = await all(db, `
+    SELECT *
+    FROM content_operation_asset_uploads
+    WHERE package_id = ?
+      AND asset_kind = ?
+      AND monster_id = ?
+      AND branch_id = ?
+      AND stage_id = ?
+  `, [
+    packageRow.package_id,
+    CONTENT_OPERATION_MONSTER_ASSET_KIND,
+    monsterId,
+    branchId,
+    stageId,
+  ]).then((rows) => rows.map(assetUploadRowToRecord));
 
   const assetUploadId = uid('coasset');
   const filename = filenameForUpload({ monsterId, branchId, stageId, extension });
@@ -877,6 +1171,28 @@ export async function uploadContentOperationMonsterAsset({
         CONTENT_OPERATION_PACKAGE_STATES.PUBLISHED,
       ]),
       bindStatement(db, `
+        DELETE FROM content_operation_asset_uploads
+        WHERE package_id = ?
+          AND asset_kind = ?
+          AND monster_id = ?
+          AND branch_id = ?
+          AND stage_id = ?
+          AND asset_upload_id <> ?
+          AND EXISTS (
+            SELECT 1
+            FROM content_operation_asset_uploads
+            WHERE asset_upload_id = ?
+          )
+      `, [
+        packageRow.package_id,
+        CONTENT_OPERATION_MONSTER_ASSET_KIND,
+        monsterId,
+        branchId,
+        stageId,
+        assetUploadId,
+        assetUploadId,
+      ]),
+      bindStatement(db, `
         DELETE FROM content_operation_package_approvals
         WHERE package_id = ?
           AND EXISTS (
@@ -887,7 +1203,7 @@ export async function uploadContentOperationMonsterAsset({
       `, [packageRow.package_id, assetUploadId]),
       bindStatement(db, `
         UPDATE content_operation_packages
-        SET state = CASE WHEN state = ? THEN ? ELSE state END,
+        SET state = CASE WHEN state <> ? THEN ? ELSE state END,
             approved_at = NULL,
             updated_by_account_id = ?,
             updated_at = ?
@@ -899,7 +1215,7 @@ export async function uploadContentOperationMonsterAsset({
             WHERE asset_upload_id = ?
           )
       `, [
-        CONTENT_OPERATION_PACKAGE_STATES.APPROVED,
+        CONTENT_OPERATION_PACKAGE_STATES.DRAFT,
         CONTENT_OPERATION_PACKAGE_STATES.DRAFT,
         actor,
         nowTs,
@@ -944,6 +1260,13 @@ export async function uploadContentOperationMonsterAsset({
         code: 'content_operation_package_published',
         packageId: packageRow.package_id,
       });
+    }
+    if (typeof bucket.delete === 'function') {
+      for (const replaced of replacedUploads) {
+        if (!replaced?.r2Key || replaced.r2Key === r2Key) continue;
+        // eslint-disable-next-line no-await-in-loop
+        await bucket.delete(replaced.r2Key).catch(() => {});
+      }
     }
   } catch (error) {
     if (r2Written && typeof bucket.delete === 'function') {

@@ -183,6 +183,7 @@ export function normaliseContentOperationCandidate(entry = null) {
     candidateHash: asString(safe.candidateHash),
     validation,
     audioScan: isPlainObject(safe.audioScan) ? safe.audioScan : null,
+    assetScan: isPlainObject(safe.assetScan) ? safe.assetScan : null,
     blockers: normaliseContentOperationBlockers(safe.blockers),
     conflicts: asArray(safe.conflicts),
     createdAt: asTs(safe.createdAt),
@@ -239,6 +240,14 @@ function releaseAssetMetadataFromProof(proof = null) {
   };
 }
 
+function releaseHasCallerProof(proof = null) {
+  if (!isPlainObject(proof)) return false;
+  return Object.keys(proof).some((key) => (
+    key !== 'contentOperationsAudio'
+    && key !== 'contentOperationsAssets'
+  ));
+}
+
 export function normaliseContentOperationRelease(entry = null) {
   const safe = isPlainObject(entry) ? entry : {};
   const proof = safe.proof ?? null;
@@ -255,6 +264,9 @@ export function normaliseContentOperationRelease(entry = null) {
     publishedByAccountId: asNullableString(safe.publishedByAccountId),
     rollbackOfReleaseId: asNullableString(safe.rollbackOfReleaseId),
     proof,
+    hasCallerProof: typeof safe.hasCallerProof === 'boolean'
+      ? safe.hasCallerProof
+      : releaseHasCallerProof(proof),
     audioFallback: isPlainObject(safe.audioFallback)
       ? safe.audioFallback
       : proofAudio.audioFallback,

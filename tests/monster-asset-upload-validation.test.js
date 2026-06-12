@@ -8,6 +8,9 @@ import {
   CONTENT_OPERATION_MONSTER_ASSET_MAX_MULTIPART_BYTES,
   uploadContentOperationMonsterAsset,
 } from '../worker/src/content-operations/assets.js';
+import {
+  serialiseContentOperationRelease,
+} from '../worker/src/content-operations/serialisers.js';
 import { createWorkerRepositoryServer } from './helpers/worker-server.js';
 
 const BASE_URL = 'https://repo.test';
@@ -136,6 +139,23 @@ function pngHeaderBytes(width = 320, height = 320) {
   return bytes;
 }
 
+function invalidPngWithValidCrcBytes(width = 320, height = 320) {
+  const ihdr = Buffer.alloc(13);
+  ihdr.writeUInt32BE(width, 0);
+  ihdr.writeUInt32BE(height, 4);
+  ihdr[8] = 8;
+  ihdr[9] = 6;
+  ihdr[10] = 0;
+  ihdr[11] = 0;
+  ihdr[12] = 0;
+  return new Uint8Array(Buffer.concat([
+    Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+    pngChunk('IHDR', ihdr),
+    pngChunk('IDAT', Buffer.from([0x00])),
+    pngChunk('IEND'),
+  ]));
+}
+
 function jpegHeaderBytes(width = 320, height = 320) {
   const bytes = new Uint8Array(19);
   bytes.set([0xff, 0xd8], 0);
@@ -198,6 +218,40 @@ function webpHeaderBytes(width = 320, height = 320) {
   bytes[28] = (encodedHeight >> 8) & 0xff;
   bytes[29] = (encodedHeight >> 16) & 0xff;
   return bytes;
+}
+
+function webpVp8HeaderOnlyBytes(width = 320, height = 320) {
+  const chunk = Buffer.alloc(10);
+  chunk[3] = 0x9d;
+  chunk[4] = 0x01;
+  chunk[5] = 0x2a;
+  chunk.writeUInt16LE(width, 6);
+  chunk.writeUInt16LE(height, 8);
+  const header = Buffer.alloc(20);
+  header.write('RIFF', 0, 'ascii');
+  header.writeUInt32LE(4 + 8 + chunk.length, 4);
+  header.write('WEBP', 8, 'ascii');
+  header.write('VP8 ', 12, 'ascii');
+  header.writeUInt32LE(chunk.length, 16);
+  return new Uint8Array(Buffer.concat([header, chunk]));
+}
+
+function webpVp8lHeaderOnlyBytes(width = 320, height = 320) {
+  const encodedWidth = width - 1;
+  const encodedHeight = height - 1;
+  const chunk = Buffer.alloc(5);
+  chunk[0] = 0x2f;
+  chunk[1] = encodedWidth & 0xff;
+  chunk[2] = ((encodedWidth >> 8) & 0x3f) | ((encodedHeight & 0x03) << 6);
+  chunk[3] = (encodedHeight >> 2) & 0xff;
+  chunk[4] = (encodedHeight >> 10) & 0x0f;
+  const header = Buffer.alloc(20);
+  header.write('RIFF', 0, 'ascii');
+  header.writeUInt32LE(4 + 8 + chunk.length + 1, 4);
+  header.write('WEBP', 8, 'ascii');
+  header.write('VP8L', 12, 'ascii');
+  header.writeUInt32LE(chunk.length, 16);
+  return new Uint8Array(Buffer.concat([header, chunk, Buffer.from([0x00])]));
 }
 
 async function createPackage(server, body = {}) {
@@ -265,7 +319,6 @@ async function approvePackage(server, packageId, candidateId) {
     jsonInit('POST', {
       candidateId,
       notes: 'Approved in the monster asset upload validation test.',
-      assetSummary: { caller: 'must be ignored' },
     }),
     adminHeaders(),
   );
@@ -408,6 +461,12 @@ test('monster image upload rejects MIME spoofing and truncated image payloads', 
         filename: 'header-only.png',
       },
       {
+        name: 'valid CRC invalid IDAT PNG payload',
+        bytes: invalidPngWithValidCrcBytes(640, 640),
+        contentType: 'image/png',
+        filename: 'invalid-idat.png',
+      },
+      {
         name: 'header-only JPEG payload',
         bytes: jpegHeaderBytes(640, 640),
         contentType: 'image/jpeg',
@@ -424,6 +483,18 @@ test('monster image upload rejects MIME spoofing and truncated image payloads', 
         bytes: webpHeaderBytes(640, 640),
         contentType: 'image/webp',
         filename: 'header-only.webp',
+      },
+      {
+        name: 'VP8 header-only WebP payload',
+        bytes: webpVp8HeaderOnlyBytes(640, 640),
+        contentType: 'image/webp',
+        filename: 'vp8-header-only.webp',
+      },
+      {
+        name: 'VP8L header-only WebP payload',
+        bytes: webpVp8lHeaderOnlyBytes(640, 640),
+        contentType: 'image/webp',
+        filename: 'vp8l-header-only.webp',
       },
     ];
     for (const entry of cases) {
@@ -463,6 +534,41 @@ test('monster image upload rejects oversized multipart requests before form pars
         assert.fail('formData() must not be called for clearly oversized requests');
       },
     };
+    await assert.rejects(
+      () => uploadContentOperationMonsterAsset({
+        db: server.env.DB,
+        env: server.env,
+        packageId: contentPackage.packageId,
+        request,
+        actorAccountId: ADMIN_ID,
+        now: () => NOW,
+      }),
+      (error) => {
+        assert.equal(error.extra.code, 'content_operation_monster_asset_request_too_large');
+        return true;
+      },
+    );
+    assert.equal(rowCount(server, 'content_operation_asset_uploads'), 0);
+  } finally {
+    server.close();
+  }
+});
+
+test('monster image upload rejects multipart requests without Content-Length before form parsing', async () => {
+  const server = createWorkerRepositoryServer({
+    env: { SPELLING_AUDIO_BUCKET: createMemoryR2Bucket() },
+    now: () => NOW,
+  });
+  try {
+    const contentPackage = await createPackage(server);
+    const request = new Request(`${BASE_URL}/upload`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'multipart/form-data; boundary=test',
+      },
+      body: new Uint8Array(CONTENT_OPERATION_MONSTER_ASSET_MAX_MULTIPART_BYTES + 1),
+    });
+    assert.equal(request.headers.get('content-length'), null);
     await assert.rejects(
       () => uploadContentOperationMonsterAsset({
         db: server.env.DB,
@@ -656,11 +762,11 @@ test('monster image uploads are bound to candidate approval and publish proof', 
     const approved = await approvalResponse.json();
     assert.equal(approved.approval.assetSummary.hash, currentCandidate.candidate.assetScan.hash);
     assert.equal(approved.approval.assetSummary.uploadCount, 1);
-    assert.equal(approved.approval.assetSummary.caller, undefined);
 
     const publishResponse = await publishPackage(server, contentPackage.packageId);
     assert.equal(publishResponse.status, 200);
     const published = await publishResponse.json();
+    assert.equal(published.release.hasCallerProof, true);
     assert.equal(
       published.release.proof.contentOperationsAssets.assetSummary.hash,
       currentCandidate.candidate.assetScan.hash,
@@ -671,9 +777,126 @@ test('monster image uploads are bound to candidate approval and publish proof', 
   }
 });
 
-test('duplicate monster image target uploads block approval and publish', async () => {
+test('monster image release serialisation distinguishes caller proof from server asset proof', () => {
+  const release = serialiseContentOperationRelease({
+    releaseId: 'rel-server-asset-proof',
+    subjectId: 'spelling',
+    status: 'published',
+    proof: {
+      contentOperationsAssets: {
+        assetSummary: {
+          status: 'passed',
+          hash: 'asset-scan-hash-1',
+          uploadCount: 1,
+        },
+      },
+    },
+  });
+
+  assert.equal(release.hasCallerProof, false);
+  assert.equal(release.assetSummary.hash, 'asset-scan-hash-1');
+  assert.equal(release.assetSummary.uploadCount, 1);
+});
+
+test('content operation approval rejects caller-supplied monster asset summaries', async () => {
   const server = createWorkerRepositoryServer({
     env: { SPELLING_AUDIO_BUCKET: createMemoryR2Bucket() },
+    now: () => NOW,
+  });
+  try {
+    await seedFirstRelease(server);
+    const contentPackage = await createPackage(server);
+    const validated = await validatePackage(server, contentPackage.packageId);
+    const response = await server.fetchAs(
+      ADMIN_ID,
+      `${BASE_URL}/api/admin/content-operations/packages/${contentPackage.packageId}/approve`,
+      jsonInit('POST', {
+        candidateId: validated.candidate.candidateId,
+        notes: 'Attempt to pass caller asset summary.',
+        assetSummary: { hash: 'caller-controlled' },
+      }),
+      adminHeaders(),
+    );
+    assert.equal(response.status, 400);
+    const payload = await response.json();
+    assert.equal(payload.code, 'content_operation_approval_asset_summary_readonly');
+    assert.equal(rowCount(server, 'content_operation_package_approvals', 'WHERE package_id = ?', [contentPackage.packageId]), 0);
+  } finally {
+    server.close();
+  }
+});
+
+test('monster image approval blocks when the uploaded R2 object is missing', async () => {
+  const bucket = createMemoryR2Bucket();
+  const server = createWorkerRepositoryServer({
+    env: { SPELLING_AUDIO_BUCKET: bucket },
+    now: () => NOW,
+  });
+  try {
+    await seedFirstRelease(server);
+    const contentPackage = await createPackage(server);
+    const uploadResponse = await uploadMonsterAsset(server, contentPackage.packageId, monsterAssetForm());
+    assert.equal(uploadResponse.status, 201);
+    const candidate = await validatePackage(server, contentPackage.packageId);
+    assert.equal(candidate.candidate.assetScan.status, 'passed');
+    await bucket.delete(bucket.puts[0].key);
+
+    const approvalResponse = await approvePackage(
+      server,
+      contentPackage.packageId,
+      candidate.candidate.candidateId,
+    );
+    assert.equal(approvalResponse.status, 409);
+    const payload = await approvalResponse.json();
+    assert.equal(payload.code, 'content_operation_candidate_assets_stale');
+    assert.equal(payload.assetScan.status, 'blocked');
+    assert.equal(
+      payload.assetScan.blockers.some((entry) => (
+        entry.errorCodes.includes('content_operation_asset_object_missing')
+      )),
+      true,
+    );
+    assert.equal(rowCount(server, 'content_operation_package_approvals', 'WHERE package_id = ?', [contentPackage.packageId]), 0);
+  } finally {
+    server.close();
+  }
+});
+
+test('monster image publish blocks when an approved R2 object disappears', async () => {
+  const bucket = createMemoryR2Bucket();
+  const server = createWorkerRepositoryServer({
+    env: { SPELLING_AUDIO_BUCKET: bucket },
+    now: () => NOW,
+  });
+  try {
+    await seedFirstRelease(server);
+    const contentPackage = await createPackage(server);
+    const uploadResponse = await uploadMonsterAsset(server, contentPackage.packageId, monsterAssetForm());
+    assert.equal(uploadResponse.status, 201);
+    const candidate = await validatePackage(server, contentPackage.packageId);
+    const approvalResponse = await approvePackage(
+      server,
+      contentPackage.packageId,
+      candidate.candidate.candidateId,
+    );
+    assert.equal(approvalResponse.status, 200);
+    await bucket.delete(bucket.puts[0].key);
+
+    const publishResponse = await publishPackage(server, contentPackage.packageId);
+    assert.equal(publishResponse.status, 409);
+    const payload = await publishResponse.json();
+    assert.equal(payload.code, 'content_operation_candidate_assets_stale');
+    assert.equal(payload.assetScan.status, 'blocked');
+    assert.equal(rowCount(server, 'content_operation_releases', 'WHERE package_id = ?', [contentPackage.packageId]), 0);
+  } finally {
+    server.close();
+  }
+});
+
+test('duplicate monster image target uploads replace the previous draft target', async () => {
+  const bucket = createMemoryR2Bucket();
+  const server = createWorkerRepositoryServer({
+    env: { SPELLING_AUDIO_BUCKET: bucket },
     now: () => NOW,
   });
   try {
@@ -690,58 +913,25 @@ test('duplicate monster image target uploads block approval and publish', async 
       filename: 'inklet-b1-0-b.png',
     }));
     assert.equal(secondUpload.status, 201);
+    assert.equal(rowCount(server, 'content_operation_asset_uploads', 'WHERE package_id = ?', [contentPackage.packageId]), 1);
+    assert.equal(bucket.puts.length, 2);
+    assert.deepEqual(bucket.deletes, [bucket.puts[0].key]);
 
     const validated = await validatePackage(server, contentPackage.packageId);
-    assert.equal(validated.candidate.assetScan.status, 'blocked');
-    assert.equal(validated.candidate.assetScan.uploadCount, 2);
-    assert.equal(
-      validated.candidate.assetScan.blockers.some((entry) => (
-        entry.code === 'content_operation_asset_target_has_multiple_uploads'
-      )),
-      true,
-    );
+    assert.equal(validated.candidate.assetScan.status, 'passed');
+    assert.equal(validated.candidate.assetScan.uploadCount, 1);
+    assert.equal(validated.candidate.assetScan.blockers.length, 0);
 
     const approvalResponse = await approvePackage(
       server,
       contentPackage.packageId,
       validated.candidate.candidateId,
     );
-    assert.equal(approvalResponse.status, 409);
-    const approvalPayload = await approvalResponse.json();
-    assert.equal(approvalPayload.code, 'content_operation_candidate_assets_blocked');
-    assert.equal(rowCount(server, 'content_operation_package_approvals', 'WHERE package_id = ?', [contentPackage.packageId]), 0);
-
-    server.DB.db.prepare(`
-      INSERT INTO content_operation_package_approvals (
-        approval_id, package_id, candidate_id, candidate_hash,
-        approved_by_account_id, approved_at, notes, audio_fallback_json,
-        asset_summary_json, validation_summary_json
-      )
-      VALUES (?, ?, ?, ?, ?, ?, ?, NULL, ?, ?)
-    `).run(
-      'coapp-duplicate-publish-guard',
-      contentPackage.packageId,
-      validated.candidate.candidateId,
-      validated.candidate.candidateHash,
-      ADMIN_ID,
-      NOW,
-      'Direct approval fixture for publish guard coverage.',
-      JSON.stringify(validated.candidate.assetScan),
-      JSON.stringify(validated.candidate.validation),
-    );
-    server.DB.db.prepare(`
-      UPDATE content_operation_packages
-      SET state = 'approved',
-          approved_at = ?,
-          updated_at = ?
-      WHERE package_id = ?
-    `).run(NOW, NOW, contentPackage.packageId);
+    assert.equal(approvalResponse.status, 200);
 
     const publishResponse = await publishPackage(server, contentPackage.packageId);
-    assert.equal(publishResponse.status, 409);
-    const publishPayload = await publishResponse.json();
-    assert.equal(publishPayload.code, 'content_operation_candidate_assets_blocked');
-    assert.equal(rowCount(server, 'content_operation_releases', 'WHERE package_id = ?', [contentPackage.packageId]), 0);
+    assert.equal(publishResponse.status, 200);
+    assert.equal(rowCount(server, 'content_operation_releases', 'WHERE package_id = ?', [contentPackage.packageId]), 1);
   } finally {
     server.close();
   }

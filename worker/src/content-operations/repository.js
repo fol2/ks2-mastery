@@ -817,7 +817,7 @@ function assertPackageIsNotPublished(packageRow, packageId) {
   }
 }
 
-export function createContentOperationsRepository({ db, now }) {
+export function createContentOperationsRepository({ db, env = {}, now }) {
   const nowFactory = typeof now === 'function' ? now : () => Date.now();
 
   return {
@@ -1381,7 +1381,11 @@ export function createContentOperationsRepository({ db, now }) {
         candidate: candidate.candidate,
         operations,
       });
-      const assetScan = await buildContentOperationAssetScan(db, { packageId });
+      const assetScan = await buildContentOperationAssetScan(db, {
+        packageId,
+        env,
+        verifyStorage: true,
+      });
       const candidateId = uid('cocand');
       const nowTs = Number(nowFactory());
       const validationSummary = {
@@ -1637,7 +1641,11 @@ export function createContentOperationsRepository({ db, now }) {
         candidate: candidate.candidate,
         operations,
       });
-      const currentAssetScan = await buildContentOperationAssetScan(db, { packageId });
+      const currentAssetScan = await buildContentOperationAssetScan(db, {
+        packageId,
+        env,
+        verifyStorage: true,
+      });
       const nowTs = Number(nowFactory());
       let approvedAudioScan = currentAudioScan;
       let audioFallbackApproval = null;
@@ -1865,7 +1873,11 @@ export function createContentOperationsRepository({ db, now }) {
         candidate: candidate.candidate,
         operations,
       });
-      const currentAssetScan = await buildContentOperationAssetScan(db, { packageId });
+      const currentAssetScan = await buildContentOperationAssetScan(db, {
+        packageId,
+        env,
+        verifyStorage: true,
+      });
       let publishAudioScan = currentAudioScan;
       if (audioReadinessHasBlockingItems(currentAudioScan)) {
         if (audioFallbackCoversCurrentScan(approval.audioFallback, currentAudioScan)) {
