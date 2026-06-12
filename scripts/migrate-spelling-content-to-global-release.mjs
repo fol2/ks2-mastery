@@ -4,8 +4,8 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
-import { uid } from '../src/platform/core/utils.js';
 import {
+  backfillSpellingWordExplanations,
   buildSpellingContentSummary,
   validateSpellingContentBundle,
 } from '../src/subjects/spelling/content/model.js';
@@ -24,6 +24,14 @@ const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, '..');
 const scriptRelativePath = 'scripts/migrate-spelling-content-to-global-release.mjs';
 const remoteConfirmation = 'seed-first-global-release';
+const compatibilityPolicy = Object.freeze({
+  legacyExportRoute: '/api/content/spelling',
+  legacyExportMode: 'read_only_after_global_release',
+  legacyWriteRoute: '/api/content/spelling',
+  legacyWriteMode: 'disabled_after_global_release',
+  mutationPath: 'content_operations_package_approval',
+  firstReleaseInsertPolicy: 'only_when_no_published_spelling_release_exists',
+});
 
 function readOptionValue(argv, index, flag) {
   if (index + 1 >= argv.length) throw new Error(`${flag} requires a value.`);
@@ -62,6 +70,26 @@ function parseJson(value, fallback = null) {
   }
 }
 
+function summariseValidation(validation, issueLimit = 12) {
+  const toIssues = (issues) => (Array.isArray(issues) ? issues : [])
+    .slice(0, issueLimit)
+    .map((issue) => ({
+      severity: issue.severity,
+      code: issue.code,
+      path: issue.path,
+      message: issue.message,
+    }));
+  const errors = Array.isArray(validation?.errors) ? validation.errors : [];
+  const warnings = Array.isArray(validation?.warnings) ? validation.warnings : [];
+  return {
+    ok: Boolean(validation?.ok),
+    errorCount: errors.length,
+    warningCount: warnings.length,
+    errors: toIssues(errors),
+    warnings: toIssues(warnings),
+  };
+}
+
 function chunkString(value, chunkSize = 80_000) {
   const chunks = [];
   const text = String(value || '');
@@ -71,26 +99,38 @@ function chunkString(value, chunkSize = 80_000) {
   return chunks.length ? chunks : [''];
 }
 
-function snapshotSqlExpression(snapshotValue) {
+function snapshotSqlExpression(snapshotValue, releaseId) {
   const chunks = chunkString(snapshotValue);
   if (chunks.length === 1 && chunks[0].length < 80_000) {
     return {
       setupSql: [],
       valueExpression: sqlString(chunks[0]),
+      appendSql: [],
       teardownSql: [],
       chunkCount: chunks.length,
+      charLength: chunks[0].length,
     };
   }
+  let prefixLength = 0;
+  const appendSql = chunks.map((chunk) => {
+    const sql = [
+      'UPDATE content_operation_releases',
+      `SET snapshot_json = snapshot_json || ${sqlString(chunk)}`,
+      `WHERE release_id = ${sqlString(releaseId)}`,
+      "  AND subject_id = 'spelling'",
+      "  AND status = 'seeding'",
+      `  AND length(snapshot_json) = ${sqlInteger(prefixLength)};`,
+    ].join('\n');
+    prefixLength += chunk.length;
+    return sql;
+  });
   return {
-    setupSql: [
-      'CREATE TEMP TABLE _content_operation_seed_snapshot_chunks (chunk_index INTEGER PRIMARY KEY, chunk_value TEXT NOT NULL);',
-      ...chunks.map((chunk, index) => (
-        `INSERT INTO _content_operation_seed_snapshot_chunks (chunk_index, chunk_value) VALUES (${sqlInteger(index)}, ${sqlString(chunk)});`
-      )),
-    ],
-    valueExpression: "(SELECT group_concat(chunk_value, '') FROM (SELECT chunk_value FROM _content_operation_seed_snapshot_chunks ORDER BY chunk_index ASC))",
-    teardownSql: ['DROP TABLE _content_operation_seed_snapshot_chunks;'],
+    setupSql: [],
+    valueExpression: "''",
+    appendSql,
+    teardownSql: [],
     chunkCount: chunks.length,
+    charLength: prefixLength,
   };
 }
 
@@ -218,10 +258,91 @@ function readLatestLegacyContentSource(options) {
   };
 }
 
+function readPublishedSpellingReleaseState(options) {
+  const resultSets = runWranglerD1Json(`
+    SELECT release_id, subject_id, status, snapshot_hash, published_at, published_by_account_id, created_at
+    FROM content_operation_releases
+    WHERE subject_id = 'spelling' AND status = 'published'
+    ORDER BY published_at DESC, created_at DESC, rowid DESC
+    LIMIT 1
+  `, options);
+  const row = resultSets.flatMap((entry) => Array.isArray(entry?.results) ? entry.results : [])[0] || null;
+  if (!row) return null;
+  return {
+    releaseId: row.release_id || null,
+    subjectId: row.subject_id || 'spelling',
+    status: row.status || 'published',
+    snapshotHash: row.snapshot_hash || null,
+    publishedAt: Number(row.published_at) || 0,
+    publishedByAccountId: row.published_by_account_id || null,
+    createdAt: Number(row.created_at) || 0,
+  };
+}
+
+export function buildCutoverState({ publishedRelease = null, plannedRelease = null } = {}) {
+  const hasPublishedRelease = Boolean(publishedRelease?.releaseId);
+  return {
+    publishedReleasePresent: hasPublishedRelease,
+    effectiveReleaseId: hasPublishedRelease
+      ? publishedRelease.releaseId
+      : plannedRelease?.releaseId || null,
+    effectiveSnapshotHash: hasPublishedRelease
+      ? publishedRelease.snapshotHash
+      : plannedRelease?.snapshotHash || null,
+    seedSqlWillInsert: !hasPublishedRelease,
+    seedSqlWillNoop: hasPublishedRelease,
+    legacyExportMode: compatibilityPolicy.legacyExportMode,
+    legacyWriteMode: compatibilityPolicy.legacyWriteMode,
+    mutationPath: compatibilityPolicy.mutationPath,
+    firstReleaseInsertPolicy: compatibilityPolicy.firstReleaseInsertPolicy,
+    publishedRelease: hasPublishedRelease ? publishedRelease : null,
+  };
+}
+
+export async function resolveFirstGlobalReleaseSeedSource({
+  legacySource = null,
+  fallbackBundle = null,
+} = {}) {
+  const bundledFallback = fallbackBundle || await readSeededSpellingContentBundle();
+  const bundledSource = {
+    type: 'bundled_fallback',
+    script: scriptRelativePath,
+  };
+  if (!legacySource?.bundle) {
+    return {
+      bundle: bundledFallback,
+      source: bundledSource,
+    };
+  }
+
+  const backfilledLegacyBundle = backfillSpellingWordExplanations(legacySource.bundle, bundledFallback);
+  const legacyValidation = validateSpellingContentBundle(backfilledLegacyBundle);
+  if (legacyValidation.ok) {
+    return {
+      bundle: legacyValidation.bundle,
+      source: {
+        ...(legacySource.source || {}),
+        type: legacySource.source?.type || 'account_subject_content',
+        backfillReference: 'bundled_spelling_seed',
+      },
+    };
+  }
+
+  return {
+    bundle: bundledFallback,
+    source: {
+      ...bundledSource,
+      fallbackReason: 'legacy_content_invalid',
+      rejectedLegacySource: legacySource.source || null,
+      rejectedLegacyValidation: summariseValidation(legacyValidation),
+    },
+  };
+}
+
 export async function buildFirstGlobalReleaseSeedPlan({
   now = () => Date.now(),
-  releaseId = uid('corel'),
-  eventId = uid('coevt'),
+  releaseId = null,
+  eventId = null,
   actorAccountId = 'content-operations-seed-script',
   sourceBundle = null,
   source = null,
@@ -238,6 +359,8 @@ export async function buildFirstGlobalReleaseSeedPlan({
 
   const summary = buildSpellingContentSummary(validation.bundle);
   const snapshotHash = contentOperationHash(validation.bundle, 'release');
+  const resolvedReleaseId = releaseId || `corel-seed-${snapshotHash}`;
+  const resolvedEventId = eventId || `coevt-seed-${snapshotHash}`;
   const seedSource = source || {
     type: 'bundled_fallback',
     script: scriptRelativePath,
@@ -246,21 +369,21 @@ export async function buildFirstGlobalReleaseSeedPlan({
     seed: {
       source: seedSource,
       summary,
+      compatibilityPolicy,
     },
   };
   const snapshotJson = await encodeContentOperationSnapshot(validation.bundle);
   const proofJson = JSON.stringify(proof);
   const eventJson = JSON.stringify({
-    releaseId,
+    releaseId: resolvedReleaseId,
     snapshotHash,
     source: seedSource,
     summary,
+    compatibilityPolicy,
   });
-  const snapshotSql = snapshotSqlExpression(snapshotJson);
+  const snapshotSql = snapshotSqlExpression(snapshotJson, resolvedReleaseId);
 
   const sql = [
-    'BEGIN TRANSACTION;',
-    '',
     ...snapshotSql.setupSql,
     ...(snapshotSql.setupSql.length ? [''] : []),
     'INSERT INTO content_operation_releases (',
@@ -269,39 +392,55 @@ export async function buildFirstGlobalReleaseSeedPlan({
     '  rollback_of_release_id, proof_json, created_at',
     ')',
     'SELECT',
-    `  ${sqlString(releaseId)}, 'spelling', 'published', ${snapshotSql.valueExpression}, ${sqlString(snapshotHash)},`,
-    `  NULL, NULL, ${sqlInteger(nowTs)}, ${sqlString(actorAccountId)},`,
+    `  ${sqlString(resolvedReleaseId)}, 'spelling', 'seeding', ${snapshotSql.valueExpression}, ${sqlString(snapshotHash)},`,
+    `  NULL, NULL, NULL, NULL,`,
     `  NULL, ${sqlString(proofJson)}, ${sqlInteger(nowTs)}`,
     'WHERE NOT EXISTS (',
     "  SELECT 1 FROM content_operation_releases WHERE subject_id = 'spelling' AND status = 'published'",
+    ')',
+    'AND NOT EXISTS (',
+    `  SELECT 1 FROM content_operation_releases WHERE release_id = ${sqlString(resolvedReleaseId)}`,
     ');',
+    '',
+    ...snapshotSql.appendSql,
+    ...(snapshotSql.appendSql.length ? [''] : []),
+    'UPDATE content_operation_releases',
+    "SET status = 'published',",
+    `    published_at = ${sqlInteger(nowTs)},`,
+    `    published_by_account_id = ${sqlString(actorAccountId)}`,
+    `WHERE release_id = ${sqlString(resolvedReleaseId)}`,
+    "  AND subject_id = 'spelling'",
+    "  AND status = 'seeding'",
+    `  AND length(snapshot_json) = ${sqlInteger(snapshotSql.charLength)}`,
+    '  AND NOT EXISTS (',
+    "    SELECT 1 FROM content_operation_releases WHERE subject_id = 'spelling' AND status = 'published'",
+    '  );',
     '',
     'INSERT INTO content_operation_events (',
     '  event_id, package_id, release_id, subject_id, event_type,',
     '  actor_account_id, event_json, created_at',
     ')',
     'SELECT',
-    `  ${sqlString(eventId)}, NULL, ${sqlString(releaseId)}, 'spelling', 'release.seeded',`,
+    `  ${sqlString(resolvedEventId)}, NULL, ${sqlString(resolvedReleaseId)}, 'spelling', 'release.seeded',`,
     `  ${sqlString(actorAccountId)}, ${sqlString(eventJson)}, ${sqlInteger(nowTs)}`,
     'WHERE EXISTS (',
-    `  SELECT 1 FROM content_operation_releases WHERE release_id = ${sqlString(releaseId)}`,
+    `  SELECT 1 FROM content_operation_releases WHERE release_id = ${sqlString(resolvedReleaseId)} AND status = 'published' AND length(snapshot_json) = ${sqlInteger(snapshotSql.charLength)}`,
     ')',
     'AND NOT EXISTS (',
-    `  SELECT 1 FROM content_operation_releases WHERE subject_id = 'spelling' AND status = 'published' AND release_id <> ${sqlString(releaseId)}`,
+    `  SELECT 1 FROM content_operation_releases WHERE subject_id = 'spelling' AND status = 'published' AND release_id <> ${sqlString(resolvedReleaseId)}`,
     ')',
     'AND NOT EXISTS (',
-    `  SELECT 1 FROM content_operation_events WHERE event_id = ${sqlString(eventId)}`,
+    `  SELECT 1 FROM content_operation_events WHERE event_id = ${sqlString(resolvedEventId)}`,
     ');',
     '',
     ...snapshotSql.teardownSql,
     ...(snapshotSql.teardownSql.length ? [''] : []),
-    'COMMIT;',
     '',
   ].join('\n');
 
   return {
     release: {
-      releaseId,
+      releaseId: resolvedReleaseId,
       subjectId: 'spelling',
       publishedAt: nowTs,
       publishedByAccountId: actorAccountId,
@@ -310,6 +449,7 @@ export async function buildFirstGlobalReleaseSeedPlan({
     summary,
     proof,
     source: seedSource,
+    compatibilityPolicy,
     snapshotStorage: {
       encoding: 'gzip-base64',
       byteLength: Buffer.byteLength(snapshotJson, 'utf8'),
@@ -366,11 +506,19 @@ async function runCli(argv = process.argv.slice(2)) {
   const legacySource = (options.apply || options.local || options.remote)
     ? readLatestLegacyContentSource(options)
     : null;
+  const publishedRelease = (options.apply || options.local || options.remote)
+    ? readPublishedSpellingReleaseState(options)
+    : null;
+  const resolvedSource = await resolveFirstGlobalReleaseSeedSource({ legacySource });
 
   const plan = await buildFirstGlobalReleaseSeedPlan({
     actorAccountId: options.actorAccountId,
-    sourceBundle: legacySource?.bundle || null,
-    source: legacySource?.source || null,
+    sourceBundle: resolvedSource.bundle,
+    source: resolvedSource.source,
+  });
+  const cutover = buildCutoverState({
+    publishedRelease,
+    plannedRelease: plan.release,
   });
 
   if (options.outFile) {
@@ -385,6 +533,8 @@ async function runCli(argv = process.argv.slice(2)) {
     release: plan.release,
     summary: plan.summary,
     source: plan.source,
+    compatibilityPolicy: plan.compatibilityPolicy,
+    cutover,
     snapshotStorage: plan.snapshotStorage,
     sqlFile: options.outFile,
     remoteConfirmation: options.remote && options.apply ? remoteConfirmation : null,

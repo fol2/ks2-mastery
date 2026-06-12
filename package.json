@@ -41,7 +41,7 @@
     "content:operations:seed": "node scripts/migrate-spelling-content-to-global-release.mjs",
     "db:migration:create": "node ./scripts/wrangler-oauth.mjs d1 migrations create ks2-mastery-db",
     "db:migrate:local": "node ./scripts/wrangler-oauth.mjs d1 migrations apply ks2-mastery-db --local",
-    "db:migrate:remote": "CI=true node ./scripts/wrangler-oauth.mjs d1 migrations apply ks2-mastery-db --remote",
+    "db:migrate:remote": "node ./scripts/wrangler-ci.mjs d1 migrations apply ks2-mastery-db --remote",
     "db:migrate:remote:oauth": "npm run db:migrate:remote",
     "db:migrations:list:local": "node ./scripts/wrangler-oauth.mjs d1 migrations list ks2-mastery-db --local",
     "db:migrations:list:remote": "node ./scripts/wrangler-oauth.mjs d1 migrations list ks2-mastery-db --remote",

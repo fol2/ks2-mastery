@@ -236,18 +236,26 @@ updated_at
 updated_by_account_id
 ```
 
-Current use:
+Pre-cutover use:
 
 - `subject_id = 'spelling'`
 - account-scoped draft/release content storage
 - content writes protected by the same account revision / idempotency mutation policy already introduced in Pass 9
 
-New Worker routes:
+Compatibility Worker routes:
 
 - `GET /api/content/spelling`
 - `PUT /api/content/spelling`
 
-The Worker validates incoming content bundles and rejects invalid ones with explicit validation details.
+After the first published global content operations release exists, `account_subject_content` is no longer the effective production spelling content source. Learner runtime, admin hubs, content-quality signals, and the legacy export route resolve the published global release first. `account_subject_content` remains only as a pre-cutover fallback and as diagnostic legacy storage.
+
+The compatibility route state after cutover is:
+
+- `GET /api/content/spelling` is retained for export and diagnostics. It returns the current global release bundle and a `compatibility` block with the release id, snapshot hash, and `legacyWriteDisabled: true`.
+- `PUT /api/content/spelling` is disabled once a published global release exists. It returns `409 subject_content_legacy_write_cutover` with the release id, snapshot hash, published time, and the required mutation path.
+- New learner-visible spelling content changes must go through content operations packages, approval, and publish into immutable global releases.
+
+The seed helper `scripts/migrate-spelling-content-to-global-release.mjs` generates first-release-only SQL. Re-running it against an environment that already has a published spelling global release is a no-op; local or remote dry-runs report the detected release and the post-cutover compatibility policy.
 
 ## Repository and service boundary
 
@@ -265,11 +273,13 @@ The content layer is deliberately separate from the subject engine.
 `createApiSpellingContentRepository()`
 
 - hydrates from `/api/content/spelling`
-- writes with account-scoped mutation metadata
+- writes with account-scoped mutation metadata only before global-release cutover
 - tracks the current account revision for replay-safe writes
 
-Accounts with no stored spelling content receive the current seeded bundle, including the Extra expansion, on first read.
-Accounts that already have stored account-scoped content are not silently overwritten by newer seeds; operators should import/publish the updated bundle, or intentionally reset to seeded content after taking a backup.
+Accounts with no stored spelling content receive the current seeded bundle, including the Extra expansion, on first read before cutover.
+Accounts that already have stored account-scoped content are not silently overwritten by newer seeds before cutover; operators should import/publish the updated bundle, or intentionally reset to seeded content after taking a backup.
+
+After cutover, operators should not use this repository as an editorial publish surface. It is kept so older tools can hydrate/export the effective content, while the write path fails closed instead of bypassing package approval.
 
 ### Content service
 
