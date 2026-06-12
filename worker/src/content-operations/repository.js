@@ -58,6 +58,26 @@ function normaliseString(value, fallback = '') {
   return typeof value === 'string' ? value.trim() || fallback : fallback;
 }
 
+function isPlainObject(value) {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+}
+
+function asArray(value) {
+  return Array.isArray(value) ? value : [];
+}
+
+function uniqueStrings(values) {
+  const output = [];
+  const seen = new Set();
+  for (const value of values) {
+    const normalised = normaliseString(value);
+    if (!normalised || seen.has(normalised)) continue;
+    seen.add(normalised);
+    output.push(normalised);
+  }
+  return output;
+}
+
 function mutationChangeCount(result) {
   return Math.max(0, Number(result?.meta?.changes ?? result?.meta?.rows_written) || 0);
 }
@@ -183,6 +203,8 @@ async function attachLatestCandidatesToPackages(db, packages = []) {
 
 function releaseRowToRecord(row, { includeSnapshot = false } = {}) {
   if (!row) return null;
+  const proof = parseJson(row.proof_json, null);
+  const audioProof = audioReleaseProofFromProof(proof);
   return {
     releaseId: row.release_id,
     subjectId: row.subject_id,
@@ -194,7 +216,9 @@ function releaseRowToRecord(row, { includeSnapshot = false } = {}) {
     publishedAt: row.published_at == null ? null : Number(row.published_at),
     publishedByAccountId: row.published_by_account_id || null,
     rollbackOfReleaseId: row.rollback_of_release_id || null,
-    proof: parseJson(row.proof_json, null),
+    proof,
+    audioFallback: audioProof.audioFallback,
+    audioWarnings: audioProof.audioWarnings,
     createdAt: Number(row.created_at) || 0,
   };
 }
@@ -286,6 +310,225 @@ async function insertContentOperationEvent(db, {
     createdAt,
   ]);
   return eventId;
+}
+
+const AUDIO_FALLBACK_BLOCKING_STATUSES = new Set([
+  'missing',
+  'stale',
+  'generated',
+  'failed',
+  'skipped',
+  'override_requested',
+]);
+const RELEASE_AUDIO_PROOF_KEY = 'contentOperationsAudio';
+const RELEASE_PROOF_RESERVED_KEYS = new Set([
+  'audioFallback',
+  'audioWarnings',
+  RELEASE_AUDIO_PROOF_KEY,
+]);
+
+function audioFallbackBlockingItems(scan = null) {
+  return asArray(scan?.items).filter((item) => (
+    item?.required !== false
+    && AUDIO_FALLBACK_BLOCKING_STATUSES.has(normaliseString(item?.status))
+  ));
+}
+
+function audioFallbackItemIdentity(item = {}) {
+  return [
+    normaliseString(item.itemId),
+    normaliseString(item.lane),
+    normaliseString(item.profileVersion),
+    normaliseString(item.modelId),
+    normaliseString(item.voiceId),
+    normaliseString(item.paceId || item.speedId),
+    normaliseString(item.contentKey),
+  ].join('|');
+}
+
+function audioFallbackItemSummary(item = {}) {
+  return {
+    itemId: normaliseString(item.itemId),
+    lane: normaliseString(item.lane),
+    entityType: item.lane === 'sentence' ? 'spelling.sentenceEntry' : 'spelling.word',
+    entityId: item.lane === 'sentence'
+      ? normaliseString(item.sentenceId)
+      : normaliseString(item.slug),
+    slug: normaliseString(item.slug),
+    sentenceId: normaliseString(item.sentenceId),
+    voiceId: normaliseString(item.voiceId),
+    paceId: normaliseString(item.paceId || item.speedId),
+    speedId: normaliseString(item.speedId),
+    modelId: normaliseString(item.modelId),
+    profileVersion: normaliseString(item.profileVersion),
+    contentKey: normaliseString(item.contentKey),
+    status: normaliseString(item.status),
+    blocker: normaliseString(item.blocker),
+  };
+}
+
+function buildAudioFallbackAffectedMatrix(scan = null) {
+  const items = audioFallbackBlockingItems(scan).map(audioFallbackItemSummary);
+  const lanes = {};
+  for (const lane of ['word', 'sentence']) {
+    const laneItems = items.filter((item) => item.lane === lane);
+    lanes[lane] = {
+      affectedCount: laneItems.length,
+      statuses: uniqueStrings(laneItems.map((item) => item.status)),
+      voices: uniqueStrings(laneItems.map((item) => item.voiceId)),
+      paces: uniqueStrings(laneItems.map((item) => item.paceId || item.speedId)),
+    };
+  }
+  return {
+    profileVersion: normaliseString(scan?.profileVersion),
+    modelId: normaliseString(scan?.modelId),
+    affectedCount: items.length,
+    lanes,
+    items,
+  };
+}
+
+function normaliseAudioFallbackApproval(rawFallback, scan, {
+  approvedByAccountId,
+  approvedAt,
+  notes = '',
+} = {}) {
+  const raw = isPlainObject(rawFallback) ? rawFallback : {};
+  if (raw.allowed === false) return null;
+  const reason = normaliseString(raw.reason || raw.justification);
+  if (!reason) {
+    throw new BadRequestError('Content operation audio fallback approval requires a reason.', {
+      code: 'content_operation_audio_fallback_reason_required',
+    });
+  }
+  const affectedMatrix = buildAudioFallbackAffectedMatrix(scan);
+  if (affectedMatrix.affectedCount < 1) {
+    throw new BadRequestError('Content operation audio fallback approval has no affected audio blockers.', {
+      code: 'content_operation_audio_fallback_not_required',
+    });
+  }
+  return {
+    allowed: true,
+    reason,
+    notes: normaliseString(raw.notes || notes),
+    approvedByAccountId: normaliseString(approvedByAccountId),
+    approvedAt: Number(approvedAt) || 0,
+    affectedMatrix,
+  };
+}
+
+function applyAudioFallbackToScan(scan = null, fallbackApproval = null) {
+  if (!fallbackApproval?.allowed) return scan;
+  const next = cloneSerialisable(scan || {});
+  const fallbackWarning = 'audio_fallback_approved';
+  const topBlockers = asArray(next.blockers);
+  const strictItems = audioFallbackBlockingItems(next).map(audioFallbackItemSummary);
+  const strictBlockers = [...topBlockers];
+  next.status = topBlockers.length || audioFallbackBlockingItems(next).length ? 'warning' : (next.status || 'warning');
+  next.warnings = uniqueStrings([
+    fallbackWarning,
+    ...asArray(next.warnings),
+    ...topBlockers,
+  ]);
+  next.blockers = [];
+  if (isPlainObject(next.lanes)) {
+    for (const laneKey of Object.keys(next.lanes)) {
+      const lane = next.lanes[laneKey];
+      if (!isPlainObject(lane)) continue;
+      const laneBlockers = asArray(lane.blockers);
+      strictBlockers.push(...laneBlockers);
+      if (laneBlockers.length || lane.status === 'blocked') {
+        lane.status = 'warning';
+      }
+      lane.warnings = uniqueStrings([
+        ...asArray(lane.warnings),
+        ...laneBlockers,
+      ]);
+      lane.blockers = [];
+    }
+  }
+  if (isPlainObject(next.bySlug)) {
+    for (const entry of Object.values(next.bySlug)) {
+      if (!isPlainObject(entry)) continue;
+      const slugBlockers = asArray(entry.blockers);
+      strictBlockers.push(...slugBlockers);
+      if (slugBlockers.length || entry.status === 'blocked') {
+        entry.status = 'warning';
+      }
+      entry.warnings = uniqueStrings([
+        ...asArray(entry.warnings),
+        ...slugBlockers,
+      ]);
+      entry.blockers = [];
+    }
+  }
+  next.fallbackApproval = {
+    allowed: true,
+    approvedAt: fallbackApproval.approvedAt,
+    approvedByAccountId: fallbackApproval.approvedByAccountId,
+    affectedCount: Number(fallbackApproval.affectedMatrix?.affectedCount) || 0,
+  };
+  next.strictAudioReadiness = {
+    status: normaliseString(scan?.status, strictItems.length || strictBlockers.length ? 'blocked' : 'passed'),
+    blockers: uniqueStrings(strictBlockers),
+    affectedCount: strictItems.length,
+    items: strictItems,
+  };
+  return next;
+}
+
+function audioFallbackCoversCurrentScan(fallbackApproval = null, scan = null) {
+  const blockingItems = audioFallbackBlockingItems(scan);
+  if (!blockingItems.length) return true;
+  if (!fallbackApproval?.allowed) return false;
+  const approvedItems = asArray(fallbackApproval.affectedMatrix?.items);
+  const approvedIdentities = new Set(approvedItems.map(audioFallbackItemIdentity));
+  return blockingItems.every((item) => approvedIdentities.has(audioFallbackItemIdentity(item)));
+}
+
+function audioWarningProofForScan(scan = null, fallbackApproval = null) {
+  if (!fallbackApproval?.allowed) return null;
+  return {
+    status: normaliseString(scan?.status, 'warning'),
+    warnings: uniqueStrings(asArray(scan?.warnings)),
+    affectedCount: Number(fallbackApproval.affectedMatrix?.affectedCount) || 0,
+    affectedMatrix: fallbackApproval.affectedMatrix,
+  };
+}
+
+function audioReleaseProofFromProof(proof = null) {
+  const metadata = isPlainObject(proof?.[RELEASE_AUDIO_PROOF_KEY])
+    ? proof[RELEASE_AUDIO_PROOF_KEY]
+    : null;
+  return {
+    audioFallback: isPlainObject(metadata?.audioFallback) ? metadata.audioFallback : null,
+    audioWarnings: isPlainObject(metadata?.audioWarnings) ? metadata.audioWarnings : null,
+  };
+}
+
+function normaliseCallerReleaseProof(proof = null) {
+  if (proof == null) return null;
+  if (!isPlainObject(proof)) return { value: proof };
+  const reservedKeys = Object.keys(proof).filter((key) => RELEASE_PROOF_RESERVED_KEYS.has(key));
+  if (reservedKeys.length) {
+    throw new BadRequestError('Content operation release proof contains reserved audio metadata keys.', {
+      code: 'content_operation_release_proof_reserved_key',
+      reservedKeys,
+    });
+  }
+  return cloneSerialisable(proof);
+}
+
+function buildReleaseProof(proof = null, approval = null, audioScan = null) {
+  const baseProof = normaliseCallerReleaseProof(proof);
+  if (!approval?.audioFallback?.allowed) return baseProof;
+  return {
+    ...(baseProof || {}),
+    [RELEASE_AUDIO_PROOF_KEY]: {
+      audioFallback: approval.audioFallback,
+      audioWarnings: audioWarningProofForScan(audioScan, approval.audioFallback),
+    },
+  };
 }
 
 async function readLatestReleaseRow(db, subjectId, { includeSnapshot = false } = {}) {
@@ -1317,14 +1560,34 @@ export function createContentOperationsRepository({ db, now }) {
         candidate: candidate.candidate,
         operations,
       });
+      const nowTs = Number(nowFactory());
+      let approvedAudioScan = currentAudioScan;
+      let audioFallbackApproval = null;
       if (audioReadinessHasBlockingItems(currentAudioScan)) {
-        await persistCandidateAudioScan(db, candidateId, currentAudioScan);
-        throw new ConflictError('Content operation candidate has audio readiness blockers.', {
-          code: 'content_operation_candidate_audio_blocked',
-          packageId,
-          candidateId,
-          audioScan: currentAudioScan,
+        if (audioFallback == null) {
+          await persistCandidateAudioScan(db, candidateId, currentAudioScan);
+          throw new ConflictError('Content operation candidate has audio readiness blockers.', {
+            code: 'content_operation_candidate_audio_blocked',
+            packageId,
+            candidateId,
+            audioScan: currentAudioScan,
+          });
+        }
+        audioFallbackApproval = normaliseAudioFallbackApproval(audioFallback, currentAudioScan, {
+          approvedByAccountId: actor,
+          approvedAt: nowTs,
+          notes,
         });
+        if (!audioFallbackApproval) {
+          await persistCandidateAudioScan(db, candidateId, currentAudioScan);
+          throw new ConflictError('Content operation candidate has audio readiness blockers.', {
+            code: 'content_operation_candidate_audio_blocked',
+            packageId,
+            candidateId,
+            audioScan: currentAudioScan,
+          });
+        }
+        approvedAudioScan = applyAudioFallbackToScan(currentAudioScan, audioFallbackApproval);
       }
       if (Array.isArray(candidate.conflicts) && candidate.conflicts.length) {
         throw new ConflictError('Content operation candidate has unresolved conflicts.', {
@@ -1336,7 +1599,6 @@ export function createContentOperationsRepository({ db, now }) {
       }
 
       const approvalId = uid('coapp');
-      const nowTs = Number(nowFactory());
       await batch(db, [
         bindStatement(db, `
           DELETE FROM content_operation_package_approvals
@@ -1347,7 +1609,7 @@ export function createContentOperationsRepository({ db, now }) {
           SET audio_scan_json = ?
           WHERE candidate_id = ?
         `, [
-          JSON.stringify(currentAudioScan),
+          JSON.stringify(approvedAudioScan),
           candidateId,
         ]),
         bindStatement(db, `
@@ -1365,7 +1627,7 @@ export function createContentOperationsRepository({ db, now }) {
           actor,
           nowTs,
           normaliseString(notes),
-          audioFallback == null ? null : JSON.stringify(audioFallback),
+          audioFallbackApproval == null ? null : JSON.stringify(audioFallbackApproval),
           assetSummary == null ? null : JSON.stringify(assetSummary),
           JSON.stringify(candidate.validation),
         ]),
@@ -1399,11 +1661,12 @@ export function createContentOperationsRepository({ db, now }) {
             notes: normaliseString(notes),
             validationSummary: candidate.validation,
             audio: {
-              status: currentAudioScan.status,
-              blockers: currentAudioScan.blockers,
-              requiredCount: currentAudioScan.requiredCount,
+              status: approvedAudioScan.status,
+              blockers: approvedAudioScan.blockers,
+              warnings: approvedAudioScan.warnings,
+              requiredCount: approvedAudioScan.requiredCount,
             },
-            audioFallback,
+            audioFallback: audioFallbackApproval,
             assetSummary,
           }),
           nowTs,
@@ -1419,6 +1682,8 @@ export function createContentOperationsRepository({ db, now }) {
         approvedAt: nowTs,
         notes: normaliseString(notes),
         validationSummary: candidate.validation,
+        audioFallback: audioFallbackApproval,
+        assetSummary,
       };
     },
 
@@ -1506,19 +1771,26 @@ export function createContentOperationsRepository({ db, now }) {
         candidate: candidate.candidate,
         operations,
       });
+      let publishAudioScan = currentAudioScan;
       if (audioReadinessHasBlockingItems(currentAudioScan)) {
-        await persistCandidateAudioScan(db, candidate.candidateId, currentAudioScan);
-        throw new ConflictError('Approved candidate has audio readiness blockers.', {
-          code: 'content_operation_candidate_audio_blocked',
-          packageId,
-          candidateId: candidate.candidateId,
-          audioScan: currentAudioScan,
-        });
+        if (audioFallbackCoversCurrentScan(approval.audioFallback, currentAudioScan)) {
+          publishAudioScan = applyAudioFallbackToScan(currentAudioScan, approval.audioFallback);
+        } else {
+          await persistCandidateAudioScan(db, candidate.candidateId, currentAudioScan);
+          throw new ConflictError('Approved candidate has audio readiness blockers.', {
+            code: 'content_operation_candidate_audio_blocked',
+            packageId,
+            candidateId: candidate.candidateId,
+            audioScan: currentAudioScan,
+          });
+        }
       }
       const releaseId = uid('corel');
       const nowTs = Number(nowFactory());
       const snapshotHash = contentOperationHash(candidate.candidate, 'release');
       const encodedSnapshot = await encodeContentOperationSnapshot(candidate.candidate);
+      const releaseProof = buildReleaseProof(proof, approval, publishAudioScan);
+      const releaseAudioProof = audioReleaseProofFromProof(releaseProof);
 
       let publishResults = [];
       try {
@@ -1545,7 +1817,7 @@ export function createContentOperationsRepository({ db, now }) {
             packageId,
             nowTs,
             actor,
-            proof == null ? null : JSON.stringify(proof),
+            releaseProof == null ? null : JSON.stringify(releaseProof),
             nowTs,
             packageId,
             CONTENT_OPERATION_PACKAGE_STATES.APPROVED,
@@ -1557,7 +1829,7 @@ export function createContentOperationsRepository({ db, now }) {
             SET audio_scan_json = ?
             WHERE candidate_id = ?
           `, [
-            JSON.stringify(currentAudioScan),
+            JSON.stringify(publishAudioScan),
             candidate.candidateId,
           ]),
           bindStatement(db, `
@@ -1603,6 +1875,8 @@ export function createContentOperationsRepository({ db, now }) {
               candidateHash: candidate.candidateHash,
               snapshotHash,
               summary: buildSpellingContentSummary(candidate.candidate),
+              audioFallback: approval.audioFallback,
+              audioWarnings: audioWarningProofForScan(publishAudioScan, approval.audioFallback),
             }),
             nowTs,
             releaseId,
@@ -1652,7 +1926,9 @@ export function createContentOperationsRepository({ db, now }) {
         baseReleaseId: candidate.currentReleaseId || packageRow.base_release_id || null,
         publishedAt: nowTs,
         publishedByAccountId: actor,
-        proof,
+        proof: releaseProof,
+        audioFallback: releaseAudioProof.audioFallback,
+        audioWarnings: releaseAudioProof.audioWarnings,
       };
     },
 
@@ -1829,6 +2105,75 @@ export function createContentOperationsRepository({ db, now }) {
         LIMIT ?
       `, params);
       return rows.map(eventRowToRecord);
+    },
+
+    async invalidateContentOperationPackageApproval(packageId, {
+      actorAccountId,
+      reason = '',
+      event = {},
+      eventType = 'audio.override',
+    } = {}) {
+      const packageRow = await requirePackage(db, packageId);
+      assertPackageIsNotPublished(packageRow, packageId);
+      const actor = normaliseString(actorAccountId);
+      if (!actor) throw new BadRequestError('Content operation approval invalidation requires an actor account id.');
+      const approvalRow = await first(db, `
+        SELECT *
+        FROM content_operation_package_approvals
+        WHERE package_id = ?
+        ORDER BY approved_at DESC
+        LIMIT 1
+      `, [packageId]);
+      const nowTs = Number(nowFactory());
+      const invalidatedApproval = Boolean(approvalRow);
+      await batch(db, [
+        bindStatement(db, `
+          DELETE FROM content_operation_package_approvals
+          WHERE package_id = ?
+        `, [packageId]),
+        bindStatement(db, `
+          UPDATE content_operation_packages
+          SET state = CASE WHEN state = ? THEN ? ELSE state END,
+              approved_at = NULL,
+              updated_by_account_id = ?,
+              updated_at = ?
+          WHERE package_id = ?
+        `, [
+          CONTENT_OPERATION_PACKAGE_STATES.APPROVED,
+          CONTENT_OPERATION_PACKAGE_STATES.DRAFT,
+          actor,
+          nowTs,
+          packageId,
+        ]),
+        bindStatement(db, `
+          INSERT INTO content_operation_events (
+            event_id, package_id, release_id, subject_id, event_type,
+            actor_account_id, event_json, created_at
+          )
+          VALUES (?, ?, NULL, ?, ?, ?, ?, ?)
+        `, [
+          uid('coevt'),
+          packageId,
+          packageRow.subject_id,
+          normaliseString(eventType, 'audio.override'),
+          actor,
+          JSON.stringify({
+            ...(isPlainObject(event) ? event : {}),
+            reason: normaliseString(reason),
+            invalidatedApproval,
+            approvalId: approvalRow?.approval_id || null,
+            candidateId: event?.candidateId || approvalRow?.candidate_id || null,
+            invalidatedApprovalCandidateId: approvalRow?.candidate_id || null,
+          }),
+          nowTs,
+        ]),
+      ]);
+      return {
+        package: packageRowToRecord(await requirePackage(db, packageId)),
+        invalidatedApproval,
+        eventType: normaliseString(eventType, 'audio.override'),
+        createdAt: nowTs,
+      };
     },
 
     async recordContentOperationEvent(event) {

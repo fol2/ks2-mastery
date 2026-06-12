@@ -672,6 +672,11 @@ function BlockerSummary({ blockers, sectionKey }) {
           {section.blockers.slice(0, 3).map((blocker) => <li key={blocker}>{blocker}</li>)}
         </ul>
       ) : null}
+      {section.warnings?.length ? (
+        <ul className="content-ops-operation-list">
+          {section.warnings.slice(0, 3).map((warning) => <li key={warning}>{warning}</li>)}
+        </ul>
+      ) : null}
     </div>
   );
 }
@@ -2209,11 +2214,17 @@ function PackageLifecyclePanel({
   onRunAction,
 }) {
   const [notes, setNotes] = React.useState('');
+  const [allowAudioFallback, setAllowAudioFallback] = React.useState(false);
+  const [audioFallbackReason, setAudioFallbackReason] = React.useState('');
   const candidate = latestCandidateForPackage(contentPackage, lifecycleState);
   const canEdit = actorCan(actor, CONTENT_OPERATION_CAPABILITIES.EDIT);
   const canApprove = actorCan(actor, CONTENT_OPERATION_CAPABILITIES.APPROVE);
   const canPublish = actorCan(actor, CONTENT_OPERATION_CAPABILITIES.PUBLISH);
   const conflicts = candidate?.conflicts || [];
+  React.useEffect(() => {
+    setAllowAudioFallback(false);
+    setAudioFallbackReason('');
+  }, [contentPackage.packageId, candidate?.candidateId]);
   const isRunning = Boolean(
     lifecycleState?.running
       && lifecycleState.packageId === contentPackage.packageId
@@ -2225,7 +2236,14 @@ function PackageLifecyclePanel({
   const actionMessageText = lifecycleState?.packageId === contentPackage.packageId
     ? lifecycleState.message
     : '';
-  const approvalBlocked = candidateHasApprovalBlockers(candidate);
+  const blockingSections = candidate?.blockers?.blockingSections || [];
+  const audioApprovalBlocked = blockingSections.includes('audio');
+  const nonAudioApprovalBlocked = blockingSections
+    .filter((section) => section !== 'publishReadiness' && section !== 'audio')
+    .length > 0;
+  const fallbackReason = audioFallbackReason.trim();
+  const fallbackReady = audioApprovalBlocked && allowAudioFallback && fallbackReason.length > 0;
+  const approvalBlocked = !candidate || nonAudioApprovalBlocked || (audioApprovalBlocked && !fallbackReady);
   const validateDisabled = !actionAvailability.validate || !canEdit || isRunning || contentPackage.state === 'published';
   const approveDisabled = !canApprove
     || !actionAvailability.approve
@@ -2249,6 +2267,9 @@ function PackageLifecyclePanel({
       candidateId: candidate?.candidateId || '',
       candidateHash: candidate?.candidateHash || '',
       notes,
+      audioFallback: action === 'approve' && fallbackReady
+        ? { reason: fallbackReason }
+        : null,
     });
   };
   const resolveConflict = (conflict, resolution, value) => {
@@ -2313,6 +2334,29 @@ function PackageLifecyclePanel({
             data-content-ops-approval-notes="true"
           />
         </label>
+        {audioApprovalBlocked ? (
+          <div className="content-ops-notes-field">
+            <label className="content-ops-checkbox-row">
+              <input
+                type="checkbox"
+                checked={allowAudioFallback}
+                onChange={(event) => setAllowAudioFallback(event.target.checked)}
+                data-content-ops-audio-fallback-toggle="true"
+              />
+              <span>Allow runtime TTS fallback</span>
+            </label>
+            <label>
+              <span className="small muted">Fallback reason</span>
+              <textarea
+                value={audioFallbackReason}
+                onChange={(event) => setAudioFallbackReason(event.target.value)}
+                rows={2}
+                disabled={!allowAudioFallback}
+                data-content-ops-audio-fallback-reason="true"
+              />
+            </label>
+          </div>
+        ) : null}
         <div className="actions content-ops-lifecycle-actions">
           <button
             type="button"
@@ -2347,7 +2391,15 @@ function PackageLifecyclePanel({
         </div>
       </div>
       {approvalBlocked && candidate ? (
-        <BlockerSummary blockers={candidate.blockers} sectionKey="validation" />
+        <>
+          <BlockerSummary blockers={candidate.blockers} sectionKey="validation" />
+          <BlockerSummary blockers={candidate.blockers} sectionKey="conflicts" />
+          <BlockerSummary blockers={candidate.blockers} sectionKey="audio" />
+          <BlockerSummary blockers={candidate.blockers} sectionKey="assets" />
+          <BlockerSummary blockers={candidate.blockers} sectionKey="rewards" />
+          <BlockerSummary blockers={candidate.blockers} sectionKey="visibility" />
+          <BlockerSummary blockers={candidate.blockers} sectionKey="exposure" />
+        </>
       ) : null}
       {actionError ? (
         <div className="feedback warn admin-note-spaced" data-content-ops-action-error="true">
@@ -2523,28 +2575,52 @@ function ReleaseTable({ releases }) {
             <th className="small admin-overview-th">Status</th>
             <th className="small admin-overview-th">Package</th>
             <th className="small admin-overview-th">Published</th>
+            <th className="small admin-overview-th">Audio</th>
             <th className="small admin-overview-th">Proof</th>
           </tr>
         </thead>
         <tbody>
-          {releases.map((release) => (
-            <tr key={release.releaseId} className="admin-overview-tbody-row">
-              <td className="admin-overview-td-first">
-                {release.releaseId}
-                <div className="small muted">{release.snapshotHash || 'hash pending'}</div>
-              </td>
-              <td className="admin-overview-td">
-                <span className={`chip ${release.status === 'published' ? 'good' : ''}`}>
-                  {release.status}
-                </span>
-              </td>
-              <td className="admin-overview-td small">{release.packageId || 'seeded'}</td>
-              <td className="admin-overview-td small">{formatTimestamp(release.publishedAt || release.createdAt)}</td>
-              <td className="admin-overview-td">
-                {release.proof ? <span className="chip good">Recorded</span> : <span className="chip warn">Missing</span>}
-              </td>
-            </tr>
-          ))}
+          {releases.map((release) => {
+            const fallback = release.audioFallback || null;
+            const audioWarnings = release.audioWarnings || null;
+            const warnings = Array.isArray(audioWarnings?.warnings) ? audioWarnings.warnings : [];
+            const affectedCount = Number(
+              audioWarnings?.affectedCount
+                ?? fallback?.affectedMatrix?.affectedCount
+                ?? 0,
+            ) || 0;
+            return (
+              <tr key={release.releaseId} className="admin-overview-tbody-row">
+                <td className="admin-overview-td-first">
+                  {release.releaseId}
+                  <div className="small muted">{release.snapshotHash || 'hash pending'}</div>
+                </td>
+                <td className="admin-overview-td">
+                  <span className={`chip ${release.status === 'published' ? 'good' : ''}`}>
+                    {release.status}
+                  </span>
+                </td>
+                <td className="admin-overview-td small">{release.packageId || 'seeded'}</td>
+                <td className="admin-overview-td small">{formatTimestamp(release.publishedAt || release.createdAt)}</td>
+                <td className="admin-overview-td">
+                  {fallback?.allowed ? (
+                    <div className="content-ops-release-audio">
+                      <span className="chip warn">Audio fallback</span>
+                      <div className="small muted">{String(affectedCount)} affected</div>
+                      {warnings.length ? (
+                        <div className="small muted">{warnings.slice(0, 3).join(', ')}</div>
+                      ) : null}
+                    </div>
+                  ) : (
+                    <span className="chip good">Ready</span>
+                  )}
+                </td>
+                <td className="admin-overview-td">
+                  {release.proof ? <span className="chip good">Recorded</span> : <span className="chip warn">Missing</span>}
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>
@@ -2888,6 +2964,7 @@ export function AdminContentOperationsSection({
     resolution = '',
     value = undefined,
     notes = '',
+    audioFallback = null,
   } = {}) => {
     if (!api || !packageId) return;
     setLifecycleState((current) => ({
@@ -2924,6 +3001,7 @@ export function AdminContentOperationsSection({
           packageId,
           candidateId,
           notes,
+          audioFallback,
           mutation: contentOperationMutation(action, packageId),
         });
       } else if (action === 'publish') {

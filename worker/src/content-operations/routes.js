@@ -578,18 +578,31 @@ export async function handleContentOperationsAdminRequest({
         } catch (error) {
           badContentOperation(error);
         }
+        const resolvedCandidateId = body.candidateId || body.candidate_id || candidate.candidateId;
+        const overrideReason = body.reason || body.overrideReason || body.override_reason || '';
         const audio = await generateContentOperationPackageAudio({
           db: requireDatabase(env),
           env,
           packageId,
           candidate,
-          candidateId: body.candidateId || body.candidate_id || candidate.candidateId,
+          candidateId: resolvedCandidateId,
           requestedByAccountId: actor.id,
           itemIds: body.itemIds || body.item_ids || [],
           limit: body.limit,
           override: body.override === true,
-          overrideReason: body.reason || body.overrideReason || body.override_reason || '',
+          overrideReason,
         });
+        const invalidation = body.override === true
+          ? await repository.invalidateContentOperationPackageApproval(packageId, {
+            actorAccountId: actor.id,
+            reason: overrideReason,
+            event: {
+              candidateId: resolvedCandidateId,
+              summary: audio.summary,
+              jobIds: Array.isArray(audio.jobs) ? audio.jobs.map((job) => job.jobId).filter(Boolean) : [],
+            },
+          })
+          : null;
         return json({
           ok: true,
           actor: serialiseContentOperationActor(actor),
@@ -597,6 +610,10 @@ export async function handleContentOperationsAdminRequest({
             includeSnapshot: includeSnapshot(url, body),
           }),
           audio,
+          package: invalidation?.package
+            ? serialiseContentOperationPackage(invalidation.package)
+            : undefined,
+          invalidation,
         });
       }
 
@@ -608,16 +625,10 @@ export async function handleContentOperationsAdminRequest({
             packageId,
           });
         }
-        if (body.audioFallback != null) {
-          throw new BadRequestError('Content operation audio fallback approvals are not supported.', {
-            code: 'content_operation_audio_fallback_not_supported',
-            packageId,
-            candidateId,
-          });
-        }
         const approval = await repository.approveContentOperationCandidate(packageId, candidateId, {
           approvedByAccountId: actor.id,
           notes: body.notes,
+          audioFallback: body.audioFallback ?? body.audio_fallback ?? null,
           assetSummary: body.assetSummary ?? null,
         });
         return json({
