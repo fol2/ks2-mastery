@@ -6,6 +6,18 @@ import {
   buildSpellingContentSentenceDetail,
   buildSpellingContentWordDetail,
 } from '../src/subjects/spelling/content/editor-read-model.js';
+import {
+  buildSpellingContentOperationCandidate,
+  applyContentOperationsToSpellingContent,
+} from '../src/subjects/spelling/content/operations-model.js';
+import {
+  buildPublishedSnapshotFromDraft,
+} from '../src/subjects/spelling/content/model.js';
+import {
+  buildSpellingWordDeleteOrRetireOperation,
+  buildSpellingWordUpsertOperation,
+  validateSpellingWordEditorInput,
+} from '../src/subjects/spelling/content/package-operations.js';
 
 const NOW = Date.UTC(2026, 5, 11, 12, 0, 0);
 
@@ -50,6 +62,7 @@ function contentBundle(overrides = {}) {
           coverageTier: 'statutory-core',
           yearGroups: ['Y3', 'Y4'],
           accepted: ['alpha'],
+          tags: ['exception-word'],
           patternIds: ['prefix-alpha'],
           explanation: 'Alpha has a clear root explanation.',
           sentenceEntryIds: ['alpha-s1', 'alpha-s2'],
@@ -64,6 +77,7 @@ function contentBundle(overrides = {}) {
           coverageTier: 'statutory-core',
           yearGroups: ['Y3', 'Y4'],
           accepted: ['beta'],
+          tags: ['exception-word'],
           patternIds: ['prefix-beta'],
           explanation: 'Beta has a clear root explanation.',
           sentenceEntryIds: ['beta-s1'],
@@ -128,6 +142,7 @@ function packageBundle() {
           coverageTier: 'statutory-core',
           yearGroups: ['Y3', 'Y4'],
           accepted: ['gamma'],
+          tags: ['exception-word'],
           patternIds: ['prefix-gamma'],
           explanation: 'Gamma has a clear root explanation.',
           sentenceEntryIds: ['gamma-s1'],
@@ -275,4 +290,128 @@ test('spelling content operations sentence detail supports id lookups', () => {
   assert.equal(detail.draftState, 'added');
   assert.equal(detail.current, null);
   assert.equal(detail.packageValue.word.slug, 'gamma');
+});
+
+test('spelling word editor builder creates a valid upsert operation with explicit progress key', () => {
+  const bundle = contentBundle();
+  const alpha = bundle.draft.words[0];
+  const operation = buildSpellingWordUpsertOperation({
+    ...alpha,
+    explanation: 'Alpha has a revised learner-facing explanation.',
+    accepted: 'alpha',
+    sourceNote: 'Edited in Content Operations Centre.',
+    provenance: { source: 'admin-editor', note: 'T10 test edit' },
+    progressKey: 'alpha',
+  }, {
+    existingWord: alpha,
+    wordLists: bundle.draft.wordLists,
+  });
+  const candidate = buildSpellingContentOperationCandidate(bundle, [operation]);
+
+  assert.equal(operation.entityType, 'spelling.word');
+  assert.equal(operation.action, 'upsert');
+  assert.equal(operation.entityId, 'alpha');
+  assert.equal(operation.payload.progressKey, 'alpha');
+  assert.equal(candidate.validation.ok, true);
+  assert.equal(
+    candidate.candidate.draft.words.find((word) => word.slug === 'alpha').explanation,
+    'Alpha has a revised learner-facing explanation.',
+  );
+});
+
+test('spelling word editor builder keeps Extra word-family variants first class', () => {
+  const bundle = contentBundle();
+  const extra = bundle.draft.words.find((word) => word.slug === 'metamorphosis');
+  const operation = buildSpellingWordUpsertOperation({
+    ...extra,
+    accepted: 'metamorphosis',
+    sourceNote: 'Edited in Content Operations Centre.',
+    provenance: { source: 'admin-editor' },
+    variants: [{
+      word: 'metamorphic',
+      accepted: 'metamorphic',
+      explanation: 'Metamorphic shares the same changing root.',
+      sentenceEntryIds: 'meta-v1',
+      sourceNote: 'Edited in Content Operations Centre.',
+      provenance: { source: 'admin-editor' },
+      progressKey: 'metamorphic',
+    }],
+  }, {
+    existingWord: extra,
+    wordLists: bundle.draft.wordLists,
+  });
+  const candidate = buildSpellingContentOperationCandidate(bundle, [operation]);
+
+  assert.equal(operation.payload.variants[0].word, 'metamorphic');
+  assert.equal(operation.payload.variants[0].progressKey, 'metamorphic');
+  assert.equal(candidate.validation.ok, true);
+});
+
+test('spelling word editor validation blocks learner-visible words without editorial contract fields', () => {
+  const bundle = contentBundle();
+  const result = validateSpellingWordEditorInput({
+    slug: 'delta',
+    word: 'delta',
+    family: 'greek-root',
+    listId: 'core-y34',
+    spellingPool: 'core',
+    coverageTier: 'statutory-core',
+    yearGroups: 'Y3, Y4',
+    explanation: 'Too short.',
+  }, {
+    wordLists: bundle.draft.wordLists,
+  });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.errors.some((entry) => entry.field === 'accepted'));
+  assert.ok(result.errors.some((entry) => entry.field === 'sentenceEntryIds'));
+  assert.ok(result.errors.some((entry) => entry.field === 'provenance'));
+});
+
+test('spelling word editor builder keeps core word-family variants as separate rows', () => {
+  const bundle = contentBundle();
+  const alpha = bundle.draft.words[0];
+
+  assert.throws(
+    () => buildSpellingWordUpsertOperation({
+      ...alpha,
+      accepted: 'alpha',
+      sourceNote: 'Edited in Content Operations Centre.',
+      provenance: { source: 'admin-editor' },
+      variants: [{
+        word: 'alphabet',
+        accepted: 'alphabet',
+        explanation: 'Alphabet shares the same family.',
+        sentenceEntryIds: 'alpha-s1',
+        sourceNote: 'Edited in Content Operations Centre.',
+        provenance: { source: 'admin-editor' },
+      }],
+    }, {
+      existingWord: alpha,
+      wordLists: bundle.draft.wordLists,
+    }),
+    /Core word-family variants must stay as separate word rows/,
+  );
+});
+
+test('spelling word delete-or-retire operation hard deletes drafts and retires published words', () => {
+  const bundle = contentBundle();
+  const draftDelete = buildSpellingWordDeleteOrRetireOperation({ slug: 'gamma' });
+  const retire = buildSpellingWordDeleteOrRetireOperation({ slug: 'alpha', hasCurrent: true }, {
+    reason: 'Retired by test.',
+    now: () => NOW,
+  });
+  const candidate = buildSpellingContentOperationCandidate(bundle, [retire]);
+  const applied = applyContentOperationsToSpellingContent(bundle, [retire]);
+  const retiredAlpha = applied.draft.words.find((word) => word.slug === 'alpha');
+  const snapshot = buildPublishedSnapshotFromDraft(applied.draft, { generatedAt: NOW });
+
+  assert.equal(draftDelete.action, 'remove');
+  assert.equal(retire.action, 'retire');
+  assert.equal(candidate.validation.ok, true);
+  assert.equal(retiredAlpha.active, false);
+  assert.equal(retiredAlpha.retired, true);
+  assert.equal(retiredAlpha.retirement.reason, 'Retired by test.');
+  assert.equal(snapshot.words.some((word) => word.slug === 'alpha'), false);
+  assert.equal(snapshot.words.some((word) => word.slug === 'beta'), true);
 });

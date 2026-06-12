@@ -853,6 +853,45 @@ describe('Content Operations Centre hub API client', () => {
     assert.equal(calls[3].body.value, 'Merged value.');
   });
 
+  it('calls content operation append and delete endpoints', async () => {
+    const calls = [];
+    const api = createHubApi({
+      baseUrl: 'https://repo.test',
+      fetch: async (url, init = {}) => {
+        calls.push({
+          url: String(url),
+          method: init.method,
+          body: init.body ? JSON.parse(init.body) : null,
+        });
+        return jsonResponse({ ok: true });
+      },
+    });
+    const operation = {
+      entityType: 'spelling.word',
+      entityId: 'metamorphosis',
+      action: 'set',
+      fieldPath: 'explanation',
+      payload: 'Updated explanation.',
+    };
+
+    await api.appendContentOperation({
+      packageId: 'pkg/with/slash',
+      operation,
+      mutation: { requestId: 'op-append-1' },
+    });
+    await api.deleteContentOperation({
+      packageId: 'pkg/with/slash',
+      operationId: 'op/with/slash',
+    });
+
+    assert.equal(new URL(calls[0].url).pathname, '/api/admin/content-operations/packages/pkg%2Fwith%2Fslash/operations');
+    assert.equal(new URL(calls[1].url).pathname, '/api/admin/content-operations/packages/pkg%2Fwith%2Fslash/operations/op%2Fwith%2Fslash');
+    assert.deepEqual(calls.map((call) => call.method), ['POST', 'DELETE']);
+    assert.deepEqual(calls[0].body.operation, operation);
+    assert.equal(calls[0].body.mutation.requestId, 'op-append-1');
+    assert.equal(calls[1].body, null);
+  });
+
   it('rejects package and release detail reads without explicit ids', async () => {
     const api = createHubApi({
       baseUrl: 'https://repo.test',
@@ -894,6 +933,22 @@ describe('Content Operations Centre hub API client', () => {
     await assert.rejects(
       () => api.resolveContentOperationConflict({ packageId: 'pkg-1', resolution: '' }),
       /Content operation conflict resolution is required/,
+    );
+    await assert.rejects(
+      () => api.appendContentOperation({ packageId: '', operation: {} }),
+      /Content operation package id is required/,
+    );
+    await assert.rejects(
+      () => api.appendContentOperation({ packageId: 'pkg-1', operation: null }),
+      /Content operation payload is required/,
+    );
+    await assert.rejects(
+      () => api.deleteContentOperation({ packageId: '', operationId: 'op-1' }),
+      /Content operation package id is required/,
+    );
+    await assert.rejects(
+      () => api.deleteContentOperation({ packageId: 'pkg-1', operationId: '' }),
+      /Content operation id is required/,
     );
   });
 });

@@ -12435,6 +12435,55 @@ html { scroll-behavior: smooth; }
   padding-top: 10px;
 }
 
+.content-ops-word-editor {
+  display: grid;
+  gap: 10px;
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
+}
+
+.content-ops-word-editor-header,
+.content-ops-word-editor-actions {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.content-ops-word-editor-grid,
+.content-ops-word-variant-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.content-ops-word-editor label,
+.content-ops-word-variant-row label {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.content-ops-word-editor input,
+.content-ops-word-editor select,
+.content-ops-word-editor textarea {
+  width: 100%;
+}
+
+.content-ops-word-editor-wide {
+  grid-column: 1 / -1;
+}
+
+.content-ops-word-variants {
+  display: grid;
+  gap: 8px;
+}
+
+.content-ops-word-variant-row {
+  border-top: 1px solid var(--line);
+  padding-top: 8px;
+}
+
 .content-ops-detail-body {
   border-top: 1px solid var(--line);
   padding-top: 12px;
@@ -12576,10 +12625,17 @@ html { scroll-behavior: smooth; }
   .content-ops-detail-header,
   .content-ops-lifecycle-header,
   .content-ops-lifecycle-controls,
+  .content-ops-word-editor-header,
+  .content-ops-word-editor-actions,
   .content-ops-spelling-detail-header,
   .content-ops-spelling-draft-compare {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .content-ops-word-editor-grid,
+  .content-ops-word-variant-row {
+    grid-template-columns: 1fr;
   }
 
   .content-ops-conflict-values {

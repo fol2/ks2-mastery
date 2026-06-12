@@ -536,6 +536,15 @@ test('button labels: every statically extractable label is classified', () => {
     'Keep package value',
     'Keep current value',
     'Save merged value',
+    // Content Operations Centre T10: spelling editorial word/variant
+    // controls are domain-specific. These labels distinguish selected-word
+    // editing, new word creation, variant child-row management, and word
+    // package operation submission.
+    'Edit selected',
+    'New word',
+    'Add variant',
+    'Remove variant',
+    'Save word',
     // Reasoning launch: delayed SATs-style sets use "Mark set" and "Save
     // answers" to distinguish full-set marking from single-question submit.
     // "Partly worked support" is the child-facing scaffold request, matching

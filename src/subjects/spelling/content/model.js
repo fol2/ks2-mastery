@@ -127,6 +127,15 @@ function normaliseProvenance(rawValue, fallbackSource = '') {
   };
 }
 
+function normaliseRetirement(rawValue = null) {
+  const raw = isPlainObject(rawValue) ? rawValue : {};
+  return {
+    reason: normaliseString(raw.reason),
+    source: normaliseString(raw.source),
+    retiredAt: normaliseTimestamp(raw.retiredAt, 0),
+  };
+}
+
 function yearBandFromGroups(yearGroups) {
   const groups = normaliseYearGroups(yearGroups);
   const y34 = groups.filter((entry) => entry === 'Y3' || entry === 'Y4');
@@ -192,6 +201,10 @@ function normaliseWordEntry(rawValue, index = 0, wordListsById = new Map()) {
     sentenceEntryIds: uniqueStrings(raw.sentenceEntryIds),
     sourceNote: normaliseString(raw.sourceNote),
     provenance: normaliseProvenance(raw.provenance, raw.sourceNote || 'spelling word'),
+    progressKey: normaliseString(raw.progressKey, slug),
+    active: raw.active === false ? false : true,
+    retired: Boolean(raw.retired),
+    ...(raw.retired || raw.active === false || raw.retirement ? { retirement: normaliseRetirement(raw.retirement) } : {}),
     sortIndex: Number.isInteger(Number(raw.sortIndex)) && Number(raw.sortIndex) >= 0 ? Number(raw.sortIndex) : index,
   };
 }
@@ -206,6 +219,7 @@ function normaliseWordVariant(rawValue, index = 0) {
     sentenceEntryIds: uniqueStrings(raw.sentenceEntryIds),
     sourceNote: normaliseString(raw.sourceNote),
     provenance: normaliseProvenance(raw.provenance, raw.sourceNote || 'spelling word variant'),
+    progressKey: normaliseString(raw.progressKey, word),
     sortIndex: Number.isInteger(Number(raw.sortIndex)) && Number(raw.sortIndex) >= 0 ? Number(raw.sortIndex) : index,
   };
 }
@@ -257,6 +271,7 @@ function normaliseRuntimeWord(rawValue, index = 0) {
     patternIds: normalisePatternIds(raw.patternIds),
     sourceNote: normaliseString(raw.sourceNote),
     provenance: normaliseProvenance(raw.provenance, raw.sourceNote || 'published spelling word'),
+    progressKey: normaliseString(raw.progressKey, slug),
     sortIndex: Number.isInteger(Number(raw.sortIndex)) && Number(raw.sortIndex) >= 0 ? Number(raw.sortIndex) : index,
   };
 }
@@ -275,6 +290,7 @@ function normaliseRuntimeWordVariant(rawValue, index = 0) {
     explanation: normaliseString(raw.explanation),
     sourceNote: normaliseString(raw.sourceNote),
     provenance: normaliseProvenance(raw.provenance, raw.sourceNote || 'published spelling word variant'),
+    progressKey: normaliseString(raw.progressKey, word),
     sortIndex: Number.isInteger(Number(raw.sortIndex)) && Number(raw.sortIndex) >= 0 ? Number(raw.sortIndex) : index,
   };
 }
@@ -466,6 +482,8 @@ export function validateSpellingContentBundle(rawBundle) {
       errors.push(issue('error', 'duplicate_word', `draft.words[${index}].word`, `Duplicate canonical word "${word.word}" in list "${word.listId || 'unlisted'}".`));
     }
     wordTextKeys.add(duplicateTextKey);
+    const learnerVisible = word.active !== false && !word.retired;
+    if (!learnerVisible) return;
     if (word.spellingPool === 'core' && !word.yearGroups.length) {
       errors.push(issue('error', 'missing_year_group_metadata', `draft.words[${index}].yearGroups`, `Word "${word.slug}" is missing year-group metadata.`));
     }
@@ -541,6 +559,7 @@ export function validateSpellingContentBundle(rawBundle) {
   });
 
   bundle.draft.words.forEach((word, index) => {
+    if (word.active === false || word.retired) return;
     word.sentenceEntryIds.forEach((sentenceId, position) => {
       const sentence = sentencesById.get(sentenceId);
       if (!sentence) {
@@ -695,7 +714,8 @@ export function buildPublishedSnapshotFromDraft(rawDraft, { generatedAt = Date.n
   const draft = normaliseDraft(rawDraft);
   const sentenceById = new Map(draft.sentences.map((entry) => [entry.id, entry]));
   const familyMap = new Map();
-  const orderedWords = orderedDraftWords(draft);
+  const orderedWords = orderedDraftWords(draft)
+    .filter((word) => word.active !== false && !word.retired);
 
   const runtimeWords = orderedWords.map((word, index) => {
     const sentences = word.sentenceEntryIds
@@ -718,6 +738,7 @@ export function buildPublishedSnapshotFromDraft(rawDraft, { generatedAt = Date.n
             explanation: variant.explanation,
             sourceNote: variant.sourceNote,
             provenance: variant.provenance,
+            progressKey: variant.progressKey,
             sortIndex: variant.sortIndex,
           };
         })
@@ -746,6 +767,7 @@ export function buildPublishedSnapshotFromDraft(rawDraft, { generatedAt = Date.n
       patternIds: word.patternIds,
       sourceNote: word.sourceNote,
       provenance: word.provenance,
+      progressKey: word.progressKey,
       sortIndex: index,
     }, index);
   });

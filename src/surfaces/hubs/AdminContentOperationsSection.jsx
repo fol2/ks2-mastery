@@ -13,6 +13,10 @@ import {
   normaliseContentOperationsSpellingBrowse,
   normaliseContentOperationsSpellingItemDetail,
 } from '../../platform/hubs/admin-content-operations.js';
+import {
+  buildSpellingWordDeleteOrRetireOperation,
+  buildSpellingWordUpsertOperation,
+} from '../../subjects/spelling/content/package-operations.js';
 
 const CENTRE_TABS = Object.freeze([
   { key: 'overview', label: 'Overview' },
@@ -49,6 +53,110 @@ function contentOperationMutation(action, packageId) {
   const safePackageId = String(packageId || 'package').replace(/[^a-z0-9_-]/gi, '-').toLowerCase();
   return {
     requestId: `content-ops-${safeAction}-${safePackageId}-${Date.now()}`,
+  };
+}
+
+function csvValue(values) {
+  return Array.isArray(values) ? values.filter(Boolean).join(', ') : '';
+}
+
+function provenanceField(provenance, key) {
+  return provenance && typeof provenance === 'object' ? String(provenance[key] || '') : '';
+}
+
+function emptyWordEditorForm(wordLists = [], selectedRow = null) {
+  const preferredList = selectedRow?.listId
+    ? wordLists.find((entry) => entry.id === selectedRow.listId)
+    : wordLists[0];
+  const spellingPool = preferredList?.spellingPool || selectedRow?.spellingPool || 'core';
+  return {
+    slug: '',
+    word: '',
+    family: selectedRow?.family || '',
+    listId: preferredList?.id || selectedRow?.listId || '',
+    spellingPool,
+    coverageTier: preferredList?.coverageTier || selectedRow?.coverageTier || (spellingPool === 'extra' ? 'enrichment-extra' : 'statutory-core'),
+    yearGroups: spellingPool === 'core' ? 'Y3, Y4' : '',
+    tags: '',
+    patternIds: '',
+    accepted: '',
+    explanation: '',
+    sentenceEntryIds: '',
+    sourceNote: '',
+    provenanceSource: '',
+    provenanceNote: '',
+    progressKey: '',
+    variants: [],
+    retirementReason: '',
+  };
+}
+
+function wordEditorFormFromWord(word, selectedRow = null, wordLists = []) {
+  if (!word) return emptyWordEditorForm(wordLists, selectedRow);
+  const list = word.list || wordLists.find((entry) => entry.id === word.listId) || null;
+  return {
+    slug: word.slug || selectedRow?.slug || '',
+    word: word.word || selectedRow?.word || '',
+    family: word.family || selectedRow?.family || '',
+    listId: word.listId || list?.id || selectedRow?.listId || '',
+    spellingPool: word.spellingPool || list?.spellingPool || selectedRow?.spellingPool || 'core',
+    coverageTier: word.coverageTier || list?.coverageTier || selectedRow?.coverageTier || '',
+    yearGroups: csvValue(word.yearGroups),
+    tags: csvValue(word.tags),
+    patternIds: csvValue(word.patternIds),
+    accepted: csvValue(word.accepted),
+    explanation: word.explanation || '',
+    sentenceEntryIds: csvValue(word.sentenceEntryIds),
+    sourceNote: word.sourceNote || '',
+    provenanceSource: provenanceField(word.provenance, 'source'),
+    provenanceNote: provenanceField(word.provenance, 'note'),
+    progressKey: word.progressKey || word.slug || '',
+    variants: (Array.isArray(word.variants) ? word.variants : []).map((variant) => ({
+      word: variant.word || '',
+      accepted: csvValue(variant.accepted),
+      explanation: variant.explanation || '',
+      sentenceEntryIds: csvValue(variant.sentenceEntryIds),
+      sourceNote: variant.sourceNote || '',
+      provenanceSource: provenanceField(variant.provenance, 'source'),
+      provenanceNote: provenanceField(variant.provenance, 'note'),
+      progressKey: variant.progressKey || variant.word || '',
+    })),
+    retirementReason: '',
+  };
+}
+
+function operationInputFromWordForm(form) {
+  return {
+    slug: form.slug,
+    word: form.word,
+    family: form.family,
+    listId: form.listId,
+    spellingPool: form.spellingPool,
+    coverageTier: form.coverageTier,
+    yearGroups: form.yearGroups,
+    tags: form.tags,
+    patternIds: form.patternIds,
+    accepted: form.accepted,
+    explanation: form.explanation,
+    sentenceEntryIds: form.sentenceEntryIds,
+    sourceNote: form.sourceNote,
+    provenance: {
+      source: form.provenanceSource,
+      note: form.provenanceNote,
+    },
+    progressKey: form.progressKey,
+    variants: (Array.isArray(form.variants) ? form.variants : []).map((variant) => ({
+      word: variant.word,
+      accepted: variant.accepted,
+      explanation: variant.explanation,
+      sentenceEntryIds: variant.sentenceEntryIds,
+      sourceNote: variant.sourceNote,
+      provenance: {
+        source: variant.provenanceSource,
+        note: variant.provenanceNote,
+      },
+      progressKey: variant.progressKey,
+    })),
   };
 }
 
@@ -466,12 +574,16 @@ function SpellingBrowsePanel({
   filters,
   selectedWordSlug,
   selectedPackageId,
+  canEdit,
+  wordOperationAvailable,
+  wordOperationState,
   loadingBrowse,
   loadingItem,
   error,
   onFilterChange,
   onApplyFilters,
   onSelectWord,
+  onSubmitWordOperation,
 }) {
   const selectedRow = browse.words.find((row) => row.slug === selectedWordSlug) || browse.words[0] || null;
   const packageDraft = browse.packageDraft;
@@ -484,8 +596,130 @@ function SpellingBrowsePanel({
     : null;
   const currentWord = selectedDetail?.current || null;
   const packageWord = selectedDetail?.packageValue || null;
+  const editorSourceWord = packageWord || currentWord || null;
   const releaseLabel = browse.release.releaseId || 'bundled fallback';
   const detailValidation = selectedDetail?.validationState || selectedRow?.validationState || packageDraft.validation;
+  const [editorMode, setEditorMode] = React.useState('edit');
+  const [wordForm, setWordForm] = React.useState(() => emptyWordEditorForm(browse.wordLists, selectedRow));
+  const [formError, setFormError] = React.useState('');
+  const formDisabled = !selectedPackageId
+    || !canEdit
+    || !wordOperationAvailable
+    || Boolean(wordOperationState?.running);
+  const formBlockedReason = !selectedPackageId
+    ? 'Select a package'
+    : (!canEdit ? 'Edit locked' : (!wordOperationAvailable ? 'API unavailable' : ''));
+  const removeLabel = selectedRow?.hasCurrent ? 'Retire word' : 'Delete draft';
+
+  React.useEffect(() => {
+    if (editorMode === 'create') return;
+    setFormError('');
+    setWordForm(wordEditorFormFromWord(editorSourceWord, selectedRow, browse.wordLists));
+  }, [
+    browse.wordLists,
+    editorMode,
+    editorSourceWord,
+    selectedRow,
+    selectedRow?.slug,
+  ]);
+
+  const updateWordForm = React.useCallback((patch) => {
+    setFormError('');
+    setWordForm((current) => {
+      const next = { ...current, ...patch };
+      if (Object.prototype.hasOwnProperty.call(patch, 'listId')) {
+        const list = browse.wordLists.find((entry) => entry.id === patch.listId);
+        if (list) {
+          next.spellingPool = list.spellingPool;
+          next.coverageTier = list.coverageTier;
+        }
+      }
+      return next;
+    });
+  }, [browse.wordLists]);
+
+  const updateVariant = React.useCallback((index, patch) => {
+    setFormError('');
+    setWordForm((current) => ({
+      ...current,
+      variants: current.variants.map((variant, variantIndex) => (
+        variantIndex === index ? { ...variant, ...patch } : variant
+      )),
+    }));
+  }, []);
+
+  const addVariant = React.useCallback(() => {
+    setFormError('');
+    setWordForm((current) => ({
+      ...current,
+      spellingPool: 'extra',
+      coverageTier: 'enrichment-extra',
+      variants: [
+        ...current.variants,
+        {
+          word: '',
+          accepted: '',
+          explanation: '',
+          sentenceEntryIds: '',
+          sourceNote: current.sourceNote,
+          provenanceSource: current.provenanceSource,
+          provenanceNote: '',
+          progressKey: '',
+        },
+      ],
+    }));
+  }, []);
+
+  const removeVariant = React.useCallback((index) => {
+    setFormError('');
+    setWordForm((current) => ({
+      ...current,
+      variants: current.variants.filter((_, variantIndex) => variantIndex !== index),
+    }));
+  }, []);
+
+  const startCreate = React.useCallback(() => {
+    setEditorMode('create');
+    setFormError('');
+    setWordForm(emptyWordEditorForm(browse.wordLists, selectedRow));
+  }, [browse.wordLists, selectedRow]);
+
+  const startEdit = React.useCallback(() => {
+    setEditorMode('edit');
+    setFormError('');
+    setWordForm(wordEditorFormFromWord(editorSourceWord, selectedRow, browse.wordLists));
+  }, [browse.wordLists, editorSourceWord, selectedRow]);
+
+  const submitWordForm = React.useCallback((event) => {
+    event?.preventDefault?.();
+    if (!onSubmitWordOperation) return;
+    try {
+      const operation = buildSpellingWordUpsertOperation(operationInputFromWordForm(wordForm), {
+        existingWord: editorMode === 'edit' ? editorSourceWord : null,
+        wordLists: browse.wordLists,
+      });
+      onSubmitWordOperation(operation, { slug: operation.entityId, action: 'word-upsert' });
+    } catch (submitError) {
+      setFormError(submitError?.validation?.errors?.[0]?.message || submitError?.message || 'Word operation is invalid.');
+    }
+  }, [browse.wordLists, editorMode, editorSourceWord, onSubmitWordOperation, wordForm]);
+
+  const submitRemoval = React.useCallback(() => {
+    if (!onSubmitWordOperation || !selectedRow) return;
+    try {
+      const operation = buildSpellingWordDeleteOrRetireOperation({
+        slug: wordForm.slug || selectedRow.slug,
+        hasCurrent: selectedRow.hasCurrent,
+        reason: wordForm.retirementReason,
+      }, {
+        reason: wordForm.retirementReason,
+      });
+      onSubmitWordOperation(operation, { slug: operation.entityId, action: operation.action });
+    } catch (submitError) {
+      setFormError(submitError?.message || 'Word operation is invalid.');
+    }
+  }, [onSubmitWordOperation, selectedRow, wordForm.retirementReason, wordForm.slug]);
+
   return (
     <div className="content-ops-area-panel" data-content-ops-area="spelling" data-content-ops-spelling-browse="true">
       <div className="content-ops-detail-header">
@@ -685,6 +919,317 @@ function SpellingBrowsePanel({
                   <span className="small muted">{packageWord.explanation || 'Draft value available'}</span>
                 </div>
               ) : null}
+              <form
+                className="content-ops-word-editor"
+                data-content-ops-word-editor="true"
+                onSubmit={submitWordForm}
+              >
+                <div className="content-ops-word-editor-header">
+                  <div>
+                    <div className="eyebrow">Word editor</div>
+                    <strong>{editorMode === 'create' ? 'New word' : (wordForm.word || selectedRow.word)}</strong>
+                  </div>
+                  <div className="chip-row content-ops-chip-wrap">
+                    <button type="button" className="btn secondary compact" onClick={startEdit} disabled={!selectedRow}>
+                      Edit selected
+                    </button>
+                    <button type="button" className="btn secondary compact" onClick={startCreate}>
+                      New word
+                    </button>
+                  </div>
+                </div>
+                {formBlockedReason ? (
+                  <div className="feedback warn" data-content-ops-word-editor-blocked="true">
+                    {formBlockedReason}
+                  </div>
+                ) : null}
+                {formError || wordOperationState?.error ? (
+                  <div className="feedback warn" data-content-ops-word-editor-error="true">
+                    {formError || wordOperationState.error.message}
+                  </div>
+                ) : null}
+                {wordOperationState?.message ? (
+                  <div className="feedback good" data-content-ops-word-editor-message="true">
+                    {wordOperationState.message}
+                  </div>
+                ) : null}
+                <div className="content-ops-word-editor-grid">
+                  <label>
+                    <span className="small muted">Slug</span>
+                    <input
+                      value={wordForm.slug}
+                      onChange={(event) => updateWordForm({ slug: event.target.value, progressKey: event.target.value })}
+                      disabled={formDisabled || editorMode !== 'create'}
+                      data-content-ops-word-field="slug"
+                    />
+                  </label>
+                  <label>
+                    <span className="small muted">Word</span>
+                    <input
+                      value={wordForm.word}
+                      onChange={(event) => updateWordForm({ word: event.target.value })}
+                      disabled={formDisabled}
+                      data-content-ops-word-field="word"
+                    />
+                  </label>
+                  <label>
+                    <span className="small muted">Family</span>
+                    <input
+                      value={wordForm.family}
+                      onChange={(event) => updateWordForm({ family: event.target.value })}
+                      disabled={formDisabled}
+                      data-content-ops-word-field="family"
+                    />
+                  </label>
+                  <label>
+                    <span className="small muted">List</span>
+                    <select
+                      value={wordForm.listId}
+                      onChange={(event) => updateWordForm({ listId: event.target.value })}
+                      disabled={formDisabled}
+                      data-content-ops-word-field="listId"
+                    >
+                      <option value="">Select list</option>
+                      {browse.wordLists.map((list) => (
+                        <option key={list.id} value={list.id}>{list.title}</option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    <span className="small muted">Pool</span>
+                    <select
+                      value={wordForm.spellingPool}
+                      onChange={(event) => updateWordForm({ spellingPool: event.target.value })}
+                      disabled={formDisabled}
+                      data-content-ops-word-field="spellingPool"
+                    >
+                      <option value="core">Core</option>
+                      <option value="extra">Extra</option>
+                    </select>
+                  </label>
+                  <label>
+                    <span className="small muted">Coverage</span>
+                    <input
+                      value={wordForm.coverageTier}
+                      onChange={(event) => updateWordForm({ coverageTier: event.target.value })}
+                      disabled={formDisabled}
+                      data-content-ops-word-field="coverageTier"
+                    />
+                  </label>
+                  <label>
+                    <span className="small muted">Year groups</span>
+                    <input
+                      value={wordForm.yearGroups}
+                      onChange={(event) => updateWordForm({ yearGroups: event.target.value })}
+                      disabled={formDisabled}
+                      data-content-ops-word-field="yearGroups"
+                    />
+                  </label>
+                  <label>
+                    <span className="small muted">Accepted spellings</span>
+                    <input
+                      value={wordForm.accepted}
+                      onChange={(event) => updateWordForm({ accepted: event.target.value })}
+                      disabled={formDisabled}
+                      data-content-ops-word-field="accepted"
+                    />
+                  </label>
+                  <label>
+                    <span className="small muted">Sentence IDs</span>
+                    <input
+                      value={wordForm.sentenceEntryIds}
+                      onChange={(event) => updateWordForm({ sentenceEntryIds: event.target.value })}
+                      disabled={formDisabled}
+                      data-content-ops-word-field="sentenceEntryIds"
+                    />
+                  </label>
+                  <label>
+                    <span className="small muted">Progress key</span>
+                    <input
+                      value={wordForm.progressKey}
+                      onChange={(event) => updateWordForm({ progressKey: event.target.value })}
+                      disabled={formDisabled}
+                      data-content-ops-word-field="progressKey"
+                    />
+                  </label>
+                  <label>
+                    <span className="small muted">Tags</span>
+                    <input
+                      value={wordForm.tags}
+                      onChange={(event) => updateWordForm({ tags: event.target.value })}
+                      disabled={formDisabled}
+                      data-content-ops-word-field="tags"
+                    />
+                  </label>
+                  <label>
+                    <span className="small muted">Pattern IDs</span>
+                    <input
+                      value={wordForm.patternIds}
+                      onChange={(event) => updateWordForm({ patternIds: event.target.value })}
+                      disabled={formDisabled}
+                      data-content-ops-word-field="patternIds"
+                    />
+                  </label>
+                  <label className="content-ops-word-editor-wide">
+                    <span className="small muted">Explanation</span>
+                    <textarea
+                      value={wordForm.explanation}
+                      onChange={(event) => updateWordForm({ explanation: event.target.value })}
+                      disabled={formDisabled}
+                      rows={3}
+                      data-content-ops-word-field="explanation"
+                    />
+                  </label>
+                  <label className="content-ops-word-editor-wide">
+                    <span className="small muted">Source notes</span>
+                    <textarea
+                      value={wordForm.sourceNote}
+                      onChange={(event) => updateWordForm({ sourceNote: event.target.value })}
+                      disabled={formDisabled}
+                      rows={2}
+                      data-content-ops-word-field="sourceNote"
+                    />
+                  </label>
+                  <label>
+                    <span className="small muted">Provenance source</span>
+                    <input
+                      value={wordForm.provenanceSource}
+                      onChange={(event) => updateWordForm({ provenanceSource: event.target.value })}
+                      disabled={formDisabled}
+                      data-content-ops-word-field="provenanceSource"
+                    />
+                  </label>
+                  <label>
+                    <span className="small muted">Provenance note</span>
+                    <input
+                      value={wordForm.provenanceNote}
+                      onChange={(event) => updateWordForm({ provenanceNote: event.target.value })}
+                      disabled={formDisabled}
+                      data-content-ops-word-field="provenanceNote"
+                    />
+                  </label>
+                </div>
+
+                <div className="content-ops-word-variants" data-content-ops-word-variants="true">
+                  <div className="content-ops-word-editor-header">
+                    <strong>Word-family variants</strong>
+                    <button type="button" className="btn secondary compact" onClick={addVariant} disabled={formDisabled}>
+                      Add variant
+                    </button>
+                  </div>
+                  {wordForm.variants.length ? wordForm.variants.map((variant, index) => (
+                    <div className="content-ops-word-variant-row" key={`${String(index)}-${variant.word || 'variant'}`}>
+                      <label>
+                        <span className="small muted">Variant</span>
+                        <input
+                          value={variant.word}
+                          onChange={(event) => updateVariant(index, { word: event.target.value, progressKey: event.target.value })}
+                          disabled={formDisabled}
+                          data-content-ops-variant-field="word"
+                        />
+                      </label>
+                      <label>
+                        <span className="small muted">Accepted</span>
+                        <input
+                          value={variant.accepted}
+                          onChange={(event) => updateVariant(index, { accepted: event.target.value })}
+                          disabled={formDisabled}
+                          data-content-ops-variant-field="accepted"
+                        />
+                      </label>
+                      <label>
+                        <span className="small muted">Sentence IDs</span>
+                        <input
+                          value={variant.sentenceEntryIds}
+                          onChange={(event) => updateVariant(index, { sentenceEntryIds: event.target.value })}
+                          disabled={formDisabled}
+                          data-content-ops-variant-field="sentenceEntryIds"
+                        />
+                      </label>
+                      <label>
+                        <span className="small muted">Progress key</span>
+                        <input
+                          value={variant.progressKey}
+                          onChange={(event) => updateVariant(index, { progressKey: event.target.value })}
+                          disabled={formDisabled}
+                          data-content-ops-variant-field="progressKey"
+                        />
+                      </label>
+                      <label className="content-ops-word-editor-wide">
+                        <span className="small muted">Explanation</span>
+                        <textarea
+                          value={variant.explanation}
+                          onChange={(event) => updateVariant(index, { explanation: event.target.value })}
+                          disabled={formDisabled}
+                          rows={2}
+                          data-content-ops-variant-field="explanation"
+                        />
+                      </label>
+                      <label>
+                        <span className="small muted">Source notes</span>
+                        <input
+                          value={variant.sourceNote}
+                          onChange={(event) => updateVariant(index, { sourceNote: event.target.value })}
+                          disabled={formDisabled}
+                          data-content-ops-variant-field="sourceNote"
+                        />
+                      </label>
+                      <label>
+                        <span className="small muted">Provenance source</span>
+                        <input
+                          value={variant.provenanceSource}
+                          onChange={(event) => updateVariant(index, { provenanceSource: event.target.value })}
+                          disabled={formDisabled}
+                          data-content-ops-variant-field="provenanceSource"
+                        />
+                      </label>
+                      <label>
+                        <span className="small muted">Provenance note</span>
+                        <input
+                          value={variant.provenanceNote}
+                          onChange={(event) => updateVariant(index, { provenanceNote: event.target.value })}
+                          disabled={formDisabled}
+                          data-content-ops-variant-field="provenanceNote"
+                        />
+                      </label>
+                      <button
+                        type="button"
+                        className="btn secondary compact"
+                        onClick={() => removeVariant(index)}
+                        disabled={formDisabled}
+                      >
+                        Remove variant
+                      </button>
+                    </div>
+                  )) : (
+                    <div className="small muted">No variants</div>
+                  )}
+                </div>
+
+                <label className="content-ops-word-editor-wide">
+                  <span className="small muted">Retirement reason</span>
+                  <input
+                    value={wordForm.retirementReason}
+                    onChange={(event) => updateWordForm({ retirementReason: event.target.value })}
+                    disabled={formDisabled || editorMode === 'create'}
+                    data-content-ops-word-field="retirementReason"
+                  />
+                </label>
+                <div className="content-ops-word-editor-actions">
+                  <button type="submit" className="btn primary compact" disabled={formDisabled}>
+                    Save word
+                  </button>
+                  <button
+                    type="button"
+                    className="btn secondary compact"
+                    onClick={submitRemoval}
+                    disabled={formDisabled || editorMode === 'create' || !selectedRow}
+                    data-content-ops-word-remove="true"
+                  >
+                    {removeLabel}
+                  </button>
+                </div>
+              </form>
             </>
           ) : (
             <div className="feedback admin-note-spaced" data-content-ops-spelling-empty="true">
@@ -1196,6 +1741,13 @@ export function AdminContentOperationsSection({
     approval: null,
     release: null,
   });
+  const [wordOperationState, setWordOperationState] = React.useState({
+    packageId: '',
+    action: '',
+    running: false,
+    message: '',
+    error: null,
+  });
   const detailRequestRef = React.useRef({ id: '', seq: 0 });
   const spellingBrowseRequestRef = React.useRef(0);
   const spellingItemRequestRef = React.useRef({ slug: '', seq: 0 });
@@ -1347,6 +1899,51 @@ export function AdminContentOperationsSection({
     event?.preventDefault?.();
     loadSpellingBrowse();
   }, [loadSpellingBrowse]);
+
+  const runSpellingWordOperation = React.useCallback(async (operation, {
+    slug = '',
+    action = 'word-operation',
+  } = {}) => {
+    if (!api?.appendOperation || !selectedPackageId) return;
+    setWordOperationState({
+      packageId: selectedPackageId,
+      action,
+      running: true,
+      message: '',
+      error: null,
+    });
+    try {
+      await api.appendOperation({
+        packageId: selectedPackageId,
+        operation,
+        mutation: contentOperationMutation(action, selectedPackageId),
+      });
+      setWordOperationState({
+        packageId: selectedPackageId,
+        action,
+        running: false,
+        message: operation.action === 'remove'
+          ? 'Draft word deleted.'
+          : (operation.action === 'retire' ? 'Word retired.' : 'Word operation saved.'),
+        error: null,
+      });
+      if (api.readPackage) {
+        await loadPackageDetail(selectedPackageId);
+      }
+      await loadSpellingBrowse();
+      if (slug && api.readSpellingWord && operation.action !== 'remove') {
+        await selectSpellingWord(slug);
+      }
+    } catch (opError) {
+      setWordOperationState({
+        packageId: selectedPackageId,
+        action,
+        running: false,
+        message: '',
+        error: errorEnvelope(opError, 'content_operations_word_operation_failed'),
+      });
+    }
+  }, [api, loadPackageDetail, loadSpellingBrowse, selectSpellingWord, selectedPackageId]);
 
   const refresh = React.useCallback(async () => {
     if (!api?.readOverview) return;
@@ -1518,6 +2115,7 @@ export function AdminContentOperationsSection({
       : { package: null, events: [] });
   const warningSectionCount = packages.reduce((sum, entry) => sum + entry.blockers.warningCount, 0);
   const detailActor = safeDetail.actor?.accountId ? safeDetail.actor : overview.actor;
+  const spellingActor = spellingBrowse.actor?.accountId ? spellingBrowse.actor : overview.actor;
   const lifecycleActionAvailability = {
     validate: Boolean(api?.validatePackage),
     resolveConflict: Boolean(api?.resolveConflict),
@@ -1573,12 +2171,16 @@ export function AdminContentOperationsSection({
           filters={spellingFilters}
           selectedWordSlug={selectedWordSlug}
           selectedPackageId={selectedPackageId}
+          canEdit={actorCan(spellingActor, CONTENT_OPERATION_CAPABILITIES.EDIT)}
+          wordOperationAvailable={Boolean(api?.appendOperation)}
+          wordOperationState={wordOperationState}
           loadingBrowse={loadingSpellingBrowse}
           loadingItem={loadingSpellingItem}
           error={spellingError}
           onFilterChange={updateSpellingFilters}
           onApplyFilters={applySpellingFilters}
           onSelectWord={selectSpellingWord}
+          onSubmitWordOperation={runSpellingWordOperation}
         />
       ) : null}
 
