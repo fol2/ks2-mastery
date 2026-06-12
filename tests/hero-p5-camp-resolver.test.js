@@ -75,6 +75,7 @@ function invoke(command, body, opts = {}) {
     learnerId: opts.learnerId || LEARNER,
     rosterVersion: opts.rosterVersion || ROSTER_V,
     nowTs: opts.nowTs || NOW,
+    allowedMonsterIds: opts.allowedMonsterIds,
   });
 }
 
@@ -182,6 +183,17 @@ test('unknown monsterId returns hero_monster_unknown', () => {
   assert.equal(result.ok, false);
   assert.equal(result.code, 'hero_monster_unknown');
   assert.equal(result.httpStatus, 400);
+});
+
+test('hidden Hero Camp monster returns hero_monster_hidden before spending checks', () => {
+  const result = invoke('unlock-monster', { monsterId: 'loomrill', branch: 'b1' }, {
+    balance: 500,
+    allowedMonsterIds: ['glossbloom'],
+  });
+
+  assert.equal(result.ok, false);
+  assert.equal(result.code, 'hero_monster_hidden');
+  assert.equal(result.httpStatus, 404);
 });
 
 // ── Error: invalid branch ───────────────────────────────────────────

@@ -4,6 +4,8 @@ import {
   stageFor,
 } from '../monsters.js';
 import {
+  LEGACY_SPELLING_REWARD_TRACKS,
+  rewardTracksVisibleForHeroSurface,
   spellingRewardTrackForMonster,
   thresholdsForRewardTrack,
 } from '../reward-track-config.js';
@@ -85,11 +87,40 @@ function secureWordsFromAnalytics(analytics, branchState = {}) {
   return state;
 }
 
-export function progressForMonster(state, monsterId) {
-  if (monsterId === 'phaeton') return derivePhaeton(state);
+function visibleSpellingMonsterIdsForHeroSurface(rewardTracks, {
+  surface = 'codex',
+  now = Date.now(),
+  env = {},
+} = {}) {
+  if (!Array.isArray(rewardTracks)) return null;
+  const visibleTrackSet = new Set(
+    rewardTracksVisibleForHeroSurface(
+      rewardTracks.length ? rewardTracks : [],
+      { surface, now, env },
+    ).map((track) => track.monsterId),
+  );
+  return SPELLING_MONSTER_IDS.filter((monsterId) => visibleTrackSet.has(monsterId));
+}
+
+function spellingMonsterIdsForSummary(state = {}, options = {}) {
+  const byRewardTrack = visibleSpellingMonsterIdsForHeroSurface(options.rewardTracks, options);
+  if (byRewardTrack) return byRewardTrack;
+
+  const exposedSpellingMonsterIds = SPELLING_MONSTER_IDS
+    .filter((monsterId) => state?.[monsterId]?.visibleInCodex === true);
+  return exposedSpellingMonsterIds.length ? exposedSpellingMonsterIds : SPELLING_MONSTER_IDS;
+}
+
+export function progressForMonster(state, monsterId, { rewardTracks = LEGACY_SPELLING_REWARD_TRACKS } = {}) {
+  if (monsterId === 'phaeton') {
+    const progress = derivePhaeton(state);
+    return state?.phaeton?.visibleInCodex === true
+      ? { ...progress, visibleInCodex: true }
+      : progress;
+  }
   const entry = isPlainObject(state?.[monsterId]) ? state[monsterId] : { mastered: [], caught: false };
   const mastered = masteredCount(entry);
-  const rewardTrack = spellingRewardTrackForMonster(monsterId);
+  const rewardTrack = spellingRewardTrackForMonster(monsterId, rewardTracks);
   return {
     mastered,
     stage: stageFor(mastered, rewardTrack ? thresholdsForRewardTrack(rewardTrack) : undefined),
@@ -97,6 +128,7 @@ export function progressForMonster(state, monsterId) {
     caught: mastered >= 1,
     branch: branchForMonster(state, monsterId),
     masteredList: masteredList(entry),
+    ...(entry.visibleInCodex === true ? { visibleInCodex: true } : {}),
     ...(rewardTrack ? {
       rewardTrackId: rewardTrack.id,
       progressKey: rewardTrack.progressKey || monsterId,
@@ -148,11 +180,20 @@ export function monsterSummary(learnerId, gameStateRepository, { punctuationStar
   return monsterSummaryFromState(state, { punctuationStarView });
 }
 
-export function monsterSummaryFromState(state = {}, { punctuationStarView = null } = {}) {
-  const spelling = SPELLING_MONSTER_IDS.map((monsterId) => ({
+export function monsterSummaryFromState(state = {}, {
+  punctuationStarView = null,
+  rewardTracks = null,
+  surface = 'codex',
+  now = Date.now(),
+  env = {},
+} = {}) {
+  const spellingMonsterIds = spellingMonsterIdsForSummary(state, { rewardTracks, surface, now, env });
+  const spelling = spellingMonsterIds.map((monsterId) => ({
     subjectId: 'spelling',
     monster: MONSTERS[monsterId],
-    progress: progressForMonster(state, monsterId),
+    progress: progressForMonster(state, monsterId, {
+      rewardTracks: Array.isArray(rewardTracks) ? rewardTracks : LEGACY_SPELLING_REWARD_TRACKS,
+    }),
   }));
   // Route Grammar through `normaliseGrammarRewardState` so pre-flip learners
   // whose only evidence is under a retired direct id (Glossbloom / Loomrill /
@@ -174,6 +215,10 @@ export function monsterSummaryFromSpellingAnalytics(analytics, {
   learnerId = null,
   gameStateRepository = null,
   punctuationStarView = null,
+  rewardTracks = null,
+  surface = 'codex',
+  now = Date.now(),
+  env = {},
   random = Math.random,
   persistBranches = true,
 } = {}) {
@@ -192,7 +237,13 @@ export function monsterSummaryFromSpellingAnalytics(analytics, {
   }
 
   if (!analyticsHasWordRows(analytics) && hasMonsterMasteryProgress(branchState)) {
-    return monsterSummaryFromState(branchState, { punctuationStarView });
+    return monsterSummaryFromState(branchState, {
+      punctuationStarView,
+      rewardTracks,
+      surface,
+      now,
+      env,
+    });
   }
 
   const state = secureWordsFromAnalytics(analytics, branchState);
@@ -201,7 +252,12 @@ export function monsterSummaryFromSpellingAnalytics(analytics, {
   // pre-flip retired-id progress still surfaces Concordium on the meadow.
   const normalisedBranchState = normaliseGrammarRewardState(branchState);
   return [
-    ...monsterSummaryFromState(state),
+    ...monsterSummaryFromState(state, {
+      rewardTracks,
+      surface,
+      now,
+      env,
+    }),
     ...activePunctuationMonsterSummaryFromState(branchState, { starView: punctuationStarView }),
     ...activeGrammarMonsterSummaryFromState(normalisedBranchState),
     ...activeReadingMonsterSummaryFromState(branchState),

@@ -22,6 +22,13 @@ import {
 } from '../shared/hero/contracts.js';
 
 import {
+  HERO_EXPOSURE_SURFACES,
+  heroExposureStatus,
+  isHeroExposureVisible,
+  normaliseHeroExposure,
+} from '../src/platform/game/reward-track-config.js';
+
+import {
   generateHeroSeed,
   deriveDateKey,
   createSeededRandom,
@@ -167,6 +174,76 @@ test('legacy spelling reward-track monsters have bundled visual coverage', () =>
       }
     }
   }
+});
+
+test('Hero / Codex exposure normalises scheduled and rollout-flagged states', () => {
+  const scheduled = normaliseHeroExposure({
+    state: 'staged',
+    surfaces: 'codex, heroQuest',
+    scheduledAt: Date.UTC(2026, 5, 12, 9, 0, 0),
+  });
+  const flagged = normaliseHeroExposure({
+    state: 'rolloutFlagged',
+    rolloutFlag: 'HERO_CODEX_REWARD_TRACKS_ENABLED',
+  });
+  const emptySurfaces = normaliseHeroExposure({
+    state: 'visible',
+    surfaces: [],
+  });
+
+  assert.equal(scheduled.state, 'scheduled');
+  assert.deepEqual(scheduled.surfaces, ['codex', 'heroQuest']);
+  assert.equal(flagged.state, 'rollout-flagged');
+  assert.deepEqual(flagged.surfaces, HERO_EXPOSURE_SURFACES);
+  assert.deepEqual(emptySurfaces.surfaces, []);
+});
+
+test('Hero / Codex exposure resolves learner visibility by surface, schedule, and rollout flag', () => {
+  const scheduled = {
+    state: 'scheduled',
+    surfaces: ['codex'],
+    scheduledAt: Date.UTC(2026, 5, 12, 9, 0, 0),
+  };
+  const flagged = {
+    state: 'rollout-flagged',
+    surfaces: ['codex'],
+    rolloutFlag: 'HERO_CODEX_REWARD_TRACKS_ENABLED',
+  };
+
+  assert.equal(isHeroExposureVisible(scheduled, {
+    surface: 'codex',
+    now: Date.UTC(2026, 5, 12, 8, 59, 59),
+  }), false);
+  assert.equal(isHeroExposureVisible(scheduled, {
+    surface: 'codex',
+    now: Date.UTC(2026, 5, 12, 9, 0, 0),
+  }), true);
+  assert.equal(isHeroExposureVisible(scheduled, {
+    surface: 'heroCamp',
+    now: Date.UTC(2026, 5, 12, 10, 0, 0),
+  }), false);
+  assert.equal(isHeroExposureVisible(flagged, {
+    surface: 'codex',
+    env: { HERO_CODEX_REWARD_TRACKS_ENABLED: 'false' },
+  }), false);
+  assert.equal(heroExposureStatus(flagged, {
+    surface: 'codex',
+    env: { HERO_CODEX_REWARD_TRACKS_ENABLED: 'true' },
+  }).learnerVisible, true);
+  assert.deepEqual(heroExposureStatus({
+    state: 'hidden',
+    surfaces: ['codex'],
+    previewAllowed: false,
+  }, {
+    surface: 'codex',
+  }), {
+    state: 'hidden',
+    surfaces: ['codex'],
+    scheduledAt: 0,
+    rolloutFlag: '',
+    previewAllowed: false,
+    learnerVisible: false,
+  });
 });
 
 // ── Intent / launcher validation ───────────────────────────────────

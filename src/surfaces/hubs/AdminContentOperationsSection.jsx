@@ -17,6 +17,7 @@ import {
 import {
   buildSpellingPoolDeleteOrRetireOperation,
   buildSpellingPoolUpsertOperation,
+  buildSpellingHeroExposureUpsertOperation,
   buildSpellingRewardTrackDeleteOrRetireOperation,
   buildSpellingRewardTrackUpsertOperation,
   buildSpellingSentenceDeleteOrRetireOperation,
@@ -27,9 +28,12 @@ import {
   buildSpellingWordUpsertOperation,
 } from '../../subjects/spelling/content/package-operations.js';
 import {
+  HERO_EXPOSURE_STATES,
+  HERO_EXPOSURE_SURFACES,
   REWARD_TRACK_PROGRESS_MODES,
   REWARD_TRACK_THRESHOLD_TEMPLATES,
   SPELLING_REWARD_TRACK_MONSTER_IDS,
+  heroExposureStatus,
 } from '../../platform/game/reward-track-config.js';
 
 const CENTRE_TABS = Object.freeze([
@@ -58,6 +62,14 @@ const CONTENT_OPERATION_CAPABILITIES = Object.freeze({
   PUBLISH: 'content_operations.publish',
 });
 
+const SPELLING_OPERATION_NOUNS = Object.freeze({
+  'spelling.sentenceEntry': 'Sentence',
+  'spelling.wordList': 'Word list',
+  'spelling.pool': 'Pool',
+  'spelling.rewardTrack': 'Reward track',
+  'spelling.heroExposure': 'Hero / Codex',
+});
+
 function actorCan(actor, capability) {
   return Boolean(actor?.capabilities?.[capability]);
 }
@@ -82,6 +94,14 @@ function csvNumberValue(values) {
 
 function csvNumberList(value) {
   return thresholdOverrideParse(value).values;
+}
+
+function csvList(value) {
+  if (Array.isArray(value)) return value.filter(Boolean);
+  return String(value || '')
+    .split(/[\n,]+/)
+    .map((entry) => entry.trim())
+    .filter(Boolean);
 }
 
 function thresholdOverrideParse(value) {
@@ -410,6 +430,28 @@ function thresholdTemplateLabel(templateId) {
   return REWARD_TRACK_THRESHOLD_TEMPLATES[templateId]?.label || templateId || 'Template';
 }
 
+function heroExposureStateLabel(state) {
+  if (state === 'rollout-flagged') return 'Rollout flagged';
+  if (state === 'scheduled') return 'Scheduled';
+  if (state === 'hidden') return 'Hidden';
+  return 'Visible';
+}
+
+function heroExposureSurfaceLabel(surface) {
+  if (surface === 'heroCamp') return 'Hero Camp';
+  if (surface === 'heroQuest') return 'Hero Quest';
+  if (surface === 'subjectSetup') return 'Subject setup';
+  if (surface === 'codex') return 'Codex';
+  return surface;
+}
+
+function heroExposureChipClass(exposure) {
+  const state = exposure?.state || 'visible';
+  if (state === 'hidden') return 'warn';
+  if (state === 'scheduled' || state === 'rollout-flagged') return '';
+  return 'good';
+}
+
 function thresholdsForRewardTrackForm(form) {
   const overrides = csvNumberList(form.thresholdOverrides);
   if (overrides.length) return overrides;
@@ -483,6 +525,11 @@ function emptyRewardTrackEditorForm(pools = [], selectedPool = null, rewardTrack
     sequentialAfter: '',
     dependencyApprovalApproved: false,
     dependencyApprovalReason: '',
+    heroExposureState: 'visible',
+    heroExposureSurfaces: csvValue(HERO_EXPOSURE_SURFACES),
+    heroExposureScheduledAt: '',
+    heroExposureRolloutFlag: '',
+    heroExposurePreviewAllowed: true,
     labelsTitle: '',
     labelsShortLabel: '',
     labelsDescription: '',
@@ -494,6 +541,10 @@ function emptyRewardTrackEditorForm(pools = [], selectedPool = null, rewardTrack
 
 function rewardTrackEditorFormFromTrack(track, selectedPool = null, pools = [], rewardTracks = []) {
   if (!track) return emptyRewardTrackEditorForm(pools, selectedPool, rewardTracks);
+  const exposure = track.heroExposure || {};
+  const exposureSurfaces = Array.isArray(exposure.surfaces) && exposure.surfaces.length
+    ? exposure.surfaces
+    : HERO_EXPOSURE_SURFACES;
   return {
     id: track.id || '',
     poolId: track.poolId || spellingPoolOptionId(selectedPool) || '',
@@ -507,12 +558,27 @@ function rewardTrackEditorFormFromTrack(track, selectedPool = null, pools = [], 
     sequentialAfter: track.sequentialAfter || '',
     dependencyApprovalApproved: track.dependencyApproval?.approved === true,
     dependencyApprovalReason: track.dependencyApproval?.reason || '',
+    heroExposureState: exposure.state || 'visible',
+    heroExposureSurfaces: csvValue(exposureSurfaces),
+    heroExposureScheduledAt: exposure.scheduledAt ? String(exposure.scheduledAt) : '',
+    heroExposureRolloutFlag: exposure.rolloutFlag || '',
+    heroExposurePreviewAllowed: exposure.previewAllowed !== false,
     labelsTitle: track.labels?.title || '',
     labelsShortLabel: track.labels?.shortLabel || '',
     labelsDescription: track.labels?.description || '',
     sourceNote: track.sourceNote || '',
     retirementReason: '',
     sortIndex: Number.isInteger(Number(track.sortIndex)) ? String(track.sortIndex) : '0',
+  };
+}
+
+function heroExposureInputFromForm(form) {
+  return {
+    state: form.heroExposureState,
+    surfaces: csvList(form.heroExposureSurfaces),
+    scheduledAt: form.heroExposureScheduledAt,
+    rolloutFlag: form.heroExposureRolloutFlag,
+    previewAllowed: Boolean(form.heroExposurePreviewAllowed),
   };
 }
 
@@ -539,9 +605,17 @@ function operationInputFromRewardTrackForm(form) {
       shortLabel: form.labelsShortLabel,
       description: form.labelsDescription,
     },
+    heroExposure: heroExposureInputFromForm(form),
     ...(dependencyApproval ? { dependencyApproval } : {}),
     sourceNote: form.sourceNote,
     sortIndex: form.sortIndex,
+  };
+}
+
+function operationInputFromHeroExposureForm(form) {
+  return {
+    id: form.id,
+    heroExposure: heroExposureInputFromForm(form),
   };
 }
 
@@ -1402,6 +1476,9 @@ function SpellingBrowsePanel({
     || rewardTracksForSelectedPool[0]
     || rewardTracks[0]
     || null;
+  const canSaveRewardExposure = rewardTrackMode === 'edit'
+    && Boolean(selectedRewardTrack)
+    && rewardTrackForm.id === selectedRewardTrack?.id;
   const selectedRewardThresholds = React.useMemo(
     () => thresholdsForRewardTrackForm(rewardTrackForm),
     [rewardTrackForm],
@@ -1410,6 +1487,10 @@ function SpellingBrowsePanel({
     || selectedPool
     || null;
   const selectedRewardPoolWordCount = poolWordCountValue(selectedRewardPool);
+  const selectedRewardExposureStatus = heroExposureStatus(
+    heroExposureInputFromForm(rewardTrackForm),
+    { surface: 'codex', now: Date.now() },
+  );
 
   React.useEffect(() => {
     if (editorMode === 'create') return;
@@ -1797,6 +1878,24 @@ function SpellingBrowsePanel({
     selectedRow?.slug,
   ]);
 
+  const submitHeroExposureForm = React.useCallback(() => {
+    if (!onSubmitSpellingOperation || !canSaveRewardExposure) return;
+    try {
+      const operation = buildSpellingHeroExposureUpsertOperation(operationInputFromHeroExposureForm(rewardTrackForm), {
+        existingTrack: selectedRewardTrack,
+      });
+      onSubmitSpellingOperation(operation, { slug: selectedRow?.slug, action: 'hero-exposure-upsert' });
+    } catch (submitError) {
+      setFormError(submitError?.validation?.errors?.[0]?.message || submitError?.message || 'Hero / Codex exposure operation is invalid.');
+    }
+  }, [
+    onSubmitSpellingOperation,
+    canSaveRewardExposure,
+    rewardTrackForm,
+    selectedRewardTrack,
+    selectedRow?.slug,
+  ]);
+
   const submitRewardTrackRemoval = React.useCallback(() => {
     if (!onSubmitSpellingOperation || !selectedRewardTrack) return;
     try {
@@ -1819,7 +1918,7 @@ function SpellingBrowsePanel({
         <div>
           <div className="eyebrow">Published state</div>
           <h4 className="section-title admin-section-title">
-            {areaKey === 'poolsRewards' ? 'Pools & Rewards' : 'Spelling browse'}
+            {areaKey === 'heroCodex' ? 'Hero / Codex' : (areaKey === 'poolsRewards' ? 'Pools & Rewards' : 'Spelling browse')}
           </h4>
           <p className="small muted admin-note-spaced">
             Latest release {releaseLabel}
@@ -2075,6 +2174,13 @@ function SpellingBrowsePanel({
             value={rewardTrackForm.progressionMode}
             detail={thresholdTemplateLabel(rewardTrackForm.thresholdTemplate)}
           />
+          <MetricTile
+            label="Codex exposure"
+            value={heroExposureStateLabel(selectedRewardExposureStatus.state)}
+            detail={selectedRewardExposureStatus.learnerVisible
+              ? 'Learner visible now'
+              : (selectedRewardExposureStatus.previewAllowed === false ? 'Hidden from preview' : 'Admin preview only')}
+          />
         </div>
         <div className="feedback warn content-ops-reward-safety" data-content-ops-reward-safety="true">
           Existing learner history stays keyed by the published progress key. Changing thresholds, source monsters, or sequence changes future reward projection after approval.
@@ -2087,6 +2193,7 @@ function SpellingBrowsePanel({
                 <th className="small admin-overview-th">Pool</th>
                 <th className="small admin-overview-th">Monster</th>
                 <th className="small admin-overview-th">Mode</th>
+                <th className="small admin-overview-th">Exposure</th>
                 <th className="small admin-overview-th-right">Thresholds</th>
                 <th className="small admin-overview-th">State</th>
               </tr>
@@ -2108,6 +2215,16 @@ function SpellingBrowsePanel({
                   <td className="admin-overview-td small">{track.poolId || 'No pool'}</td>
                   <td className="admin-overview-td small">{track.monsterId || 'No monster'}</td>
                   <td className="admin-overview-td small">{track.progressionMode || 'parallel'}</td>
+                  <td className="admin-overview-td">
+                    <span className={`chip ${heroExposureChipClass(track.heroExposure)}`}>
+                      {heroExposureStateLabel(track.heroExposure?.state || 'visible')}
+                    </span>
+                    <div className="small muted">
+                      {((Array.isArray(track.heroExposure?.surfaces) && track.heroExposure.surfaces.length)
+                        ? track.heroExposure.surfaces
+                        : HERO_EXPOSURE_SURFACES).map(heroExposureSurfaceLabel).join(', ')}
+                    </div>
+                  </td>
                   <td className="admin-overview-td-right small">
                     {String((track.thresholdOverrides || []).length || (REWARD_TRACK_THRESHOLD_TEMPLATES[track.thresholdTemplate]?.thresholds || []).length)}
                   </td>
@@ -2119,7 +2236,7 @@ function SpellingBrowsePanel({
                 </tr>
               )) : (
                 <tr className="admin-overview-tbody-row">
-                  <td className="admin-overview-td-first small muted" colSpan={6}>
+                  <td className="admin-overview-td-first small muted" colSpan={7}>
                     No reward tracks in this package view.
                   </td>
                 </tr>
@@ -2232,6 +2349,51 @@ function SpellingBrowsePanel({
             />
           </label>
           <label>
+            <span className="small muted">Hero / Codex exposure</span>
+            <select
+              value={rewardTrackForm.heroExposureState}
+              onChange={(event) => updateRewardTrackForm({ heroExposureState: event.target.value })}
+              data-content-ops-reward-field="heroExposureState"
+            >
+              {HERO_EXPOSURE_STATES.map((state) => (
+                <option key={state} value={state}>{heroExposureStateLabel(state)}</option>
+              ))}
+            </select>
+          </label>
+          <label>
+            <span className="small muted">Exposure surfaces</span>
+            <input
+              value={rewardTrackForm.heroExposureSurfaces}
+              onChange={(event) => updateRewardTrackForm({ heroExposureSurfaces: event.target.value })}
+              data-content-ops-reward-field="heroExposureSurfaces"
+            />
+          </label>
+          <label>
+            <span className="small muted">Exposure scheduled at</span>
+            <input
+              value={rewardTrackForm.heroExposureScheduledAt}
+              onChange={(event) => updateRewardTrackForm({ heroExposureScheduledAt: event.target.value })}
+              data-content-ops-reward-field="heroExposureScheduledAt"
+            />
+          </label>
+          <label>
+            <span className="small muted">Exposure rollout flag</span>
+            <input
+              value={rewardTrackForm.heroExposureRolloutFlag}
+              onChange={(event) => updateRewardTrackForm({ heroExposureRolloutFlag: event.target.value })}
+              data-content-ops-reward-field="heroExposureRolloutFlag"
+            />
+          </label>
+          <label>
+            <span className="small muted">Admin preview</span>
+            <input
+              type="checkbox"
+              checked={rewardTrackForm.heroExposurePreviewAllowed}
+              onChange={(event) => updateRewardTrackForm({ heroExposurePreviewAllowed: event.target.checked })}
+              data-content-ops-reward-field="heroExposurePreviewAllowed"
+            />
+          </label>
+          <label>
             <span className="small muted">Order</span>
             <input
               value={rewardTrackForm.sortIndex}
@@ -2299,6 +2461,9 @@ function SpellingBrowsePanel({
           <div className="content-ops-editor-actions content-ops-editor-wide">
             <button type="submit" className="btn primary" disabled={formDisabled}>
               Save reward track
+            </button>
+            <button type="button" className="btn secondary" onClick={submitHeroExposureForm} disabled={formDisabled || !canSaveRewardExposure}>
+              Save exposure
             </button>
             <button type="button" className="btn secondary" onClick={submitRewardTrackRemoval} disabled={formDisabled || !selectedRewardTrack}>
               {selectedRewardTrack?.draftState === 'added' || selectedRewardTrack?.hasCurrent === false ? 'Delete draft track' : 'Retire track'}
@@ -3842,13 +4007,7 @@ export function AdminContentOperationsSection({
         operation,
         mutation: contentOperationMutation(action, selectedPackageId),
       });
-      const noun = operation.entityType === 'spelling.sentenceEntry'
-        ? 'Sentence'
-        : (operation.entityType === 'spelling.wordList'
-            ? 'Word list'
-            : (operation.entityType === 'spelling.pool'
-                ? 'Pool'
-                : (operation.entityType === 'spelling.rewardTrack' ? 'Reward track' : 'Word')));
+      const noun = SPELLING_OPERATION_NOUNS[operation.entityType] || 'Word';
       setSpellingOperationState({
         packageId: selectedPackageId,
         action,
@@ -3913,7 +4072,7 @@ export function AdminContentOperationsSection({
   }, [api, overviewPayload, packageListPayload, refresh, releaseListPayload]);
 
   React.useEffect(() => {
-    if (!['spelling', 'poolsRewards'].includes(activeTab)) return;
+    if (!['spelling', 'poolsRewards', 'heroCodex'].includes(activeTab)) return;
     if (!api?.readSpellingBrowse) return;
     if (spellingBrowsePayload) return;
     loadSpellingBrowse();
@@ -4187,7 +4346,7 @@ export function AdminContentOperationsSection({
         />
       ) : null}
 
-      {['spelling', 'poolsRewards'].includes(activeTab) ? (
+      {['spelling', 'poolsRewards', 'heroCodex'].includes(activeTab) ? (
         <SpellingBrowsePanel
           areaKey={activeTab}
           browse={spellingBrowse}
@@ -4208,7 +4367,7 @@ export function AdminContentOperationsSection({
         />
       ) : null}
 
-      {['audio', 'monstersAssets', 'heroCodex', 'approvals'].includes(activeTab) ? (
+      {['audio', 'monstersAssets', 'approvals'].includes(activeTab) ? (
         <PublishedAreaPanel
           activeTab={activeTab}
           latestRelease={latestRelease}

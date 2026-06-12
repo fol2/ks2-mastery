@@ -104,10 +104,12 @@ import {
   publicMonsterCodexHasMastery,
   publicMonsterCodexState,
   publicMonsterCodexStateFromSpellingProgress,
+  publicMonsterCodexStateWithoutSpellingEntries,
   PUBLIC_MONSTER_BRANCHES,
   PUBLIC_MONSTER_CODEX_SYSTEM_ID,
   PUBLIC_DIRECT_SPELLING_MONSTER_IDS,
   PUBLIC_MONSTER_IDS,
+  PUBLIC_SPELLING_MONSTER_IDS,
   PUBLIC_SPELLING_REWARD_TRACK_IDS,
   PUBLIC_PRACTICE_CARD_LABELS,
   publicPracticeLabel,
@@ -481,7 +483,11 @@ async function publicSubjectStateRowToRecord(row, { spellingContentSnapshot = nu
 // spellingProgressFromSubjectRow, publicMonsterCodexStateFromSpellingProgress,
 // publicMonsterCodexHasMastery → row-transforms.js
 
-async function mergePublicSpellingCodexState(db, accountId, subjectRows, gameState, { runtimeSnapshot = null } = {}) {
+async function mergePublicSpellingCodexState(db, accountId, subjectRows, gameState, {
+  runtimeSnapshot = null,
+  now = Date.now(),
+  env = {},
+} = {}) {
   const spellingRows = subjectRows.filter((row) => row.subject_id === 'spelling');
   if (!spellingRows.length) return gameState;
 
@@ -492,11 +498,19 @@ async function mergePublicSpellingCodexState(db, accountId, subjectRows, gameSta
     if (!progress) continue;
     const key = gameStateKey(row.learner_id, PUBLIC_MONSTER_CODEX_SYSTEM_ID);
     const existingState = publicMonsterCodexState(gameState[key] || {}, { learnerId: row.learner_id });
-    const derived = publicMonsterCodexStateFromSpellingProgress(progress, snapshot, existingState, { learnerId: row.learner_id });
+    const hasExistingSpellingState = PUBLIC_SPELLING_MONSTER_IDS.some((monsterId) => (
+      Object.prototype.hasOwnProperty.call(existingState, monsterId)
+    ));
+    const derived = publicMonsterCodexStateFromSpellingProgress(progress, snapshot, existingState, {
+      learnerId: row.learner_id,
+      now,
+      env,
+    });
     if (!derived) continue;
-    if (derived.knownWordCount > 0 || !publicMonsterCodexHasMastery(existingState)) {
+    if (derived.knownWordCount > 0 || hasExistingSpellingState || !publicMonsterCodexHasMastery(existingState)) {
+      const existingNonSpellingState = publicMonsterCodexStateWithoutSpellingEntries(existingState);
       gameState[key] = publicMonsterCodexState({
-        ...existingState,
+        ...existingNonSpellingState,
         ...derived.state,
       }, { learnerId: row.learner_id });
     }
@@ -7435,6 +7449,7 @@ async function bootstrapBundle(db, accountId, {
   // server-side snapshot to avoid a duplicate adult account point read.
   accountSnapshot = null,
   capacity = null,
+  env = {},
 } = {}) {
   const snapshot = accountSnapshotForBootstrap(accountSnapshot, accountId);
   const account = snapshot
@@ -7740,6 +7755,8 @@ async function bootstrapBundle(db, accountId, {
     if (publicReadModels) {
       await mergePublicSpellingCodexState(db, accountId, subjectRows, gameState, {
         runtimeSnapshot: publicSpellingContent?.snapshot || null,
+        now: publicReadModelNow,
+        env,
       });
     }
   });
@@ -9146,7 +9163,7 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
       return first(db, 'SELECT * FROM adult_accounts WHERE id = ?', [accountId]);
     },
     async bootstrap(accountId, options = {}) {
-      const bundle = await bootstrapBundle(db, accountId, { ...options, capacity });
+      const bundle = await bootstrapBundle(db, accountId, { env, ...options, capacity });
       // U3: stamp `bootstrapCapacity` on the collector when the bundle
       // emitted one. The collector is mutated rather than returned —
       // keeps repository call signatures stable across all callers.
@@ -9203,6 +9220,7 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
         }
       }
       const bundle = await bootstrapBundle(db, accountId, {
+        env,
         publicReadModels,
         selectedLearnerBounded: true,
         preferredLearnerId,
@@ -9227,6 +9245,7 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
       accountSnapshot = null,
     } = {}) {
       const bundle = await bootstrapBundle(db, accountId, {
+        env,
         publicReadModels,
         selectedLearnerBounded: true,
         preferredLearnerId,
@@ -10257,7 +10276,7 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
           if (rows.length > 0) {
             await bumpAccountLearnerListRevision(db, accountId, nowTs);
           }
-          const bundle = await bootstrapBundle(db, accountId);
+          const bundle = await bootstrapBundle(db, accountId, { env });
           return {
             reset: true,
             learners: bundle.learners,
@@ -10332,7 +10351,13 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
           }
           : rawUi;
         if (data || ui) {
-          result[row.subject_id] = { data, ui };
+          result[row.subject_id] = {
+            data,
+            ui,
+            ...(row.subject_id === 'spelling' && spellingContent?.snapshot
+              ? { content: spellingContent.snapshot }
+              : {}),
+          };
         }
       }
       return result;
@@ -10395,10 +10420,12 @@ export {
   publicMonsterCodexHasMastery,
   publicMonsterCodexState,
   publicMonsterCodexStateFromSpellingProgress,
+  publicMonsterCodexStateWithoutSpellingEntries,
   PUBLIC_MONSTER_BRANCHES,
   PUBLIC_MONSTER_CODEX_SYSTEM_ID,
   PUBLIC_DIRECT_SPELLING_MONSTER_IDS,
   PUBLIC_MONSTER_IDS,
+  PUBLIC_SPELLING_MONSTER_IDS,
   PUBLIC_SPELLING_REWARD_TRACK_IDS,
   PUBLIC_PRACTICE_CARD_LABELS,
   publicPracticeLabel,

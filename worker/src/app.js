@@ -50,6 +50,7 @@ import { handleContentOperationsAdminRequest } from './content-operations/routes
 import { resolveHeroStartTaskCommand } from './hero/launch.js';
 import { resolveHeroClaimCommand } from './hero/claim.js';
 import { resolveHeroCampCommand } from './hero/camp.js';
+import { heroCampMonsterIdsFromRewardTracks } from './hero/exposure.js';
 import { probeHeroTelemetry, buildExpandedProbeResponse, stripPrivacyFields } from './hero/telemetry-probe.js';
 import { resolveHeroFlagsWithOverride, resolveHeroFlagsForAccount, HERO_FLAG_KEYS } from '../../shared/hero/account-override.js';
 import {
@@ -476,6 +477,27 @@ function shouldUsePublicReadModels(request, env = {}) {
 
 function envFlagEnabled(value) {
   return ['1', 'true', 'yes', 'on'].includes(String(value || '').trim().toLowerCase());
+}
+
+async function visibleHeroCampMonsterIdsFromSpellingExposure(repository, accountId, {
+  now = Date.now(),
+  env = {},
+} = {}) {
+  if (!accountId || typeof repository?.readSpellingRuntimeContent !== 'function') return null;
+  try {
+    const runtimeContent = await repository.readSpellingRuntimeContent(accountId, 'spelling', {
+      includeAccountContent: false,
+      includeGlobalContent: true,
+    });
+    const rewardTracks = runtimeContent?.snapshot?.rewardTracks;
+    if (!Array.isArray(rewardTracks)) return null;
+    return heroCampMonsterIdsFromRewardTracks(rewardTracks, {
+      now,
+      env,
+    });
+  } catch {
+    return null;
+  }
 }
 
 export function subjectExposureGatesFromEnv(env = {}) {
@@ -1885,6 +1907,11 @@ export function createWorkerApp({
 
             const nowTs = now();
             const heroProgressState = await repository.readHeroProgress(heroLearnerId);
+            const allowedCampMonsterIds = await visibleHeroCampMonsterIdsFromSpellingExposure(
+              repository,
+              session.accountId,
+              { now: nowTs, env: heroCommandEnv },
+            );
 
             // Resolve the camp command (pure function)
             const campResult = resolveHeroCampCommand({
@@ -1894,6 +1921,7 @@ export function createWorkerApp({
               learnerId: heroLearnerId,
               rosterVersion: heroProgressState.heroPool?.rosterVersion || HERO_POOL_ROSTER_VERSION,
               nowTs,
+              allowedMonsterIds: allowedCampMonsterIds,
             });
 
             // Handle rejection

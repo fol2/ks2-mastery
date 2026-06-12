@@ -25,8 +25,8 @@ import { monsterBranchOverrideForLearner } from '../../src/platform/game/learner
 import { monsterIdForSpellingWord } from '../../src/platform/game/monster-system.js';
 import {
   LEGACY_SPELLING_REWARD_TRACKS,
+  rewardTracksVisibleForHeroSurface,
   sourceMonsterIdsForRewardTrack,
-  spellingRewardTrackForMonster,
 } from '../../src/platform/game/reward-track-config.js';
 import {
   asTs,
@@ -199,6 +199,7 @@ export function publicMonsterCodexEntry(entry, branchOverride = null) {
     masteredCount: mastered,
     caught: Boolean(entry.caught) || mastered > 0,
   };
+  if (entry.visibleInCodex === true) output.visibleInCodex = true;
   if (PUBLIC_MONSTER_BRANCHES.has(branchOverride)) output.branch = branchOverride;
   else if (PUBLIC_MONSTER_BRANCHES.has(entry.branch)) output.branch = entry.branch;
   const starHighWater = safePublicNonNegativeInt(entry.starHighWater);
@@ -221,6 +222,14 @@ export function publicMonsterCodexState(rawState, { learnerId = '' } = {}) {
   return output;
 }
 
+export function publicMonsterCodexStateWithoutSpellingEntries(rawState, { learnerId = '' } = {}) {
+  const output = publicMonsterCodexState(rawState, { learnerId });
+  for (const monsterId of PUBLIC_SPELLING_MONSTER_IDS) {
+    delete output[monsterId];
+  }
+  return output;
+}
+
 export function publicGameStateRowToRecord(row) {
   if (row.system_id !== PUBLIC_MONSTER_CODEX_SYSTEM_ID) return null;
   return publicMonsterCodexState(gameStateRowToRecord(row), { learnerId: row.learner_id });
@@ -238,7 +247,28 @@ export function spellingProgressFromSubjectRow(row) {
   return isPlainObject(data?.progress) ? data.progress : null;
 }
 
-export function publicMonsterCodexStateFromSpellingProgress(progress, snapshot, existingState = {}, { learnerId = '' } = {}) {
+function rewardTrackCountsWord(track, word, sourceMonsterIds = sourceMonsterIdsForRewardTrack(track)) {
+  if (!track?.poolId || !word?.spellingPool || track.poolId !== word.spellingPool) return false;
+  if (!['core', 'extra'].includes(track.poolId)) return true;
+  const sourceMonsterId = monsterIdForSpellingWord(word);
+  return sourceMonsterIds.includes(sourceMonsterId);
+}
+
+function rewardTrackProjection(track) {
+  const sourceMonsterIds = sourceMonsterIdsForRewardTrack(track);
+  return {
+    track,
+    sourceMonsterIds,
+    aggregate: track?.thresholdTemplate === 'aggregate' || sourceMonsterIds.length > 1,
+  };
+}
+
+export function publicMonsterCodexStateFromSpellingProgress(progress, snapshot, existingState = {}, {
+  learnerId = '',
+  now = Date.now(),
+  env = {},
+  includeAdminPreview = false,
+} = {}) {
   if (!isPlainObject(progress)) return null;
   const branchOverride = monsterBranchOverrideForLearner(learnerId);
   const branchForOutput = (existing) => (
@@ -246,9 +276,17 @@ export function publicMonsterCodexStateFromSpellingProgress(progress, snapshot, 
       ? { branch: branchOverride }
       : (PUBLIC_MONSTER_BRANCHES.has(existing.branch) ? { branch: existing.branch } : {})
   );
-  const directRewardTracks = LEGACY_SPELLING_REWARD_TRACKS
-    .filter((track) => PUBLIC_DIRECT_SPELLING_MONSTER_IDS.includes(track.monsterId));
-  const counts = Object.fromEntries(directRewardTracks.map((track) => [track.monsterId, 0]));
+  const rewardTracks = rewardTracksVisibleForHeroSurface(
+    Array.isArray(snapshot?.rewardTracks) && snapshot.rewardTracks.length
+      ? snapshot.rewardTracks
+      : LEGACY_SPELLING_REWARD_TRACKS,
+    { surface: 'codex', now, env, includeAdminPreview },
+  );
+  const rewardTrackProjections = rewardTracks.map((track) => rewardTrackProjection(track));
+  const directRewardTrackProjections = rewardTrackProjections
+    .filter((projection) => !projection.aggregate)
+    .filter(({ track }) => PUBLIC_DIRECT_SPELLING_MONSTER_IDS.includes(track.monsterId));
+  const counts = Object.fromEntries(directRewardTrackProjections.map(({ track }) => [track.monsterId, 0]));
   const words = Array.isArray(snapshot?.words) ? snapshot.words : [];
   let knownWordCount = 0;
 
@@ -256,32 +294,45 @@ export function publicMonsterCodexStateFromSpellingProgress(progress, snapshot, 
     if (!word?.slug || !isPlainObject(progress[word.slug])) continue;
     knownWordCount += 1;
     if (!secureSpellingProgress(progress[word.slug])) continue;
-    const monsterId = monsterIdForSpellingWord(word);
-    const rewardTrack = spellingRewardTrackForMonster(monsterId);
-    if (rewardTrack?.monsterId && Object.prototype.hasOwnProperty.call(counts, rewardTrack.monsterId)) {
-      counts[rewardTrack.monsterId] += 1;
+    for (const { track: rewardTrack, sourceMonsterIds } of directRewardTrackProjections) {
+      if (rewardTrackCountsWord(rewardTrack, word, sourceMonsterIds) && Object.prototype.hasOwnProperty.call(counts, rewardTrack.monsterId)) {
+        counts[rewardTrack.monsterId] += 1;
+      }
     }
   }
 
   const nextState = {};
-  for (const { monsterId } of directRewardTracks) {
-    const existing = isPlainObject(existingState?.[monsterId]) ? existingState[monsterId] : {};
-    nextState[monsterId] = {
-      masteredCount: counts[monsterId],
-      caught: counts[monsterId] > 0,
+  for (const { track } of directRewardTrackProjections) {
+    const existing = isPlainObject(existingState?.[track.monsterId]) ? existingState[track.monsterId] : {};
+    const masteredCount = Math.max(
+      counts[track.monsterId] || 0,
+      safePublicNonNegativeInt(existing.masteredCount),
+    );
+    counts[track.monsterId] = masteredCount;
+    nextState[track.monsterId] = {
+      masteredCount,
+      caught: existing.caught === true || masteredCount > 0,
+      visibleInCodex: true,
       ...branchForOutput(existing),
     };
   }
 
-  const phaetonTrack = spellingRewardTrackForMonster('phaeton');
-  const phaetonCount = sourceMonsterIdsForRewardTrack(phaetonTrack)
-    .reduce((sum, monsterId) => sum + (counts[monsterId] || 0), 0);
-  const existingPhaeton = isPlainObject(existingState?.phaeton) ? existingState.phaeton : {};
-  nextState.phaeton = {
-    masteredCount: phaetonCount,
-    caught: phaetonCount >= 3,
-    ...branchForOutput(existingPhaeton),
-  };
+  const aggregateRewardTrackProjections = rewardTrackProjections
+    .filter((projection) => projection.aggregate)
+    .filter(({ track }) => PUBLIC_SPELLING_MONSTER_IDS.includes(track.monsterId));
+  for (const { track, sourceMonsterIds } of aggregateRewardTrackProjections) {
+    const existing = isPlainObject(existingState?.[track.monsterId]) ? existingState[track.monsterId] : {};
+    const masteredCount = Math.max(
+      sourceMonsterIds.reduce((sum, monsterId) => sum + (counts[monsterId] || 0), 0),
+      safePublicNonNegativeInt(existing.masteredCount),
+    );
+    nextState[track.monsterId] = {
+      masteredCount,
+      caught: existing.caught === true || masteredCount >= 3,
+      visibleInCodex: true,
+      ...branchForOutput(existing),
+    };
+  }
 
   return {
     state: publicMonsterCodexState(nextState, { learnerId }),

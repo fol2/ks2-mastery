@@ -560,6 +560,7 @@ test('button labels: every statically extractable label is classified', () => {
     'Edit track',
     'New track',
     'Save reward track',
+    'Save exposure',
     'Retire track',
     'Delete draft track',
     // Content Operations Centre T16: audio operations controls are

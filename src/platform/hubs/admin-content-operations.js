@@ -1,3 +1,7 @@
+import {
+  normaliseHeroExposure,
+} from '../game/reward-track-config.js';
+
 const PACKAGE_STATE_LABELS = Object.freeze({
   draft: 'Draft',
   ready_for_approval: 'Ready for approval',
@@ -524,6 +528,7 @@ function normaliseSpellingPoolSummary(row = null) {
 function normaliseSpellingRewardTrackSummary(row = null) {
   const safe = isPlainObject(row) ? row : {};
   const labels = isPlainObject(safe.labels) ? safe.labels : {};
+  const heroExposure = normaliseHeroExposure(safe.heroExposure);
   const dependencyApproval = isPlainObject(safe.dependencyApproval)
     ? { ...safe.dependencyApproval }
     : null;
@@ -540,6 +545,7 @@ function normaliseSpellingRewardTrackSummary(row = null) {
     active: safe.active === false ? false : true,
     retired: Boolean(safe.retired),
     retirement: isPlainObject(safe.retirement) ? { ...safe.retirement } : null,
+    heroExposure,
     labels: {
       title: asString(labels.title),
       shortLabel: asString(labels.shortLabel),

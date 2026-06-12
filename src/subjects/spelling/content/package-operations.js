@@ -1,6 +1,10 @@
 import {
+  HERO_EXPOSURE_SURFACES,
   SPELLING_REWARD_TRACK_MONSTER_IDS,
+  isKnownHeroExposureState,
+  isKnownHeroExposureSurface,
   isValidRewardTrackId,
+  normaliseHeroExposure,
   normaliseRewardTrackConfig,
   validateRewardTrackCollection,
 } from '../../../platform/game/reward-track-config.js';
@@ -151,6 +155,15 @@ function rewardTrackValidationResult(errors, warnings, rewardTrack = null) {
     errors,
     warnings,
     rewardTrack,
+  };
+}
+
+function heroExposureValidationResult(errors, warnings, heroExposure = null) {
+  return {
+    ok: errors.length === 0,
+    errors,
+    warnings,
+    heroExposure,
   };
 }
 
@@ -585,10 +598,16 @@ export function validateSpellingRewardTrackEditorInput(rawValue = {}, options = 
   const raw = isPlainObject(rawValue) ? rawValue : {};
   const existing = isPlainObject(options.existingTrack) ? options.existingTrack : null;
   const rewardTrack = normaliseSpellingRewardTrackEditorInput(raw, options);
+  const rawHeroExposure = isPlainObject(raw.heroExposure)
+    ? raw.heroExposure
+    : (isPlainObject(raw.exposure) ? raw.exposure : null);
+  const validationTrack = rawHeroExposure
+    ? { ...rewardTrack, heroExposure: rawHeroExposure }
+    : rewardTrack;
   const existingId = normaliseString(existing?.id);
   const peers = (Array.isArray(options.rewardTracks) ? options.rewardTracks : [])
     .filter((entry) => !existingId || entry?.id !== existingId);
-  const validation = validateRewardTrackCollection([...peers, rewardTrack], {
+  const validation = validateRewardTrackCollection([...peers, validationTrack], {
     pools: options.pools || [],
     poolWordCounts: options.poolWordCounts || null,
     learnerVisiblePoolIds: options.learnerVisiblePoolIds || null,
@@ -601,6 +620,51 @@ export function validateSpellingRewardTrackEditorInput(rawValue = {}, options = 
     validation.warnings.map(rewardTrackIssueToEditorIssue),
     rewardTrack,
   );
+}
+
+export function normaliseSpellingHeroExposureEditorInput(rawValue = {}, {
+  existingTrack = null,
+} = {}) {
+  const raw = isPlainObject(rawValue) ? rawValue : {};
+  return normaliseHeroExposure(raw.heroExposure || raw.exposure || raw, existingTrack?.heroExposure);
+}
+
+export function validateSpellingHeroExposureEditorInput(rawValue = {}, options = {}) {
+  const errors = [];
+  const warnings = [];
+  const raw = isPlainObject(rawValue) ? rawValue : {};
+  const exposureRaw = isPlainObject(raw.heroExposure)
+    ? raw.heroExposure
+    : (isPlainObject(raw.exposure) ? raw.exposure : raw);
+  const heroExposure = normaliseSpellingHeroExposureEditorInput(exposureRaw, options);
+
+  if (exposureRaw.state && !isKnownHeroExposureState(exposureRaw.state)) {
+    errors.push(issue('heroExposure.state', 'Hero / Codex exposure state is invalid.', 'invalid_hero_exposure_state'));
+  }
+  const rawSurfaces = Array.isArray(exposureRaw.surfaces)
+    ? exposureRaw.surfaces.map((surface) => String(surface || '').trim()).filter(Boolean)
+    : (typeof exposureRaw.surfaces === 'string'
+        ? exposureRaw.surfaces.split(/[\n,]+/).map((surface) => surface.trim()).filter(Boolean)
+        : []);
+  rawSurfaces.forEach((surface) => {
+    if (!isKnownHeroExposureSurface(surface)) {
+      errors.push(issue('heroExposure.surfaces', `Hero / Codex exposure surface "${surface}" is invalid.`, 'invalid_hero_exposure_surface'));
+    }
+  });
+  if (!heroExposure.surfaces.length) {
+    errors.push(issue('heroExposure.surfaces', 'At least one Hero / Codex surface is required.', 'hero_exposure_surface_required'));
+  }
+  if (heroExposure.state === 'scheduled' && !heroExposure.scheduledAt) {
+    errors.push(issue('heroExposure.scheduledAt', 'Scheduled exposure requires a visibility timestamp.', 'hero_exposure_schedule_required'));
+  }
+  if (heroExposure.state === 'rollout-flagged' && !heroExposure.rolloutFlag) {
+    errors.push(issue('heroExposure.rolloutFlag', 'Rollout-flagged exposure requires a rollout flag.', 'hero_exposure_flag_required'));
+  }
+  if (heroExposure.state === 'hidden' && heroExposure.surfaces.length === HERO_EXPOSURE_SURFACES.length) {
+    warnings.push(issue('heroExposure.state', 'Hidden exposure keeps admin preview available but hides this track from learner Hero / Codex surfaces.', 'hero_exposure_hidden'));
+  }
+
+  return heroExposureValidationResult(errors, warnings, heroExposure);
 }
 
 function throwIfInvalid(validation) {
@@ -667,6 +731,22 @@ export function buildSpellingRewardTrackUpsertOperation(rawValue = {}, options =
     fieldPath: '',
     action: 'upsert',
     payload: validation.rewardTrack,
+  };
+}
+
+export function buildSpellingHeroExposureUpsertOperation(rawValue = {}, options = {}) {
+  const raw = isPlainObject(rawValue) ? rawValue : {};
+  const id = normaliseString(raw.id || raw.entityId || raw.rewardTrackId || raw.trackId || options.existingTrack?.id).toLowerCase();
+  if (!id) throw new TypeError('Reward track id is required.');
+  if (!isValidRewardTrackId(id)) throw new TypeError('Reward track id must be a stable lowercase id.');
+  const validation = validateSpellingHeroExposureEditorInput(raw.heroExposure || raw.exposure || raw, options);
+  throwIfInvalid(validation);
+  return {
+    entityType: 'spelling.heroExposure',
+    entityId: id,
+    fieldPath: '',
+    action: 'upsert',
+    payload: validation.heroExposure,
   };
 }
 

@@ -1030,6 +1030,9 @@ export function buildSpellingContext({ appState, service, repositories, subject 
   };
   const needsAnalytics = ui.phase === 'dashboard' || ui.phase === 'word-bank';
   const analytics = needsAnalytics ? service.getAnalyticsSnapshot(learner.id) : null;
+  const runtimeRewardTracks = typeof service.getRuntimeRewardTracks === 'function'
+    ? service.getRuntimeRewardTracks()
+    : null;
   // Post-mastery aggregates are needed on the dashboard (mode selection,
   // Alt+4 gate), the summary scene (to render "Next check" in Guardian
   // mode), and the Word Bank (to gate the four Guardian filter chips and
@@ -1070,6 +1073,8 @@ export function buildSpellingContext({ appState, service, repositories, subject 
       ? monsterSummaryFromSpellingAnalytics(analytics, {
           learnerId: learner.id,
           gameStateRepository: repositories?.gameState,
+          rewardTracks: Array.isArray(runtimeRewardTracks) ? runtimeRewardTracks : null,
+          surface: 'subjectSetup',
           persistBranches: false,
         })
       : [],
