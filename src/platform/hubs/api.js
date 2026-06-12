@@ -262,11 +262,14 @@ export function createHubApi({
         body: JSON.stringify({ version, expectedPublishedVersion, mutation }),
       }, authSession);
     },
-    async readContentOperationsOverview({ limit = 30 } = {}) {
+    async readContentOperationsOverview({ limit = 30, includeHistory = false } = {}) {
       const url = buildRequestUrl(
         baseUrl,
         '/api/admin/content-operations/subjects/spelling/overview',
-        { limit },
+        {
+          limit,
+          includeHistory: includeHistory ? 'true' : null,
+        },
       );
       return fetchHubJson(fetch, url, { method: 'GET' }, authSession);
     },
@@ -455,18 +458,19 @@ export function createHubApi({
         }),
       }, authSession);
     },
-    async readContentOperationReleases({ limit = 20, includeSnapshot = false } = {}) {
+    async readContentOperationReleases({ limit = 20, includeSnapshot = false, includeHistory = false } = {}) {
       const url = buildRequestUrl(
         baseUrl,
         '/api/admin/content-operations/subjects/spelling/releases',
         {
           limit,
           includeSnapshot: includeSnapshot ? 'true' : null,
+          includeHistory: includeHistory ? 'true' : null,
         },
       );
       return fetchHubJson(fetch, url, { method: 'GET' }, authSession);
     },
-    async readContentOperationRelease({ releaseId, includeSnapshot = false } = {}) {
+    async readContentOperationRelease({ releaseId, includeSnapshot = false, includeHistory = false } = {}) {
       if (!releaseId) throw new TypeError('Content operation release id is required.');
       const safeReleaseId = encodeURIComponent(String(releaseId));
       const url = buildRequestUrl(
@@ -474,9 +478,26 @@ export function createHubApi({
         `/api/admin/content-operations/subjects/spelling/releases/${safeReleaseId}`,
         {
           includeSnapshot: includeSnapshot ? 'true' : null,
+          includeHistory: includeHistory ? 'true' : null,
         },
       );
       return fetchHubJson(fetch, url, { method: 'GET' }, authSession);
+    },
+    async captureContentOperationReleaseProof({ releaseId, proof, includeSnapshot = false } = {}) {
+      if (!releaseId) throw new TypeError('Content operation release id is required.');
+      const safeReleaseId = encodeURIComponent(String(releaseId));
+      const url = buildRequestUrl(
+        baseUrl,
+        `/api/admin/content-operations/subjects/spelling/releases/${safeReleaseId}/proof`,
+        {
+          includeSnapshot: includeSnapshot ? 'true' : null,
+        },
+      );
+      return fetchHubJson(fetch, url, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ proof }),
+      }, authSession);
     },
     async readAdminOpsKpi() {
       const url = buildRequestUrl(baseUrl, '/api/admin/ops/kpi');

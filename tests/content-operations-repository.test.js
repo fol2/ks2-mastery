@@ -1044,3 +1044,49 @@ test('content operations repository orders latest releases deterministically on 
     DB.close();
   }
 });
+
+test('content operations repository batches release history enrichment', async () => {
+  const DB = createMigratedSqliteD1Database();
+  const repository = createWorkerRepository({
+    env: { DB },
+    now: () => 1_777_000_000_000,
+  });
+
+  try {
+    const seeded = await readSeededSpellingContentBundle();
+    const words = seeded.draft.words.slice(0, 4);
+    assert.equal(words.length, 4);
+
+    for (const [index, word] of words.entries()) {
+      await publishWordEdit(repository, word, {
+        actorAccountId: `admin-${index}`,
+        title: `Batch history package ${index + 1}`,
+        payload: `Batch history explanation ${index + 1} for ${word.word}.`,
+      });
+    }
+
+    DB.clearQueryLog();
+    const releases = await repository.listContentOperationReleases({
+      subjectId: 'spelling',
+      includeHistory: true,
+      limit: 10,
+    });
+    const queryLog = DB.takeQueryLog();
+
+    assert.ok(releases.length >= 4);
+    assert.equal(releases[0].history.package.title, 'Batch history package 4');
+    assert.equal(releases[0].history.changedEntities.preview[0].entityType, 'spelling.word');
+    assert.ok(releases.every((release) => release.history));
+
+    const historyReads = queryLog.filter((entry) => (
+      entry.operation === 'all'
+        && /FROM content_operation_(releases|packages|package_approvals|package_operations)\b/i.test(entry.sql)
+    ));
+    assert.equal(historyReads.length, 4);
+    assert.equal(historyReads.filter((entry) => /FROM content_operation_packages\b/i.test(entry.sql)).length, 1);
+    assert.equal(historyReads.filter((entry) => /FROM content_operation_package_approvals\b/i.test(entry.sql)).length, 1);
+    assert.equal(historyReads.filter((entry) => /FROM content_operation_package_operations\b/i.test(entry.sql)).length, 1);
+  } finally {
+    DB.close();
+  }
+});

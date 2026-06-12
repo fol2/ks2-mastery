@@ -345,6 +345,104 @@ function releaseHasCallerProof(proof = null) {
   ));
 }
 
+function normaliseProofSurfaces(value = null) {
+  return asArray(value).map((entry) => {
+    const safe = isPlainObject(entry) ? entry : {};
+    return {
+      key: asString(safe.key),
+      label: asString(safe.label || safe.key),
+    };
+  }).filter((entry) => entry.key || entry.label);
+}
+
+function normaliseReleaseProductionProof(value = null) {
+  const safe = isPlainObject(value) ? value : {};
+  return {
+    status: asString(safe.status, 'unknown'),
+    hasCallerProof: Boolean(safe.hasCallerProof),
+    capturedAt: asTs(safe.capturedAt),
+    capturedByAccountId: asNullableString(safe.capturedByAccountId),
+    requiredSurfaces: normaliseProofSurfaces(safe.requiredSurfaces),
+    linkedSurfaces: normaliseProofSurfaces(safe.linkedSurfaces),
+    missingSurfaces: normaliseProofSurfaces(safe.missingSurfaces),
+  };
+}
+
+function normaliseReleaseChangedEntityPreview(value = null) {
+  const safe = isPlainObject(value) ? value : {};
+  return {
+    entityType: asString(safe.entityType, 'unknown'),
+    entityId: asString(safe.entityId, 'unknown'),
+    actionCount: Number(safe.actionCount) || 0,
+    actions: asArray(safe.actions).map((entry) => asString(entry)).filter(Boolean),
+    fields: asArray(safe.fields).map((entry) => asString(entry)).filter(Boolean),
+  };
+}
+
+function normaliseReleaseChangedEntities(value = null) {
+  const safe = isPlainObject(value) ? value : {};
+  return {
+    operationCount: Number(safe.operationCount) || 0,
+    entityCount: Number(safe.entityCount) || 0,
+    entityTypes: asArray(safe.entityTypes).map((entry) => {
+      const type = isPlainObject(entry) ? entry : {};
+      return {
+        entityType: asString(type.entityType, 'unknown'),
+        operationCount: Number(type.operationCount) || 0,
+        entityCount: Number(type.entityCount) || 0,
+      };
+    }),
+    actionCounts: isPlainObject(safe.actionCounts) ? { ...safe.actionCounts } : {},
+    fieldPaths: asArray(safe.fieldPaths).map((entry) => asString(entry)).filter(Boolean),
+    preview: asArray(safe.preview).map(normaliseReleaseChangedEntityPreview),
+  };
+}
+
+function normaliseReleaseAssetChanges(value = null) {
+  const safe = isPlainObject(value) ? value : {};
+  return {
+    uploadCount: Number(safe.uploadCount) || 0,
+    referenceCount: Number(safe.referenceCount) || 0,
+    hash: asString(safe.hash),
+    preview: asArray(safe.preview).map((entry) => {
+      const safeEntry = isPlainObject(entry) ? entry : {};
+      return {
+        assetUploadId: asString(safeEntry.assetUploadId),
+        referenceId: asString(safeEntry.referenceId),
+        assetKind: asString(safeEntry.assetKind),
+        monsterId: asString(safeEntry.monsterId),
+        branchId: asString(safeEntry.branchId),
+        stageId: asString(safeEntry.stageId),
+        validationStatus: asString(safeEntry.validationStatus),
+      };
+    }),
+  };
+}
+
+function normaliseContentOperationReleaseHistory(value = null) {
+  const safe = isPlainObject(value) ? value : {};
+  const contentPackage = isPlainObject(safe.package) ? safe.package : null;
+  return {
+    releaseId: asString(safe.releaseId),
+    package: contentPackage ? {
+      packageId: asString(contentPackage.packageId),
+      title: asString(contentPackage.title),
+      templateId: asString(contentPackage.templateId),
+      state: asString(contentPackage.state),
+    } : null,
+    approvedByAccountId: asNullableString(safe.approvedByAccountId),
+    approvedAt: asTs(safe.approvedAt),
+    approvalId: asNullableString(safe.approvalId),
+    candidateId: asNullableString(safe.candidateId),
+    candidateHash: asString(safe.candidateHash),
+    publishedByAccountId: asNullableString(safe.publishedByAccountId),
+    publishedAt: asTs(safe.publishedAt),
+    changedEntities: normaliseReleaseChangedEntities(safe.changedEntities),
+    assetChanges: normaliseReleaseAssetChanges(safe.assetChanges),
+    productionProof: normaliseReleaseProductionProof(safe.productionProof),
+  };
+}
+
 export function normaliseContentOperationRelease(entry = null) {
   const safe = isPlainObject(entry) ? entry : {};
   const proof = safe.proof ?? null;
@@ -380,6 +478,7 @@ export function normaliseContentOperationRelease(entry = null) {
         ? safe.assetReferenceManifest
         : proofAssets.assetReferenceManifest,
     ),
+    history: safe.history ? normaliseContentOperationReleaseHistory(safe.history) : null,
     createdAt: asTs(safe.createdAt),
   };
 }

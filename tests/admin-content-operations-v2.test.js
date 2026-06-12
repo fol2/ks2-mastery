@@ -474,6 +474,7 @@ const CONTENT_OPS_OVERVIEW = {
       publishedAt: Date.UTC(2026, 5, 11, 9, 0, 0),
       proof: {
         source: 'test',
+        surfaces: { spellingSetup: {}, wordBank: {} },
         contentOperationsAudio: {
           audioFallback: {
             allowed: true,
@@ -484,6 +485,45 @@ const CONTENT_OPS_OVERVIEW = {
             status: 'warning',
             warnings: ['audio_fallback_approved', 'sentence_audio_missing'],
           },
+        },
+      },
+      history: {
+        releaseId: 'rel-global-1',
+        package: { packageId: 'pkg-published-1', title: 'Published word edit', templateId: 'edit-spelling-word', state: 'published' },
+        approvedByAccountId: 'admin-reviewer',
+        approvedAt: Date.UTC(2026, 5, 11, 8, 55, 0),
+        publishedByAccountId: 'admin-publisher',
+        publishedAt: Date.UTC(2026, 5, 11, 9, 0, 0),
+        changedEntities: {
+          operationCount: 1,
+          entityCount: 1,
+          entityTypes: [{ entityType: 'spelling.word', operationCount: 1, entityCount: 1 }],
+          actionCounts: { set: 1 },
+          fieldPaths: ['explanation'],
+          preview: [{ entityType: 'spelling.word', entityId: 'accident', actionCount: 1, actions: ['set'], fields: ['explanation'] }],
+        },
+        assetChanges: {
+          uploadCount: 1,
+          referenceCount: 1,
+          hash: 'asset-reference-proof-hash',
+          preview: [{
+            assetUploadId: 'coasset-proof-1',
+            referenceId: 'coref-proof-1',
+            assetKind: 'monster-image',
+            monsterId: 'inklet',
+            branchId: 'default',
+            stageId: 'base',
+            validationStatus: 'passed',
+          }],
+        },
+        productionProof: {
+          status: 'recorded',
+          hasCallerProof: true,
+          capturedAt: Date.UTC(2026, 5, 11, 9, 1, 0),
+          capturedByAccountId: 'admin-publisher',
+          requiredSurfaces: [{ key: 'spellingSetup', label: 'Spelling setup' }, { key: 'wordBank', label: 'Word Bank' }],
+          linkedSurfaces: [{ key: 'spellingSetup', label: 'Spelling setup' }, { key: 'wordBank', label: 'Word Bank' }],
+          missingSurfaces: [],
         },
       },
     },
@@ -502,6 +542,7 @@ const CONTENT_OPS_OVERVIEW = {
           publishedAt: Date.UTC(2026, 5, 11, 9, 0, 0),
           proof: {
             source: 'test',
+            surfaces: { spellingSetup: {}, wordBank: {} },
             contentOperationsAudio: {
               audioFallback: {
                 allowed: true,
@@ -512,6 +553,45 @@ const CONTENT_OPS_OVERVIEW = {
                 status: 'warning',
                 warnings: ['audio_fallback_approved', 'sentence_audio_missing'],
               },
+            },
+          },
+          history: {
+            releaseId: 'rel-global-1',
+            package: { packageId: 'pkg-published-1', title: 'Published word edit', templateId: 'edit-spelling-word', state: 'published' },
+            approvedByAccountId: 'admin-reviewer',
+            approvedAt: Date.UTC(2026, 5, 11, 8, 55, 0),
+            publishedByAccountId: 'admin-publisher',
+            publishedAt: Date.UTC(2026, 5, 11, 9, 0, 0),
+            changedEntities: {
+              operationCount: 1,
+              entityCount: 1,
+              entityTypes: [{ entityType: 'spelling.word', operationCount: 1, entityCount: 1 }],
+              actionCounts: { set: 1 },
+              fieldPaths: ['explanation'],
+              preview: [{ entityType: 'spelling.word', entityId: 'accident', actionCount: 1, actions: ['set'], fields: ['explanation'] }],
+            },
+            assetChanges: {
+              uploadCount: 1,
+              referenceCount: 1,
+              hash: 'asset-reference-proof-hash',
+              preview: [{
+                assetUploadId: 'coasset-proof-1',
+                referenceId: 'coref-proof-1',
+                assetKind: 'monster-image',
+                monsterId: 'inklet',
+                branchId: 'default',
+                stageId: 'base',
+                validationStatus: 'passed',
+              }],
+            },
+            productionProof: {
+              status: 'recorded',
+              hasCallerProof: true,
+              capturedAt: Date.UTC(2026, 5, 11, 9, 1, 0),
+              capturedByAccountId: 'admin-publisher',
+              requiredSurfaces: [{ key: 'spellingSetup', label: 'Spelling setup' }, { key: 'wordBank', label: 'Word Bank' }],
+              linkedSurfaces: [{ key: 'spellingSetup', label: 'Spelling setup' }, { key: 'wordBank', label: 'Word Bank' }],
+              missingSurfaces: [],
             },
           },
         },
@@ -686,6 +766,19 @@ describe('Content Operations Centre normalisers', () => {
     assert.equal(overview.recentReleases[0].audioFallback.allowed, true);
     assert.equal(overview.recentReleases[0].audioFallback.affectedMatrix.affectedCount, 1);
     assert.equal(overview.recentReleases[0].audioWarnings.status, 'warning');
+    assert.equal(overview.recentReleases[0].history.approvedByAccountId, 'admin-reviewer');
+    assert.equal(overview.recentReleases[0].history.publishedByAccountId, 'admin-publisher');
+    assert.equal(overview.recentReleases[0].history.changedEntities.entityCount, 1);
+    assert.equal(overview.recentReleases[0].history.changedEntities.preview[0].entityId, 'accident');
+    assert.equal(overview.recentReleases[0].history.assetChanges.uploadCount, 1);
+    assert.equal(overview.recentReleases[0].history.assetChanges.referenceCount, 1);
+    assert.equal(overview.recentReleases[0].history.assetChanges.preview[0].monsterId, 'inklet');
+    assert.equal(overview.recentReleases[0].history.productionProof.status, 'recorded');
+    assert.equal(overview.recentReleases[0].history.productionProof.capturedByAccountId, 'admin-publisher');
+    assert.deepEqual(
+      overview.recentReleases[0].history.productionProof.linkedSurfaces.map((entry) => entry.key),
+      ['spellingSetup', 'wordBank'],
+    );
     assert.equal(overview.actor.capabilities['content_operations.approve'], true);
   });
 
@@ -1023,6 +1116,7 @@ describe('Content Operations Centre hub API client', () => {
     });
 
     await api.readContentOperationsOverview({ limit: 7 });
+    await api.readContentOperationsOverview({ limit: 8, includeHistory: true });
     await api.readContentOperationPackages({ state: 'draft', limit: 11 });
     await api.readContentOperationPackage({ packageId: 'pkg/with/slash' });
     await api.readContentOperationSpellingBrowse({
@@ -1036,25 +1130,38 @@ describe('Content Operations Centre hub API client', () => {
     await api.readContentOperationSpellingSentence({ sentenceId: 'sentence/1', packageId: 'pkg/with/slash' });
     await api.readContentOperationReleases({ limit: 5, includeSnapshot: true });
     await api.readContentOperationRelease({ releaseId: 'rel/with/slash', includeSnapshot: true });
+    await api.readContentOperationReleases({ limit: 6, includeHistory: true });
+    await api.readContentOperationRelease({ releaseId: 'rel/with/slash', includeHistory: true });
 
     assert.equal(new URL(calls[0].url).pathname, '/api/admin/content-operations/subjects/spelling/overview');
     assert.equal(new URL(calls[0].url).searchParams.get('limit'), '7');
-    assert.equal(new URL(calls[1].url).pathname, '/api/admin/content-operations/packages');
-    assert.equal(new URL(calls[1].url).searchParams.get('state'), 'draft');
-    assert.equal(new URL(calls[2].url).pathname, '/api/admin/content-operations/packages/pkg%2Fwith%2Fslash');
-    assert.equal(new URL(calls[3].url).pathname, '/api/admin/content-operations/subjects/spelling/browse');
-    assert.equal(new URL(calls[3].url).searchParams.get('packageId'), 'pkg/with/slash');
-    assert.equal(new URL(calls[3].url).searchParams.get('query'), 'meta');
-    assert.equal(new URL(calls[3].url).searchParams.get('pool'), 'extra');
-    assert.equal(new URL(calls[3].url).searchParams.get('listId'), 'extra-greek');
-    assert.equal(new URL(calls[4].url).pathname, '/api/admin/content-operations/subjects/spelling/words/meta%2Fmorphosis');
+    assert.equal(new URL(calls[0].url).searchParams.get('includeHistory'), null);
+    assert.equal(new URL(calls[1].url).pathname, '/api/admin/content-operations/subjects/spelling/overview');
+    assert.equal(new URL(calls[1].url).searchParams.get('limit'), '8');
+    assert.equal(new URL(calls[1].url).searchParams.get('includeHistory'), 'true');
+    assert.equal(new URL(calls[2].url).pathname, '/api/admin/content-operations/packages');
+    assert.equal(new URL(calls[2].url).searchParams.get('state'), 'draft');
+    assert.equal(new URL(calls[3].url).pathname, '/api/admin/content-operations/packages/pkg%2Fwith%2Fslash');
+    assert.equal(new URL(calls[4].url).pathname, '/api/admin/content-operations/subjects/spelling/browse');
     assert.equal(new URL(calls[4].url).searchParams.get('packageId'), 'pkg/with/slash');
-    assert.equal(new URL(calls[5].url).pathname, '/api/admin/content-operations/subjects/spelling/sentences/sentence%2F1');
-    assert.equal(new URL(calls[6].url).pathname, '/api/admin/content-operations/subjects/spelling/releases');
-    assert.equal(new URL(calls[6].url).searchParams.get('includeSnapshot'), 'true');
-    assert.equal(new URL(calls[7].url).pathname, '/api/admin/content-operations/subjects/spelling/releases/rel%2Fwith%2Fslash');
+    assert.equal(new URL(calls[4].url).searchParams.get('query'), 'meta');
+    assert.equal(new URL(calls[4].url).searchParams.get('pool'), 'extra');
+    assert.equal(new URL(calls[4].url).searchParams.get('listId'), 'extra-greek');
+    assert.equal(new URL(calls[5].url).pathname, '/api/admin/content-operations/subjects/spelling/words/meta%2Fmorphosis');
+    assert.equal(new URL(calls[5].url).searchParams.get('packageId'), 'pkg/with/slash');
+    assert.equal(new URL(calls[6].url).pathname, '/api/admin/content-operations/subjects/spelling/sentences/sentence%2F1');
+    assert.equal(new URL(calls[7].url).pathname, '/api/admin/content-operations/subjects/spelling/releases');
     assert.equal(new URL(calls[7].url).searchParams.get('includeSnapshot'), 'true');
-    assert.deepEqual(calls.map((call) => call.method), ['GET', 'GET', 'GET', 'GET', 'GET', 'GET', 'GET', 'GET']);
+    assert.equal(new URL(calls[7].url).searchParams.get('includeHistory'), null);
+    assert.equal(new URL(calls[8].url).pathname, '/api/admin/content-operations/subjects/spelling/releases/rel%2Fwith%2Fslash');
+    assert.equal(new URL(calls[8].url).searchParams.get('includeSnapshot'), 'true');
+    assert.equal(new URL(calls[8].url).searchParams.get('includeHistory'), null);
+    assert.equal(new URL(calls[9].url).pathname, '/api/admin/content-operations/subjects/spelling/releases');
+    assert.equal(new URL(calls[9].url).searchParams.get('limit'), '6');
+    assert.equal(new URL(calls[9].url).searchParams.get('includeHistory'), 'true');
+    assert.equal(new URL(calls[10].url).pathname, '/api/admin/content-operations/subjects/spelling/releases/rel%2Fwith%2Fslash');
+    assert.equal(new URL(calls[10].url).searchParams.get('includeHistory'), 'true');
+    assert.deepEqual(calls.map((call) => call.method), ['GET', 'GET', 'GET', 'GET', 'GET', 'GET', 'GET', 'GET', 'GET', 'GET', 'GET']);
   });
 
   it('calls lifecycle mutation endpoints with package, candidate, and proof payloads', async () => {
@@ -1099,6 +1206,11 @@ describe('Content Operations Centre hub API client', () => {
       proof: { source: 'test' },
       mutation: { requestId: 'publish-1' },
     });
+    await api.captureContentOperationReleaseProof({
+      releaseId: 'rel/with/slash',
+      proof: { surfaces: { spellingSetup: { evidence: 'setup' } } },
+      includeSnapshot: true,
+    });
     await api.resolveContentOperationConflict({
       packageId: 'pkg/with/slash',
       conflictId: 'conflict/with/slash',
@@ -1111,8 +1223,10 @@ describe('Content Operations Centre hub API client', () => {
     assert.equal(new URL(calls[1].url).pathname, '/api/admin/content-operations/packages/pkg%2Fwith%2Fslash/generate-audio');
     assert.equal(new URL(calls[2].url).pathname, '/api/admin/content-operations/packages/pkg%2Fwith%2Fslash/approve');
     assert.equal(new URL(calls[3].url).pathname, '/api/admin/content-operations/packages/pkg%2Fwith%2Fslash/publish');
-    assert.equal(new URL(calls[4].url).pathname, '/api/admin/content-operations/packages/pkg%2Fwith%2Fslash/resolve-conflict');
-    assert.deepEqual(calls.map((call) => call.method), ['POST', 'POST', 'POST', 'POST', 'POST']);
+    assert.equal(new URL(calls[4].url).pathname, '/api/admin/content-operations/subjects/spelling/releases/rel%2Fwith%2Fslash/proof');
+    assert.equal(new URL(calls[4].url).searchParams.get('includeSnapshot'), 'true');
+    assert.equal(new URL(calls[5].url).pathname, '/api/admin/content-operations/packages/pkg%2Fwith%2Fslash/resolve-conflict');
+    assert.deepEqual(calls.map((call) => call.method), ['POST', 'POST', 'POST', 'POST', 'POST', 'POST']);
     assert.equal(calls[0].body.includeSnapshot, true);
     assert.equal(calls[1].body.candidateId, 'cand/with/slash');
     assert.deepEqual(calls[1].body.itemIds, ['word:meta:base:male.natural']);
@@ -1127,9 +1241,10 @@ describe('Content Operations Centre hub API client', () => {
     );
     assert.equal(Object.prototype.hasOwnProperty.call(calls[2].body, 'assetSummary'), false);
     assert.equal(calls[3].body.proof.source, 'test');
-    assert.equal(calls[4].body.conflictId, 'conflict/with/slash');
-    assert.equal(calls[4].body.resolution, 'edit');
-    assert.equal(calls[4].body.value, 'Merged value.');
+    assert.equal(calls[4].body.proof.surfaces.spellingSetup.evidence, 'setup');
+    assert.equal(calls[5].body.conflictId, 'conflict/with/slash');
+    assert.equal(calls[5].body.resolution, 'edit');
+    assert.equal(calls[5].body.value, 'Merged value.');
   });
 
   it('calls content operation append and delete endpoints', async () => {

@@ -919,7 +919,7 @@ test('published monster image assets are runtime-readable with draft isolation a
   }
 });
 
-test('monster image release serialisation distinguishes caller proof from server asset proof', () => {
+test('monster image release serialisation distinguishes caller proof from server proof metadata', () => {
   const release = serialiseContentOperationRelease({
     releaseId: 'rel-server-asset-proof',
     subjectId: 'spelling',
@@ -945,6 +945,12 @@ test('monster image release serialisation distinguishes caller proof from server
             preview: { kind: 'admin-api-handle', url: '/api/admin/content-operations/packages/pkg-asset/monster-assets/coasset-1/preview' },
           }],
         },
+      },
+      productionProof: {
+        releaseId: 'rel-server-asset-proof',
+        capturedAt: NOW + 1,
+        capturedByAccountId: ADMIN_ID,
+        surfaces: ['monsterRendering'],
       },
     },
   });

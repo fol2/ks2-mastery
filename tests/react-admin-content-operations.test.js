@@ -263,6 +263,7 @@ const release = {
   publishedAt: Date.UTC(2026, 5, 11, 9, 0, 0),
   proof: {
     source: 'test',
+    surfaces: { spellingSetup: {}, wordBank: {} },
     contentOperationsAudio: {
       audioFallback: {
         allowed: true,
@@ -273,6 +274,45 @@ const release = {
         status: 'warning',
         warnings: ['audio_fallback_approved', 'sentence_audio_missing'],
       },
+    },
+  },
+  history: {
+    releaseId: 'rel-global-1',
+    package: { packageId: 'pkg-published-1', title: 'Published word edit', templateId: 'edit-spelling-word', state: 'published' },
+    approvedByAccountId: 'admin-reviewer',
+    approvedAt: Date.UTC(2026, 5, 11, 8, 55, 0),
+    publishedByAccountId: 'admin-publisher',
+    publishedAt: Date.UTC(2026, 5, 11, 9, 0, 0),
+    changedEntities: {
+      operationCount: 1,
+      entityCount: 1,
+      entityTypes: [{ entityType: 'spelling.word', operationCount: 1, entityCount: 1 }],
+      actionCounts: { set: 1 },
+      fieldPaths: ['explanation'],
+      preview: [{ entityType: 'spelling.word', entityId: 'accident', actionCount: 1, actions: ['set'], fields: ['explanation'] }],
+    },
+    assetChanges: {
+      uploadCount: 1,
+      referenceCount: 1,
+      hash: 'asset-reference-proof-hash',
+      preview: [{
+        assetUploadId: 'coasset-proof-1',
+        referenceId: 'coref-proof-1',
+        assetKind: 'monster-image',
+        monsterId: 'inklet',
+        branchId: 'default',
+        stageId: 'base',
+        validationStatus: 'passed',
+      }],
+    },
+    productionProof: {
+      status: 'recorded',
+      hasCallerProof: true,
+      capturedAt: Date.UTC(2026, 5, 11, 9, 1, 0),
+      capturedByAccountId: 'admin-publisher',
+      requiredSurfaces: [{ key: 'spellingSetup', label: 'Spelling setup' }, { key: 'wordBank', label: 'Word Bank' }],
+      linkedSurfaces: [{ key: 'spellingSetup', label: 'Spelling setup' }, { key: 'wordBank', label: 'Word Bank' }],
+      missingSurfaces: [],
     },
   },
 };
@@ -693,6 +733,16 @@ test('Content Operations Centre release history shows approved audio fallback wa
   assert.match(html, /Audio fallback/);
   assert.match(html, /1 affected/);
   assert.match(html, /sentence_audio_missing/);
+  assert.match(html, /Published by admin-publisher/);
+  assert.match(html, /Approved by admin-reviewer/);
+  assert.match(html, /1 entities/);
+  assert.match(html, /1 operations/);
+  assert.match(html, /spelling\.word:accident set explanation/);
+  assert.match(html, /Assets 1 uploads \/ 1 references/);
+  assert.match(html, /inklet\/default\/base/);
+  assert.match(html, /data-content-ops-release-proof-status="recorded"/);
+  assert.match(html, /Spelling setup, Word Bank/);
+  assert.match(html, /Captured by admin-publisher/);
 });
 
 test('Content Operations Centre SSR renders package-scoped domain tabs and audit state', async () => {
@@ -929,9 +979,9 @@ test('Content Operations Centre mounted shell loads API data without implicit pa
   const result = JSON.parse(output);
 
   assert.deepEqual(result.calls, [
-    { method: 'overview', args: { limit: 30 } },
+    { method: 'overview', args: { limit: 30, includeHistory: true } },
     { method: 'packages', args: { limit: 50 } },
-    { method: 'releases', args: { limit: 20 } },
+    { method: 'releases', args: { limit: 20, includeHistory: true } },
   ]);
   assert.match(result.overviewText, /Word family update/);
   assert.match(result.overviewText, /Audio \/ asset warnings/);

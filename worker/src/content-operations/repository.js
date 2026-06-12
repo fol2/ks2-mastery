@@ -328,6 +328,7 @@ const AUDIO_FALLBACK_BLOCKING_STATUSES = new Set([
 ]);
 const RELEASE_AUDIO_PROOF_KEY = 'contentOperationsAudio';
 const RELEASE_ASSET_PROOF_KEY = 'contentOperationsAssets';
+const RELEASE_PRODUCTION_PROOF_KEY = 'productionProof';
 const RELEASE_PROOF_RESERVED_KEYS = new Set([
   'audioFallback',
   'audioWarnings',
@@ -335,6 +336,18 @@ const RELEASE_PROOF_RESERVED_KEYS = new Set([
   'assetWarnings',
   RELEASE_AUDIO_PROOF_KEY,
   RELEASE_ASSET_PROOF_KEY,
+  RELEASE_PRODUCTION_PROOF_KEY,
+]);
+const PRODUCTION_PROOF_SURFACES = Object.freeze([
+  { key: 'spellingSetup', label: 'Spelling setup', aliases: ['spellingSetup', 'spelling-setup', 'setup'] },
+  { key: 'wordBank', label: 'Word Bank', aliases: ['wordBank', 'word-bank', 'wordbank'] },
+  { key: 'heroCodex', label: 'Hero / Codex', aliases: ['heroCodex', 'hero-codex', 'codex', 'hero'] },
+  { key: 'monsterRendering', label: 'Monster rendering', aliases: ['monsterRendering', 'monster-rendering', 'monster', 'monsters'] },
+]);
+const PRODUCTION_PROOF_RESERVED_KEYS = new Set([
+  RELEASE_AUDIO_PROOF_KEY,
+  RELEASE_ASSET_PROOF_KEY,
+  RELEASE_PRODUCTION_PROOF_KEY,
 ]);
 
 function audioFallbackBlockingItems(scan = null) {
@@ -531,7 +544,7 @@ function normaliseCallerReleaseProof(proof = null) {
   if (!isPlainObject(proof)) return { value: proof };
   const reservedKeys = Object.keys(proof).filter((key) => RELEASE_PROOF_RESERVED_KEYS.has(key));
   if (reservedKeys.length) {
-    throw new BadRequestError('Content operation release proof contains reserved audio metadata keys.', {
+    throw new BadRequestError('Content operation release proof contains reserved metadata keys.', {
       code: 'content_operation_release_proof_reserved_key',
       reservedKeys,
     });
@@ -569,6 +582,348 @@ function releaseAssetProofFromProof(proof = null) {
   return {
     assetSummary: isPlainObject(metadata?.assetSummary) ? metadata.assetSummary : null,
     assetReferenceManifest: isPlainObject(metadata?.assetReferenceManifest) ? metadata.assetReferenceManifest : null,
+  };
+}
+
+function proofHasCallerMetadata(proof = null) {
+  if (!isPlainObject(proof)) return false;
+  return Object.keys(proof).some((key) => !PRODUCTION_PROOF_RESERVED_KEYS.has(key));
+}
+
+function normaliseProofSurfaceKey(value) {
+  const raw = normaliseString(value);
+  if (!raw) return '';
+  const comparable = raw.toLowerCase().replace(/[^a-z0-9]/g, '');
+  for (const surface of PRODUCTION_PROOF_SURFACES) {
+    const candidates = [surface.key, ...surface.aliases];
+    if (candidates.some((candidate) => candidate.toLowerCase().replace(/[^a-z0-9]/g, '') === comparable)) {
+      return surface.key;
+    }
+  }
+  return '';
+}
+
+function proofSurfaceKeysFromValue(value, keys = new Set()) {
+  if (typeof value === 'string') {
+    const key = normaliseProofSurfaceKey(value);
+    if (key) keys.add(key);
+    return keys;
+  }
+  if (Array.isArray(value)) {
+    for (const entry of value) {
+      if (typeof entry === 'string') {
+        proofSurfaceKeysFromValue(entry, keys);
+      } else if (isPlainObject(entry)) {
+        proofSurfaceKeysFromValue(entry.key || entry.id || entry.surface || entry.name, keys);
+      }
+    }
+    return keys;
+  }
+  if (isPlainObject(value)) {
+    for (const [rawKey, entry] of Object.entries(value)) {
+      if (entry === false || entry == null) continue;
+      const key = normaliseProofSurfaceKey(rawKey);
+      if (key) keys.add(key);
+      if (isPlainObject(entry)) {
+        proofSurfaceKeysFromValue(entry.key || entry.id || entry.surface || entry.name, keys);
+      }
+    }
+  }
+  return keys;
+}
+
+function proofSurfaceEvidenceEntriesFromValue(value, entries = new Map()) {
+  if (typeof value === 'string') {
+    const key = normaliseProofSurfaceKey(value);
+    if (key && !entries.has(key)) entries.set(key, {});
+    return entries;
+  }
+  if (Array.isArray(value)) {
+    for (const entry of value) {
+      if (typeof entry === 'string') {
+        proofSurfaceEvidenceEntriesFromValue(entry, entries);
+      } else if (isPlainObject(entry)) {
+        const key = normaliseProofSurfaceKey(entry.key || entry.id || entry.surface || entry.name);
+        if (key && !entries.has(key)) entries.set(key, cloneSerialisable(entry));
+      }
+    }
+    return entries;
+  }
+  if (isPlainObject(value)) {
+    for (const [rawKey, entry] of Object.entries(value)) {
+      if (entry === false || entry == null) continue;
+      const key = normaliseProofSurfaceKey(rawKey);
+      if (key && !entries.has(key)) {
+        entries.set(key, isPlainObject(entry) ? cloneSerialisable(entry) : {});
+      }
+      if (isPlainObject(entry)) {
+        const nestedKey = normaliseProofSurfaceKey(entry.key || entry.id || entry.surface || entry.name);
+        if (nestedKey && !entries.has(nestedKey)) entries.set(nestedKey, cloneSerialisable(entry));
+      }
+    }
+  }
+  return entries;
+}
+
+function productionProofCaptureForRelease(proof = null, release = {}) {
+  if (!isPlainObject(proof)) return null;
+  const capture = isPlainObject(proof[RELEASE_PRODUCTION_PROOF_KEY])
+    ? proof[RELEASE_PRODUCTION_PROOF_KEY]
+    : null;
+  if (!capture) return null;
+  const releaseId = normaliseString(capture.releaseId);
+  if (!releaseId || releaseId !== release.releaseId) return null;
+  const capturedAt = Number(capture.capturedAt) || 0;
+  const publishedAt = Number(release.publishedAt) || 0;
+  if (!capturedAt || (publishedAt && capturedAt < publishedAt)) return null;
+  return {
+    ...capture,
+    capturedAt,
+    capturedByAccountId: normaliseString(capture.capturedByAccountId) || null,
+  };
+}
+
+function productionProofSurfaceKeys(proof = null, release = {}) {
+  const capture = productionProofCaptureForRelease(proof, release);
+  if (!capture) return [];
+  const keys = new Set();
+  proofSurfaceKeysFromValue(capture.surfaces, keys);
+  proofSurfaceKeysFromValue(capture.surfaceProof, keys);
+  return [...keys];
+}
+
+function surfaceDescriptor(key) {
+  const surface = PRODUCTION_PROOF_SURFACES.find((entry) => entry.key === key);
+  return surface || { key, label: key };
+}
+
+function surfaceCaptureDescriptor(key, capture = null) {
+  return {
+    ...surfaceDescriptor(key),
+    capturedAt: Number(capture?.capturedAt) || null,
+    capturedByAccountId: capture?.capturedByAccountId || null,
+  };
+}
+
+function isPoolVisibilityChange(operation = {}) {
+  if (operation.entityType !== 'spelling.pool') return false;
+  if (operation.fieldPath === 'visibility' || operation.fieldPath === 'rewardTrack' || operation.fieldPath === 'noRewardException') return true;
+  return isPlainObject(operation.payload)
+    && (
+      isPlainObject(operation.payload.visibility)
+      || isPlainObject(operation.payload.rewardTrack)
+      || isPlainObject(operation.payload.noRewardException)
+    );
+}
+
+function isHeroCodexVisibilityChange(operation = {}) {
+  const entityType = normaliseString(operation.entityType);
+  const fieldPath = normaliseString(operation.fieldPath);
+  if (entityType === 'spelling.heroExposure' || entityType === 'spelling.visibilityRule') return true;
+  if (isPoolVisibilityChange(operation)) return true;
+  if (entityType !== 'spelling.rewardTrack') return false;
+  if (fieldPath === 'heroExposure' || fieldPath.startsWith('heroExposure.')) return true;
+  return isPlainObject(operation.payload) && isPlainObject(operation.payload.heroExposure);
+}
+
+function requiredProductionProofSurfaceKeys(operations = [], release = {}) {
+  const required = new Set();
+  if (operations.some((operation) => normaliseString(operation.entityType).startsWith('spelling.'))) {
+    required.add('spellingSetup');
+    required.add('wordBank');
+  }
+  if (operations.some(isHeroCodexVisibilityChange)) {
+    required.add('heroCodex');
+  }
+  const assetReferenceCount = Number(release.assetReferenceManifest?.referenceCount) || 0;
+  const assetUploadCount = Number(release.assetSummary?.uploadCount) || 0;
+  if (assetReferenceCount > 0 || assetUploadCount > 0) {
+    required.add('monsterRendering');
+  }
+  return [...required];
+}
+
+function summariseContentOperationChanges(operations = []) {
+  const entities = new Map();
+  const entityTypeCounts = new Map();
+  const actionCounts = {};
+  const fieldPaths = new Set();
+  for (const operation of operations) {
+    const entityType = normaliseString(operation.entityType, 'unknown');
+    const entityId = normaliseString(operation.entityId, 'unknown');
+    const key = `${entityType}:${entityId}`;
+    if (!entities.has(key)) {
+      entities.set(key, {
+        entityType,
+        entityId,
+        actionCount: 0,
+        actions: [],
+        fields: [],
+      });
+    }
+    const entry = entities.get(key);
+    const action = normaliseString(operation.action, 'unknown');
+    const fieldPath = normaliseString(operation.fieldPath || '$', '$');
+    entry.actionCount += 1;
+    if (!entry.actions.includes(action)) entry.actions.push(action);
+    if (!entry.fields.includes(fieldPath)) entry.fields.push(fieldPath);
+    entityTypeCounts.set(entityType, (entityTypeCounts.get(entityType) || 0) + 1);
+    actionCounts[action] = (actionCounts[action] || 0) + 1;
+    fieldPaths.add(fieldPath);
+  }
+  return {
+    operationCount: operations.length,
+    entityCount: entities.size,
+    entityTypes: [...entityTypeCounts.entries()].map(([entityType, operationCount]) => ({
+      entityType,
+      operationCount,
+      entityCount: [...entities.values()].filter((entry) => entry.entityType === entityType).length,
+    })),
+    actionCounts,
+    fieldPaths: [...fieldPaths],
+    preview: [...entities.values()].slice(0, 12),
+  };
+}
+
+function summariseReleaseAssetChanges(release = {}) {
+  const assetSummary = isPlainObject(release.assetSummary) ? release.assetSummary : null;
+  const assetReferenceManifest = isPlainObject(release.assetReferenceManifest) ? release.assetReferenceManifest : null;
+  const references = asArray(assetReferenceManifest?.references).map((reference) => {
+    const target = isPlainObject(reference?.target) ? reference.target : {};
+    return {
+      assetUploadId: normaliseString(reference?.assetUploadId),
+      referenceId: normaliseString(reference?.referenceId),
+      assetKind: normaliseString(reference?.assetKind),
+      monsterId: normaliseString(target.monsterId),
+      branchId: normaliseString(target.branchId),
+      stageId: normaliseString(target.stageId),
+      validationStatus: normaliseString(reference?.validation?.status),
+    };
+  }).filter((reference) => reference.assetUploadId || reference.referenceId || reference.monsterId);
+  return {
+    uploadCount: Number(assetSummary?.uploadCount) || 0,
+    referenceCount: Number(assetReferenceManifest?.referenceCount ?? references.length) || 0,
+    hash: normaliseString(assetReferenceManifest?.hash || assetSummary?.hash),
+    preview: references.slice(0, 12),
+  };
+}
+
+function buildProductionProofSummary(release = {}, operations = []) {
+  const requiredKeys = requiredProductionProofSurfaceKeys(operations, release);
+  const capture = productionProofCaptureForRelease(release.proof, release);
+  const linkedKeys = productionProofSurfaceKeys(release.proof, release);
+  const missingKeys = requiredKeys.filter((key) => !linkedKeys.includes(key));
+  const hasCallerProof = proofHasCallerMetadata(release.proof);
+  let status = 'not_required';
+  if (requiredKeys.length) {
+    if (!missingKeys.length) {
+      status = 'recorded';
+    } else if (linkedKeys.length || hasCallerProof) {
+      status = 'partial';
+    } else {
+      status = 'missing';
+    }
+  } else if (hasCallerProof) {
+    status = 'recorded';
+  }
+  return {
+    status,
+    hasCallerProof,
+    capturedAt: Number(capture?.capturedAt) || null,
+    capturedByAccountId: capture?.capturedByAccountId || null,
+    requiredSurfaces: requiredKeys.map(surfaceDescriptor),
+    linkedSurfaces: linkedKeys.map((key) => surfaceCaptureDescriptor(key, capture)),
+    missingSurfaces: missingKeys.map(surfaceDescriptor),
+  };
+}
+
+function buildProductionProofCapture(proof = null, {
+  releaseId,
+  capturedByAccountId,
+  capturedAt,
+} = {}) {
+  if (!isPlainObject(proof)) {
+    throw new BadRequestError('Production proof capture requires a proof object.', {
+      code: 'content_operation_release_proof_required',
+      releaseId,
+    });
+  }
+  const reservedKeys = Object.keys(proof).filter((key) => (
+    key !== RELEASE_PRODUCTION_PROOF_KEY && RELEASE_PROOF_RESERVED_KEYS.has(key)
+  ));
+  if (reservedKeys.length) {
+    throw new BadRequestError('Production proof capture contains reserved metadata keys.', {
+      code: 'content_operation_release_proof_reserved_key',
+      releaseId,
+      reservedKeys,
+    });
+  }
+  const source = isPlainObject(proof[RELEASE_PRODUCTION_PROOF_KEY])
+    ? proof[RELEASE_PRODUCTION_PROOF_KEY]
+    : proof;
+  const entries = new Map();
+  proofSurfaceEvidenceEntriesFromValue(proof.surfaces, entries);
+  proofSurfaceEvidenceEntriesFromValue(proof.surfaceProof, entries);
+  proofSurfaceEvidenceEntriesFromValue(source.surfaces, entries);
+  proofSurfaceEvidenceEntriesFromValue(source.surfaceProof, entries);
+  for (const surface of PRODUCTION_PROOF_SURFACES) {
+    if (proof[surface.key] != null) {
+      entries.set(surface.key, isPlainObject(proof[surface.key]) ? cloneSerialisable(proof[surface.key]) : {});
+    }
+  }
+  if (!entries.size) {
+    throw new BadRequestError('Production proof capture requires at least one recognised surface.', {
+      code: 'content_operation_release_proof_surfaces_required',
+      releaseId,
+    });
+  }
+  const surfaces = {};
+  for (const [key, evidence] of entries.entries()) {
+    surfaces[key] = {
+      ...surfaceDescriptor(key),
+      ...(isPlainObject(evidence) ? evidence : {}),
+      key,
+      label: surfaceDescriptor(key).label,
+      releaseId,
+      capturedAt,
+      capturedByAccountId,
+    };
+  }
+  return {
+    releaseId,
+    capturedAt,
+    capturedByAccountId,
+    source: normaliseString(proof.source || source.source, 'content-operations-admin'),
+    notes: normaliseString(proof.notes || source.notes),
+    surfaces,
+  };
+}
+
+function buildReleaseHistorySummary({
+  release = null,
+  contentPackage = null,
+  approval = null,
+  operations = [],
+} = {}) {
+  if (!release) return null;
+  return {
+    releaseId: release.releaseId,
+    package: contentPackage ? {
+      packageId: contentPackage.packageId,
+      title: contentPackage.title,
+      templateId: contentPackage.templateId,
+      state: contentPackage.state,
+    } : null,
+    approvedByAccountId: approval?.approvedByAccountId || null,
+    approvedAt: approval?.approvedAt ?? null,
+    approvalId: approval?.approvalId || null,
+    candidateId: approval?.candidateId || null,
+    candidateHash: approval?.candidateHash || '',
+    publishedByAccountId: release.publishedByAccountId || null,
+    publishedAt: release.publishedAt ?? null,
+    changedEntities: summariseContentOperationChanges(operations),
+    assetChanges: summariseReleaseAssetChanges(release),
+    productionProof: buildProductionProofSummary(release, operations),
   };
 }
 
@@ -682,6 +1037,101 @@ async function listPackageOperations(db, packageId) {
     ORDER BY operation_order ASC
   `, [packageId]);
   return rows.map(operationRowToRecord);
+}
+
+async function attachReleaseHistorySummary(db, release = null) {
+  if (!release) return null;
+  if (!release.packageId) {
+    return {
+      ...release,
+      history: buildReleaseHistorySummary({ release }),
+    };
+  }
+  const [packageRow, approvalRow, operations] = await Promise.all([
+    first(db, `
+      SELECT *
+      FROM content_operation_packages
+      WHERE package_id = ?
+    `, [release.packageId]),
+    first(db, `
+      SELECT *
+      FROM content_operation_package_approvals
+      WHERE package_id = ?
+      ORDER BY approved_at DESC
+      LIMIT 1
+    `, [release.packageId]),
+    listPackageOperations(db, release.packageId),
+  ]);
+  return {
+    ...release,
+    history: buildReleaseHistorySummary({
+      release,
+      contentPackage: packageRow ? packageRowToRecord(packageRow) : null,
+      approval: approvalRowToRecord(approvalRow),
+      operations,
+    }),
+  };
+}
+
+async function attachReleaseHistorySummaries(db, releases = []) {
+  if (!releases.length) return releases;
+  const packageIds = uniqueStrings(releases.map((release) => release?.packageId).filter(Boolean));
+  if (!packageIds.length) {
+    return releases.map((release) => ({
+      ...release,
+      history: buildReleaseHistorySummary({ release }),
+    }));
+  }
+  const placeholders = packageIds.map(() => '?').join(', ');
+  const [packageRows, approvalRows, operationRows] = await Promise.all([
+    all(db, `
+      SELECT *
+      FROM content_operation_packages
+      WHERE package_id IN (${placeholders})
+    `, packageIds),
+    all(db, `
+      SELECT *
+      FROM content_operation_package_approvals
+      WHERE package_id IN (${placeholders})
+      ORDER BY package_id ASC, approved_at DESC
+    `, packageIds),
+    all(db, `
+      SELECT *
+      FROM content_operation_package_operations
+      WHERE package_id IN (${placeholders})
+      ORDER BY package_id ASC, operation_order ASC
+    `, packageIds),
+  ]);
+  const packagesById = new Map(packageRows.map((row) => [row.package_id, packageRowToRecord(row)]));
+  const approvalsByPackageId = new Map();
+  for (const row of approvalRows) {
+    if (!approvalsByPackageId.has(row.package_id)) {
+      approvalsByPackageId.set(row.package_id, approvalRowToRecord(row));
+    }
+  }
+  const operationsByPackageId = new Map();
+  for (const row of operationRows) {
+    const operation = operationRowToRecord(row);
+    if (!operationsByPackageId.has(row.package_id)) operationsByPackageId.set(row.package_id, []);
+    operationsByPackageId.get(row.package_id).push(operation);
+  }
+  return releases.map((release) => {
+    if (!release?.packageId) {
+      return {
+        ...release,
+        history: buildReleaseHistorySummary({ release }),
+      };
+    }
+    return {
+      ...release,
+      history: buildReleaseHistorySummary({
+        release,
+        contentPackage: packagesById.get(release.packageId) || null,
+        approval: approvalsByPackageId.get(release.packageId) || null,
+        operations: operationsByPackageId.get(release.packageId) || [],
+      }),
+    };
+  });
 }
 
 function releaseDriftConflict(packageRow, currentReleaseRow, baseReleaseRow) {
@@ -2056,7 +2506,7 @@ export function createContentOperationsRepository({ db, env = {}, now }) {
         });
       }
 
-      return {
+      const releaseRecord = {
         releaseId,
         packageId,
         subjectId: packageRow.subject_id,
@@ -2071,6 +2521,20 @@ export function createContentOperationsRepository({ db, env = {}, now }) {
         audioWarnings: releaseAudioProof.audioWarnings,
         assetSummary: releaseAssetProof.assetSummary,
         assetReferenceManifest: releaseAssetProof.assetReferenceManifest,
+      };
+      return {
+        ...releaseRecord,
+        history: buildReleaseHistorySummary({
+          release: releaseRecord,
+          contentPackage: {
+            packageId,
+            title: packageRow.title,
+            templateId: packageRow.template_id,
+            state: CONTENT_OPERATION_PACKAGE_STATES.PUBLISHED,
+          },
+          approval,
+          operations,
+        }),
       };
     },
 
@@ -2203,19 +2667,99 @@ export function createContentOperationsRepository({ db, env = {}, now }) {
       };
     },
 
-    async readLatestContentOperationRelease(subjectId = CONTENT_OPERATION_SUBJECT_ID, { includeSnapshot = false } = {}) {
-      const row = await readLatestReleaseRow(db, normaliseSubjectId(subjectId), { includeSnapshot });
-      return releaseRowToRecordAsync(row, { includeSnapshot });
+    async captureContentOperationReleaseProof(subjectId = CONTENT_OPERATION_SUBJECT_ID, releaseId, {
+      capturedByAccountId,
+      proof = null,
+    } = {}) {
+      const actor = normaliseString(capturedByAccountId);
+      const safeSubjectId = normaliseSubjectId(subjectId);
+      const safeReleaseId = normaliseString(releaseId);
+      if (!actor) throw new BadRequestError('Content operation release proof capture requires an account id.', {
+        code: 'content_operation_release_proof_actor_required',
+        releaseId: safeReleaseId,
+      });
+      const row = await readReleaseRowById(db, safeSubjectId, safeReleaseId, { includeSnapshot: false });
+      if (!row) {
+        throw new NotFoundError('Content operation release was not found.', {
+          code: 'content_operation_release_not_found',
+          releaseId: safeReleaseId,
+        });
+      }
+      const release = await releaseRowToRecordAsync(row, { includeSnapshot: false });
+      if (release.status !== 'published') {
+        throw new ConflictError('Production proof can only be captured for published releases.', {
+          code: 'content_operation_release_not_published',
+          releaseId: safeReleaseId,
+          status: release.status,
+        });
+      }
+      const nowTs = Number(nowFactory());
+      const capture = buildProductionProofCapture(proof, {
+        releaseId: release.releaseId,
+        capturedByAccountId: actor,
+        capturedAt: nowTs,
+      });
+      const nextProof = {
+        ...(isPlainObject(release.proof) ? release.proof : {}),
+        [RELEASE_PRODUCTION_PROOF_KEY]: capture,
+      };
+      await batch(db, [
+        bindStatement(db, `
+          UPDATE content_operation_releases
+          SET proof_json = ?
+          WHERE subject_id = ? AND release_id = ?
+        `, [
+          JSON.stringify(nextProof),
+          safeSubjectId,
+          safeReleaseId,
+        ]),
+        bindStatement(db, `
+          INSERT INTO content_operation_events (
+            event_id, package_id, release_id, subject_id, event_type,
+            actor_account_id, event_json, created_at
+          )
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        `, [
+          uid('coevt'),
+          release.packageId || null,
+          release.releaseId,
+          safeSubjectId,
+          'release.production_proof_captured',
+          actor,
+          JSON.stringify({
+            releaseId: release.releaseId,
+            capturedAt: nowTs,
+            surfaces: Object.keys(capture.surfaces || {}),
+          }),
+          nowTs,
+        ]),
+      ]);
+      return attachReleaseHistorySummary(db, {
+        ...release,
+        proof: nextProof,
+      });
     },
 
-    async readContentOperationRelease(subjectId = CONTENT_OPERATION_SUBJECT_ID, releaseId, { includeSnapshot = false } = {}) {
+    async readLatestContentOperationRelease(subjectId = CONTENT_OPERATION_SUBJECT_ID, { includeSnapshot = false, includeHistory = false } = {}) {
+      const row = await readLatestReleaseRow(db, normaliseSubjectId(subjectId), { includeSnapshot });
+      const release = await releaseRowToRecordAsync(row, { includeSnapshot });
+      return includeHistory ? attachReleaseHistorySummary(db, release) : release;
+    },
+
+    async readContentOperationRelease(subjectId = CONTENT_OPERATION_SUBJECT_ID, releaseId, { includeSnapshot = false, includeHistory = false } = {}) {
       const row = await readReleaseRowById(db, normaliseSubjectId(subjectId), normaliseString(releaseId), {
         includeSnapshot,
       });
-      return releaseRowToRecordAsync(row, { includeSnapshot });
+      const release = await releaseRowToRecordAsync(row, { includeSnapshot });
+      return includeHistory ? attachReleaseHistorySummary(db, release) : release;
     },
 
-    async listContentOperationReleases({ subjectId = CONTENT_OPERATION_SUBJECT_ID, includeSnapshot = false, limit = 20 } = {}) {
+    async listContentOperationReleases({
+      subjectId = CONTENT_OPERATION_SUBJECT_ID,
+      includeSnapshot = false,
+      includeHistory = false,
+      limit = 20,
+    } = {}) {
       const safeLimit = Math.max(1, Math.min(100, Number(limit) || 20));
       const rows = await all(db, `
         SELECT
@@ -2228,7 +2772,8 @@ export function createContentOperationsRepository({ db, env = {}, now }) {
         ORDER BY published_at DESC, created_at DESC, rowid DESC
         LIMIT ?
       `, [normaliseSubjectId(subjectId), safeLimit]);
-      return Promise.all(rows.map((row) => releaseRowToRecordAsync(row, { includeSnapshot })));
+      const releases = await Promise.all(rows.map((row) => releaseRowToRecordAsync(row, { includeSnapshot })));
+      return includeHistory ? attachReleaseHistorySummaries(db, releases) : releases;
     },
 
     async listContentOperationEvents({ packageId = null, releaseId = null, subjectId = CONTENT_OPERATION_SUBJECT_ID, limit = 50 } = {}) {
