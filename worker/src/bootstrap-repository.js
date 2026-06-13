@@ -41,10 +41,14 @@ export const PUBLIC_BOOTSTRAP_RECENT_EVENT_LIMIT_PER_LEARNER = 50;
 // including the active spelling content-operation release token. Without this,
 // a published spelling content release could leave stable accounts on the
 // notModified short-circuit with stale public read-model stats.
+// CDP stress hardening 2026-06-13: bumped 5 -> 6 when the selected-learner
+// bounded bootstrap switched non-spelling subjects from full public read
+// models to compact first-paint projections. Stable clients must miss once so
+// heavy cached `subjectStates.*.ui` analytics do not survive indefinitely.
 // Any additive required field on the bootstrap envelope MUST bump this in
 // the same PR. `tests/worker-bootstrap-v2.test.js` has a snapshot test that
 // fails if the envelope shape changes without a version bump (scenario 15).
-export const PUBLIC_BOOTSTRAP_CAPACITY_VERSION = 5;
+export const PUBLIC_BOOTSTRAP_CAPACITY_VERSION = 6;
 export const BOOTSTRAP_CAPACITY_VERSION = PUBLIC_BOOTSTRAP_CAPACITY_VERSION;
 
 // U7: closed union for `meta.capacity.bootstrapMode` when the public

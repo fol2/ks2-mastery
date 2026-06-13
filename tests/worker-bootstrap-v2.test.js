@@ -215,8 +215,12 @@ test('U7 scenario 15: envelope shape snapshot matches BOOTSTRAP_CAPACITY_VERSION
   //
   // Content Operations Centre T5A: bumped 4 -> 5 when spelling public
   // read-model revision hashes started including the active content release.
-  assert.equal(BOOTSTRAP_CAPACITY_VERSION, 5,
-    'Content Operations Centre T5A bumps BOOTSTRAP_CAPACITY_VERSION 4->5 so spelling content release changes miss the notModified probe.');
+  //
+  // CDP stress hardening 2026-06-13: bumped 5 -> 6 when selected-bounded
+  // bootstrap non-spelling subject states switched to compact first-paint
+  // projections rather than full analytics read-models.
+  assert.equal(BOOTSTRAP_CAPACITY_VERSION, 6,
+    'CDP stress hardening bumps BOOTSTRAP_CAPACITY_VERSION 5->6 so compact first-paint projections miss the notModified probe.');
   // Closed union for meta.capacity.bootstrapMode (canonical U7 enum).
   assert.deepEqual(
     [...BOOTSTRAP_MODES].sort(),
@@ -1213,6 +1217,14 @@ test('fresh bootstrap hydrates Punctuation and Grammar public stats from stored 
       'grammar first-paint analytics tracks stored mastery concepts');
     assert.equal(grammar.ui?.analytics?.progressSnapshot?.securedConcepts, 1,
       'grammar first-paint analytics exposes secured concepts');
+    assert.equal(grammar.ui?.analytics?.recentAttempts, undefined,
+      'grammar bootstrap projection omits heavyweight recent attempt history');
+    assert.ok(JSON.stringify(grammar.ui?.analytics || {}).length < 6_000,
+      'grammar bootstrap analytics stays compact for first paint');
+    assert.equal(punctuation.ui?.analytics?.recentMistakes, undefined,
+      'punctuation bootstrap projection omits heavyweight mistake history');
+    assert.ok(JSON.stringify(punctuation.ui?.analytics || {}).length < 6_000,
+      'punctuation bootstrap analytics stays compact for first paint');
   } finally {
     server.close();
   }

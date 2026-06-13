@@ -500,6 +500,279 @@ function redactReasoningUiForClient(ui, data = {}, learnerId = '', { now = Date.
   });
 }
 
+function compactText(value, maxLength = 180) {
+  if (typeof value !== 'string') return value;
+  return value.length > maxLength ? value.slice(0, maxLength) : value;
+}
+
+function compactScalar(value, maxLength = 180) {
+  if (value == null) return value;
+  if (typeof value === 'string') return compactText(value, maxLength);
+  if (typeof value === 'number' || typeof value === 'boolean') return value;
+  return undefined;
+}
+
+function compactScalarArray(value, limit = 5, maxLength = 80) {
+  if (!Array.isArray(value)) return undefined;
+  return value
+    .map((entry) => compactScalar(entry, maxLength))
+    .filter((entry) => entry !== undefined)
+    .slice(0, limit);
+}
+
+function compactObjectFields(source, keys, {
+  stringMaxLength = 180,
+  arrayLimit = 5,
+} = {}) {
+  if (!source || typeof source !== 'object' || Array.isArray(source)) return null;
+  const output = {};
+  for (const key of keys) {
+    if (!Object.prototype.hasOwnProperty.call(source, key)) continue;
+    const value = source[key];
+    if (Array.isArray(value)) {
+      const compactArray = compactScalarArray(value, arrayLimit, stringMaxLength);
+      if (compactArray && compactArray.length) output[key] = compactArray;
+      continue;
+    }
+    const compactValue = compactScalar(value, stringMaxLength);
+    if (compactValue !== undefined) output[key] = compactValue;
+  }
+  return Object.keys(output).length ? output : null;
+}
+
+function compactList(value, limit, mapper) {
+  if (!Array.isArray(value)) return [];
+  return value
+    .slice(0, limit)
+    .map((entry) => mapper(entry))
+    .filter(Boolean);
+}
+
+function compactProgressSnapshot(value) {
+  return compactObjectFields(value, [
+    'trackedConcepts',
+    'totalConcepts',
+    'securedConcepts',
+    'dueConcepts',
+    'weakConcepts',
+    'accuracyPercent',
+    'streak',
+    'streakCount',
+    'attempts',
+    'correct',
+    'wrong',
+    'generatedAt',
+  ], { stringMaxLength: 80 });
+}
+
+function compactSkillAnalyticsEntry(entry) {
+  return compactObjectFields(entry, [
+    'id',
+    'skillId',
+    'templateId',
+    'strandId',
+    'clusterId',
+    'domain',
+    'name',
+    'label',
+    'status',
+    'strength',
+    'attempts',
+    'correct',
+    'wrong',
+    'accuracy',
+    'due',
+    'dueAt',
+    'mastery',
+    'secure',
+    'lastSeenAt',
+  ], { stringMaxLength: 140, arrayLimit: 4 });
+}
+
+function compactRecentActivityEntry(entry) {
+  return compactObjectFields(entry, [
+    'id',
+    'itemId',
+    'questionId',
+    'templateId',
+    'templateLabel',
+    'questionType',
+    'questionTypeLabel',
+    'mode',
+    'status',
+    'correct',
+    'score',
+    'maxScore',
+    'misconception',
+    'createdAt',
+    'timestamp',
+    'skillIds',
+    'conceptIds',
+  ], { stringMaxLength: 140, arrayLimit: 4 });
+}
+
+function compactGrammarConcept(entry) {
+  return compactObjectFields(entry, [
+    'id',
+    'name',
+    'domain',
+    'status',
+    'strength',
+    'attempts',
+    'correct',
+    'wrong',
+    'correctStreak',
+    'dueAt',
+    'intervalDays',
+    'punctuationForGrammar',
+  ], { stringMaxLength: 180, arrayLimit: 4 });
+}
+
+function compactGrammarAnalytics(analytics) {
+  if (!analytics || typeof analytics !== 'object' || Array.isArray(analytics)) return null;
+  const output = {
+    concepts: compactList(analytics.concepts, 24, compactGrammarConcept),
+    progressSnapshot: compactProgressSnapshot(analytics.progressSnapshot),
+    evidenceSummary: compactList(analytics.evidenceSummary, 3, (entry) => compactObjectFields(entry, [
+      'id',
+      'label',
+      'detail',
+    ], { stringMaxLength: 180 })),
+    misconceptionPatterns: compactList(analytics.misconceptionPatterns, 5, compactSkillAnalyticsEntry),
+    questionTypeSummary: compactList(analytics.questionTypeSummary, 8, compactSkillAnalyticsEntry),
+    recentActivity: compactList(analytics.recentActivity, 5, compactRecentActivityEntry),
+  };
+  return Object.fromEntries(Object.entries(output).filter(([, value]) => (
+    value && (!Array.isArray(value) || value.length)
+  )));
+}
+
+function compactPunctuationAnalytics(analytics) {
+  if (!analytics || typeof analytics !== 'object' || Array.isArray(analytics)) return null;
+  const scalar = compactObjectFields(analytics, [
+    'available',
+    'releaseId',
+    'attempts',
+    'correct',
+    'accuracy',
+    'sessionsCompleted',
+    'rewardUnits',
+  ], { stringMaxLength: 120 });
+  const output = {
+    ...(scalar || {}),
+    dailyGoal: analytics.dailyGoal && typeof analytics.dailyGoal === 'object'
+      ? compactObjectFields(analytics.dailyGoal, ['target', 'done', 'remaining', 'met'], { stringMaxLength: 80 })
+      : undefined,
+    streak: analytics.streak && typeof analytics.streak === 'object'
+      ? compactObjectFields(analytics.streak, ['current', 'best', 'active'], { stringMaxLength: 80 })
+      : undefined,
+    skillRows: compactList(analytics.skillRows, 20, compactSkillAnalyticsEntry),
+    bySessionMode: compactList(analytics.bySessionMode, 8, compactSkillAnalyticsEntry),
+    byItemMode: compactList(analytics.byItemMode, 8, compactSkillAnalyticsEntry),
+    weakestFacets: compactList(analytics.weakestFacets, 6, compactSkillAnalyticsEntry),
+    misconceptionPatterns: compactList(analytics.misconceptionPatterns, 6, compactSkillAnalyticsEntry),
+  };
+  return Object.fromEntries(Object.entries(output).filter(([, value]) => (
+    value && (!Array.isArray(value) || value.length)
+  )));
+}
+
+function compactReadingAnalytics(analytics) {
+  if (!analytics || typeof analytics !== 'object' || Array.isArray(analytics)) return null;
+  const output = {
+    ...(compactObjectFields(analytics, ['available', 'generatedAt'], { stringMaxLength: 80 }) || {}),
+    skills: compactList(analytics.skills, 20, compactSkillAnalyticsEntry),
+    byGenre: compactList(analytics.byGenre, 6, compactSkillAnalyticsEntry),
+    byType: compactList(analytics.byType, 8, compactSkillAnalyticsEntry),
+    misconceptionPatterns: compactList(analytics.misconceptionPatterns, 6, compactSkillAnalyticsEntry),
+    reviewQueue: compactList(analytics.reviewQueue, 6, compactRecentActivityEntry),
+    recentActivity: compactList(analytics.recentActivity, 5, compactRecentActivityEntry),
+  };
+  return Object.fromEntries(Object.entries(output).filter(([, value]) => (
+    value && (!Array.isArray(value) || value.length)
+  )));
+}
+
+function compactArithmeticAnalytics(analytics) {
+  if (!analytics || typeof analytics !== 'object' || Array.isArray(analytics)) return null;
+  const output = {
+    skills: compactList(analytics.skills, 30, compactSkillAnalyticsEntry),
+    strands: compactList(analytics.strands, 8, compactSkillAnalyticsEntry),
+    misconceptions: compactList(analytics.misconceptions, 6, compactSkillAnalyticsEntry),
+    recentAttempts: compactList(analytics.recentAttempts, 5, compactRecentActivityEntry),
+  };
+  return Object.fromEntries(Object.entries(output).filter(([, value]) => (
+    value && (!Array.isArray(value) || value.length)
+  )));
+}
+
+function compactReasoningAnalytics(analytics) {
+  if (!analytics || typeof analytics !== 'object' || Array.isArray(analytics)) return null;
+  const output = {
+    ...(compactObjectFields(analytics, ['available'], { stringMaxLength: 80 }) || {}),
+    skills: compactList(analytics.skills, 24, compactSkillAnalyticsEntry),
+    templates: compactList(analytics.templates, 16, compactSkillAnalyticsEntry),
+    misconceptionPatterns: compactList(analytics.misconceptionPatterns, 6, compactSkillAnalyticsEntry),
+    reviewQueue: compactList(analytics.reviewQueue, 6, compactRecentActivityEntry),
+    recentActivity: compactList(analytics.recentActivity, 5, compactRecentActivityEntry),
+  };
+  return Object.fromEntries(Object.entries(output).filter(([, value]) => (
+    value && (!Array.isArray(value) || value.length)
+  )));
+}
+
+const BOOTSTRAP_ANALYTICS_COMPACTORS = Object.freeze({
+  grammar: compactGrammarAnalytics,
+  punctuation: compactPunctuationAnalytics,
+  reading: compactReadingAnalytics,
+  arithmetic: compactArithmeticAnalytics,
+  reasoning: compactReasoningAnalytics,
+});
+
+function compactBootstrapPublicSubjectUi(subjectId, ui) {
+  if (!ui || typeof ui !== 'object' || Array.isArray(ui)) return ui;
+  const compact = {};
+  for (const key of [
+    'subjectId',
+    'learnerId',
+    'version',
+    'releaseId',
+    'authority',
+    'phase',
+    'awaitingAdvance',
+    'session',
+    'feedback',
+    'summary',
+    'error',
+    'availability',
+    'prefs',
+    'stats',
+    'content',
+    'parentSummary',
+    'starView',
+    'audio',
+    'postMastery',
+  ]) {
+    if (Object.prototype.hasOwnProperty.call(ui, key)) compact[key] = ui[key];
+  }
+  const compactAnalytics = BOOTSTRAP_ANALYTICS_COMPACTORS[subjectId]?.(ui.analytics);
+  if (compactAnalytics && Object.keys(compactAnalytics).length) {
+    compact.analytics = compactAnalytics;
+  } else if (Object.prototype.hasOwnProperty.call(ui, 'analytics')) {
+    compact.analytics = null;
+  }
+  if (subjectId === 'grammar') {
+    compact.capabilities = ui.capabilities && typeof ui.capabilities === 'object'
+      ? {
+        aiEnrichment: ui.capabilities.aiEnrichment && typeof ui.capabilities.aiEnrichment === 'object'
+          ? { enabled: ui.capabilities.aiEnrichment.enabled !== false }
+          : undefined,
+      }
+      : undefined;
+  }
+  return Object.fromEntries(Object.entries(compact).filter(([, value]) => value !== undefined));
+}
+
 const PUBLIC_SUBJECT_READ_MODEL_BUILDERS = Object.freeze({
   async spelling({ record, row, spellingContentSnapshot, now }) {
     const audio = await buildSpellingAudioCue({
@@ -529,17 +802,24 @@ const PUBLIC_SUBJECT_READ_MODEL_BUILDERS = Object.freeze({
   },
 });
 
-async function publicSubjectStateRowToRecord(row, { spellingContentSnapshot = null, now = Date.now() } = {}) {
+async function publicSubjectStateRowToRecord(row, {
+  spellingContentSnapshot = null,
+  now = Date.now(),
+  compact = false,
+} = {}) {
   const record = subjectStateRowToRecord(row);
   const buildPublicUi = PUBLIC_SUBJECT_READ_MODEL_BUILDERS[row.subject_id];
   if (!buildPublicUi) return record;
+  const ui = await buildPublicUi({
+    record,
+    row,
+    now,
+    spellingContentSnapshot,
+  });
+  const shouldCompact = compact
+    && Object.prototype.hasOwnProperty.call(BOOTSTRAP_ANALYTICS_COMPACTORS, row.subject_id);
   return normaliseSubjectStateRecord({
-    ui: await buildPublicUi({
-      record,
-      row,
-      now,
-      spellingContentSnapshot,
-    }),
+    ui: shouldCompact ? compactBootstrapPublicSubjectUi(row.subject_id, ui) : ui,
     data: {},
     updatedAt: record.updatedAt,
   });
@@ -7943,6 +8223,7 @@ async function bootstrapBundle(db, accountId, {
             ? publicSpellingContent?.snapshot || null
             : null,
           now: publicReadModelNow,
+          compact: Boolean(boundedToSelected),
         })
         : subjectStateRowToRecord(row);
     }

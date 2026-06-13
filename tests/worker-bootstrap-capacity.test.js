@@ -333,8 +333,10 @@ test('production bootstrap keeps high-history public payloads bounded and redact
   // gained `subjectStatesBounded` and the revision-hash input set
   // changed. PR799 follow-up 2026-04-30 bumped 3 -> 4 because the
   // Grammar public read-model representation changed and cached v3
-  // revisions must miss the notModified probe.
-  assert.equal(payload.meta.capacity.bootstrapCapacity.version, 5);
+  // revisions must miss the notModified probe. CDP stress hardening
+  // 2026-06-13 bumped 5 -> 6 so selected-learner subject state
+  // analytics switch to compact first-paint projections.
+  assert.equal(payload.meta.capacity.bootstrapCapacity.version, 6);
   assert.equal(payload.meta.capacity.bootstrapCapacity.mode, 'public-bounded');
   assert.equal('bootstrapPhaseTimings' in payload.meta.capacity, false, 'phase timings stay out of child-facing meta.capacity.');
 
