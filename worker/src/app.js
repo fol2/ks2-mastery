@@ -101,6 +101,65 @@ import { BUILD_VERSION } from './generated-build-version.js';
 const CSP_REPORT_BODY_CAP_BYTES = 8192;
 const CSP_REPORT_WINDOW_MS = 10 * 60 * 1000;
 const CSP_REPORT_IP_LIMIT = 20;
+const PUBLIC_BOOTSTRAP_IN_FLIGHT_LIMIT = 64;
+const publicBootstrapInFlight = new Map();
+
+function publicBootstrapInFlightKey({ accountId, preferredLearnerId = null }) {
+  return [
+    'public-v2',
+    accountId || '',
+    preferredLearnerId || '',
+  ].join('\u0000');
+}
+
+function stampPublicBootstrapCapacity(capacity, bundle) {
+  if (!capacity || !bundle || typeof bundle !== 'object') return;
+  if (bundle.bootstrapCapacity != null && typeof capacity.setBootstrapCapacity === 'function') {
+    capacity.setBootstrapCapacity(bundle.bootstrapCapacity);
+  }
+  if (typeof capacity.setBootstrapMode === 'function') {
+    capacity.setBootstrapMode('selected-learner-bounded');
+  }
+}
+
+async function readPublicBootstrapInFlight({ accountId, preferredLearnerId = null, capacity = null }, loadBundle) {
+  const key = publicBootstrapInFlightKey({ accountId, preferredLearnerId });
+  const existing = publicBootstrapInFlight.get(key);
+  if (existing) {
+    const bundle = await existing;
+    stampPublicBootstrapCapacity(capacity, bundle);
+    return bundle;
+  }
+
+  if (publicBootstrapInFlight.size >= PUBLIC_BOOTSTRAP_IN_FLIGHT_LIMIT) {
+    const bundle = await loadBundle();
+    stampPublicBootstrapCapacity(capacity, bundle);
+    return bundle;
+  }
+
+  const pending = Promise.resolve().then(loadBundle);
+  publicBootstrapInFlight.set(key, pending);
+  try {
+    const bundle = await pending;
+    stampPublicBootstrapCapacity(capacity, bundle);
+    return bundle;
+  } finally {
+    if (publicBootstrapInFlight.get(key) === pending) {
+      publicBootstrapInFlight.delete(key);
+    }
+  }
+}
+
+export function __clearPublicBootstrapInFlightForTests() {
+  publicBootstrapInFlight.clear();
+}
+
+export function __publicBootstrapInFlightSizeForTests() {
+  return publicBootstrapInFlight.size;
+}
+
+export const __readPublicBootstrapInFlightForTests = readPublicBootstrapInFlight;
+
 // Strip newline and control characters from logged values so a
 // violation report body cannot inject a fake structured log line
 // (security F-02, log-line spoofing). Keep printable characters
@@ -1406,12 +1465,17 @@ export function createWorkerApp({
           // Legacy (non-public) callers keep the unrestricted shape for
           // back-compat. `?preferredLearnerId=` echoes the client-side
           // preference precedence.
+          const preferredLearnerId = url.searchParams.get('preferredLearnerId') || null;
           const bundle = usePublic
-            ? await repository.bootstrapV2Get(session.accountId, {
+            ? await readPublicBootstrapInFlight({
+              accountId: session.accountId,
+              preferredLearnerId,
+              capacity,
+            }, () => repository.bootstrapV2Get(session.accountId, {
               publicReadModels: true,
-              preferredLearnerId: url.searchParams.get('preferredLearnerId') || null,
+              preferredLearnerId,
               accountSnapshot: account,
-            })
+            }))
             : await repository.bootstrap(session.accountId, {
               publicReadModels: usePublic,
               accountSnapshot: account,
@@ -1474,12 +1538,23 @@ export function createWorkerApp({
             ? body.preferredLearnerId
             : null;
           const usePublic = shouldUsePublicReadModels(request, env);
-          const bundle = await repository.bootstrapV2(session.accountId, {
-            publicReadModels: usePublic,
-            lastKnownRevision,
-            preferredLearnerId,
-            accountSnapshot: account,
-          });
+          const bundle = usePublic && !lastKnownRevision
+            ? await readPublicBootstrapInFlight({
+              accountId: session.accountId,
+              preferredLearnerId,
+              capacity,
+            }, () => repository.bootstrapV2(session.accountId, {
+              publicReadModels: true,
+              lastKnownRevision,
+              preferredLearnerId,
+              accountSnapshot: account,
+            }))
+            : await repository.bootstrapV2(session.accountId, {
+              publicReadModels: usePublic,
+              lastKnownRevision,
+              preferredLearnerId,
+              accountSnapshot: account,
+            });
           if (bundle?.notModified) {
             // U7: notModified body stays tight (< 2 KB). No session
             // rotation, no subject exposure gates — operator tooling

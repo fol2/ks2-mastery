@@ -29,6 +29,11 @@ import {
 import {
   readSeededSpellingContentBundle,
 } from '../worker/src/generated-spelling-content-seed.js';
+import {
+  __clearPublicBootstrapInFlightForTests,
+  __publicBootstrapInFlightSizeForTests,
+  __readPublicBootstrapInFlightForTests,
+} from '../worker/src/app.js';
 import { createWorkerRepositoryServer } from './helpers/worker-server.js';
 
 const BASE_URL = 'https://repo.test';
@@ -136,6 +141,66 @@ async function readJsonBody(response) {
   const text = await response.text();
   try { return JSON.parse(text); } catch { return null; }
 }
+
+test('public bootstrap in-flight dedupe shares concurrent full bundles without retaining resolved cache', async () => {
+  __clearPublicBootstrapInFlightForTests();
+  const bundle = {
+    ok: true,
+    bootstrapCapacity: {
+      version: BOOTSTRAP_CAPACITY_VERSION,
+      mode: 'public-bounded',
+      subjectStatesBounded: true,
+    },
+    subjectStates: {},
+  };
+  const capacityHits = [];
+  const makeCapacity = (label) => ({
+    setBootstrapCapacity(value) {
+      capacityHits.push({ label, type: 'capacity', value });
+    },
+    setBootstrapMode(value) {
+      capacityHits.push({ label, type: 'mode', value });
+    },
+  });
+  let resolveLoader;
+  let loaderCalls = 0;
+  const loaderGate = new Promise((resolve) => { resolveLoader = resolve; });
+  const loadBundle = async () => {
+    loaderCalls += 1;
+    await loaderGate;
+    return bundle;
+  };
+
+  const first = __readPublicBootstrapInFlightForTests({
+    accountId: 'adult-u7',
+    preferredLearnerId: 'learner-a',
+    capacity: makeCapacity('first'),
+  }, loadBundle);
+  const second = __readPublicBootstrapInFlightForTests({
+    accountId: 'adult-u7',
+    preferredLearnerId: 'learner-a',
+    capacity: makeCapacity('second'),
+  }, loadBundle);
+
+  await Promise.resolve();
+  assert.equal(loaderCalls, 1, 'same-key concurrent bootstrap calls share one in-flight loader');
+  assert.equal(__publicBootstrapInFlightSizeForTests(), 1);
+  resolveLoader();
+
+  assert.strictEqual(await first, bundle);
+  assert.strictEqual(await second, bundle);
+  assert.equal(__publicBootstrapInFlightSizeForTests(), 0, 'resolved bundles are not retained as a stale cache');
+  assert.deepEqual(
+    capacityHits.filter((hit) => hit.type === 'mode').map((hit) => hit.label).sort(),
+    ['first', 'second'],
+    'both callers stamp their own capacity collector',
+  );
+  assert.equal(
+    capacityHits.filter((hit) => hit.type === 'capacity').length,
+    2,
+    'both callers keep bootstrapCapacity metadata on their response',
+  );
+});
 
 function insertLargeSpellingContentRow(server, accountId) {
   runSql(server, `
