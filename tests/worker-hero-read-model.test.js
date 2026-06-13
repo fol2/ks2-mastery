@@ -2,6 +2,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { createApiPlatformRepositories } from '../src/platform/core/repositories/index.js';
+import {
+  __clearHeroReadModelInFlightForTests,
+  __heroReadModelInFlightSizeForTests,
+  __readHeroReadModelInFlightForTests,
+} from '../worker/src/hero/routes.js';
 import { createWorkerRepositoryServer } from './helpers/worker-server.js';
 
 // ── Helpers ────────────────────────────────────────────────────────────
@@ -83,6 +88,47 @@ function guardAgainstHeroSpellingContentRead(server) {
 }
 
 // ── Tests ──────────────────────────────────────────────────────────────
+
+test('hero read-model in-flight dedupe shares concurrent payloads without retaining resolved cache', async () => {
+  __clearHeroReadModelInFlightForTests();
+  const payload = {
+    ok: true,
+    hero: {
+      version: 6,
+      ui: { enabled: true },
+    },
+  };
+  let resolveLoader;
+  let loaderCalls = 0;
+  const loaderGate = new Promise((resolve) => { resolveLoader = resolve; });
+  const loadPayload = async () => {
+    loaderCalls += 1;
+    await loaderGate;
+    return payload;
+  };
+
+  const first = __readHeroReadModelInFlightForTests({
+    accountId: 'adult-a',
+    learnerId: 'learner-a',
+  }, loadPayload);
+  const second = __readHeroReadModelInFlightForTests({
+    accountId: 'adult-a',
+    learnerId: 'learner-a',
+  }, loadPayload);
+
+  await Promise.resolve();
+  assert.equal(loaderCalls, 1, 'same-key concurrent hero reads share one in-flight loader');
+  assert.equal(__heroReadModelInFlightSizeForTests(), 1);
+  resolveLoader();
+
+  assert.strictEqual(await first, payload);
+  assert.strictEqual(await second, payload);
+  assert.equal(
+    __heroReadModelInFlightSizeForTests(),
+    0,
+    'resolved hero payloads are not retained as a stale cache',
+  );
+});
 
 test('hero read-model: flag on + authenticated returns shadow read model', async () => {
   const server = createServerWithHeroFlag(true);

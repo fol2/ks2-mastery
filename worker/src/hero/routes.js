@@ -10,6 +10,39 @@ import { buildHeroShadowReadModel } from './read-model.js';
 import { resolveHeroFlagsForAccount } from '../../../shared/hero/account-override.js';
 import { heroCampMonsterIdsFromRewardTracks } from './exposure.js';
 
+const HERO_READ_MODEL_IN_FLIGHT_LIMIT = 64;
+const heroReadModelInFlight = new Map();
+
+function heroReadModelInFlightKey({ accountId, learnerId }) {
+  return [
+    'hero-read-model-v1',
+    accountId || '',
+    learnerId || '',
+  ].join('\u0000');
+}
+
+async function readHeroReadModelInFlight({ accountId, learnerId }, loadPayload) {
+  const key = heroReadModelInFlightKey({ accountId, learnerId });
+  const existing = heroReadModelInFlight.get(key);
+  if (existing) {
+    return existing;
+  }
+
+  if (heroReadModelInFlight.size >= HERO_READ_MODEL_IN_FLIGHT_LIMIT) {
+    return loadPayload();
+  }
+
+  const pending = Promise.resolve().then(loadPayload);
+  heroReadModelInFlight.set(key, pending);
+  try {
+    return await pending;
+  } finally {
+    if (heroReadModelInFlight.get(key) === pending) {
+      heroReadModelInFlight.delete(key);
+    }
+  }
+}
+
 function envFlagEnabled(value) {
   return ['1', 'true', 'yes', 'on'].includes(String(value || '').trim().toLowerCase());
 }
@@ -93,61 +126,77 @@ export async function handleHeroReadModel({
   //    caller without membership receives a 403 before any data read.
   await repository.requireLearnerReadAccess(session.accountId, learnerId);
 
-  const nowTs = typeof now === 'function' ? now() : Date.now();
-
-  // 4. Load per-subject read models for the learner.
-  //    This uses the same public read-model projection as bootstrap so Hero
-  //    sees provider-readable subject signals rather than raw storage slots.
-  const subjectReadModels = await repository.readHeroSubjectReadModels(learnerId, {
+  const payload = await readHeroReadModelInFlight({
     accountId: session.accountId,
-    now: nowTs,
-  });
-
-  // 4b. P3 U7: load progress bundle for the v4 read model when progress enabled.
-  const progressFlagEnabled = envFlagEnabled(resolvedEnv.HERO_MODE_PROGRESS_ENABLED);
-  const economyFlagEnabled = envFlagEnabled(resolvedEnv.HERO_MODE_ECONOMY_ENABLED);
-  const campFlagEnabled = envFlagEnabled(resolvedEnv.HERO_MODE_CAMP_ENABLED);
-  const campMonsterIds = campMonsterIdsFromSubjectExposure(subjectReadModels, {
-    now: nowTs,
-    env: resolvedEnv,
-  });
-  const heroProgressData = progressFlagEnabled
-    ? await repository.readHeroProgressData(learnerId)
-    : { heroProgressState: null, recentCompletedSessions: [] };
-
-  // 5. Assemble the shadow read model (v3, v4, v5, or v6: pass accountId and env for
-  //    quest fingerprint and the HERO_MODE_CHILD_UI_ENABLED gate).
-  const result = buildHeroShadowReadModel({
     learnerId,
-    accountId: session.accountId || '',
-    subjectReadModels,
-    now: nowTs,
-    env: resolvedEnv,
-    heroProgressState: heroProgressData.heroProgressState,
-    recentCompletedSessions: heroProgressData.recentCompletedSessions,
-    progressEnabled: progressFlagEnabled,
-    economyEnabled: progressFlagEnabled && economyFlagEnabled,
-    campEnabled: progressFlagEnabled && economyFlagEnabled && campFlagEnabled,
-    campMonsterIds,
+  }, async () => {
+    const nowTs = typeof now === 'function' ? now() : Date.now();
+
+    // 4. Load per-subject read models for the learner.
+    //    This uses the same public read-model projection as bootstrap so Hero
+    //    sees provider-readable subject signals rather than raw storage slots.
+    const subjectReadModels = await repository.readHeroSubjectReadModels(learnerId, {
+      accountId: session.accountId,
+      now: nowTs,
+    });
+
+    // 4b. P3 U7: load progress bundle for the v4 read model when progress enabled.
+    const progressFlagEnabled = envFlagEnabled(resolvedEnv.HERO_MODE_PROGRESS_ENABLED);
+    const economyFlagEnabled = envFlagEnabled(resolvedEnv.HERO_MODE_ECONOMY_ENABLED);
+    const campFlagEnabled = envFlagEnabled(resolvedEnv.HERO_MODE_CAMP_ENABLED);
+    const campMonsterIds = campMonsterIdsFromSubjectExposure(subjectReadModels, {
+      now: nowTs,
+      env: resolvedEnv,
+    });
+    const heroProgressData = progressFlagEnabled
+      ? await repository.readHeroProgressData(learnerId)
+      : { heroProgressState: null, recentCompletedSessions: [] };
+
+    // 5. Assemble the shadow read model (v3, v4, v5, or v6: pass accountId and env for
+    //    quest fingerprint and the HERO_MODE_CHILD_UI_ENABLED gate).
+    const result = buildHeroShadowReadModel({
+      learnerId,
+      accountId: session.accountId || '',
+      subjectReadModels,
+      now: nowTs,
+      env: resolvedEnv,
+      heroProgressState: heroProgressData.heroProgressState,
+      recentCompletedSessions: heroProgressData.recentCompletedSessions,
+      progressEnabled: progressFlagEnabled,
+      economyEnabled: progressFlagEnabled && economyFlagEnabled,
+      campEnabled: progressFlagEnabled && economyFlagEnabled && campFlagEnabled,
+      campMonsterIds,
+    });
+
+    // U10: structured observability — fire-and-forget, never blocks the response.
+    try {
+      // eslint-disable-next-line no-console
+      console.log(JSON.stringify({
+        event: 'hero_read_model_loaded',
+        learnerId,
+        version: result.version,
+        uiEnabled: result.ui?.enabled || false,
+        taskCount: result.dailyQuest?.tasks?.length || 0,
+        activeSession: Boolean(result.activeHeroSession),
+      }));
+    } catch { /* best-effort */ }
+
+    // Strip debug block from the child-visible response — debug data is
+    // only available via operator scripts / event_log, never over HTTP.
+    const { debug, ...safeResult } = result;
+
+    return { ok: true, hero: safeResult };
   });
 
-  // U10: structured observability — fire-and-forget, never blocks the response.
-  try {
-    // eslint-disable-next-line no-console
-    console.log(JSON.stringify({
-      event: 'hero_read_model_loaded',
-      learnerId,
-      version: result.version,
-      uiEnabled: result.ui?.enabled || false,
-      taskCount: result.dailyQuest?.tasks?.length || 0,
-      activeSession: Boolean(result.activeHeroSession),
-    }));
-  } catch { /* best-effort */ }
-
-  // Strip debug block from the child-visible response — debug data is
-  // only available via operator scripts / event_log, never over HTTP.
-  const { debug, ...safeResult } = result;
-  const responseHero = safeResult;
-
-  return json({ ok: true, hero: responseHero });
+  return json(payload);
 }
+
+export function __clearHeroReadModelInFlightForTests() {
+  heroReadModelInFlight.clear();
+}
+
+export function __heroReadModelInFlightSizeForTests() {
+  return heroReadModelInFlight.size;
+}
+
+export const __readHeroReadModelInFlightForTests = readHeroReadModelInFlight;
