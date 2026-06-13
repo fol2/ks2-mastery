@@ -1108,6 +1108,94 @@ function runtimeContentSummary(content, snapshot) {
   };
 }
 
+function nonNegativeInteger(value) {
+  return Math.max(0, Number(value) || 0);
+}
+
+function readReleaseProofSummary(row = null) {
+  const proof = safeJsonParse(row?.proof_json, null);
+  if (isPlainObject(proof?.seed?.summary)) return proof.seed.summary;
+  if (isPlainObject(proof?.summary)) return proof.summary;
+  if (isPlainObject(proof?.content?.summary)) return proof.content.summary;
+  return null;
+}
+
+function normaliseAdminSpellingContentSummary(rawSummary = null, releaseRow = null) {
+  const fallback = SEEDED_SPELLING_CONTENT_SUMMARY || {};
+  const raw = isPlainObject(rawSummary) ? rawSummary : {};
+  const coverageTierCounts = isPlainObject(raw.coverageTierCounts)
+    ? raw.coverageTierCounts
+    : (isPlainObject(fallback.coverageTierCounts) ? fallback.coverageTierCounts : {});
+  const publishedAt = Number(releaseRow?.published_at)
+    || Number(raw.publishedAt)
+    || Number(fallback.publishedAt)
+    || 0;
+  return {
+    subjectId: typeof raw.subjectId === 'string' ? raw.subjectId : 'spelling',
+    wordListCount: nonNegativeInteger(raw.wordListCount ?? fallback.wordListCount),
+    wordCount: nonNegativeInteger(raw.wordCount ?? fallback.wordCount),
+    sentenceCount: nonNegativeInteger(raw.sentenceCount ?? fallback.sentenceCount),
+    releaseCount: nonNegativeInteger(raw.releaseCount ?? fallback.releaseCount),
+    errorCount: nonNegativeInteger(raw.errorCount ?? fallback.errorCount),
+    warningCount: nonNegativeInteger(raw.warningCount ?? fallback.warningCount),
+    publishedReleaseId: typeof raw.publishedReleaseId === 'string' && raw.publishedReleaseId
+      ? raw.publishedReleaseId
+      : (typeof releaseRow?.release_id === 'string' ? releaseRow.release_id : (fallback.publishedReleaseId || '')),
+    publishedVersion: nonNegativeInteger(raw.publishedVersion ?? fallback.publishedVersion),
+    publishedAt,
+    runtimeWordCount: nonNegativeInteger(raw.runtimeWordCount ?? fallback.runtimeWordCount),
+    runtimeSentenceCount: nonNegativeInteger(raw.runtimeSentenceCount ?? fallback.runtimeSentenceCount),
+    coverageTierCounts: {
+      statutoryCore: nonNegativeInteger(coverageTierCounts.statutoryCore),
+      secureExtension: nonNegativeInteger(coverageTierCounts.secureExtension),
+      enrichmentExtra: nonNegativeInteger(coverageTierCounts.enrichmentExtra),
+      total: nonNegativeInteger(coverageTierCounts.total),
+    },
+    statutoryCoreCount: nonNegativeInteger(raw.statutoryCoreCount ?? coverageTierCounts.statutoryCore ?? fallback.statutoryCoreCount),
+    secureExtensionCount: nonNegativeInteger(raw.secureExtensionCount ?? coverageTierCounts.secureExtension ?? fallback.secureExtensionCount),
+    enrichmentExtraCount: nonNegativeInteger(raw.enrichmentExtraCount ?? coverageTierCounts.enrichmentExtra ?? fallback.enrichmentExtraCount),
+    ok: raw.ok !== false,
+  };
+}
+
+function buildAdminSpellingDraftStatus(summary, releaseRow = null) {
+  const publishedAt = Number(summary?.publishedAt) || Number(releaseRow?.published_at) || 0;
+  return {
+    id: typeof summary?.currentDraftId === 'string' && summary.currentDraftId
+      ? summary.currentDraftId
+      : 'metadata-deferred',
+    version: nonNegativeInteger(summary?.currentDraftVersion),
+    state: typeof summary?.currentDraftState === 'string' && summary.currentDraftState
+      ? summary.currentDraftState
+      : 'metadata-deferred',
+    updatedAt: Number(summary?.draftUpdatedAt) || publishedAt,
+    provenance: {
+      source: typeof summary?.source === 'string' && summary.source
+        ? summary.source
+        : 'content-operation-release-metadata',
+      importedAt: Number(summary?.importedAt) || 0,
+    },
+  };
+}
+
+async function readAdminSpellingContentStatus(db, accountId, subjectId = 'spelling') {
+  const releaseRow = await readResolvedContentOperationReleaseRow(db, accountId, subjectId, {
+    includeSnapshot: false,
+  });
+  const summary = normaliseAdminSpellingContentSummary(readReleaseProofSummary(releaseRow), releaseRow);
+  return {
+    summary,
+    validation: {
+      ok: summary.ok,
+      errorCount: summary.errorCount,
+      warningCount: summary.warningCount,
+      errors: [],
+      warnings: [],
+    },
+    draft: buildAdminSpellingDraftStatus(summary, releaseRow),
+  };
+}
+
 function resolveLearnerVisibleRuntimeContent(runtimeContent, {
   nowMs = Date.now(),
   env = {},
@@ -10076,14 +10164,18 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
       const actor = await assertAdminHubActor(db, accountId);
       const account = actor;
 
-      // Sequential: memberships depend on account lookup, learner bundles
-      // depend on membership list, spelling content is an independent read
-      // but must complete before buildAdminHubReadModel.
-      const memberships = await listMembershipRows(db, accountId, { writableOnly: false });
-      const spellingContent = await readSpellingContentForReadModels(db, accountId, 'spelling', {
-        nowMs: nowFactory(),
-        env,
-      });
+      // The default admin hub only needs release/card-level content status.
+      // Keep full spelling runtime hydration behind the diagnostics opt-in so
+      // repeated admin page reads stay below Cloudflare's Worker limits.
+      const [memberships, spellingContent] = await Promise.all([
+        listMembershipRows(db, accountId, { writableOnly: false }),
+        includeLearnerDiagnostics
+          ? readSpellingContentForReadModels(db, accountId, 'spelling', {
+            nowMs: nowFactory(),
+            env,
+          })
+          : readAdminSpellingContentStatus(db, accountId, 'spelling'),
+      ]);
       const defaultLearnerId = account?.selected_learner_id && memberships.some((membership) => membership.id === account.selected_learner_id)
         ? account.selected_learner_id
         : (memberships[0]?.id || null);
@@ -10168,10 +10260,11 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
           platformRole: accountPlatformRole(account),
         },
         platformRole: accountPlatformRole(account),
-        spellingContentBundle: spellingContent.contentBundle,
+        spellingContentBundle: includeLearnerDiagnostics ? spellingContent.contentBundle : null,
+        spellingContentStatus: includeLearnerDiagnostics ? null : spellingContent,
         memberships: memberships.map(membershipRowToModel),
         learnerBundles,
-        runtimeSnapshots: { spelling: spellingContent.runtimeSnapshot },
+        runtimeSnapshots: includeLearnerDiagnostics ? { spelling: spellingContent.runtimeSnapshot } : {},
         demoOperations,
         monsterVisualConfig,
         auditEntries: auditEntries.map((row) => ({

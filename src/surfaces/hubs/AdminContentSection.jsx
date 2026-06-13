@@ -374,6 +374,13 @@ function ContentQualitySummaryPanel({ model }) {
   );
 }
 
+function contentDraftStatusText(status = {}) {
+  if (status.currentDraftId === 'metadata-deferred' || status.currentDraftState === 'metadata-deferred') {
+    return `Draft metadata deferred · release metadata only · updated ${formatTimestamp(status.draftUpdatedAt)}`;
+  }
+  return `Draft ${status.currentDraftId || 'unknown'} · version ${String(status.currentDraftVersion || 1)} · updated ${formatTimestamp(status.draftUpdatedAt)}`;
+}
+
 function ContentReleaseAndImport({ model, accessContext, actions }) {
   return (
     <section className="two-col admin-card-spaced">
@@ -387,7 +394,7 @@ function ContentReleaseAndImport({ model, accessContext, actions }) {
           <span className="chip">{String(model.contentReleaseStatus.runtimeSentenceCount || 0)} sentences</span>
         </div>
         <p className="small muted admin-meta-spaced">
-          Draft {model.contentReleaseStatus.currentDraftId} · version {String(model.contentReleaseStatus.currentDraftVersion || 1)} · updated {formatTimestamp(model.contentReleaseStatus.draftUpdatedAt)}
+          {contentDraftStatusText(model.contentReleaseStatus)}
         </p>
         <div className="actions admin-actions-spaced">
           <button className="btn secondary" type="button" disabled={isBlocked('open-subject', accessContext)} onClick={() => actions.openSubject('spelling')}>Open Spelling</button>

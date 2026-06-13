@@ -77,6 +77,79 @@ function isPlainObject(value) {
   return value && typeof value === 'object' && !Array.isArray(value);
 }
 
+function normaliseContentIssuePreview(issues) {
+  return (Array.isArray(issues) ? issues : [])
+    .filter(isPlainObject)
+    .slice(0, 5)
+    .map((issue) => ({
+      severity: typeof issue.severity === 'string' ? issue.severity : '',
+      code: typeof issue.code === 'string' ? issue.code : '',
+      path: typeof issue.path === 'string' ? issue.path : '',
+      message: typeof issue.message === 'string' ? issue.message : '',
+    }));
+}
+
+function buildSpellingContentStatusFromBundle(spellingContentBundle) {
+  const validation = validateSpellingContentBundle(spellingContentBundle);
+  const contentSummary = buildSpellingContentSummary(validation.bundle);
+  const draft = validation.bundle.draft || {};
+  return {
+    summary: contentSummary,
+    validation: {
+      ok: validation.ok,
+      errorCount: validation.errors.length,
+      warningCount: validation.warnings.length,
+      errors: validation.errors.slice(0, 5),
+      warnings: validation.warnings.slice(0, 5),
+    },
+    draft: {
+      id: draft.id || '',
+      version: Number(draft.version) || 0,
+      state: draft.state || '',
+      updatedAt: asTs(draft.updatedAt, 0),
+      provenance: isPlainObject(draft.provenance) ? draft.provenance : {},
+    },
+  };
+}
+
+function normaliseSpellingContentStatus(rawStatus, spellingContentBundle) {
+  if (!isPlainObject(rawStatus)) {
+    return buildSpellingContentStatusFromBundle(spellingContentBundle);
+  }
+  const summary = isPlainObject(rawStatus.summary) ? rawStatus.summary : {};
+  const validation = isPlainObject(rawStatus.validation) ? rawStatus.validation : {};
+  const draft = isPlainObject(rawStatus.draft) ? rawStatus.draft : {};
+  const provenance = isPlainObject(draft.provenance) ? draft.provenance : {};
+  return {
+    summary: {
+      subjectId: typeof summary.subjectId === 'string' ? summary.subjectId : 'spelling',
+      publishedReleaseId: typeof summary.publishedReleaseId === 'string' ? summary.publishedReleaseId : '',
+      publishedVersion: toNonNegativeInt(summary.publishedVersion),
+      publishedAt: asTs(summary.publishedAt, 0),
+      releaseCount: toNonNegativeInt(summary.releaseCount),
+      runtimeWordCount: toNonNegativeInt(summary.runtimeWordCount),
+      runtimeSentenceCount: toNonNegativeInt(summary.runtimeSentenceCount),
+      statutoryCoreCount: toNonNegativeInt(summary.statutoryCoreCount),
+      secureExtensionCount: toNonNegativeInt(summary.secureExtensionCount),
+      enrichmentExtraCount: toNonNegativeInt(summary.enrichmentExtraCount),
+    },
+    validation: {
+      ok: validation.ok !== false,
+      errorCount: toNonNegativeInt(validation.errorCount),
+      warningCount: toNonNegativeInt(validation.warningCount),
+      errors: normaliseContentIssuePreview(validation.errors),
+      warnings: normaliseContentIssuePreview(validation.warnings),
+    },
+    draft: {
+      id: typeof draft.id === 'string' ? draft.id : '',
+      version: toNonNegativeInt(draft.version),
+      state: typeof draft.state === 'string' ? draft.state : '',
+      updatedAt: asTs(draft.updatedAt, 0),
+      provenance,
+    },
+  };
+}
+
 // P1.5 Phase A (U3): `real` / `demo` pairs are surfaced on every counter
 // that can be split by account type. `demo` is optional on every field — a
 // legacy server that doesn't emit the new sibling still produces a valid
@@ -475,6 +548,7 @@ export function buildAdminHubReadModel({
   account = null,
   platformRole = 'parent',
   spellingContentBundle = null,
+  spellingContentStatus = null,
   memberships = [],
   learnerBundles = {},
   runtimeSnapshots = {},
@@ -491,8 +565,10 @@ export function buildAdminHubReadModel({
   now = Date.now,
 } = {}) {
   const resolvedPlatformRole = normalisePlatformRole(platformRole || account?.platformRole);
-  const validation = validateSpellingContentBundle(spellingContentBundle);
-  const contentSummary = buildSpellingContentSummary(validation.bundle);
+  const contentStatus = normaliseSpellingContentStatus(spellingContentStatus, spellingContentBundle);
+  const contentSummary = contentStatus.summary;
+  const validation = contentStatus.validation;
+  const contentDraft = contentStatus.draft;
   const generatedAt = typeof now === 'function' ? asTs(now(), Date.now()) : asTs(now, Date.now());
   const sourceMemberships = Array.isArray(memberships) ? memberships : [];
   const diagnosticsEntries = includeLearnerDiagnostics ? sourceMemberships.map((membership) => {
@@ -620,19 +696,19 @@ export function buildAdminHubReadModel({
       statutoryCoreCount: Number(contentSummary.statutoryCoreCount) || 0,
       secureExtensionCount: Number(contentSummary.secureExtensionCount) || 0,
       enrichmentExtraCount: Number(contentSummary.enrichmentExtraCount) || 0,
-      currentDraftId: validation.bundle.draft.id,
-      currentDraftVersion: validation.bundle.draft.version,
-      currentDraftState: validation.bundle.draft.state,
-      draftUpdatedAt: validation.bundle.draft.updatedAt,
+      currentDraftId: contentDraft.id,
+      currentDraftVersion: contentDraft.version,
+      currentDraftState: contentDraft.state,
+      draftUpdatedAt: contentDraft.updatedAt,
     },
     importValidationStatus: {
       ok: validation.ok,
-      errorCount: validation.errors.length,
-      warningCount: validation.warnings.length,
-      importedAt: validation.bundle.draft.provenance?.importedAt || 0,
-      source: validation.bundle.draft.provenance?.source || '',
-      errors: validation.errors.slice(0, 5),
-      warnings: validation.warnings.slice(0, 5),
+      errorCount: validation.errorCount,
+      warningCount: validation.warningCount,
+      importedAt: contentDraft.provenance?.importedAt || 0,
+      source: contentDraft.provenance?.source || '',
+      errors: validation.errors,
+      warnings: validation.warnings,
     },
     auditLogLookup: {
       available: Boolean(auditAvailable),

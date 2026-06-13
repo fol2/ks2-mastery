@@ -625,6 +625,70 @@ test('admin hub read model reports published release status, validation state, a
   assert.equal(model.learnerSupport.selectedDiagnostics.overview.secureWords, 1);
 });
 
+test('admin hub read model accepts precomputed spelling content status for compact Worker reads', () => {
+  const learner = makeLearner('learner-compact-admin', 'Ada');
+  const model = buildAdminHubReadModel({
+    account: {
+      id: 'adult-admin',
+      selectedLearnerId: learner.id,
+      repoRevision: 7,
+      platformRole: 'admin',
+    },
+    platformRole: 'admin',
+    spellingContentStatus: {
+      summary: {
+        subjectId: 'spelling',
+        publishedReleaseId: 'spelling-r77',
+        publishedVersion: 77,
+        publishedAt: 1_777_111_222_333,
+        releaseCount: 77,
+        runtimeWordCount: 321,
+        runtimeSentenceCount: 654,
+        statutoryCoreCount: 111,
+        secureExtensionCount: 190,
+        enrichmentExtraCount: 20,
+      },
+      validation: {
+        ok: true,
+        errorCount: 0,
+        warningCount: 2,
+        errors: [],
+        warnings: [
+          { severity: 'warn', code: 'sample', path: 'draft.words[0]', message: 'Sample warning.' },
+        ],
+      },
+      draft: {
+        id: 'metadata-deferred',
+        version: 0,
+        state: 'metadata-deferred',
+        updatedAt: 1_777_111_222_333,
+        provenance: {
+          source: 'content-operation-release-metadata',
+          importedAt: 0,
+        },
+      },
+    },
+    memberships: [{
+      learnerId: learner.id,
+      role: 'owner',
+      learner,
+      stateRevision: 5,
+    }],
+    auditAvailable: true,
+    selectedLearnerId: learner.id,
+    includeLearnerDiagnostics: false,
+    now: () => 6000,
+  });
+
+  assert.equal(model.contentReleaseStatus.publishedVersion, 77);
+  assert.equal(model.contentReleaseStatus.runtimeWordCount, 321);
+  assert.equal(model.contentReleaseStatus.currentDraftId, 'metadata-deferred');
+  assert.equal(model.importValidationStatus.warningCount, 2);
+  assert.equal(model.importValidationStatus.warnings[0].code, 'sample');
+  assert.equal(model.learnerSupport.diagnosticsHydrationStatus, 'deferred');
+  assert.equal(model.learnerSupport.selectedDiagnostics, null);
+});
+
 test('parent hub read model exposes readable learner choices and access mode labels', () => {
   const learner = makeLearner('learner-viewer', 'Vera');
   const model = buildParentHubReadModel({
