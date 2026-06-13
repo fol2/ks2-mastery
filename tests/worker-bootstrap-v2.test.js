@@ -29,9 +29,6 @@ import {
 import {
   readSeededSpellingContentBundle,
 } from '../worker/src/generated-spelling-content-seed.js';
-import {
-  isStatutoryCoreWord,
-} from '../src/subjects/spelling/content/taxonomy.js';
 import { createWorkerRepositoryServer } from './helpers/worker-server.js';
 
 const BASE_URL = 'https://repo.test';
@@ -90,7 +87,7 @@ function insertSubjectState(server, accountId, learnerId, { sessions = 0 } = {})
   `, [
     learnerId,
     JSON.stringify({ phase: 'idle' }),
-    JSON.stringify({ prefs: { mode: 'smart' } }),
+    JSON.stringify({ prefs: { mode: 'smart' }, progress: { possess: { stage: 3 } } }),
     NOW,
     accountId,
   ]);
@@ -515,8 +512,8 @@ test('U7 scenario 2: 30-learner bounded bootstrap ≤ 150 KB; others in learnerL
     // U1 hotfix 2026-04-26: subject states ship for every writable learner
     // (unbounded) so learner switching can still see the sibling rows.
     // Sessions + events remain bounded to the selected learner. The heavy
-    // spelling read-model projection is now also selected-only; sibling
-    // spelling rows hydrate fully when that learner becomes selected.
+    // spelling runtime projection is not part of bootstrap; all spelling rows
+    // carry compact persisted-progress stats and hydrate post-mastery lazily.
     const selectedLearnerId = payload.account.selectedLearnerId;
     assert.equal(selectedLearnerId, 'learner-00');
     const subjectKeys = Object.keys(payload.subjectStates || {});
@@ -540,16 +537,18 @@ test('U7 scenario 2: 30-learner bounded bootstrap ≤ 150 KB; others in learnerL
       'defence-in-depth: learner-00 events present (sanity — test seeds 200)');
     assert.equal(payload.bootstrapCapacity?.subjectStatesBounded, false,
       'U1: subjectStatesBounded contract marker stamped false');
-    assert.ok(Object.keys(payload.subjectStates['learner-00::spelling']?.ui?.stats || {}).length > 0,
-      'selected learner keeps the full content-backed spelling stats');
-    assert.ok(payload.subjectStates['learner-00::spelling']?.ui?.analytics,
-      'selected learner keeps the full content-backed spelling analytics');
-    assert.deepEqual(payload.subjectStates['learner-01::spelling']?.ui?.stats, {},
-      'sibling spelling row stays lightweight in the selected-learner-bounded envelope');
+    assert.equal(payload.subjectStates['learner-00::spelling']?.ui?.stats?.all?.total, 1,
+      'selected learner keeps compact persisted spelling stats');
+    assert.equal(payload.subjectStates['learner-00::spelling']?.ui?.analytics, null,
+      'selected learner avoids heavyweight spelling analytics in bootstrap');
+    assert.equal(payload.subjectStates['learner-00::spelling']?.ui?.postMastery, null,
+      'selected learner post-mastery waits for a spelling command or lazy route');
+    assert.equal(payload.subjectStates['learner-01::spelling']?.ui?.stats?.all?.total, 1,
+      'sibling spelling row keeps compact persisted spelling stats');
     assert.equal(payload.subjectStates['learner-01::spelling']?.ui?.analytics, null,
-      'sibling spelling analytics waits until that learner is selected');
+      'sibling spelling analytics stays out of the bootstrap envelope');
     assert.equal(payload.subjectStates['learner-01::spelling']?.ui?.postMastery, null,
-      'sibling post-mastery derivation waits until that learner is selected');
+      'sibling post-mastery derivation stays out of the bootstrap envelope');
 
     // account.learnerList has the other 29.
     assert.equal(payload.account.learnerList.length, 29);
@@ -1158,10 +1157,6 @@ test('public bootstrap uses the published global content operations release with
     insertLargeSpellingContentRow(server, 'adult-u7');
     guardAgainstBootstrapSpellingContentRead(server);
 
-    const runtime = await repository.readSpellingRuntimeContent('adult-u7', 'spelling', {
-      includeAccountContent: false,
-    });
-    const expectedCoreWordCount = runtime.snapshot.words.filter(isStatutoryCoreWord).length;
     const response = await getBootstrap(server);
     assert.equal(response.status, 200);
     const payload = await readJsonBody(response);
@@ -1169,7 +1164,10 @@ test('public bootstrap uses the published global content operations release with
 
     const spelling = payload.subjectStates?.['learner-a::spelling'];
     assert.ok(spelling, 'fresh bootstrap includes spelling subject state');
-    assert.equal(spelling.ui?.stats?.all?.total, expectedCoreWordCount);
+    assert.equal(spelling.ui?.stats?.all?.total, 1,
+      'fresh bootstrap uses compact persisted spelling stats instead of release snapshot totals');
+    assert.equal(spelling.ui?.analytics, null,
+      'fresh bootstrap does not build heavyweight spelling analytics from the release snapshot');
   } finally {
     server.close();
   }
@@ -1197,18 +1195,14 @@ test('public bootstrap notModified misses after a spelling content-operation rel
       payload: { reason: 'Bootstrap notModified regression test.' },
     });
 
-    const runtime = await repository.readSpellingRuntimeContent('adult-u7', 'spelling', {
-      includeAccountContent: false,
-    });
-    const expectedCoreWordCount = runtime.snapshot.words.filter(isStatutoryCoreWord).length;
-
     const response = await postBootstrap(server, { lastKnownRevision: firstHash });
     assert.equal(response.status, 200);
     const payload = await readJsonBody(response);
     assert.notEqual(payload.notModified, true,
       'content-only spelling release changes must invalidate the bootstrap notModified probe');
     assert.notEqual(payload.revision?.hash, firstHash);
-    assert.equal(payload.subjectStates?.['learner-a::spelling']?.ui?.stats?.all?.total, expectedCoreWordCount);
+    assert.equal(payload.subjectStates?.['learner-a::spelling']?.ui?.stats?.all?.total, 1,
+      'content-release invalidation still returns compact persisted spelling stats');
   } finally {
     server.close();
   }

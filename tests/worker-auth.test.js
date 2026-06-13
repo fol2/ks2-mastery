@@ -3,8 +3,6 @@ import assert from 'node:assert/strict';
 
 import { createWorkerRepositoryServer } from './helpers/worker-server.js';
 
-const EXTRA_SPELLING_WORD_COUNT = 52;
-
 function productionServer(env = {}) {
   return createWorkerRepositoryServer({
     env: {
@@ -554,7 +552,7 @@ test('production public bootstrap redacts spelling sentinels from subject state,
   server.close();
 });
 
-test('production public bootstrap keeps Codex mastery visible from redacted spelling progress', async () => {
+test('production public bootstrap keeps spelling progress compact without heavyweight read-model projection', async () => {
   const server = productionServer();
   const register = await postJson(server, '/api/auth/register', {
     email: 'bootstrap-codex@example.test',
@@ -596,21 +594,16 @@ test('production public bootstrap keeps Codex mastery visible from redacted spel
 
   assert.equal(response.status, 200, JSON.stringify(payload));
   assert.equal(publicSpelling.data.progress, undefined);
-  assert.ok(publicSpelling.ui.stats.core.total > 0);
-  assert.equal(publicSpelling.ui.stats.all.secure, 3);
-  assert.equal(publicSpelling.ui.stats.core.secure, 3);
-  assert.equal(publicSpelling.ui.stats.y34.secure, 1);
-  assert.equal(publicSpelling.ui.stats.y56.secure, 2);
-  assert.equal(publicSpelling.ui.stats.extra.total, EXTRA_SPELLING_WORD_COUNT);
-  assert.equal(publicSpelling.ui.stats.extra.secure, 1);
-  assert.deepEqual(publicSpelling.ui.analytics.wordGroups, []);
-  assert.equal(publicSpelling.ui.analytics.pools.core.secure, 3);
-  assert.equal(publicGameState.inklet.mastered, undefined);
-  assert.equal(publicGameState.inklet.masteredCount, 1);
-  assert.equal(publicGameState.glimmerbug.masteredCount, 2);
-  assert.equal(publicGameState.phaeton.masteredCount, 3);
-  assert.equal(publicGameState.phaeton.caught, true);
-  assert.equal(publicGameState.vellhorn.masteredCount, 1);
+  assert.equal(publicSpelling.ui.stats.all.total, 4);
+  assert.equal(publicSpelling.ui.stats.all.secure, 4);
+  assert.equal(publicSpelling.ui.stats.core.total, 4);
+  assert.equal(publicSpelling.ui.stats.core.secure, 4);
+  assert.equal(publicSpelling.ui.stats.y34.total, 0);
+  assert.equal(publicSpelling.ui.stats.y56.total, 0);
+  assert.equal(publicSpelling.ui.stats.extra.total, 0);
+  assert.equal(publicSpelling.ui.analytics, null);
+  assert.equal(publicSpelling.ui.postMastery, null);
+  assert.equal(publicGameState, undefined);
 
   server.close();
 });

@@ -151,6 +151,7 @@ import { buildParentHubReadModel } from '../../src/platform/hubs/parent-read-mod
 // monsterIdForSpellingWord → row-transforms.js
 import { buildSpellingProgressPools, buildSpellingWordBankReadModel } from './content/spelling-read-models.js';
 import { getSpellingPostMasteryState } from '../../src/subjects/spelling/read-model.js';
+import { normaliseServerSpellingData } from './subjects/spelling/engine.js';
 import {
   activityFeedRowFromEventRow,
   appendRecentEventTokens,
@@ -271,6 +272,68 @@ function isMissingCapacityReadModelTableError(error) {
 // safeSpellingSessionProgress, publicSpellingStats, publicSpellingAnalytics
 // → row-transforms.js
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+function spellingTodayDay(now = Date.now()) {
+  const numeric = Number(now);
+  return Math.floor((Number.isFinite(numeric) ? numeric : Date.now()) / DAY_MS);
+}
+
+function compactSpellingProgressEntry(rawValue, now) {
+  const raw = rawValue && typeof rawValue === 'object' && !Array.isArray(rawValue) ? rawValue : {};
+  return {
+    stage: Number.isFinite(Number(raw.stage)) ? Number(raw.stage) : 0,
+    attempts: Number.isFinite(Number(raw.attempts)) ? Number(raw.attempts) : 0,
+    correct: Number.isFinite(Number(raw.correct)) ? Number(raw.correct) : 0,
+    wrong: Number.isFinite(Number(raw.wrong)) ? Number(raw.wrong) : 0,
+    dueDay: Number.isFinite(Number(raw.dueDay)) ? Number(raw.dueDay) : spellingTodayDay(now),
+  };
+}
+
+function emptyCompactSpellingStats() {
+  return {
+    total: 0,
+    secure: 0,
+    due: 0,
+    fresh: 0,
+    trouble: 0,
+    attempts: 0,
+    correct: 0,
+    accuracy: null,
+  };
+}
+
+function compactSpellingStatsFromData(data = {}, now = Date.now()) {
+  const progressMap = normaliseServerSpellingData(data, now).progress || {};
+  const today = spellingTodayDay(now);
+  const stats = Object.values(progressMap).reduce((acc, rawEntry) => {
+    const progress = compactSpellingProgressEntry(rawEntry, now);
+    acc.total += 1;
+    acc.attempts += progress.attempts;
+    acc.correct += progress.correct;
+    if (progress.attempts === 0) acc.fresh += 1;
+    if (progress.stage >= SPELLING_SECURE_STAGE) acc.secure += 1;
+    if (progress.attempts > 0 && progress.dueDay <= today) acc.due += 1;
+    if (progress.wrong > 0 && (progress.wrong >= progress.correct || progress.stage < SPELLING_SECURE_STAGE)) {
+      acc.trouble += 1;
+    }
+    return acc;
+  }, emptyCompactSpellingStats());
+  const withAccuracy = {
+    ...stats,
+    accuracy: stats.attempts ? Math.round((stats.correct / stats.attempts) * 100) : null,
+  };
+  const emptyStats = emptyCompactSpellingStats();
+  return {
+    all: withAccuracy,
+    core: { ...withAccuracy },
+    y34: { ...emptyStats },
+    y56: { ...emptyStats },
+    secureExtension: { ...emptyStats },
+    extra: { ...emptyStats },
+  };
+}
+
 function redactSpellingUiForClient(ui, data = {}, learnerId = '', {
   audio = null,
   contentSnapshot = null,
@@ -282,18 +345,11 @@ function redactSpellingUiForClient(ui, data = {}, learnerId = '', {
     : null;
   const progressPools = contentSnapshot
     ? buildSpellingProgressPools({ contentSnapshot, data, now })
-    : null;
-  // P2 hotfix: derive `postMastery` on the bootstrap path so a graduated
-  // learner whose D1 record has the sticky bit lands on the post-Mega
-  // dashboard on first render — without waiting for the first command
-  // round-trip to populate `subjectUi.spelling.postMastery`. Pre-v3
-  // graduates (sticky bit minted via the read-model backfill on first
-  // hydration, or seeded directly into D1) would otherwise stay on the
-  // legacy Smart Review setup until they fired a command. The selector is
-  // shared with the `applyCommandResponse` path (engine.js), so the
-  // bootstrap-derived snapshot and the Worker authoritative response use
-  // byte-identical logic. `sourceHint: 'worker'` matches the existing
-  // hydrated path so the Admin diagnostic panel does not need to branch.
+    : compactSpellingStatsFromData(data, now);
+  // Non-bounded legacy bootstrap paths may still derive `postMastery` from a
+  // supplied runtime snapshot. The selected-learner-bounded public bootstrap
+  // deliberately passes no snapshot so the signed-in shell cannot trip Worker
+  // resource limits before the page becomes usable.
   let postMastery = null;
   if (contentSnapshot) {
     try {
@@ -336,7 +392,7 @@ function redactSpellingUiForClient(ui, data = {}, learnerId = '', {
     error: typeof raw.error === 'string' ? raw.error : '',
     prefs: cloneSerialisable(data?.prefs) || {},
     stats: publicSpellingStats(progressPools),
-    analytics: publicSpellingAnalytics(progressPools, now),
+    analytics: contentSnapshot ? publicSpellingAnalytics(progressPools, now) : null,
     audio: audio ? cloneSerialisable(audio) : null,
     content: null,
     postMastery,
@@ -7867,13 +7923,14 @@ async function bootstrapBundle(db, accountId, {
   ));
   const publicReadModelNow = Date.now();
   // Full spelling read-model derivation walks the published runtime snapshot.
-  // In the selected-learner-bounded bootstrap shape, keep that work on the
-  // selected learner only; sibling learner rows stay present, but avoid
-  // repeating the heavy spelling projection before the user switches learner.
+  // In the selected-learner-bounded bootstrap shape, avoid that work entirely:
+  // the bootstrap carries compact progress aggregates, while heavyweight
+  // spelling post-mastery and Word Bank data hydrate through subject commands
+  // or dedicated spelling routes after the shell is usable.
   const shouldHydratePublicSpellingReadModel = (row) => (
     publicReadModels
     && row?.subject_id === 'spelling'
-    && (!boundedToSelected || String(row.learner_id) === String(selectedId))
+    && !boundedToSelected
   );
   const publicSpellingContent = await measureBootstrapPhase(capacity, BOOTSTRAP_PHASE_TIMING.readModel, () => (
     subjectRows.some(shouldHydratePublicSpellingReadModel)
@@ -7912,10 +7969,8 @@ async function bootstrapBundle(db, accountId, {
         : gameStateRowToRecord(row);
       if (record) gameState[gameStateKey(row.learner_id, row.system_id)] = record;
     });
-    if (publicReadModels) {
-      const spellingCodexSubjectRows = boundedToSelected
-        ? subjectRows.filter(shouldHydratePublicSpellingReadModel)
-        : subjectRows;
+    if (publicReadModels && !boundedToSelected) {
+      const spellingCodexSubjectRows = subjectRows;
       await mergePublicSpellingCodexState(db, accountId, spellingCodexSubjectRows, gameState, {
         runtimeSnapshot: publicSpellingContent?.snapshot || null,
         now: publicReadModelNow,
