@@ -388,6 +388,9 @@ test('H3 role idempotency — same requestId replays cached receipt', async () =
 // ---------------------------------------------------------------------------
 test('I3 rate limit — 61st /ops-metadata PUT from same session hits 429', async () => {
   const server = createWorkerRepositoryServer();
+  const originalDateNow = Date.now;
+  const fixedNow = 1_700_000_000_000;
+  Date.now = () => fixedNow;
   try {
     const now = Date.now();
     seedCore(server, now);
@@ -427,6 +430,7 @@ test('I3 rate limit — 61st /ops-metadata PUT from same session hits 429', asyn
     assert.ok(Number.isFinite(payload.retryAfterSeconds));
     assert.ok(payload.retryAfterSeconds >= 0);
   } finally {
+    Date.now = originalDateNow;
     server.close();
   }
 });

@@ -1928,10 +1928,9 @@ async function loadAdminAccounts({ force = false } = {}) {
       error: '',
       savingAccountId: '',
     });
-    invalidateAdultHubState(null, { rerender: false });
-    const currentScreen = store.getState().route.screen;
-    if (currentScreen === 'admin-hub') loadAdminHub({ force: true });
-    if (currentScreen === 'parent-hub') loadParentHub({ force: true });
+    // Account directory reads are local to the Accounts panel. Role writes
+    // still invalidate and reload the adult hubs below, but a plain read must
+    // not duplicate the admin/parent hub bootstrap during cold page load.
   } catch (error) {
     patchAdminAccountDirectory({
       status: 'error',
