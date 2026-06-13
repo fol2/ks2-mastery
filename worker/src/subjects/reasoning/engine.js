@@ -12,8 +12,15 @@ import {
 } from '../../../../shared/reasoning/content.js';
 
 const TEMPLATE_MAP = Object.freeze(Object.fromEntries(REASONING_TEMPLATES.map((template) => [template.id, template])));
+const TEMPLATE_IDS = Object.freeze(REASONING_TEMPLATES.map((template) => template.id));
 const SKILL_IDS = Object.freeze(Object.keys(REASONING_SKILLS));
 const DEFAULT_ROUND_LENGTH = 6;
+const REASONING_RETRY_QUEUE_LIMIT = 200;
+const REASONING_EVENT_HISTORY_LIMIT = 240;
+const REASONING_SESSION_HISTORY_LIMIT = 80;
+const REASONING_EVIDENCE_KEY_LIMIT = 1000;
+const REASONING_ITEM_NODE_LIMIT = 320;
+const REASONING_TEMPLATE_START_LIMIT = 40;
 
 const DEFAULT_PREFS = Object.freeze({
   mode: 'smart',
@@ -105,6 +112,13 @@ function defaultData() {
     events: [],
     sessions: [],
     evidenceKeys: [],
+    evidenceTotal: 0,
+    totals: {
+      questions: 0,
+      correct: 0,
+      independent: 0,
+      independentCorrect: 0,
+    },
     lastPracticeDay: null,
     streakDays: 0,
   };
@@ -125,19 +139,102 @@ function defaultState(learnerId = '') {
   };
 }
 
+function toNonNegativeInt(value) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : 0;
+}
+
+function clonePlainObject(value) {
+  return value && typeof value === 'object' && !Array.isArray(value) ? clone(value) : {};
+}
+
+function boundedArray(value, limit) {
+  if (!Array.isArray(value)) return [];
+  return value.slice(-limit).map((entry) => clone(entry));
+}
+
+function nodeSortTime(node) {
+  const lastSeen = Date.parse(node?.lastSeenAt || '');
+  if (Number.isFinite(lastSeen)) return lastSeen;
+  const lastWrong = Date.parse(node?.lastWrongAt || '');
+  if (Number.isFinite(lastWrong)) return lastWrong;
+  const dueAt = Number(node?.dueAt);
+  return Number.isFinite(dueAt) ? dueAt : 0;
+}
+
+function boundedNodeMap(value, { limit = Infinity, allowedIds = null } = {}) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+  const allowed = Array.isArray(allowedIds) ? new Set(allowedIds) : null;
+  let entries = Object.entries(value)
+    .filter(([key, node]) => (!allowed || allowed.has(key)) && node && typeof node === 'object' && !Array.isArray(node));
+  if (Number.isFinite(limit) && entries.length > limit) {
+    entries = entries
+      .sort((a, b) => nodeSortTime(a[1]) - nodeSortTime(b[1]))
+      .slice(-limit);
+  }
+  return Object.fromEntries(entries.map(([key, node]) => [key, clone(node)]));
+}
+
+function normaliseRetryQueue(value) {
+  if (!Array.isArray(value)) return [];
+  return value
+    .filter((entry) => entry?.templateId)
+    .sort((a, b) => (Number(a.dueAt) || 0) - (Number(b.dueAt) || 0))
+    .slice(0, REASONING_RETRY_QUEUE_LIMIT)
+    .map((entry) => clone(entry));
+}
+
+function normaliseTotals(rawTotals, rawEvents = []) {
+  const totals = rawTotals && typeof rawTotals === 'object' && !Array.isArray(rawTotals) ? rawTotals : null;
+  const fromTotals = {
+    questions: toNonNegativeInt(totals?.questions),
+    correct: toNonNegativeInt(totals?.correct),
+    independent: toNonNegativeInt(totals?.independent),
+    independentCorrect: toNonNegativeInt(totals?.independentCorrect),
+  };
+  if (fromTotals.questions > 0) {
+    fromTotals.correct = Math.min(fromTotals.correct, fromTotals.questions);
+    fromTotals.independent = Math.min(fromTotals.independent, fromTotals.questions);
+    fromTotals.independentCorrect = Math.min(fromTotals.independentCorrect, fromTotals.independent);
+    return fromTotals;
+  }
+  const events = Array.isArray(rawEvents) ? rawEvents : [];
+  const correct = events.filter((event) => event?.correct).length;
+  const independent = events.filter((event) => !event?.supportLevel);
+  return {
+    questions: events.length,
+    correct,
+    independent: independent.length,
+    independentCorrect: independent.filter((event) => event?.correct).length,
+  };
+}
+
 function normaliseData(raw = {}) {
-  const data = { ...defaultData(), ...(raw && typeof raw === 'object' ? clone(raw) : {}) };
-  data.prefs = normalisePrefs(data.prefs || {});
-  data.skills = data.skills || {};
-  data.templates = data.templates || {};
-  data.items = data.items || {};
-  data.misconceptions = data.misconceptions || {};
-  data.retryQueue = Array.isArray(data.retryQueue) ? data.retryQueue.filter((entry) => entry?.templateId) : [];
-  data.recentTemplateStarts = Array.isArray(data.recentTemplateStarts) ? data.recentTemplateStarts.slice(-40) : [];
-  data.events = Array.isArray(data.events) ? data.events.slice(-700) : [];
-  data.sessions = Array.isArray(data.sessions) ? data.sessions.slice(-100) : [];
-  data.evidenceKeys = Array.isArray(data.evidenceKeys) ? data.evidenceKeys.filter(Boolean).slice(-2000) : [];
-  return data;
+  const source = raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {};
+  const rawEvents = Array.isArray(source.events) ? source.events : [];
+  const rawEvidenceKeys = Array.isArray(source.evidenceKeys) ? source.evidenceKeys.filter(Boolean) : [];
+  const evidenceKeys = rawEvidenceKeys.length
+    ? rawEvidenceKeys.slice(-REASONING_EVIDENCE_KEY_LIMIT)
+    : [];
+  return {
+    ...defaultData(),
+    version: 1,
+    releaseId: REASONING_CONTENT_RELEASE_ID,
+    prefs: normalisePrefs(source.prefs || {}),
+    skills: boundedNodeMap(source.skills, { allowedIds: SKILL_IDS }),
+    templates: boundedNodeMap(source.templates, { allowedIds: TEMPLATE_IDS }),
+    items: boundedNodeMap(source.items, { limit: REASONING_ITEM_NODE_LIMIT }),
+    misconceptions: clonePlainObject(source.misconceptions),
+    retryQueue: normaliseRetryQueue(source.retryQueue),
+    recentTemplateStarts: boundedArray(source.recentTemplateStarts, REASONING_TEMPLATE_START_LIMIT),
+    events: boundedArray(rawEvents, REASONING_EVENT_HISTORY_LIMIT),
+    sessions: boundedArray(source.sessions, REASONING_SESSION_HISTORY_LIMIT),
+    evidenceKeys,
+    evidenceTotal: Math.max(toNonNegativeInt(source.evidenceTotal), rawEvidenceKeys.length, evidenceKeys.length),
+    totals: normaliseTotals(source.totals, rawEvents),
+    lastPracticeDay: typeof source.lastPracticeDay === 'string' ? source.lastPracticeDay : null,
+    streakDays: toNonNegativeInt(source.streakDays),
+  };
 }
 
 function normaliseState(raw = {}, learnerId = '') {
@@ -308,9 +405,10 @@ function weakSkillIds(data, nowValue) {
 
 function extraCreditReady(data, nowValue) {
   const events = Array.isArray(data?.events) ? data.events : [];
-  const independentCorrect = events.filter((event) => event?.correct && !(Number(event?.supportLevel) > 0)).length;
+  const independentCorrect = toNonNegativeInt(data?.totals?.independentCorrect)
+    || events.filter((event) => event?.correct && !(Number(event?.supportLevel) > 0)).length;
   const securedSkills = SKILL_IDS.filter((skillId) => nodeStatus(data.skills?.[skillId] || defaultNode(), nowValue) === 'secured').length;
-  const totalAttempts = events.length;
+  const totalAttempts = toNonNegativeInt(data?.totals?.questions) || events.length;
   return independentCorrect >= 20 || securedSkills >= 3 || (totalAttempts >= 30 && independentCorrect / Math.max(1, totalAttempts) >= 0.8);
 }
 
@@ -477,7 +575,7 @@ function buildSession(data, prefs, { nowValue, random, heroContext } = {}) {
   const questionRefs = buildQuestionRefs(data, prefs, { nowValue, random });
   if (!questionRefs.length) return null;
   for (const ref of questionRefs) data.recentTemplateStarts.push({ templateId: ref.templateId, at: nowValue });
-  data.recentTemplateStarts = data.recentTemplateStarts.slice(-40);
+  data.recentTemplateStarts = data.recentTemplateStarts.slice(-REASONING_TEMPLATE_START_LIMIT);
   const presentation = presentationFor(prefs.mode);
   const support = {};
   if (presentation === 'worked' || presentation === 'faded') {
@@ -670,10 +768,11 @@ function buildAnalytics(data, nowValue) {
 
 function buildStats(data, nowValue) {
   const events = data.events || [];
-  const total = events.length;
-  const correct = events.filter((event) => event.correct).length;
-  const independent = events.filter((event) => !event.supportLevel);
-  const independentCorrect = independent.filter((event) => event.correct).length;
+  const totals = normaliseTotals(data.totals, events);
+  const total = totals.questions;
+  const correct = totals.correct;
+  const independent = totals.independent;
+  const independentCorrect = totals.independentCorrect;
   const skills = buildSkillRows(data, nowValue);
   const due = skills.filter((row) => row.status === 'due').length + (data.retryQueue || []).filter((entry) => entry.dueAt <= nowValue).length;
   const weak = skills.filter((row) => row.status === 'weak').length;
@@ -682,12 +781,12 @@ function buildStats(data, nowValue) {
     overview: {
       totalQuestions: total,
       accuracy: total ? Math.round((correct / total) * 100) : 0,
-      independentAccuracy: independent.length ? Math.round((independentCorrect / independent.length) * 100) : 0,
+      independentAccuracy: independent ? Math.round((independentCorrect / independent) * 100) : 0,
       due,
       weak,
       securedSkills,
       streakDays: data.streakDays || 0,
-      evidenceStars: data.evidenceKeys?.length || 0,
+      evidenceStars: toNonNegativeInt(data.evidenceTotal) || data.evidenceKeys?.length || 0,
       content: reasoningContentSummary(),
     },
     skills,
@@ -759,7 +858,7 @@ function enqueueRetry(data, ref, question, result, nowValue, reason = '') {
     skillIds: question.skillIds || [],
     reason: reason || (result.correct ? 'supported-or-shaky' : 'recent-miss'),
   });
-  data.retryQueue = data.retryQueue.sort((a, b) => a.dueAt - b.dueAt).slice(0, 300);
+  data.retryQueue = data.retryQueue.sort((a, b) => a.dueAt - b.dueAt).slice(0, REASONING_RETRY_QUEUE_LIMIT);
 }
 
 function maybeEvidenceEvent({ learnerId, ref, question, result, quality, requestId, nowValue, supportLevel, attemptCount }) {
@@ -784,6 +883,17 @@ function maybeEvidenceEvent({ learnerId, ref, question, result, quality, request
   };
 }
 
+function incrementTotals(data, event) {
+  const current = normaliseTotals(data?.totals, []);
+  current.questions += 1;
+  if (event?.correct) current.correct += 1;
+  if (!(Number(event?.supportLevel) > 0)) {
+    current.independent += 1;
+    if (event?.correct) current.independentCorrect += 1;
+  }
+  data.totals = current;
+}
+
 function finaliseQuestion({ data, session, ref, question, result, learnerId, requestId, nowValue }) {
   const attemptCount = session.attempts[ref.itemId] || 1;
   const supportLevel = session.support?.[ref.itemId]?.level || 0;
@@ -793,6 +903,9 @@ function finaliseQuestion({ data, session, ref, question, result, learnerId, req
   for (const skillId of question.skillIds || []) updateNodeFromQuality(ensureNode(data.skills, skillId), quality, nowValue);
   updateNodeFromQuality(ensureNode(data.templates, ref.templateId), quality, nowValue);
   updateNodeFromQuality(ensureNode(data.items, ref.itemId), quality, nowValue);
+  if (Object.keys(data.items).length > REASONING_ITEM_NODE_LIMIT) {
+    data.items = boundedNodeMap(data.items, { limit: REASONING_ITEM_NODE_LIMIT });
+  }
   if (result.misconception) bumpMisconception(data, result.misconception, nowValue);
   if (!result.correct || quality < 4) enqueueRetry(data, ref, question, result, nowValue);
   const event = {
@@ -811,7 +924,8 @@ function finaliseQuestion({ data, session, ref, question, result, learnerId, req
     durationSec: Math.round((nowValue - (session.startedAt || nowValue)) / 1000),
   };
   data.events.push(event);
-  data.events = data.events.slice(-700);
+  data.events = data.events.slice(-REASONING_EVENT_HISTORY_LIMIT);
+  incrementTotals(data, event);
   const domainEvents = [{
     id: `reasoning.answer-submitted.${learnerId || 'learner'}.${ref.itemId}.${requestId || uid('req')}`,
     type: 'reasoning.answer-submitted',
@@ -831,6 +945,8 @@ function finaliseQuestion({ data, session, ref, question, result, learnerId, req
   const evidenceEvent = maybeEvidenceEvent({ learnerId, ref, question, result, quality, requestId, nowValue, supportLevel, attemptCount });
   if (evidenceEvent && !data.evidenceKeys.includes(evidenceEvent.masteryKey)) {
     data.evidenceKeys.push(evidenceEvent.masteryKey);
+    data.evidenceKeys = data.evidenceKeys.slice(-REASONING_EVIDENCE_KEY_LIMIT);
+    data.evidenceTotal = Math.max(toNonNegativeInt(data.evidenceTotal) + 1, data.evidenceKeys.length);
     domainEvents.push(evidenceEvent);
   }
   return domainEvents;
@@ -858,7 +974,7 @@ function maybeFinishSession({ state, data, session, nowValue }) {
   state.summary = summary;
   state.feedback = null;
   data.sessions.push(summary);
-  data.sessions = data.sessions.slice(-100);
+  data.sessions = data.sessions.slice(-REASONING_SESSION_HISTORY_LIMIT);
 }
 
 function currentPracticeSessionRecord(state, data, nowValue) {

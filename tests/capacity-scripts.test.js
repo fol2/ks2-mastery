@@ -87,6 +87,22 @@ test('classroom load script dry-run reports the planned scenarios without networ
   }
 });
 
+test('classroom load script can plan mixed subject command coverage', async () => {
+  const report = await runClassroomLoadTest([
+    '--dry-run',
+    '--learners', '2',
+    '--bootstrap-burst', '4',
+    '--rounds', '1',
+    '--subjects', 'grammar,arithmetic,reasoning',
+  ]);
+
+  assert.equal(report.ok, true);
+  assert.deepEqual(report.plan.subjects, ['grammar', 'arithmetic', 'reasoning']);
+  assert.equal(report.plan.scenarios[1].name, 'human-paced-subject-round');
+  assert.equal(report.plan.scenarios[1].commandsPerRound, 9);
+  assert.equal(report.plan.expectedRequests, 24);
+});
+
 test('classroom load local fixture creates isolated learners and request ids', async () => {
   const previousFetch = globalThis.fetch;
   const calls = [];

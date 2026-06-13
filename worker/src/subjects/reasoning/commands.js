@@ -51,36 +51,40 @@ export function createReasoningCommandHandlers({ now, random } = {}) {
       requestId: command.requestId,
     });
 
-    const projectionInput = result.changed === false
-      ? null
-      : await resolveProjectionInput(context, {
+    const domainEvents = Array.isArray(result.events) ? result.events : [];
+    const needsProjection = result.changed !== false && domainEvents.length > 0;
+    const projectionInput = needsProjection
+      ? await resolveProjectionInput(context, {
           learnerId: command.learnerId,
           currentRevision: Number(command.expectedLearnerRevision) || 0,
           capacity: context.capacity || null,
-        });
+        })
+      : null;
     const projectionState = projectionInput ? projectionInput.projectionState : { gameState: null, events: [] };
-    const projectedRewards = result.changed === false
-      ? { gameState: projectionState.gameState, changedGameState: null, rewardEvents: [] }
-      : projectReasoningRewards({
+    const projectedRewards = needsProjection
+      ? projectReasoningRewards({
           learnerId: command.learnerId,
-          domainEvents: result.events,
+          domainEvents,
           gameState: projectionState.gameState,
           random,
-        });
-    const projectedEvents = result.changed === false
-      ? { events: [], domainEvents: [], reactionEvents: [], toastEvents: [] }
-      : combineCommandEvents({
-          domainEvents: result.events,
+        })
+      : { gameState: projectionState.gameState, changedGameState: null, rewardEvents: [] };
+    const projectedEvents = needsProjection
+      ? combineCommandEvents({
+          domainEvents,
           reactionEvents: projectedRewards.rewardEvents,
           existingEvents: projectionState.events,
           seedTokens: projectionInput?.tokens || [],
-        });
-    const projections = buildCommandProjectionReadModel({
-      gameState: projectedRewards.gameState,
-      domainEvents: projectedEvents.domainEvents,
-      reactionEvents: projectedEvents.reactionEvents,
-      toastEvents: projectedEvents.toastEvents,
-    });
+        })
+      : { events: [], domainEvents: [], reactionEvents: [], toastEvents: [] };
+    const projections = needsProjection
+      ? buildCommandProjectionReadModel({
+          gameState: projectedRewards.gameState,
+          domainEvents: projectedEvents.domainEvents,
+          reactionEvents: projectedEvents.reactionEvents,
+          toastEvents: projectedEvents.toastEvents,
+        })
+      : null;
 
     const response = {
       learnerId: command.learnerId,
@@ -111,7 +115,7 @@ export function createReasoningCommandHandlers({ now, random } = {}) {
         events: projectedEvents.events,
         previousActiveSessionId: runtimeRecord.latestSession?.status === 'active' ? runtimeRecord.latestSession.id : null,
       };
-      response.projectionContext = projectionInput;
+      if (projectionInput) response.projectionContext = projectionInput;
     }
 
     return response;

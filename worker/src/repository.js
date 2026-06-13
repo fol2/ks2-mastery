@@ -8382,8 +8382,19 @@ async function readSubjectRuntimeBundle(db, accountId, learnerId, subjectId = 's
     LIMIT 1
   `, [learnerId, subjectId]);
   return {
-    subjectRecord: row ? subjectStateRowToRecord(row) : normaliseSubjectStateRecord({}),
+    subjectRecord: row ? subjectRuntimeRowToRecord(row) : normaliseSubjectStateRecord({}),
     latestSession: latestSession ? practiceSessionRowToRecord(latestSession) : null,
+  };
+}
+
+function subjectRuntimeRowToRecord(row) {
+  if (!row) return normaliseSubjectStateRecord({});
+  const ui = safeJsonParse(row.ui_json, null);
+  const data = safeJsonParse(row.data_json, {});
+  return {
+    ui: isPlainObject(ui) ? ui : null,
+    data: isPlainObject(data) ? data : {},
+    updatedAt: asTs(row.updated_at, 0),
   };
 }
 

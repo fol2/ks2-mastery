@@ -12,6 +12,7 @@ import {
   ARITHMETIC_EVENT_TYPES,
   createServerArithmeticEngine,
 } from '../worker/src/subjects/arithmetic/engine.js';
+import { createArithmeticCommandHandlers } from '../worker/src/subjects/arithmetic/commands.js';
 import { buildArithmeticReadModel } from '../worker/src/subjects/arithmetic/read-models.js';
 import { applyArithmeticCommandResponse } from '../src/subjects/arithmetic/command-actions.js';
 import { projectArithmeticRewards } from '../worker/src/projections/rewards.js';
@@ -268,6 +269,74 @@ test('arithmetic due goal targets due skills and falls back to a bounded smart s
   }
   assert.equal(step.state.phase, 'summary', 'due goal should not create an endless session when no work is due');
   assert.equal(step.state.summary.answered, 10);
+});
+
+test('arithmetic command normalises long-history data into bounded storage', () => {
+  const now = 1700000000000;
+  const templateIds = ARITHMETIC_TEMPLATES.map((template) => template.id);
+  const skillIds = [...new Set(ARITHMETIC_TEMPLATES.flatMap((template) => template.skillIds || []))];
+  const legacyAttempts = Array.from({ length: 4000 }, (_, index) => ({
+    id: `legacy-attempt-${index}`,
+    timestamp: new Date(now - (4000 - index) * 1000).toISOString(),
+    templateId: templateIds[index % templateIds.length],
+    questionId: `legacy-question-${index}`,
+    skillIds: [skillIds[index % skillIds.length]],
+    score: index % 4 === 0 ? 0 : 1,
+    maxScore: 1,
+    correct: index % 4 !== 0,
+    response: { answer: String(index) },
+  }));
+  const legacyData = {
+    prefs: { mode: 'smart', goal: '10q' },
+    skills: {
+      ...Object.fromEntries(skillIds.map((skillId, index) => [skillId, {
+        attempts: index + 1,
+        correct: index,
+        wrong: 1,
+        strength: 0.4,
+        dueAt: now - index,
+      }])),
+      'legacy-overflow-skill': { attempts: 999 },
+    },
+    templates: {
+      ...Object.fromEntries(templateIds.map((templateId, index) => [templateId, {
+        attempts: index + 1,
+        correct: index,
+        wrong: 1,
+        strength: 0.4,
+        dueAt: now - index,
+      }])),
+      'legacy-overflow-template': { attempts: 999 },
+    },
+    retryQueue: Array.from({ length: 900 }, (_, index) => ({
+      templateId: templateIds[index % templateIds.length],
+      questionSeed: index,
+      difficulty: index % 3,
+      dueAt: now - index,
+      skillIds: [skillIds[index % skillIds.length]],
+    })),
+    recentAttempts: legacyAttempts,
+    sessions: Array.from({ length: 250 }, (_, index) => ({ id: `legacy-session-${index}`, answered: index % 20 })),
+    misconceptions: { careless_arithmetic: { count: 4 }, 'legacy-overflow-misconception': { count: 999 } },
+    streak: { lastPracticeDay: '2026-06-12', days: 9 },
+  };
+
+  const engine = createServerArithmeticEngine({ now: () => now });
+  const result = engine.apply({
+    learnerId: 'learner-long-arithmetic',
+    subjectRecord: { ui: {}, data: legacyData },
+    command: 'start-session',
+    payload: { mode: 'smart', goal: '10q' },
+    requestId: 'long-arithmetic-start',
+  });
+
+  assert.ok(result.data.recentAttempts.length <= 500, 'recent attempts stay bounded');
+  assert.ok(result.data.retryQueue.length <= 200, 'retry queue stays bounded');
+  assert.ok(result.data.sessions.length <= 80, 'session history stays bounded');
+  assert.equal(result.data.skills['legacy-overflow-skill'], undefined);
+  assert.equal(result.data.templates['legacy-overflow-template'], undefined);
+  assert.equal(result.data.misconceptions['legacy-overflow-misconception'], undefined);
+  assert.ok(JSON.stringify(result.data).length < JSON.stringify(legacyData).length / 2, 'bounded data is materially smaller');
 });
 
 test('arithmetic generators avoid malformed place-value items and repeating-decimal order answers', () => {
@@ -791,4 +860,35 @@ test('arithmetic command response preserves server-side validation errors in sub
 
   assert.equal(appState.subjectUi.arithmetic.error, 'Enter an answer before marking.');
   assert.equal(appState.subjectUi.arithmetic.pendingCommand, '');
+});
+
+test('arithmetic eventless commands skip projection reads', async () => {
+  const handlers = createArithmeticCommandHandlers({ now: () => 1000, random: () => 0 });
+  let projectionReads = 0;
+  const response = await handlers['save-prefs']({
+    subjectId: 'arithmetic',
+    command: 'save-prefs',
+    learnerId: 'learner-eventless-arithmetic',
+    requestId: 'eventless-arithmetic-save',
+    expectedLearnerRevision: 7,
+    payload: { prefs: { goal: '20q' } },
+  }, {
+    session: { accountId: 'adult-eventless' },
+    capacity: null,
+    repository: {
+      async readSubjectRuntime() {
+        return { subjectRecord: { ui: { phase: 'setup' }, data: {} }, latestSession: null };
+      },
+      async readLearnerProjectionInput() {
+        projectionReads += 1;
+        throw new Error('eventless command should not read projection input');
+      },
+    },
+  });
+
+  assert.equal(projectionReads, 0);
+  assert.equal(response.changed, true);
+  assert.deepEqual(response.events, []);
+  assert.deepEqual(response.domainEvents, []);
+  assert.equal(response.projectionContext, undefined);
 });

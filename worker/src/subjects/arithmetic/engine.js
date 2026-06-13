@@ -16,6 +16,13 @@ import {
 } from '../../../../shared/arithmetic/content.js';
 
 const DAY_MS = 86400000;
+const ARITHMETIC_RETRY_QUEUE_LIMIT = 200;
+const ARITHMETIC_RECENT_ATTEMPT_LIMIT = 500;
+const ARITHMETIC_SESSION_HISTORY_LIMIT = 80;
+const ARITHMETIC_SKILL_IDS = Object.freeze(Object.keys(ARITHMETIC_SKILLS));
+const ARITHMETIC_TEMPLATE_IDS = Object.freeze(Object.keys(ARITHMETIC_TEMPLATE_MAP));
+const ARITHMETIC_REWARD_UNIT_IDS = Object.freeze(Object.keys(ARITHMETIC_REWARD_UNIT_MAP));
+const ARITHMETIC_MISCONCEPTION_IDS = Object.freeze(Object.keys(ARITHMETIC_MISCONCEPTIONS));
 const DEFAULT_PREFS = Object.freeze({
   mode: 'smart',
   focusSkillId: '',
@@ -90,6 +97,41 @@ function normaliseNode(node) {
   return { ...defaultSkillNode(), ...(node && typeof node === 'object' ? node : {}) };
 }
 
+function isPlainObject(value) {
+  return Boolean(value && typeof value === 'object' && !Array.isArray(value));
+}
+
+function boundedArray(value, limit) {
+  if (!Array.isArray(value)) return [];
+  return value.slice(-limit).map((entry) => clone(entry));
+}
+
+function boundedPlainMap(value, allowedIds) {
+  if (!isPlainObject(value)) return {};
+  const allowed = new Set(allowedIds || []);
+  return Object.fromEntries(Object.entries(value)
+    .filter(([key, entry]) => allowed.has(key) && isPlainObject(entry))
+    .map(([key, entry]) => [key, clone(entry)]));
+}
+
+function normaliseRetryQueue(value) {
+  if (!Array.isArray(value)) return [];
+  return value
+    .filter((entry) => entry?.templateId && ARITHMETIC_TEMPLATE_MAP[entry.templateId])
+    .sort((a, b) => (Number(a.dueAt) || 0) - (Number(b.dueAt) || 0))
+    .slice(0, ARITHMETIC_RETRY_QUEUE_LIMIT)
+    .map((entry) => clone(entry));
+}
+
+function normaliseStreak(value, fallback) {
+  if (!isPlainObject(value)) return { ...fallback };
+  const days = Number(value.days);
+  return {
+    lastPracticeDay: typeof value.lastPracticeDay === 'string' ? value.lastPracticeDay : null,
+    days: Number.isFinite(days) && days > 0 ? Math.floor(days) : 0,
+  };
+}
+
 export function arithmeticStatusFromNode(node, now = Date.now()) {
   const n = normaliseNode(node);
   if (!n.attempts) return 'new';
@@ -129,19 +171,18 @@ export function createInitialArithmeticState() {
 
 function normaliseData(raw) {
   const initial = createInitialArithmeticData();
-  const data = raw && typeof raw === 'object' && !Array.isArray(raw) ? clone(raw) : {};
+  const data = isPlainObject(raw) ? raw : {};
   return {
     ...initial,
-    ...data,
     prefs: normaliseArithmeticPrefs(data.prefs || initial.prefs),
-    skills: data.skills && typeof data.skills === 'object' ? data.skills : {},
-    templates: data.templates && typeof data.templates === 'object' ? data.templates : {},
-    rewardUnits: data.rewardUnits && typeof data.rewardUnits === 'object' ? data.rewardUnits : {},
-    misconceptions: data.misconceptions && typeof data.misconceptions === 'object' ? data.misconceptions : {},
-    retryQueue: Array.isArray(data.retryQueue) ? data.retryQueue.slice(-200) : [],
-    recentAttempts: Array.isArray(data.recentAttempts) ? data.recentAttempts.slice(-500) : [],
-    sessions: Array.isArray(data.sessions) ? data.sessions.slice(-80) : [],
-    streak: data.streak && typeof data.streak === 'object' ? data.streak : initial.streak,
+    skills: boundedPlainMap(data.skills, ARITHMETIC_SKILL_IDS),
+    templates: boundedPlainMap(data.templates, ARITHMETIC_TEMPLATE_IDS),
+    rewardUnits: boundedPlainMap(data.rewardUnits, ARITHMETIC_REWARD_UNIT_IDS),
+    misconceptions: boundedPlainMap(data.misconceptions, ARITHMETIC_MISCONCEPTION_IDS),
+    retryQueue: normaliseRetryQueue(data.retryQueue),
+    recentAttempts: boundedArray(data.recentAttempts, ARITHMETIC_RECENT_ATTEMPT_LIMIT),
+    sessions: boundedArray(data.sessions, ARITHMETIC_SESSION_HISTORY_LIMIT),
+    streak: normaliseStreak(data.streak, initial.streak),
   };
 }
 
@@ -226,7 +267,7 @@ function bumpMisconception(data, tag, now) {
 
 function recordAttempt(data, attempt) {
   data.recentAttempts.push(attempt);
-  data.recentAttempts = data.recentAttempts.slice(-500);
+  data.recentAttempts = data.recentAttempts.slice(-ARITHMETIC_RECENT_ATTEMPT_LIMIT);
 }
 
 function retryEntryFor(question, result, now) {
@@ -243,7 +284,7 @@ function retryEntryFor(question, result, now) {
 function maybeQueueRetry(data, question, result, now) {
   if (result.correct) return;
   data.retryQueue.push(retryEntryFor(question, result, now));
-  data.retryQueue = data.retryQueue.sort((a, b) => a.dueAt - b.dueAt).slice(-200);
+  data.retryQueue = data.retryQueue.sort((a, b) => a.dueAt - b.dueAt).slice(0, ARITHMETIC_RETRY_QUEUE_LIMIT);
 }
 
 function dueSkillIdSet(data, now) {
@@ -579,7 +620,7 @@ function completeSession({ learnerId, state, data, now, requestId, auto = false 
   state.feedback = null;
   state.phase = 'summary';
   data.sessions.push({ ...state.summary, createdAt: iso(now) });
-  data.sessions = data.sessions.slice(-80);
+  data.sessions = data.sessions.slice(-ARITHMETIC_SESSION_HISTORY_LIMIT);
   return [event(uid('arith_complete', learnerId, requestId, state.session.id), ARITHMETIC_EVENT_TYPES.SESSION_COMPLETED, now, {
     learnerId,
     subjectId: 'arithmetic',

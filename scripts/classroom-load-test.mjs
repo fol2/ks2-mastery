@@ -22,6 +22,7 @@ const GRAMMAR_LOAD_ITEM = Object.freeze({
   templateId: 'fronted_adverbial_choose',
   seed: 1,
 });
+const LOAD_TEST_SUBJECTS = Object.freeze(['grammar', 'arithmetic', 'reasoning']);
 let requestSequence = 0;
 
 function readOptionValue(argv, index, optionName) {
@@ -49,6 +50,19 @@ function positiveInteger(value, optionName) {
 function normaliseOrigin(value) {
   const url = new URL(/^https?:\/\//i.test(value) ? value : `https://${value}`);
   return url.origin;
+}
+
+function normaliseSubjects(value) {
+  const raw = String(value || 'grammar')
+    .split(',')
+    .map((entry) => entry.trim().toLowerCase())
+    .filter(Boolean);
+  const subjects = raw.length ? [...new Set(raw)] : ['grammar'];
+  const unknown = subjects.filter((entry) => !LOAD_TEST_SUBJECTS.includes(entry));
+  if (unknown.length) {
+    throw new Error(`--subjects contains unsupported subject(s): ${unknown.join(', ')}. Supported: ${LOAD_TEST_SUBJECTS.join(', ')}.`);
+  }
+  return subjects;
 }
 
 function isLocalOrigin(origin) {
@@ -301,6 +315,7 @@ export function parseClassroomLoadArgs(argv = process.argv.slice(2)) {
     learners: 3,
     bootstrapBurst: 6,
     rounds: 1,
+    subjects: ['grammar'],
     pacingMs: 0,
     timeoutMs: DEFAULT_TIMEOUT_MS,
     cookie: '',
@@ -373,6 +388,10 @@ export function parseClassroomLoadArgs(argv = process.argv.slice(2)) {
     } else if (arg === '--rounds') {
       assignOnce(arg);
       options.rounds = positiveInteger(readOptionValue(argv, index, arg), arg);
+      index += 1;
+    } else if (arg === '--subjects') {
+      assignOnce(arg);
+      options.subjects = normaliseSubjects(readOptionValue(argv, index, arg));
       index += 1;
     } else if (arg === '--pacing-ms') {
       assignOnce(arg);
@@ -491,6 +510,7 @@ export function buildClassroomLoadPlan(options = {}) {
   const learners = positiveInteger(options.learners ?? 3, '--learners');
   const bootstrapBurst = positiveInteger(options.bootstrapBurst ?? Math.max(learners, 1), '--bootstrap-burst');
   const rounds = positiveInteger(options.rounds ?? 1, '--rounds');
+  const subjects = normaliseSubjects((options.subjects || ['grammar']).join(','));
   const pacingMs = nonNegativeInteger(options.pacingMs ?? 0, '--pacing-ms');
   const virtualLearners = Array.from({ length: learners }, (_, index) => ({
     index,
@@ -500,6 +520,7 @@ export function buildClassroomLoadPlan(options = {}) {
   return {
     mode,
     origin: origin || null,
+    subjects,
     virtualLearners,
     scenarios: [
       {
@@ -509,15 +530,18 @@ export function buildClassroomLoadPlan(options = {}) {
         endpoint: 'GET /api/bootstrap',
       },
       {
-        name: 'human-paced-grammar-round',
+        name: subjects.length === 1 && subjects[0] === 'grammar'
+          ? 'human-paced-grammar-round'
+          : 'human-paced-subject-round',
         learners,
+        subjects,
         rounds,
         pacingMs,
-        commandsPerRound: 3,
-        endpoint: 'POST /api/subjects/grammar/command',
+        commandsPerRound: 3 * subjects.length,
+        endpoint: `POST /api/subjects/{${subjects.join(',')}}/command`,
       },
     ],
-    expectedRequests: learners + bootstrapBurst + (learners * rounds * 3) + (options.demoSessions && !options.sessionManifest ? learners : 0),
+    expectedRequests: learners + bootstrapBurst + (learners * rounds * 3 * subjects.length) + (options.demoSessions && !options.sessionManifest ? learners : 0),
     safety: {
       productionRequiresConfirmation: true,
       productionRequiresAuth: true,
@@ -757,6 +781,8 @@ const BOOTSTRAP_P95_ENDPOINTS = Object.freeze([
 
 const COMMAND_P95_ENDPOINTS = Object.freeze([
   'POST /api/subjects/grammar/command',
+  'POST /api/subjects/arithmetic/command',
+  'POST /api/subjects/reasoning/command',
 ]);
 
 function collectObservedSignals(signals = {}) {
@@ -1216,11 +1242,15 @@ function commandRequestId(context, round, command) {
   return `load-${learner}-r${round}-${command}-${Date.now()}-${requestSequence}`;
 }
 
-async function sendGrammarCommand(origin, options, context, round, command, payload = {}) {
-  const requestId = commandRequestId(context, round, command);
+function commandScenario(subjectId) {
+  return `human-paced-${subjectId}-round`;
+}
+
+async function sendSubjectCommand(origin, options, context, round, subjectId, command, payload = {}) {
+  const requestId = commandRequestId(context, round, `${subjectId}-${command}`);
   const measurement = await timedJsonRequest({
     origin,
-    path: '/api/subjects/grammar/command',
+    path: `/api/subjects/${subjectId}/command`,
     method: 'POST',
     headers: {
       ...contextAuthHeaders(options, context),
@@ -1228,7 +1258,7 @@ async function sendGrammarCommand(origin, options, context, round, command, payl
       origin,
     },
     body: {
-      subjectId: 'grammar',
+      subjectId,
       learnerId: context.learnerId,
       command,
       requestId,
@@ -1236,7 +1266,7 @@ async function sendGrammarCommand(origin, options, context, round, command, payl
       expectedLearnerRevision: context.revision,
       payload,
     },
-    scenario: 'human-paced-grammar-round',
+    scenario: commandScenario(subjectId),
     virtualLearner: context.label,
     timeoutMs: options.timeoutMs,
   });
@@ -1254,7 +1284,7 @@ async function runGrammarRound(origin, options, context, round) {
   const measurements = [];
   let current = context;
 
-  let step = await sendGrammarCommand(origin, options, current, round, 'start-session', {
+  let step = await sendSubjectCommand(origin, options, current, round, 'grammar', 'start-session', {
     mode: 'smart',
     roundLength: 1,
     templateId: GRAMMAR_LOAD_ITEM.templateId,
@@ -1265,15 +1295,92 @@ async function runGrammarRound(origin, options, context, round) {
 
   const currentItem = step.measurement.payload?.subjectReadModel?.session?.currentItem;
   const response = currentItem ? correctResponseFor(currentItem) : { answer: '' };
-  step = await sendGrammarCommand(origin, options, current, round, 'submit-answer', { response });
+  step = await sendSubjectCommand(origin, options, current, round, 'grammar', 'submit-answer', { response });
   measurements.push(step.measurement);
   current = step.context;
 
-  step = await sendGrammarCommand(origin, options, current, round, 'continue-session');
+  step = await sendSubjectCommand(origin, options, current, round, 'grammar', 'continue-session');
   measurements.push(step.measurement);
   current = step.context;
 
   return { context: current, measurements };
+}
+
+async function runArithmeticRound(origin, options, context, round) {
+  const measurements = [];
+  let current = context;
+
+  let step = await sendSubjectCommand(origin, options, current, round, 'arithmetic', 'start-session', {
+    mode: 'smart',
+    goal: '10q',
+  });
+  measurements.push(step.measurement);
+  current = step.context;
+
+  const startModel = step.measurement.payload?.subjectReadModel || {};
+  const session = startModel.session || {};
+  const question = session.currentQuestion || {};
+  step = await sendSubjectCommand(origin, options, current, round, 'arithmetic', 'submit-answer', {
+    expectedSessionId: session.id,
+    expectedQuestionId: question.id,
+    response: { answer: '__load_test_wrong_answer__' },
+  });
+  measurements.push(step.measurement);
+  current = step.context;
+
+  step = await sendSubjectCommand(origin, options, current, round, 'arithmetic', 'continue-session', {
+    expectedSessionId: session.id,
+    expectedQuestionId: question.id,
+  });
+  measurements.push(step.measurement);
+  current = step.context;
+
+  return { context: current, measurements };
+}
+
+function blankReasoningResponse(question = {}) {
+  const inputSpec = question.inputSpec || {};
+  if (inputSpec.type === 'multi') {
+    return Object.fromEntries((inputSpec.fields || []).map((field) => [field.key, '']));
+  }
+  return { answer: '' };
+}
+
+async function runReasoningRound(origin, options, context, round) {
+  const measurements = [];
+  let current = context;
+
+  let step = await sendSubjectCommand(origin, options, current, round, 'reasoning', 'start-session', {
+    mode: 'worked',
+    viewMode: 'one',
+    roundLength: 3,
+  });
+  measurements.push(step.measurement);
+  current = step.context;
+
+  const startModel = step.measurement.payload?.subjectReadModel || {};
+  const session = startModel.session || {};
+  const question = session.currentQuestion || {};
+  step = await sendSubjectCommand(origin, options, current, round, 'reasoning', 'submit-answer', {
+    expectedSessionId: session.id,
+    expectedQuestionId: question.id,
+    response: blankReasoningResponse(question),
+  });
+  measurements.push(step.measurement);
+  current = step.context;
+
+  step = await sendSubjectCommand(origin, options, current, round, 'reasoning', 'continue-session');
+  measurements.push(step.measurement);
+  current = step.context;
+
+  return { context: current, measurements };
+}
+
+async function runSubjectRound(origin, options, context, round, subjectId) {
+  if (subjectId === 'grammar') return runGrammarRound(origin, options, context, round);
+  if (subjectId === 'arithmetic') return runArithmeticRound(origin, options, context, round);
+  if (subjectId === 'reasoning') return runReasoningRound(origin, options, context, round);
+  throw new Error(`Unsupported load-test subject: ${subjectId}`);
 }
 
 async function prepareContexts(origin, options, plan) {
@@ -1329,12 +1436,15 @@ async function runColdBootstrapBurst(origin, options, contexts, plan) {
 
 async function runHumanPacedRounds(origin, options, contexts, plan) {
   const measurements = [];
+  const subjects = normaliseSubjects((plan.subjects || options.subjects || ['grammar']).join(','));
   for (let round = 1; round <= options.rounds; round += 1) {
     for (let index = 0; index < contexts.length; index += 1) {
-      const result = await runGrammarRound(origin, options, contexts[index], round);
-      contexts[index] = result.context;
-      measurements.push(...result.measurements);
-      await wait(options.pacingMs);
+      for (const subjectId of subjects) {
+        const result = await runSubjectRound(origin, options, contexts[index], round, subjectId);
+        contexts[index] = result.context;
+        measurements.push(...result.measurements);
+        await wait(options.pacingMs);
+      }
     }
   }
   return measurements;
@@ -1624,7 +1734,8 @@ export function usage() {
     '  --origin <url>                    Target origin for local-fixture or production runs',
     '  --learners <number>               Virtual learner count, default 3',
     '  --bootstrap-burst <number>        Concurrent cold bootstrap requests, default 6',
-    '  --rounds <number>                 Human-paced Grammar rounds per learner, default 1',
+    '  --rounds <number>                 Human-paced subject rounds per learner, default 1',
+    '  --subjects <list>                 Comma-separated subject command flows: grammar, arithmetic, reasoning',
     '  --pacing-ms <number>              Delay between learner command groups, default 0',
     '  --timeout-ms <number>             Per-request timeout, default 15000',
     '  --cookie <cookie>                 Cookie header for an existing authenticated run',
