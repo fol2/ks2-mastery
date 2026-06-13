@@ -365,7 +365,7 @@ test('worker admin hub requires admin or operations role and exposes content plu
       ('demo-expired', NULL, 'Demo Expired', 'parent', NULL, 1, 1, 'demo', ${now - 60000});
   `);
 
-  const adminResponse = await server.fetchAs('adult-admin', 'https://repo.test/api/hubs/admin?learnerId=learner-a&auditLimit=10', {}, {
+  const adminResponse = await server.fetchAs('adult-admin', 'https://repo.test/api/hubs/admin?learnerId=learner-a&auditLimit=10&includeOpsPanels=true', {}, {
     'x-ks2-dev-platform-role': 'admin',
   });
   const adminPayload = await adminResponse.json();

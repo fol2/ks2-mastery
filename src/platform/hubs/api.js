@@ -184,11 +184,17 @@ export function createHubApi({
     },
     readParentRecentSessions,
     readParentActivity,
-    async readAdminHub({ learnerId = null, requestId = null, auditLimit = 20 } = {}) {
+    async readAdminHub({
+      learnerId = null,
+      requestId = null,
+      auditLimit = 20,
+      includeOpsPanels = false,
+    } = {}) {
       const url = buildRequestUrl(baseUrl, '/api/hubs/admin', {
         learnerId,
         requestId,
         auditLimit,
+        includeOpsPanels: includeOpsPanels ? 'true' : null,
       });
       // U9 round 1 fix (adv-u9-r1-002): the Admin Hub read surfaces the
       // per-learner Grammar/Punctuation/Spelling summary stats. When the

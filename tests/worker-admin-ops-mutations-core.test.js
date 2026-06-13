@@ -766,7 +766,7 @@ test('U5 integration — hub admin payload reflects metadata change after PUT', 
     });
     assert.equal(put.status, 200);
 
-    const hubResponse = await server.fetchAs('adult-admin', 'https://repo.test/api/hubs/admin', {}, {
+    const hubResponse = await server.fetchAs('adult-admin', 'https://repo.test/api/hubs/admin?includeOpsPanels=true', {}, {
       'x-ks2-dev-platform-role': 'admin',
     });
     const hubPayload = await hubResponse.json();

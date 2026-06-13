@@ -2409,18 +2409,22 @@ export function createWorkerApp({
         }
 
         if (url.pathname === '/api/hubs/admin' && request.method === 'GET') {
+          const includeOpsPanels = url.searchParams.get('includeOpsPanels') === 'true';
           const result = await repository.readAdminHub(session.accountId, {
             learnerId: url.searchParams.get('learnerId') || null,
             requestId: url.searchParams.get('requestId') || null,
             auditLimit: url.searchParams.get('auditLimit') || 20,
+            includeOpsPanels,
           });
-          const productionEvidence = await readBundledProductionEvidenceSummary();
+          const productionEvidence = includeOpsPanels
+            ? await readBundledProductionEvidenceSummary()
+            : null;
           return json({
             ok: true,
             ...result,
             adminHub: {
               ...(result.adminHub || {}),
-              productionEvidence,
+              ...(productionEvidence ? { productionEvidence } : {}),
             },
           });
         }

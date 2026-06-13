@@ -844,6 +844,9 @@ async function loadAdminHub({ learnerId = null, force = false, auditLimit = 20 }
     };
     const syncedWritableShell = syncWritableLearnerSelection(resolvedLearnerId);
     if (!syncedWritableShell) store.patch(() => ({}));
+    queueMicrotask(() => {
+      void refreshAdminHubBootstrapPanels();
+    });
     return payload;
   } catch (error) {
     if (adultSurfaceState.adminHub.requestToken !== requestToken) return null;
@@ -1383,6 +1386,25 @@ async function refreshAdminProductionEvidence() {
     if (!isAdminOpsRefreshTokenLatest('productionEvidence', token)) return { ok: false, reason: 'superseded' };
     applyAdminOpsRefreshError('productionEvidence', error);
     return { ok: false, reason: 'error', error };
+  }
+}
+
+function isAdminHubRouteActive() {
+  return boot.session.signedIn && store?.getState?.()?.route?.screen === 'admin-hub';
+}
+
+async function refreshAdminHubBootstrapPanels() {
+  if (!isAdminHubRouteActive()) return;
+  const refreshSteps = [
+    () => refreshAdminOpsKpi(),
+    () => refreshAdminProductionEvidence(),
+    () => refreshAdminOpsActivity(),
+    () => refreshAdminOpsErrorEvents(),
+    () => refreshAdminOpsAccountsMetadata(),
+  ];
+  for (const refreshStep of refreshSteps) {
+    if (!isAdminHubRouteActive()) return;
+    await refreshStep();
   }
 }
 

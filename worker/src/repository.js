@@ -10028,7 +10028,12 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
         parentHub: model,
       };
     },
-    async readAdminHub(accountId, { learnerId = null, requestId = null, auditLimit = 20 } = {}) {
+    async readAdminHub(accountId, {
+      learnerId = null,
+      requestId = null,
+      auditLimit = 20,
+      includeOpsPanels = false,
+    } = {}) {
       // P3 U1 (R22): single assertAdminHubActor call — the resolved actor
       // row is threaded to every downstream helper so the admin-role DB
       // lookup fires exactly once per readAdminHub invocation.
@@ -10057,40 +10062,50 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
       });
       const nowTs = nowFactory();
 
-      // P3 U1 (R22): parallelise independent queries. These share no
-      // read-dependency after the learner bundles are loaded. The pre-
-      // resolved `actor` row is threaded so none of them re-query
-      // adult_accounts for the admin-role check.
       const [
         demoOperations,
         monsterVisualConfig,
-        dashboardKpis,
-        opsActivityStream,
-        accountOpsMetadata,
-        errorLogSummary,
       ] = await Promise.all([
         readDemoOperationSummary(db, nowTs),
         readMonsterVisualConfigState(db, nowTs),
-        readDashboardKpis(db, { now: nowTs, actorAccountId: accountId, actor }),
-        listRecentMutationReceipts(db, {
-          now: nowTs,
-          actorAccountId: accountId,
-          actor,
-          limit: OPS_ACTIVITY_STREAM_DEFAULT_LIMIT,
-        }),
-        readAccountOpsMetadataDirectory(db, {
-          now: nowTs,
-          actorAccountId: accountId,
-          actorPlatformRole: accountPlatformRole(account),
-          actor,
-        }),
-        readOpsErrorEventSummary(db, {
-          now: nowTs,
-          actorAccountId: accountId,
-          actor,
-          limit: OPS_ERROR_EVENTS_DEFAULT_LIMIT,
-        }),
       ]);
+
+      let dashboardKpis = null;
+      let opsActivityStream = null;
+      let accountOpsMetadata = null;
+      let errorLogSummary = null;
+
+      if (includeOpsPanels) {
+        // Diagnostic opt-in only. The production admin route now relies on the
+        // narrow panel endpoints after bootstrap so this aggregate path stays
+        // below the Worker resource ceiling.
+        ([
+          dashboardKpis,
+          opsActivityStream,
+          accountOpsMetadata,
+          errorLogSummary,
+        ] = await Promise.all([
+          readDashboardKpis(db, { now: nowTs, actorAccountId: accountId, actor }),
+          listRecentMutationReceipts(db, {
+            now: nowTs,
+            actorAccountId: accountId,
+            actor,
+            limit: OPS_ACTIVITY_STREAM_DEFAULT_LIMIT,
+          }),
+          readAccountOpsMetadataDirectory(db, {
+            now: nowTs,
+            actorAccountId: accountId,
+            actorPlatformRole: accountPlatformRole(account),
+            actor,
+          }),
+          readOpsErrorEventSummary(db, {
+            now: nowTs,
+            actorAccountId: accountId,
+            actor,
+            limit: OPS_ERROR_EVENTS_DEFAULT_LIMIT,
+          }),
+        ]));
+      }
       // Phase E UX-1: surface the build's current release hash on the
       // admin hub payload so `ErrorLogCentrePanel` can pre-fill the
       // "New in release" filter and the drawer helper text. The value
@@ -10132,8 +10147,8 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
         selectedLearnerId,
         now: nowFactory,
       });
-      return {
-        adminHub: {
+      const adminHub = includeOpsPanels
+        ? {
           ...model,
           dashboardKpis,
           opsActivityStream,
@@ -10148,8 +10163,15 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
             ...(errorLogSummary || {}),
             currentRelease,
           },
-        },
-      };
+        }
+        : {
+          ...model,
+          errorLogSummary: {
+            ...(model.errorLogSummary || {}),
+            currentRelease,
+          },
+        };
+      return { adminHub };
     },
     async readAdminOpsKpi(accountId) {
       return readDashboardKpis(db, {

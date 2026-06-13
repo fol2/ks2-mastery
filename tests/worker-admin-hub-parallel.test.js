@@ -88,7 +88,7 @@ test('readAdminHub issues a single assertAdminHubActor query (actor dedup)', asy
     const now = Date.now();
     seedAdminAndOps(server, now);
 
-    const response = await server.fetchAs('adult-admin', 'https://repo.test/api/hubs/admin', {}, {
+    const response = await server.fetchAs('adult-admin', 'https://repo.test/api/hubs/admin?includeOpsPanels=true', {}, {
       'x-ks2-dev-platform-role': 'admin',
     });
     const payload = await response.json();
@@ -126,7 +126,7 @@ test('readAdminHub returns identical payload shape before and after parallelisat
     const now = Date.now();
     seedAdminAndOps(server, now);
 
-    const response = await server.fetchAs('adult-admin', 'https://repo.test/api/hubs/admin', {}, {
+    const response = await server.fetchAs('adult-admin', 'https://repo.test/api/hubs/admin?includeOpsPanels=true', {}, {
       'x-ks2-dev-platform-role': 'admin',
     });
     const payload = await response.json();
@@ -253,7 +253,7 @@ test('hub read with zero learners returns valid payload', async () => {
     assert.ok(Array.isArray(hub.learnerSupport.accessibleLearners));
     assert.equal(hub.learnerSupport.accessibleLearners.length, 0);
 
-    // The four ops panels should still be populated.
+    // The four ops panel envelopes should still be shape-stable.
     assert.ok(hub.dashboardKpis);
     assert.ok(hub.opsActivityStream);
     assert.ok(hub.accountOpsMetadata);
@@ -274,7 +274,7 @@ test('hub read with missing account_ops_metadata row returns defaults', async ()
     seedAdminAndOps(server, now);
     // No insertAccountOpsMetadata calls — every account has a default row.
 
-    const response = await server.fetchAs('adult-admin', 'https://repo.test/api/hubs/admin', {}, {
+    const response = await server.fetchAs('adult-admin', 'https://repo.test/api/hubs/admin?includeOpsPanels=true', {}, {
       'x-ks2-dev-platform-role': 'admin',
     });
     const payload = await response.json();
@@ -335,7 +335,7 @@ test('readAdminHub with learner data returns all four ops panels alongside learn
       now,
     });
 
-    const response = await server.fetchAs('adult-admin', 'https://repo.test/api/hubs/admin', {}, {
+    const response = await server.fetchAs('adult-admin', 'https://repo.test/api/hubs/admin?includeOpsPanels=true', {}, {
       'x-ks2-dev-platform-role': 'admin',
     });
     const payload = await response.json();
@@ -375,7 +375,7 @@ test('ops-role readAdminHub succeeds with actor dedup', async () => {
       updatedByAccountId: 'adult-admin',
     });
 
-    const response = await server.fetchAs('adult-ops', 'https://repo.test/api/hubs/admin', {}, {
+    const response = await server.fetchAs('adult-ops', 'https://repo.test/api/hubs/admin?includeOpsPanels=true', {}, {
       'x-ks2-dev-platform-role': 'ops',
     });
     const payload = await response.json();

@@ -391,13 +391,46 @@ test('GET /api/admin/ops/error-events filters by status', async () => {
   }
 });
 
-test('GET /api/hubs/admin extends payload with admin ops siblings while preserving existing ones', async () => {
+test('GET /api/hubs/admin defers heavy admin ops siblings by default', async () => {
   const server = createWorkerRepositoryServer();
   try {
     const now = Date.now();
     seedAdminAndOps(server, now);
 
     const response = await server.fetchAs('adult-admin', 'https://repo.test/api/hubs/admin', {}, {
+      'x-ks2-dev-platform-role': 'admin',
+    });
+    const payload = await response.json();
+
+    assert.equal(response.status, 200);
+    const hub = payload.adminHub;
+
+    assert.ok(hub.permissions);
+    assert.ok(hub.account);
+    assert.ok(hub.learnerSupport);
+    assert.ok(hub.demoOperations);
+    assert.ok(hub.contentReleaseStatus);
+    assert.ok(hub.importValidationStatus);
+    assert.ok(hub.auditLogLookup);
+    assert.ok(hub.monsterVisualConfig);
+
+    assert.equal(hub.dashboardKpis.accounts.total, 0);
+    assert.deepEqual(hub.opsActivityStream.entries, []);
+    assert.deepEqual(hub.accountOpsMetadata.accounts, []);
+    assert.deepEqual(hub.errorLogSummary.entries, []);
+    assert.equal(Object.prototype.hasOwnProperty.call(hub, 'productionEvidence'), false);
+  } finally {
+    server.close();
+  }
+});
+
+test('GET /api/hubs/admin can opt into admin ops siblings while preserving existing ones', async () => {
+  const server = createWorkerRepositoryServer();
+  try {
+    const now = Date.now();
+    seedAdminAndOps(server, now);
+
+    const response = await server.fetchAs('adult-admin', 'https://repo.test/api/hubs/admin?includeOpsPanels=true', {}, {
       'x-ks2-dev-platform-role': 'admin',
     });
     const payload = await response.json();
@@ -470,7 +503,7 @@ test('admin hub account ops metadata includes all non-demo accounts with default
       demoExpiresAt: now + 60_000,
     });
 
-    const response = await server.fetchAs('adult-admin', 'https://repo.test/api/hubs/admin', {}, {
+    const response = await server.fetchAs('adult-admin', 'https://repo.test/api/hubs/admin?includeOpsPanels=true', {}, {
       'x-ks2-dev-platform-role': 'admin',
     });
     const payload = await response.json();
@@ -502,7 +535,7 @@ test('R25: ops-role viewer receives internalNotes redacted to null; admin sees s
       updatedByAccountId: 'adult-admin',
     });
 
-    const adminResponse = await server.fetchAs('adult-admin', 'https://repo.test/api/hubs/admin', {}, {
+    const adminResponse = await server.fetchAs('adult-admin', 'https://repo.test/api/hubs/admin?includeOpsPanels=true', {}, {
       'x-ks2-dev-platform-role': 'admin',
     });
     const adminHub = (await adminResponse.json()).adminHub;
@@ -514,7 +547,7 @@ test('R25: ops-role viewer receives internalNotes redacted to null; admin sees s
     assert.equal(adminEntry.internalNotes, 'This is a private ops note');
     assert.equal(adminEntry.updatedByAccountId, 'adult-admin');
 
-    const opsResponse = await server.fetchAs('adult-ops', 'https://repo.test/api/hubs/admin', {}, {
+    const opsResponse = await server.fetchAs('adult-ops', 'https://repo.test/api/hubs/admin?includeOpsPanels=true', {}, {
       'x-ks2-dev-platform-role': 'ops',
     });
     const opsHub = (await opsResponse.json()).adminHub;
