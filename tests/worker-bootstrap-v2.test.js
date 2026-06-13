@@ -513,9 +513,10 @@ test('U7 scenario 2: 30-learner bounded bootstrap ≤ 150 KB; others in learnerL
     assert.equal(payload.meta?.capacity?.bootstrapMode, 'selected-learner-bounded');
 
     // U1 hotfix 2026-04-26: subject states ship for every writable learner
-    // (unbounded) so Setup stats are correct on learner switch. Sessions +
-    // events remain bounded to the selected learner — those are the heavy
-    // payloads the bounded envelope is protecting against.
+    // (unbounded) so learner switching can still see the sibling rows.
+    // Sessions + events remain bounded to the selected learner. The heavy
+    // spelling read-model projection is now also selected-only; sibling
+    // spelling rows hydrate fully when that learner becomes selected.
     const selectedLearnerId = payload.account.selectedLearnerId;
     assert.equal(selectedLearnerId, 'learner-00');
     const subjectKeys = Object.keys(payload.subjectStates || {});
@@ -539,6 +540,16 @@ test('U7 scenario 2: 30-learner bounded bootstrap ≤ 150 KB; others in learnerL
       'defence-in-depth: learner-00 events present (sanity — test seeds 200)');
     assert.equal(payload.bootstrapCapacity?.subjectStatesBounded, false,
       'U1: subjectStatesBounded contract marker stamped false');
+    assert.ok(Object.keys(payload.subjectStates['learner-00::spelling']?.ui?.stats || {}).length > 0,
+      'selected learner keeps the full content-backed spelling stats');
+    assert.ok(payload.subjectStates['learner-00::spelling']?.ui?.analytics,
+      'selected learner keeps the full content-backed spelling analytics');
+    assert.deepEqual(payload.subjectStates['learner-01::spelling']?.ui?.stats, {},
+      'sibling spelling row stays lightweight in the selected-learner-bounded envelope');
+    assert.equal(payload.subjectStates['learner-01::spelling']?.ui?.analytics, null,
+      'sibling spelling analytics waits until that learner is selected');
+    assert.equal(payload.subjectStates['learner-01::spelling']?.ui?.postMastery, null,
+      'sibling post-mastery derivation waits until that learner is selected');
 
     // account.learnerList has the other 29.
     assert.equal(payload.account.learnerList.length, 29);

@@ -7866,8 +7866,17 @@ async function bootstrapBundle(db, accountId, {
       `, queryLearnerIds)
   ));
   const publicReadModelNow = Date.now();
+  // Full spelling read-model derivation walks the published runtime snapshot.
+  // In the selected-learner-bounded bootstrap shape, keep that work on the
+  // selected learner only; sibling learner rows stay present, but avoid
+  // repeating the heavy spelling projection before the user switches learner.
+  const shouldHydratePublicSpellingReadModel = (row) => (
+    publicReadModels
+    && row?.subject_id === 'spelling'
+    && (!boundedToSelected || String(row.learner_id) === String(selectedId))
+  );
   const publicSpellingContent = await measureBootstrapPhase(capacity, BOOTSTRAP_PHASE_TIMING.readModel, () => (
-    publicReadModels && subjectRows.some((row) => row.subject_id === 'spelling')
+    subjectRows.some(shouldHydratePublicSpellingReadModel)
       ? (spellingContentReleaseRow
         ? readSpellingRuntimeContentReleaseBundle(
           db,
@@ -7886,7 +7895,9 @@ async function bootstrapBundle(db, accountId, {
     for (const row of subjectRows) {
       subjectStates[subjectStateKey(row.learner_id, row.subject_id)] = publicReadModels
         ? await publicSubjectStateRowToRecord(row, {
-          spellingContentSnapshot: publicSpellingContent?.snapshot || null,
+          spellingContentSnapshot: shouldHydratePublicSpellingReadModel(row)
+            ? publicSpellingContent?.snapshot || null
+            : null,
           now: publicReadModelNow,
         })
         : subjectStateRowToRecord(row);
@@ -7902,7 +7913,10 @@ async function bootstrapBundle(db, accountId, {
       if (record) gameState[gameStateKey(row.learner_id, row.system_id)] = record;
     });
     if (publicReadModels) {
-      await mergePublicSpellingCodexState(db, accountId, subjectRows, gameState, {
+      const spellingCodexSubjectRows = boundedToSelected
+        ? subjectRows.filter(shouldHydratePublicSpellingReadModel)
+        : subjectRows;
+      await mergePublicSpellingCodexState(db, accountId, spellingCodexSubjectRows, gameState, {
         runtimeSnapshot: publicSpellingContent?.snapshot || null,
         now: publicReadModelNow,
         env,
