@@ -80,6 +80,11 @@ function normaliseLimit(value, fallback, maximum) {
   return Math.min(maximum, Math.max(1, Math.floor(limit)));
 }
 
+function timestampFromClock(now = Date.now) {
+  const value = typeof now === 'function' ? Number(now()) : Number(now);
+  return Number.isFinite(value) ? value : Date.now();
+}
+
 function includeSnapshot(url, body = {}) {
   const value = url.searchParams.get('includeSnapshot') ?? body.includeSnapshot;
   return value === true || value === 'true' || value === '1';
@@ -183,6 +188,7 @@ async function readContentOperationJson(request, {
 async function consumeContentOperationActionLimit(env, actor, limitConfig, {
   action = '',
   packageId = '',
+  now = Date.now,
 } = {}) {
   const accountId = actor?.id || actor?.accountId || '';
   const result = await consumeRateLimit(env, {
@@ -190,6 +196,7 @@ async function consumeContentOperationActionLimit(env, actor, limitConfig, {
     identifier: accountId,
     limit: limitConfig.limit,
     windowMs: limitConfig.windowMs,
+    now: timestampFromClock(now),
   });
   if (result.allowed) return null;
   return rateLimitResponse({
@@ -291,6 +298,7 @@ export async function handleContentOperationsAdminRequest({
   session,
   repository,
   capacity = null,
+  now = Date.now,
 }) {
   if (!isContentOperationPath(url.pathname)) return null;
 
@@ -745,6 +753,7 @@ export async function handleContentOperationsAdminRequest({
         const rateLimited = await consumeContentOperationActionLimit(env, actor, CONTENT_OPERATION_ASSET_UPLOAD_RATE_LIMIT, {
           action,
           packageId,
+          now,
         });
         if (rateLimited) return rateLimited;
         const upload = await uploadContentOperationMonsterAsset({
@@ -837,6 +846,7 @@ export async function handleContentOperationsAdminRequest({
         const rateLimited = await consumeContentOperationActionLimit(env, actor, CONTENT_OPERATION_AUDIO_GENERATION_RATE_LIMIT, {
           action,
           packageId,
+          now,
         });
         if (rateLimited) return rateLimited;
         let candidate;

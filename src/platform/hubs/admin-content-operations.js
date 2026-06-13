@@ -357,14 +357,21 @@ function normaliseProofSurfaces(value = null) {
 
 function normaliseReleaseProductionProof(value = null) {
   const safe = isPlainObject(value) ? value : {};
+  const requiredSurfaces = normaliseProofSurfaces(safe.requiredSurfaces);
+  const linkedSurfaces = normaliseProofSurfaces(safe.linkedSurfaces);
+  const missingSurfaces = normaliseProofSurfaces(safe.missingSurfaces);
   return {
     status: asString(safe.status, 'unknown'),
     hasCallerProof: Boolean(safe.hasCallerProof),
     capturedAt: asTs(safe.capturedAt),
     capturedByAccountId: asNullableString(safe.capturedByAccountId),
-    requiredSurfaces: normaliseProofSurfaces(safe.requiredSurfaces),
-    linkedSurfaces: normaliseProofSurfaces(safe.linkedSurfaces),
-    missingSurfaces: normaliseProofSurfaces(safe.missingSurfaces),
+    requiredSurfaces,
+    linkedSurfaces,
+    missingSurfaces,
+    requiredSurfaceCount: Number(safe.requiredSurfaceCount) || requiredSurfaces.length,
+    linkedSurfaceCount: Number(safe.linkedSurfaceCount) || linkedSurfaces.length,
+    missingSurfaceCount: Number(safe.missingSurfaceCount) || missingSurfaces.length,
+    warningCount: Number(safe.warningCount) || asArray(safe.warnings).length,
   };
 }
 
