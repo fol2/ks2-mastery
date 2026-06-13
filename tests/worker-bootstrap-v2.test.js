@@ -509,19 +509,14 @@ test('U7 scenario 2: 30-learner bounded bootstrap ≤ 150 KB; others in learnerL
     assert.equal(payload.ok, true);
     assert.equal(payload.meta?.capacity?.bootstrapMode, 'selected-learner-bounded');
 
-    // U1 hotfix 2026-04-26: subject states ship for every writable learner
-    // (unbounded) so learner switching can still see the sibling rows.
-    // Sessions + events remain bounded to the selected learner. The heavy
-    // spelling runtime projection is not part of bootstrap; all spelling rows
-    // carry compact persisted-progress stats and hydrate post-mastery lazily.
+    // Production stress hardening: subject states now stay bounded to the
+    // selected learner. Sibling learner switches re-post bootstrap with
+    // preferredLearnerId instead of making the cold shell carry every row.
     const selectedLearnerId = payload.account.selectedLearnerId;
     assert.equal(selectedLearnerId, 'learner-00');
     const subjectKeys = Object.keys(payload.subjectStates || {});
-    assert.equal(subjectKeys.length, 30,
-      'U1: all 30 learners have a spelling subject state row');
-    for (const key of subjectKeys) {
-      assert.ok(key.endsWith('::spelling'), `expected spelling subject state key, got ${key}`);
-    }
+    assert.deepEqual(subjectKeys, ['learner-00::spelling'],
+      'selected-bounded bootstrap ships only the selected learner subject state');
     // Sessions + events bounded: only learner-00 ships. Two sibling
     // learners (learner-01 + learner-02) are also seeded with
     // sessions/events so this assertion has teeth — pre-hotfix the
@@ -535,20 +530,16 @@ test('U7 scenario 2: 30-learner bounded bootstrap ≤ 150 KB; others in learnerL
       'defence-in-depth: learner-00 sessions present (sanity — test seeds 30)');
     assert.ok(payload.eventLog.length > 0,
       'defence-in-depth: learner-00 events present (sanity — test seeds 200)');
-    assert.equal(payload.bootstrapCapacity?.subjectStatesBounded, false,
-      'U1: subjectStatesBounded contract marker stamped false');
+    assert.equal(payload.bootstrapCapacity?.subjectStatesBounded, true,
+      'subjectStatesBounded contract marker is true on selected-bounded bootstrap');
     assert.equal(payload.subjectStates['learner-00::spelling']?.ui?.stats?.all?.total, 1,
       'selected learner keeps compact persisted spelling stats');
     assert.equal(payload.subjectStates['learner-00::spelling']?.ui?.analytics, null,
       'selected learner avoids heavyweight spelling analytics in bootstrap');
     assert.equal(payload.subjectStates['learner-00::spelling']?.ui?.postMastery, null,
       'selected learner post-mastery waits for a spelling command or lazy route');
-    assert.equal(payload.subjectStates['learner-01::spelling']?.ui?.stats?.all?.total, 1,
-      'sibling spelling row keeps compact persisted spelling stats');
-    assert.equal(payload.subjectStates['learner-01::spelling']?.ui?.analytics, null,
-      'sibling spelling analytics stays out of the bootstrap envelope');
-    assert.equal(payload.subjectStates['learner-01::spelling']?.ui?.postMastery, null,
-      'sibling post-mastery derivation stays out of the bootstrap envelope');
+    assert.equal(payload.subjectStates['learner-01::spelling'], undefined,
+      'sibling spelling row stays out of the cold bootstrap envelope');
 
     // account.learnerList has the other 29.
     assert.equal(payload.account.learnerList.length, 29);
@@ -906,18 +897,11 @@ test('U7 scenario 22: POST notModified does not rotate session cookies', async (
 });
 
 // ---------------------------------------------------------------------------
-// U1 hotfix 2026-04-26: child_subject_state must ship for EVERY writable
-// learner on a multi-learner account, not just the selected one. The
-// selected-learner-bounded envelope still bounds practice_sessions and
-// event_log (those are the payloads that blow past 150 KB), but
-// child_subject_state is a compact per-(learner,subject) slot that powers
-// the Spelling/Grammar/Punctuation "Where You Stand" setup stats. Without
-// this carve-out, switching between siblings shows 0 stats until the user
-// triggers a Worker command that refetches.
+// Production stress hardening: selected-learner-bounded bootstrap must bound
+// child_subject_state and child_game_state too. Sibling learner switches hydrate
+// by posting bootstrap with preferredLearnerId.
 //
-// New contract marker: bootstrapCapacity.subjectStatesBounded === false.
-// Spec: docs/superpowers/specs/2026-04-26-bootstrap-learner-stats-hotfix-
-// design.md.
+// Contract marker: bootstrapCapacity.subjectStatesBounded === true.
 // ---------------------------------------------------------------------------
 
 function grammarHydrationData({ mode = 'smart', marker = null } = {}) {
@@ -1011,7 +995,7 @@ function insertEventFor(server, accountId, learnerId, { id }) {
   ]);
 }
 
-test('U1 hotfix: child_subject_state ships for all writable learners (multi-learner account)', async () => {
+test('selected-bounded bootstrap ships child_subject_state only for the selected learner (multi-learner account)', async () => {
   const server = createServer();
   try {
     // A is selected; B + C are siblings.
@@ -1036,19 +1020,15 @@ test('U1 hotfix: child_subject_state ships for all writable learners (multi-lear
     const payload = await readJsonBody(response);
     assert.equal(payload.ok, true);
 
-    // subjectStates MUST contain every (learner, subject) pair, keyed by
-    // subjectStateKey(learnerId, subjectId) → `${learner}::${subject}`.
+    // subjectStates must contain only selected learner pairs, keyed by
+    // subjectStateKey(learnerId, subjectId) -> `${learner}::${subject}`.
     const subjectKeys = Object.keys(payload.subjectStates || {}).sort();
     const expectedKeys = [
       'learner-a::grammar',
       'learner-a::spelling',
-      'learner-b::grammar',
-      'learner-b::spelling',
-      'learner-c::grammar',
-      'learner-c::spelling',
     ];
     assert.deepEqual(subjectKeys, expectedKeys,
-      `U1: subjectStates must include all writable learners across both subjects, got ${JSON.stringify(subjectKeys)}`);
+      `subjectStates must include only selected learner subjects, got ${JSON.stringify(subjectKeys)}`);
 
     // practiceSessions stays bounded to the selected learner only.
     assert.equal(payload.practiceSessions.length, 1, 'only learner-a session ships');
@@ -1061,26 +1041,16 @@ test('U1 hotfix: child_subject_state ships for all writable learners (multi-lear
     // bootstrapMode label unchanged (describes sessions/events bound).
     assert.equal(payload.meta?.capacity?.bootstrapMode, 'selected-learner-bounded');
 
-    // New contract marker: subjectStatesBounded === false.
-    assert.equal(payload.bootstrapCapacity?.subjectStatesBounded, false,
-      'bootstrapCapacity.subjectStatesBounded must be stamped false (U1 contract)');
-
-    // M1 follow-up 2026-04-26: value-level assertion. Prove the seeded
-    // `data_json` marker actually flows through for a non-selected sibling
-    // via the public Grammar read-model, while raw data stays stripped.
-    const siblingGrammar = payload.subjectStates['learner-b::grammar'];
-    assert.ok(siblingGrammar, 'sibling grammar subject-state row present');
-    assert.deepEqual(siblingGrammar.data, {}, 'M1: sibling grammar raw data is stripped');
-    assert.equal(siblingGrammar?.ui?.learnerId, 'learner-b',
-      'M1: sibling grammar read-model is built for learner-b');
-    assert.equal(siblingGrammar?.ui?.prefs?.mode, 'smart',
-      `M1: sibling grammar read-model carries the seeded prefs.mode marker, got ${JSON.stringify(siblingGrammar)}`);
+    assert.equal(payload.bootstrapCapacity?.subjectStatesBounded, true,
+      'bootstrapCapacity.subjectStatesBounded must be stamped true');
+    assert.equal(payload.subjectStates['learner-b::grammar'], undefined,
+      'sibling grammar subject-state row is omitted from cold bootstrap');
   } finally {
     server.close();
   }
 });
 
-test('U1 hotfix: GET /api/bootstrap also ships child_subject_state for all writable learners', async () => {
+test('GET /api/bootstrap also bounds child_subject_state to the selected learner', async () => {
   const server = createServer();
   try {
     insertLearner(server, 'adult-u7', { id: 'learner-a', name: 'Alpha', sortIndex: 0, selected: true });
@@ -1103,11 +1073,7 @@ test('U1 hotfix: GET /api/bootstrap also ships child_subject_state for all writa
     assert.deepEqual(subjectKeys, [
       'learner-a::grammar',
       'learner-a::spelling',
-      'learner-b::grammar',
-      'learner-b::spelling',
-      'learner-c::grammar',
-      'learner-c::spelling',
-    ], 'GET path: subjectStates unbounded across all writable learners');
+    ], 'GET path: subjectStates bounded to selected learner');
 
     assert.equal(payload.practiceSessions.length, 1);
     assert.equal(payload.practiceSessions[0].learnerId, 'learner-a');
@@ -1115,7 +1081,7 @@ test('U1 hotfix: GET /api/bootstrap also ships child_subject_state for all writa
     assert.equal(payload.eventLog[0].learnerId, 'learner-a');
 
     assert.equal(payload.meta?.capacity?.bootstrapMode, 'selected-learner-bounded');
-    assert.equal(payload.bootstrapCapacity?.subjectStatesBounded, false);
+    assert.equal(payload.bootstrapCapacity?.subjectStatesBounded, true);
   } finally {
     server.close();
   }
@@ -1347,8 +1313,9 @@ test('U1 follow-up B1: sibling subject_state write invalidates lastKnownRevision
       'grammar',
     ]);
 
-    // Re-post with the old H1. The probe MUST miss; the client MUST
-    // receive a full bundle carrying B's mutated data.
+    // Re-post with the old H1. The probe still misses so sibling writes are
+    // revision-visible, but the selected-bounded full bundle must not carry
+    // the sibling subject state.
     const response = await postBootstrap(server, { lastKnownRevision: H1 });
     assert.equal(response.status, 200);
     const payload = await readJsonBody(response);
@@ -1358,27 +1325,21 @@ test('U1 follow-up B1: sibling subject_state write invalidates lastKnownRevision
     assert.notEqual(payload.revision.hash, H1,
       'B1: new revision hash differs from H1 after sibling write');
 
-    // Value-level check: B's mutated state ships through on the full bundle
-    // as a redacted Grammar read-model.
+    assert.ok(payload.subjectStates?.['learner-a::spelling'],
+      'B1: selected learner state still ships after probe miss');
     const siblingGrammar = payload.subjectStates?.['learner-b::grammar'];
-    assert.ok(siblingGrammar, 'B1: sibling grammar state present in full bundle');
-    assert.deepEqual(siblingGrammar.data, {}, 'B1: sibling grammar raw data is stripped');
-    assert.equal(siblingGrammar?.ui?.prefs?.mode, 'learn',
-      'B1: mutated prefs ship in the full bundle after probe miss');
-    assert.equal(siblingGrammar?.ui?.stats?.concepts?.secured, 1,
-      'B1: mutated mastery stats ship in the full bundle after probe miss');
+    assert.equal(siblingGrammar, undefined,
+      'B1: sibling grammar state stays out of selected-bounded full bundle');
   } finally {
     server.close();
   }
 });
 
 // ---------------------------------------------------------------------------
-// U1 follow-up M3 (medium) 2026-04-26: single-learner accounts still ship
-// subject_state and still stamp `subjectStatesBounded: false`. Guards
-// against accidental regression where the derived `subjectStatesBounded`
-// flag (B4) is flipped to `true` on the solo path.
+// Single-learner accounts still ship subject_state and use the same
+// selected-bounded capacity marker as larger accounts.
 // ---------------------------------------------------------------------------
-test('U1 follow-up M3: single-learner account still ships subject_state + subjectStatesBounded=false', async () => {
+test('single-learner account still ships subject_state + subjectStatesBounded=true', async () => {
   const server = createServer();
   try {
     insertLearner(server, 'adult-u7', { id: 'learner-solo', name: 'Solo', sortIndex: 0, selected: true });
@@ -1391,8 +1352,8 @@ test('U1 follow-up M3: single-learner account still ships subject_state + subjec
     const subjectKeys = Object.keys(payload.subjectStates || {});
     assert.deepEqual(subjectKeys, ['learner-solo::spelling'],
       'M3: single-learner solo account ships exactly one subject state row');
-    assert.equal(payload.bootstrapCapacity?.subjectStatesBounded, false,
-      'M3: contract marker false even on solo path');
+    assert.equal(payload.bootstrapCapacity?.subjectStatesBounded, true,
+      'M3: contract marker true on selected-bounded solo path');
     assert.equal(payload.meta?.capacity?.bootstrapMode, 'selected-learner-bounded');
   } finally {
     server.close();

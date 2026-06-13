@@ -307,11 +307,15 @@ test('multi-learner #7: preferredLearnerId switches selected learner', async () 
     assert.deepEqual(siblingIds, ['learner-a', 'learner-c'],
       'A and C appear as compact siblings when B is selected');
 
-    // Subject states still include ALL writable learners.
+    // Subject states are bounded to the newly selected learner.
     const subjectKeys = Object.keys(payload.subjectStates || {}).sort();
-    assert.equal(subjectKeys.filter((k) => k.startsWith('learner-a')).length, 3, 'A subject states present');
-    assert.equal(subjectKeys.filter((k) => k.startsWith('learner-b')).length, 3, 'B subject states present');
-    assert.equal(subjectKeys.filter((k) => k.startsWith('learner-c')).length, 3, 'C subject states present');
+    assert.deepEqual(subjectKeys, [
+      'learner-b::grammar',
+      'learner-b::punctuation',
+      'learner-b::spelling',
+    ], `B-only subject states after switch, got ${JSON.stringify(subjectKeys)}`);
+    assert.equal(payload.bootstrapCapacity?.subjectStatesBounded, true,
+      'subjectStatesBounded remains true after preferred learner switch');
   } finally {
     server.close();
   }
@@ -384,13 +388,14 @@ test('multi-learner #9: cold-start alphabetical selection (no preferredLearnerId
     assert.equal(payload.practiceSessions.length, 0,
       'cold-start: zero sessions seeded, array is empty-but-correct');
 
-    // Subject states must ship for writable learners — the PR #316 regression
-    // was invisible without inspecting this envelope in cold-start scenarios.
-    const subjectKeys = Object.keys(payload.subjectStates || {});
-    assert.ok(subjectKeys.length >= 2, 'cold-start: subject states ship for writable learners');
-    // Check that sibling (learner-b) subject state is present, not just selected (learner-a).
-    assert.ok(subjectKeys.some((k) => k.startsWith('learner-b')),
-      'cold-start: sibling learner-b subject state present');
+    // Subject states must ship for the selected learner only — the PR #316
+    // regression was invisible without inspecting this envelope in cold-start
+    // scenarios.
+    const subjectKeys = Object.keys(payload.subjectStates || {}).sort();
+    assert.deepEqual(subjectKeys, ['learner-a::spelling'],
+      `cold-start: selected learner subject state only, got ${JSON.stringify(subjectKeys)}`);
+    assert.equal(subjectKeys.some((k) => k.startsWith('learner-b')), false,
+      'cold-start: sibling learner-b subject state excluded from first-paint payload');
   } finally {
     server.close();
   }
@@ -456,16 +461,15 @@ test('multi-learner #10: notModified invalidation on sibling subject-state write
     assert.notEqual(payload.revision?.hash, H1,
       'new hash differs from H1 after sibling write');
 
-    // Value-level: mutated data is reflected in the redacted read-model.
+    // Value-level: selected learner data remains present; the sibling write
+    // changes the revision but does not ship sibling state in the first-paint
+    // payload.
+    const aGrammar = payload.subjectStates?.['learner-a::grammar'];
+    assert.ok(aGrammar, 'A grammar state present in full bundle');
+    assert.equal(aGrammar?.ui?.prefs?.marker?.fixture, 'learner-a-grammar',
+      'selected learner fixture marker still ships through the read-model');
     const bGrammar = payload.subjectStates?.['learner-b::grammar'];
-    assert.ok(bGrammar, 'B grammar state present in full bundle');
-    assert.deepEqual(bGrammar.data, {}, 'B grammar raw data stays stripped');
-    assert.equal(bGrammar?.ui?.prefs?.marker?.fixture, 'learner-b-grammar-mutated',
-      'mutated fixture marker ships through the read-model');
-    assert.equal(bGrammar?.ui?.prefs?.mode, 'learn',
-      'mutated prefs mode ships through the read-model');
-    assert.equal(bGrammar?.ui?.stats?.concepts?.secured, 1,
-      'mutated mastery ships through the read-model stats');
+    assert.equal(bGrammar, undefined, 'B grammar state stays out of the selected-learner bundle');
   } finally {
     server.close();
   }
@@ -519,11 +523,14 @@ test('multi-learner #11: notModified invalidation on sibling game-state write', 
     assert.notEqual(payload.revision?.hash, H1,
       'new hash differs after sibling game-state write');
 
-    // Value-level: C's mutated game state ships through with flipped branch.
+    // Value-level: selected learner game state remains present; C's mutation
+    // invalidates the hash but does not ship sibling game state.
+    const aGame = payload.gameState?.['learner-a::monster-codex'];
+    assert.ok(aGame, 'A game state present in full bundle');
+    assert.equal(aGame?.inklet?.branch, 'b1',
+      'selected learner game state still ships through');
     const cGame = payload.gameState?.['learner-c::monster-codex'];
-    assert.ok(cGame, 'C game state present in full bundle');
-    assert.equal(cGame?.inklet?.branch, 'b2',
-      'mutated inklet branch ships through (was b1, now b2)');
+    assert.equal(cGame, undefined, 'C game state stays out of the selected-learner bundle');
   } finally {
     server.close();
   }
@@ -561,8 +568,8 @@ test('multi-learner #12: single-learner regression guard', async () => {
     assert.equal(payload.eventLog.length, 1, 'single-learner: 1 event');
 
     // subjectStatesBounded marker.
-    assert.equal(payload.bootstrapCapacity?.subjectStatesBounded, false,
-      'single-learner: subjectStatesBounded is false');
+    assert.equal(payload.bootstrapCapacity?.subjectStatesBounded, true,
+      'single-learner: subjectStatesBounded is true');
 
     // Selected learner.
     assert.equal(payload.account?.selectedLearnerId, 'learner-solo');
@@ -578,12 +585,13 @@ test('multi-learner #13: bootstrapCapacity.subjectStatesBounded marker for multi
   try {
     seed4LearnerFixture(server);
 
-    // Multi-learner: subjectStatesBounded is false.
+    // Multi-learner: subjectStatesBounded is true because first-paint subject
+    // state is bounded to the selected learner.
     const multiResponse = await postBootstrap(server, {});
     const multiPayload = await readJsonBody(multiResponse);
     assert.equal(multiPayload.ok, true);
-    assert.equal(multiPayload.bootstrapCapacity?.subjectStatesBounded, false,
-      'multi-learner: subjectStatesBounded is false (states shipped for all writable)');
+    assert.equal(multiPayload.bootstrapCapacity?.subjectStatesBounded, true,
+      'multi-learner: subjectStatesBounded is true (states ship for selected learner only)');
   } finally {
     server.close();
   }
@@ -597,8 +605,8 @@ test('multi-learner #13: bootstrapCapacity.subjectStatesBounded marker for multi
     const soloResponse = await postBootstrap(soloServer, {});
     const soloPayload = await readJsonBody(soloResponse);
     assert.equal(soloPayload.ok, true);
-    assert.equal(soloPayload.bootstrapCapacity?.subjectStatesBounded, false,
-      'single-learner: subjectStatesBounded is also false');
+    assert.equal(soloPayload.bootstrapCapacity?.subjectStatesBounded, true,
+      'single-learner: subjectStatesBounded is also true');
   } finally {
     soloServer.close();
   }

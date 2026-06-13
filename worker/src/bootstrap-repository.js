@@ -243,19 +243,11 @@ export function bootstrapCapacityMeta({
       bounded: true,
       atOrAboveRecentLimit: learnerCount > 0 && eventRows.length >= eventRecentLimit,
     },
-    // U1 hotfix 2026-04-26: child_subject_state + child_game_state ship for
-    // every writable learner even in selected-learner-bounded mode, so the
-    // Spelling/Grammar/Punctuation "Where You Stand" setup stats no longer
-    // show 0 for non-selected learners. Spec:
-    // docs/superpowers/specs/2026-04-26-bootstrap-learner-stats-hotfix-
-    // design.md. U1 follow-up (B4): value is derived from the caller's
-    // actual query shape — a drift-prone hardcoded `false` would silently
-    // lie if a future author re-bounded subject states.
+    // True when selected-learner bootstrap also bounds child_subject_state and
+    // child_game_state to the selected learner. Non-selected learner switches
+    // hydrate by re-posting bootstrap with `preferredLearnerId`.
     subjectStatesBounded: Boolean(subjectStatesBounded),
-    // U1 follow-up (B2) defensive fallback. Omitted (undefined) when the
-    // widened SELECTs succeeded; `'degraded-to-selected'` when they
-    // tripped a D1 failure and we fell back to [selectedId] so the
-    // bootstrap still returns rather than 500s.
+    // Legacy defensive marker. Omitted on the nominal path.
     ...(subjectStatesFallbackMode ? { subjectStatesFallbackMode } : {}),
   };
 }

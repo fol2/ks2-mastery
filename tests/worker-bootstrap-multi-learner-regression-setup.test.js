@@ -271,8 +271,8 @@ function seed4LearnerFixture(server) {
 // Tests
 // ---------------------------------------------------------------------------
 
-// #1 — Happy path: POST bootstrap ships child_subject_state for all 3 writable learners.
-test('multi-learner #1: POST bootstrap ships child_subject_state for all 3 writable learners', async () => {
+// #1 — Happy path: POST bootstrap ships child_subject_state for the selected learner.
+test('multi-learner #1: POST bootstrap ships selected learner child_subject_state', async () => {
   const server = createServer();
   try {
     seed4LearnerFixture(server);
@@ -287,15 +287,9 @@ test('multi-learner #1: POST bootstrap ships child_subject_state for all 3 writa
       'learner-a::grammar',
       'learner-a::punctuation',
       'learner-a::spelling',
-      'learner-b::grammar',
-      'learner-b::punctuation',
-      'learner-b::spelling',
-      'learner-c::grammar',
-      'learner-c::punctuation',
-      'learner-c::spelling',
     ];
     assert.deepEqual(subjectKeys, expectedKeys,
-      `subjectStates must include all writable learners across all 3 subjects, got ${JSON.stringify(subjectKeys)}`);
+      `subjectStates must include the selected learner across all 3 subjects, got ${JSON.stringify(subjectKeys)}`);
 
     // Verify identity via the Grammar public read-model. The public transform
     // strips raw data for all three subjects, so subject identity must survive
@@ -308,24 +302,8 @@ test('multi-learner #1: POST bootstrap ships child_subject_state for all 3 writa
       `learner-a grammar fixture marker identity, got ${JSON.stringify(aGrammar?.ui?.prefs?.marker)}`);
     assert.equal(aGrammar?.ui?.prefs?.marker?.progress, 88);
 
-    const bGrammar = payload.subjectStates['learner-b::grammar'];
-    assert.ok(bGrammar, 'learner-b grammar subject state present');
-    assert.deepEqual(bGrammar.data, {}, 'learner-b grammar data stripped by public transform');
-    assert.equal(bGrammar?.ui?.learnerId, 'learner-b');
-    assert.equal(bGrammar?.ui?.prefs?.marker?.fixture, 'learner-b-grammar',
-      `learner-b grammar fixture marker identity, got ${JSON.stringify(bGrammar?.ui?.prefs?.marker)}`);
-    assert.equal(bGrammar?.ui?.prefs?.marker?.progress, 53);
-
-    const cGrammar = payload.subjectStates['learner-c::grammar'];
-    assert.ok(cGrammar, 'learner-c grammar subject state present');
-    assert.deepEqual(cGrammar.data, {}, 'learner-c grammar data stripped by public transform');
-    assert.equal(cGrammar?.ui?.learnerId, 'learner-c');
-    assert.equal(cGrammar?.ui?.prefs?.marker?.fixture, 'learner-c-grammar',
-      `learner-c grammar fixture marker identity, got ${JSON.stringify(cGrammar?.ui?.prefs?.marker)}`);
-    assert.equal(cGrammar?.ui?.prefs?.marker?.progress, 12);
-
     // Spelling and punctuation entries also strip raw data in the public
-    // transform while preserving the correct learner routing.
+    // transform while preserving the selected learner routing.
     const aSpelling = payload.subjectStates['learner-a::spelling'];
     assert.ok(aSpelling, 'learner-a spelling entry present');
     assert.deepEqual(aSpelling.data, {}, 'learner-a spelling data stripped by public transform');
@@ -333,30 +311,15 @@ test('multi-learner #1: POST bootstrap ships child_subject_state for all 3 writa
     assert.ok(aPunctuation, 'learner-a punctuation entry present');
     assert.deepEqual(aPunctuation.data, {}, 'learner-a punctuation data stripped by public transform');
 
-    const bSpelling = payload.subjectStates['learner-b::spelling'];
-    assert.ok(bSpelling, 'learner-b spelling entry present');
-    assert.deepEqual(bSpelling.data, {}, 'learner-b spelling data stripped by public transform');
-    const bPunctuation = payload.subjectStates['learner-b::punctuation'];
-    assert.ok(bPunctuation, 'learner-b punctuation entry present');
-    assert.deepEqual(bPunctuation.data, {}, 'learner-b punctuation data stripped by public transform');
-
-    const cSpelling = payload.subjectStates['learner-c::spelling'];
-    assert.ok(cSpelling, 'learner-c spelling entry present');
-    assert.deepEqual(cSpelling.data, {}, 'learner-c spelling data stripped by public transform');
-    const cPunctuation = payload.subjectStates['learner-c::punctuation'];
-    assert.ok(cPunctuation, 'learner-c punctuation entry present');
-    assert.deepEqual(cPunctuation.data, {}, 'learner-c punctuation data stripped by public transform');
-
-    // No learner-d entries.
-    const dKeys = subjectKeys.filter((k) => k.startsWith('learner-d'));
-    assert.equal(dKeys.length, 0, 'viewer learner-d excluded from subjectStates');
+    const nonSelectedKeys = subjectKeys.filter((k) => !k.startsWith('learner-a::'));
+    assert.deepEqual(nonSelectedKeys, [], 'sibling and viewer learners excluded from subjectStates');
   } finally {
     server.close();
   }
 });
 
-// #2 — Happy path: POST bootstrap ships child_game_state for all 3 writable learners.
-test('multi-learner #2: POST bootstrap ships child_game_state for all 3 writable learners', async () => {
+// #2 — Happy path: POST bootstrap ships child_game_state for the selected learner.
+test('multi-learner #2: POST bootstrap ships selected learner child_game_state', async () => {
   const server = createServer();
   try {
     seed4LearnerFixture(server);
@@ -371,11 +334,9 @@ test('multi-learner #2: POST bootstrap ships child_game_state for all 3 writable
     // Only `monster-codex` survives `publicGameStateRowToRecord`.
     const expectedKeys = [
       'learner-a::monster-codex',
-      'learner-b::monster-codex',
-      'learner-c::monster-codex',
     ];
     assert.deepEqual(gameKeys, expectedKeys,
-      `gameState must include all writable learners' monster-codex entries, got ${JSON.stringify(gameKeys)}`);
+      `gameState must include the selected learner's monster-codex entry, got ${JSON.stringify(gameKeys)}`);
 
     // Verify data identity via the (inklet.branch, glimmerbug.branch) tuple.
     // The spelling-progress merge overwrites masteredCount/caught, but
@@ -391,31 +352,8 @@ test('multi-learner #2: POST bootstrap ships child_game_state for all 3 writable
     assert.equal(aGame?.bracehart?.starHighWater, 17,
       `learner-a Grammar star high-water survives spelling merge, got ${JSON.stringify(aGame?.bracehart)}`);
 
-    const bGame = payload.gameState['learner-b::monster-codex'];
-    assert.ok(bGame, 'learner-b game state present');
-    assert.equal(bGame?.inklet?.branch, 'b2',
-      `learner-b inklet branch identity, got ${JSON.stringify(bGame?.inklet)}`);
-    assert.equal(bGame?.glimmerbug?.branch, 'b1',
-      `learner-b glimmerbug branch identity, got ${JSON.stringify(bGame?.glimmerbug)}`);
-    assert.equal(bGame?.bracehart?.caught, true,
-      `learner-b Grammar monster survives spelling merge, got ${JSON.stringify(bGame?.bracehart)}`);
-    assert.equal(bGame?.bracehart?.starHighWater, 17,
-      `learner-b Grammar star high-water survives spelling merge, got ${JSON.stringify(bGame?.bracehart)}`);
-
-    const cGame = payload.gameState['learner-c::monster-codex'];
-    assert.ok(cGame, 'learner-c game state present');
-    assert.equal(cGame?.inklet?.branch, 'b1',
-      `learner-c inklet branch identity, got ${JSON.stringify(cGame?.inklet)}`);
-    assert.equal(cGame?.glimmerbug?.branch, 'b1',
-      `learner-c glimmerbug branch identity, got ${JSON.stringify(cGame?.glimmerbug)}`);
-    assert.equal(cGame?.bracehart?.caught, true,
-      `learner-c Grammar monster survives spelling merge, got ${JSON.stringify(cGame?.bracehart)}`);
-    assert.equal(cGame?.bracehart?.starHighWater, 17,
-      `learner-c Grammar star high-water survives spelling merge, got ${JSON.stringify(cGame?.bracehart)}`);
-
-    // No learner-d entries.
-    const dKeys = gameKeys.filter((k) => k.startsWith('learner-d'));
-    assert.equal(dKeys.length, 0, 'viewer learner-d excluded from gameState');
+    const nonSelectedKeys = gameKeys.filter((k) => !k.startsWith('learner-a::'));
+    assert.deepEqual(nonSelectedKeys, [], 'sibling and viewer learners excluded from gameState');
   } finally {
     server.close();
   }
@@ -607,26 +545,25 @@ test('multi-learner #5: GET bootstrap returns same multi-learner structure', asy
     const payload = await readJsonBody(response);
     assert.equal(payload.ok, true);
 
-    // Subject states for all writable learners.
+    // Subject states for the selected learner only.
     const subjectKeys = Object.keys(payload.subjectStates || {}).sort();
-    assert.equal(subjectKeys.length, 9,
-      `GET: 9 subject-state entries (3 learners x 3 subjects), got ${subjectKeys.length}`);
-    assert.equal(subjectKeys.filter((k) => k.startsWith('learner-d')).length, 0,
-      'GET: viewer excluded from subjectStates');
+    assert.deepEqual(subjectKeys, [
+      'learner-a::grammar',
+      'learner-a::punctuation',
+      'learner-a::spelling',
+    ], `GET: selected learner subject-state entries, got ${JSON.stringify(subjectKeys)}`);
 
-    // Game state for all writable learners.
+    // Game state for the selected learner only.
     const gameKeys = Object.keys(payload.gameState || {}).sort();
     assert.deepEqual(gameKeys, [
       'learner-a::monster-codex',
-      'learner-b::monster-codex',
-      'learner-c::monster-codex',
-    ], 'GET: gameState keys match writable learners');
+    ], 'GET: gameState keys match selected learner');
 
     // Identity check via the Grammar public read-model.
     assert.equal(
-      payload.subjectStates['learner-b::grammar']?.ui?.prefs?.marker?.fixture,
-      'learner-b-grammar',
-      'GET: learner-b grammar fixture identity',
+      payload.subjectStates['learner-a::grammar']?.ui?.prefs?.marker?.fixture,
+      'learner-a-grammar',
+      'GET: learner-a grammar fixture identity',
     );
 
     // learnerList shape.

@@ -7721,14 +7721,11 @@ async function bootstrapBundle(db, accountId, {
   // bounded mode degrades to the empty-learners branch further down.
   const boundedToSelected = publicReadModels && selectedLearnerBounded && selectedId;
   const queryLearnerIds = boundedToSelected ? [selectedId] : learnerIds;
-  // U1 hotfix 2026-04-26: child_subject_state + child_game_state are
-  // small per-(learner,subject) slots (typically < 3 KB each) and are
-  // load-bearing for the Spelling/Grammar/Punctuation "Where You Stand"
-  // setup stats. Keep them unbounded even in selected-learner-bounded
-  // mode so learner switching does not show 0-stats until the user
-  // triggers a Worker command. See docs/superpowers/specs/2026-04-26-
-  // bootstrap-learner-stats-hotfix-design.md.
-  const subjectStateLearnerIds = learnerIds;
+  // Production stress testing showed sibling subject states can dominate the
+  // public bootstrap envelope once learner histories grow. Keep the initial
+  // shell genuinely selected-learner bounded; switching learners re-posts
+  // bootstrap with `preferredLearnerId` and loads that learner's states.
+  const subjectStateLearnerIds = boundedToSelected ? [selectedId] : learnerIds;
   const spellingContentReleaseRow = publicReadModels
     ? await measureBootstrapPhase(capacity, BOOTSTRAP_PHASE_TIMING.readModel, () => (
       readResolvedContentOperationReleaseRow(db, accountId, 'spelling')
@@ -7839,17 +7836,8 @@ async function bootstrapBundle(db, accountId, {
   }
 
   const placeholders = sqlPlaceholders(queryLearnerIds.length);
-  // U1 hotfix 2026-04-26: subject/game state SELECTs use the full writable
-  // learner list so non-selected siblings retain their Spelling/Grammar/
-  // Punctuation stats in the bounded envelope. Separate placeholder string
-  // because the length differs from queryLearnerIds in bounded mode.
-  // U1 follow-up 2026-04-26 (B2 defensive): if a widened IN-clause trips
-  // an unexpected D1 failure (extremely unlikely — same table, same row
-  // shape, just more placeholders), fall back to the bounded [selectedId]
-  // shape so the bootstrap still returns rather than 500s. Sibling stats
-  // will show the pre-hotfix 0 until the next Worker command refetches,
-  // but the account stays usable. Stamp `subjectStatesFallbackMode` on
-  // the capacity meta so operators can observe the degradation.
+  // Keep a narrow fallback around the selected-state reads. It should rarely
+  // fire, but preserving the marker keeps older capacity dashboards readable.
   let subjectStateIdsUsed = subjectStateLearnerIds;
   let subjectStatesFallbackMode = null;
   let subjectRows;
@@ -7871,11 +7859,10 @@ async function bootstrapBundle(db, accountId, {
       `, subjectStateLearnerIds)
     ));
   } catch (error) {
-    // Only fall back when a selectedId exists — empty/no-learner paths
-    // are handled by the earlier `!learnerIds.length` branch, and a
-    // null selectedId here would mean an account with writable
-    // learners but no resolved selection (shouldn't reach this
-    // branch), in which case re-throwing is the correct behaviour.
+    // Only fall back when a selectedId exists — empty/no-learner paths are
+    // handled by the earlier `!learnerIds.length` branch, and a null
+    // selectedId here would mean an account with writable learners but no
+    // resolved selection (should not reach this branch).
     if (!boundedToSelected || !selectedId) throw error;
     logMutation('warn', 'bootstrap.subject_state_fallback', {
       accountId,
@@ -7984,13 +7971,7 @@ async function bootstrapBundle(db, accountId, {
     learnerCount: queryLearnerIds.length,
     sessionRows,
     eventRows,
-    // U1 follow-up 2026-04-26 (B4): derive the contract marker from the
-    // actual query shape. `subjectStatesBounded === false` whenever we
-    // SELECTed every writable learner (the nominal hotfix shape);
-    // `=== true` only if a future author re-introduces bounding OR the
-    // B2 fallback shrinks the query to [selectedId]. Explicit derivation
-    // beats a hardcoded literal — a drift here would trip this test.
-    subjectStatesBounded: subjectStateIdsUsed.length !== learnerIds.length,
+    subjectStatesBounded: Boolean(boundedToSelected),
     subjectStatesFallbackMode,
   }) : null;
   if (capacityMeta && boundedToSelected) capacityMeta.bootstrapMode = 'selected-learner-bounded';
