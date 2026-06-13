@@ -408,6 +408,8 @@ test('GET /api/hubs/admin defers heavy admin ops and visual config by default', 
     assert.ok(hub.permissions);
     assert.ok(hub.account);
     assert.ok(hub.learnerSupport);
+    assert.equal(hub.learnerSupport.diagnosticsHydrationStatus, 'deferred');
+    assert.equal(hub.learnerSupport.selectedDiagnostics, null);
     assert.ok(hub.demoOperations);
     assert.ok(hub.contentReleaseStatus);
     assert.ok(hub.importValidationStatus);

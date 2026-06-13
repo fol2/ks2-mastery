@@ -531,7 +531,7 @@ test('Punctuation release smoke completes a gated demo action through Worker com
     assertNoForbiddenPunctuationAdultEvidenceKeys(parentBody.parentHub.progressSnapshots, 'releaseSmoke.parentHub.progressSnapshots');
 
     const adminCookie = await adminCookieForLearner(server, demo.learnerId);
-    const adminHub = await server.fetchRaw(`https://repo.test/api/hubs/admin?learnerId=${demo.learnerId}&auditLimit=5`, {
+    const adminHub = await server.fetchRaw(`https://repo.test/api/hubs/admin?learnerId=${demo.learnerId}&auditLimit=5&includeLearnerDiagnostics=true`, {
       headers: { cookie: adminCookie },
     });
     const adminBody = await adminHub.json();

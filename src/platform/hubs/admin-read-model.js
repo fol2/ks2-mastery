@@ -487,13 +487,15 @@ export function buildAdminHubReadModel({
   opsActivityStream = null,
   accountOpsMetadata = null,
   errorLogSummary = null,
+  includeLearnerDiagnostics = true,
   now = Date.now,
 } = {}) {
   const resolvedPlatformRole = normalisePlatformRole(platformRole || account?.platformRole);
   const validation = validateSpellingContentBundle(spellingContentBundle);
   const contentSummary = buildSpellingContentSummary(validation.bundle);
   const generatedAt = typeof now === 'function' ? asTs(now(), Date.now()) : asTs(now, Date.now());
-  const diagnosticsEntries = (Array.isArray(memberships) ? memberships : []).map((membership) => {
+  const sourceMemberships = Array.isArray(memberships) ? memberships : [];
+  const diagnosticsEntries = includeLearnerDiagnostics ? sourceMemberships.map((membership) => {
     const resolvedMembershipRole = normaliseLearnerMembershipRole(membership?.role);
     const learner = membership?.learner || null;
     const learnerId = learner?.id || membership?.learnerId || '';
@@ -531,6 +533,28 @@ export function buildAdminHubReadModel({
       // is hidden unless `canViewAdminHub === true`).
       grammarTransferAdmin: grammarTransferAdminFromLearnerBundle(learnerBundles[learnerId] || null),
     };
+  }) : sourceMemberships.map((membership) => {
+    const resolvedMembershipRole = normaliseLearnerMembershipRole(membership?.role);
+    const learner = membership?.learner || null;
+    const learnerId = learner?.id || membership?.learnerId || '';
+    const writable = canMutateLearnerData({ membershipRole: resolvedMembershipRole });
+    return {
+      learnerId,
+      learnerName: learner?.name || 'Learner',
+      yearGroup: learner?.yearGroup || 'Y5',
+      membershipRole: resolvedMembershipRole,
+      membershipRoleLabel: learnerMembershipRoleLabel(resolvedMembershipRole),
+      stateRevision: Number(membership?.stateRevision) || 0,
+      canViewDiagnostics: canViewLearnerDiagnostics({ platformRole: resolvedPlatformRole, membershipRole: resolvedMembershipRole }),
+      writable,
+      accessModeLabel: writable ? 'Writable learner' : 'Read-only learner',
+      overview: null,
+      currentFocus: null,
+      grammarEvidence: null,
+      punctuationEvidence: null,
+      grammarTransferAdmin: null,
+      diagnosticsHydrationStatus: 'deferred',
+    };
   });
 
   const selectedDiagnostics = diagnosticsEntries.find((entry) => entry.learnerId === selectedLearnerId)
@@ -554,7 +578,7 @@ export function buildAdminHubReadModel({
   // widens the read to parent-role adults.
   const adminCanViewDebug = canViewAdminHub({ platformRole: resolvedPlatformRole });
   let postMasteryDebug = emptyPostMasteryDebug();
-  if (adminCanViewDebug && selectedDiagnostics) {
+  if (includeLearnerDiagnostics && adminCanViewDebug && selectedDiagnostics) {
     const selectedLearnerBundle = learnerBundles[selectedDiagnostics.learnerId] || null;
     const selectedSubjectState = selectedLearnerBundle && isPlainObject(selectedLearnerBundle.subjectStates)
       ? selectedLearnerBundle.subjectStates.spelling
@@ -627,8 +651,11 @@ export function buildAdminHubReadModel({
       diagnosticsCount: diagnosticsEntries.length,
       selectedLearnerId: selectedDiagnostics?.learnerId || '',
       accessibleLearners: diagnosticsEntries,
-      selectedDiagnostics,
-      punctuationReleaseDiagnostics: selectedDiagnostics?.punctuationEvidence?.releaseDiagnostics || null,
+      selectedDiagnostics: includeLearnerDiagnostics ? selectedDiagnostics : null,
+      diagnosticsHydrationStatus: includeLearnerDiagnostics ? 'full' : 'deferred',
+      punctuationReleaseDiagnostics: includeLearnerDiagnostics
+        ? selectedDiagnostics?.punctuationEvidence?.releaseDiagnostics || null
+        : null,
       entryPoints: [
         ...(canOpenParentHub ? [{
           label: 'Open Parent Hub',

@@ -10068,6 +10068,7 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
       auditLimit = 20,
       includeOpsPanels = false,
       includeVisualConfig = false,
+      includeLearnerDiagnostics = false,
     } = {}) {
       // P3 U1 (R22): single assertAdminHubActor call — the resolved actor
       // row is threaded to every downstream helper so the admin-role DB
@@ -10083,14 +10084,16 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
         nowMs: nowFactory(),
         env,
       });
-      const learnerBundles = {};
-      for (const row of memberships) {
-        learnerBundles[row.id] = await loadLearnerReadBundle(db, row.id);
-      }
       const defaultLearnerId = account?.selected_learner_id && memberships.some((membership) => membership.id === account.selected_learner_id)
         ? account.selected_learner_id
         : (memberships[0]?.id || null);
       const selectedLearnerId = learnerId || defaultLearnerId;
+      const learnerBundles = {};
+      if (includeLearnerDiagnostics) {
+        for (const row of memberships) {
+          learnerBundles[row.id] = await loadLearnerReadBundle(db, row.id);
+        }
+      }
       const auditEntries = await listMutationReceiptRows(db, accountId, {
         requestId,
         limit: auditLimit,
@@ -10182,6 +10185,7 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
         })),
         auditAvailable: true,
         selectedLearnerId,
+        includeLearnerDiagnostics,
         now: nowFactory,
       });
       const adminHub = includeOpsPanels

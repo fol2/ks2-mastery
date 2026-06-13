@@ -77,6 +77,7 @@ test('hub api client calls admin hub with learner, request id, audit limit, and 
     auditLimit: 12,
     includeOpsPanels: true,
     includeVisualConfig: true,
+    includeLearnerDiagnostics: true,
   });
 
   assert.equal(calls.length, 1);
@@ -87,6 +88,7 @@ test('hub api client calls admin hub with learner, request id, audit limit, and 
   assert.equal(requestUrl.searchParams.get('auditLimit'), '12');
   assert.equal(requestUrl.searchParams.get('includeOpsPanels'), 'true');
   assert.equal(requestUrl.searchParams.get('includeVisualConfig'), 'true');
+  assert.equal(requestUrl.searchParams.get('includeLearnerDiagnostics'), 'true');
   assert.equal(calls[0].init.method, 'GET');
   assert.equal(calls[0].init.headers['x-test-auth'], 'adult-ops');
 });

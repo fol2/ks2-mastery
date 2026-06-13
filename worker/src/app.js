@@ -2411,12 +2411,14 @@ export function createWorkerApp({
         if (url.pathname === '/api/hubs/admin' && request.method === 'GET') {
           const includeOpsPanels = url.searchParams.get('includeOpsPanels') === 'true';
           const includeVisualConfig = url.searchParams.get('includeVisualConfig') === 'true';
+          const includeLearnerDiagnostics = url.searchParams.get('includeLearnerDiagnostics') === 'true';
           const result = await repository.readAdminHub(session.accountId, {
             learnerId: url.searchParams.get('learnerId') || null,
             requestId: url.searchParams.get('requestId') || null,
             auditLimit: url.searchParams.get('auditLimit') || 20,
             includeOpsPanels,
             includeVisualConfig,
+            includeLearnerDiagnostics,
           });
           const productionEvidence = includeOpsPanels
             ? await readBundledProductionEvidenceSummary()

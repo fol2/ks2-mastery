@@ -88,7 +88,7 @@ test('readAdminHub issues a single assertAdminHubActor query (actor dedup)', asy
     const now = Date.now();
     seedAdminAndOps(server, now);
 
-    const response = await server.fetchAs('adult-admin', 'https://repo.test/api/hubs/admin?includeOpsPanels=true', {}, {
+    const response = await server.fetchAs('adult-admin', 'https://repo.test/api/hubs/admin?includeOpsPanels=true&includeLearnerDiagnostics=true', {}, {
       'x-ks2-dev-platform-role': 'admin',
     });
     const payload = await response.json();
@@ -126,7 +126,7 @@ test('readAdminHub returns identical payload shape before and after parallelisat
     const now = Date.now();
     seedAdminAndOps(server, now);
 
-    const response = await server.fetchAs('adult-admin', 'https://repo.test/api/hubs/admin?includeOpsPanels=true', {}, {
+    const response = await server.fetchAs('adult-admin', 'https://repo.test/api/hubs/admin?includeOpsPanels=true&includeLearnerDiagnostics=true', {}, {
       'x-ks2-dev-platform-role': 'admin',
     });
     const payload = await response.json();
@@ -335,7 +335,7 @@ test('readAdminHub with learner data returns all four ops panels alongside learn
       now,
     });
 
-    const response = await server.fetchAs('adult-admin', 'https://repo.test/api/hubs/admin?includeOpsPanels=true', {}, {
+    const response = await server.fetchAs('adult-admin', 'https://repo.test/api/hubs/admin?includeOpsPanels=true&includeLearnerDiagnostics=true', {}, {
       'x-ks2-dev-platform-role': 'admin',
     });
     const payload = await response.json();
@@ -344,6 +344,8 @@ test('readAdminHub with learner data returns all four ops panels alongside learn
 
     // Learner data loaded correctly alongside parallelised ops panels.
     assert.equal(hub.learnerSupport.accessibleLearners.length, 2);
+    assert.equal(hub.learnerSupport.diagnosticsHydrationStatus, 'full');
+    assert.ok(hub.learnerSupport.selectedDiagnostics);
     assert.ok(hub.dashboardKpis);
     assert.ok(hub.opsActivityStream);
     assert.ok(hub.accountOpsMetadata);
