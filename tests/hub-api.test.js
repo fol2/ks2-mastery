@@ -76,6 +76,7 @@ test('hub api client calls admin hub with learner, request id, audit limit, and 
     requestId: 'audit-req-1',
     auditLimit: 12,
     includeOpsPanels: true,
+    includeVisualConfig: true,
   });
 
   assert.equal(calls.length, 1);
@@ -85,6 +86,30 @@ test('hub api client calls admin hub with learner, request id, audit limit, and 
   assert.equal(requestUrl.searchParams.get('requestId'), 'audit-req-1');
   assert.equal(requestUrl.searchParams.get('auditLimit'), '12');
   assert.equal(requestUrl.searchParams.get('includeOpsPanels'), 'true');
+  assert.equal(requestUrl.searchParams.get('includeVisualConfig'), 'true');
+  assert.equal(calls[0].init.method, 'GET');
+  assert.equal(calls[0].init.headers['x-test-auth'], 'adult-ops');
+});
+
+test('hub api client reads the admin monster visual config narrow endpoint', async () => {
+  const calls = [];
+  const api = createHubApi({
+    baseUrl: 'https://repo.test',
+    fetch: async (url, init = {}) => {
+      calls.push({ url: String(url), init });
+      return jsonResponse({ ok: true, monsterVisualConfig: { status: {} } });
+    },
+    authSession: createStaticHeaderRepositoryAuthSession({
+      cacheScopeKey: 'account:adult-ops',
+      headers: { 'x-test-auth': 'adult-ops' },
+    }),
+  });
+
+  await api.readMonsterVisualConfig();
+
+  assert.equal(calls.length, 1);
+  const requestUrl = new URL(calls[0].url);
+  assert.equal(requestUrl.pathname, '/api/admin/monster-visual-config');
   assert.equal(calls[0].init.method, 'GET');
   assert.equal(calls[0].init.headers['x-test-auth'], 'adult-ops');
 });
@@ -449,9 +474,9 @@ async function adminFetch(server, path, init = {}) {
 }
 
 async function adminHubVisual(server) {
-  const response = await adminFetch(server, '/api/hubs/admin');
+  const response = await adminFetch(server, '/api/admin/monster-visual-config');
   const payload = await response.json();
-  return payload.adminHub.monsterVisualConfig;
+  return payload.monsterVisualConfig;
 }
 
 test('worker accepts merged visual + effect publish payload and stores both atomically', async () => {

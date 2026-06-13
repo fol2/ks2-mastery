@@ -2410,11 +2410,13 @@ export function createWorkerApp({
 
         if (url.pathname === '/api/hubs/admin' && request.method === 'GET') {
           const includeOpsPanels = url.searchParams.get('includeOpsPanels') === 'true';
+          const includeVisualConfig = includeOpsPanels || url.searchParams.get('includeVisualConfig') === 'true';
           const result = await repository.readAdminHub(session.accountId, {
             learnerId: url.searchParams.get('learnerId') || null,
             requestId: url.searchParams.get('requestId') || null,
             auditLimit: url.searchParams.get('auditLimit') || 20,
             includeOpsPanels,
+            includeVisualConfig,
           });
           const productionEvidence = includeOpsPanels
             ? await readBundledProductionEvidenceSummary()
@@ -2427,6 +2429,12 @@ export function createWorkerApp({
               ...(productionEvidence ? { productionEvidence } : {}),
             },
           });
+        }
+
+        if (url.pathname === '/api/admin/monster-visual-config' && request.method === 'GET') {
+          requireSameOrigin(request, env);
+          const result = await repository.readAdminMonsterVisualConfig(session.accountId);
+          return json({ ok: true, refreshedAt: new Date().toISOString(), ...result });
         }
 
         if (url.pathname === '/api/admin/accounts' && request.method === 'GET') {

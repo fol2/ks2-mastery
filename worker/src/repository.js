@@ -6627,6 +6627,40 @@ async function readMonsterVisualConfigPointer(db, nowTs = Date.now()) {
   return cloneMonsterVisualConfigPointer(await pending);
 }
 
+async function readCompactMonsterVisualConfigAdminState(db, nowTs) {
+  const pointer = await readMonsterVisualConfigPointer(db, nowTs);
+  return {
+    compact: true,
+    hydrationStatus: 'deferred',
+    status: {
+      schemaVersion: Number(pointer?.schemaVersion) || MONSTER_VISUAL_SCHEMA_VERSION,
+      manifestHash: pointer?.manifestHash || MONSTER_ASSET_MANIFEST.manifestHash,
+      draftRevision: 0,
+      draftUpdatedAt: 0,
+      draftUpdatedByAccountId: '',
+      publishedVersion: Number(pointer?.publishedVersion) || 0,
+      publishedAt: Number(pointer?.publishedAt) || 0,
+      publishedByAccountId: '',
+      validation: {
+        ok: true,
+        errorCount: 0,
+        warningCount: 0,
+        errors: [],
+        warnings: [],
+      },
+    },
+    draft: null,
+    published: null,
+    versions: [],
+    mutation: {
+      policyVersion: MUTATION_POLICY_VERSION,
+      scopeType: MONSTER_VISUAL_SCOPE_TYPE,
+      scopeId: MONSTER_VISUAL_SCOPE_ID,
+      draftRevision: 0,
+    },
+  };
+}
+
 function monsterVisualMutationMeta({ kind, mutation, expectedRevision, appliedRevision }) {
   return buildMutationMeta({
     kind,
@@ -10033,6 +10067,7 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
       requestId = null,
       auditLimit = 20,
       includeOpsPanels = false,
+      includeVisualConfig = false,
     } = {}) {
       // P3 U1 (R22): single assertAdminHubActor call — the resolved actor
       // row is threaded to every downstream helper so the admin-role DB
@@ -10067,7 +10102,9 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
         monsterVisualConfig,
       ] = await Promise.all([
         readDemoOperationSummary(db, nowTs),
-        readMonsterVisualConfigState(db, nowTs),
+        includeVisualConfig
+          ? readMonsterVisualConfigState(db, nowTs)
+          : readCompactMonsterVisualConfigAdminState(db, nowTs),
       ]);
 
       let dashboardKpis = null;
@@ -10172,6 +10209,13 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
           },
         };
       return { adminHub };
+    },
+    async readAdminMonsterVisualConfig(accountId) {
+      await assertAdminHubActor(db, accountId);
+      const nowTs = nowFactory();
+      return {
+        monsterVisualConfig: await readMonsterVisualConfigState(db, nowTs),
+      };
     },
     async readAdminOpsKpi(accountId) {
       return readDashboardKpis(db, {

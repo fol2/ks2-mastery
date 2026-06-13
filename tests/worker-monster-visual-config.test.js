@@ -143,7 +143,7 @@ async function fetchAdmin(server, path, init = {}) {
 }
 
 async function adminHub(server, accountId = 'adult-admin', role = 'admin') {
-  const response = await server.fetchAs(accountId, 'https://repo.test/api/hubs/admin', {}, {
+  const response = await server.fetchAs(accountId, 'https://repo.test/api/hubs/admin?includeVisualConfig=true', {}, {
     'x-ks2-dev-platform-role': role,
   });
   assert.equal(response.status, 200);
@@ -170,6 +170,25 @@ test('admin hub exposes seeded global monster visual config state', async () => 
     assert.equal(visual.draft.assets['vellhorn-b1-3'].baseline.facing, 'left');
     assert.equal(visual.published.assets['vellhorn-b1-3'].baseline.facing, 'left');
     assert.equal(visual.versions.length, 1);
+  } finally {
+    server.close();
+  }
+});
+
+test('admin monster visual config narrow read exposes the full state', async () => {
+  const server = createWorkerRepositoryServer();
+  try {
+    const response = await fetchAdmin(server, '/api/admin/monster-visual-config');
+    const payload = await json(response);
+    const visual = payload.monsterVisualConfig;
+
+    assert.equal(response.status, 200);
+    assert.equal(payload.ok, true);
+    assert.equal(visual.status.publishedVersion, 1);
+    assert.equal(visual.status.draftRevision, 0);
+    assert.equal(visual.compact, undefined);
+    assert.equal(visual.draft.assets['vellhorn-b1-3'].baseline.facing, 'left');
+    assert.equal(visual.published.assets['vellhorn-b1-3'].baseline.facing, 'left');
   } finally {
     server.close();
   }

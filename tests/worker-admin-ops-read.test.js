@@ -391,7 +391,7 @@ test('GET /api/admin/ops/error-events filters by status', async () => {
   }
 });
 
-test('GET /api/hubs/admin defers heavy admin ops siblings by default', async () => {
+test('GET /api/hubs/admin defers heavy admin ops and visual config by default', async () => {
   const server = createWorkerRepositoryServer();
   try {
     const now = Date.now();
@@ -413,6 +413,10 @@ test('GET /api/hubs/admin defers heavy admin ops siblings by default', async () 
     assert.ok(hub.importValidationStatus);
     assert.ok(hub.auditLogLookup);
     assert.ok(hub.monsterVisualConfig);
+    assert.equal(hub.monsterVisualConfig.compact, true);
+    assert.equal(hub.monsterVisualConfig.hydrationStatus, 'deferred');
+    assert.equal(hub.monsterVisualConfig.draft, null);
+    assert.equal(hub.monsterVisualConfig.published, null);
 
     assert.equal(hub.dashboardKpis.accounts.total, 0);
     assert.deepEqual(hub.opsActivityStream.entries, []);
@@ -447,6 +451,8 @@ test('GET /api/hubs/admin can opt into admin ops siblings while preserving exist
     assert.ok(hub.importValidationStatus);
     assert.ok(hub.auditLogLookup);
     assert.ok(hub.monsterVisualConfig);
+    assert.equal(hub.monsterVisualConfig.compact, false);
+    assert.ok(hub.monsterVisualConfig.draft);
 
     // Admin ops sibling fields present.
     assert.ok(hub.dashboardKpis);

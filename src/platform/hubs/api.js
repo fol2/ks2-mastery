@@ -189,12 +189,14 @@ export function createHubApi({
       requestId = null,
       auditLimit = 20,
       includeOpsPanels = false,
+      includeVisualConfig = false,
     } = {}) {
       const url = buildRequestUrl(baseUrl, '/api/hubs/admin', {
         learnerId,
         requestId,
         auditLimit,
         includeOpsPanels: includeOpsPanels ? 'true' : null,
+        includeVisualConfig: includeVisualConfig ? 'true' : null,
       });
       // U9 round 1 fix (adv-u9-r1-002): the Admin Hub read surfaces the
       // per-learner Grammar/Punctuation/Spelling summary stats. When the
@@ -216,6 +218,10 @@ export function createHubApi({
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ draft, mutation }),
       }, authSession);
+    },
+    async readMonsterVisualConfig() {
+      const url = buildRequestUrl(baseUrl, '/api/admin/monster-visual-config');
+      return fetchHubJson(fetch, url, { method: 'GET' }, authSession);
     },
     async publishMonsterVisualConfig({ mutation } = {}) {
       const url = buildRequestUrl(baseUrl, '/api/admin/monster-visual-config/publish');

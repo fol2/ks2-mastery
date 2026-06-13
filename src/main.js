@@ -1389,6 +1389,20 @@ async function refreshAdminProductionEvidence() {
   }
 }
 
+async function refreshAdminMonsterVisualConfig() {
+  if (!hubApi) return { ok: false, reason: 'no-hub' };
+  const token = beginAdminOpsRefreshToken('monsterVisualConfig');
+  try {
+    const payload = await hubApi.readMonsterVisualConfig();
+    if (!isAdminOpsRefreshTokenLatest('monsterVisualConfig', token)) return { ok: false, reason: 'superseded' };
+    patchAdminHubMonsterVisualConfig(payload.monsterVisualConfig);
+    return { ok: true };
+  } catch (error) {
+    if (!isAdminOpsRefreshTokenLatest('monsterVisualConfig', token)) return { ok: false, reason: 'superseded' };
+    return { ok: false, reason: 'error', error };
+  }
+}
+
 function isAdminHubRouteActive() {
   return boot.session.signedIn && store?.getState?.()?.route?.screen === 'admin-hub';
 }
@@ -1401,6 +1415,7 @@ async function refreshAdminHubBootstrapPanels() {
     () => refreshAdminOpsActivity(),
     () => refreshAdminOpsErrorEvents(),
     () => refreshAdminOpsAccountsMetadata(),
+    () => refreshAdminMonsterVisualConfig(),
   ];
   for (const refreshStep of refreshSteps) {
     if (!isAdminHubRouteActive()) return;

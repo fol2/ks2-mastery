@@ -380,6 +380,10 @@ export function normaliseMonsterVisualConfigAdminModel(rawValue, platformRole = 
         warnings: Array.isArray(validation.warnings) ? validation.warnings : [],
       },
     },
+    compact: raw.compact === true,
+    hydrationStatus: typeof raw.hydrationStatus === 'string'
+      ? raw.hydrationStatus
+      : (raw.compact === true ? 'deferred' : 'ready'),
     draft: raw.draft && typeof raw.draft === 'object' && !Array.isArray(raw.draft) ? raw.draft : null,
     published: raw.published && typeof raw.published === 'object' && !Array.isArray(raw.published) ? raw.published : null,
     versions: Array.isArray(raw.versions) ? raw.versions : [],
