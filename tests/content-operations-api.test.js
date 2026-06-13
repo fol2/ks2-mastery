@@ -1162,14 +1162,25 @@ test('content operations API publishes linked sentence-entry operations through 
       payload: [...word.sentenceEntryIds, sentenceId],
     });
 
-    const blocked = await validatePackage(server, packageId);
+    const blockedResponse = await server.fetchAs(
+      ADMIN_ID,
+      `${BASE_URL}/api/admin/content-operations/packages/${packageId}/validate`,
+      jsonInit('POST'),
+      adminHeaders(),
+    );
+    const blockedText = await blockedResponse.text();
+    assert.equal(blockedResponse.status, 200);
+    assert.ok(Buffer.byteLength(blockedText, 'utf8') < 200_000);
+    const blocked = JSON.parse(blockedText);
     assert.equal(blocked.candidate.validation.status, 'passed');
     assert.equal(blocked.candidate.blockers.audio.status, 'blocked');
+    assert.equal(blocked.candidate.audioScan.items, undefined);
 
+    const blockedDetail = await validatePackage(server, packageId, { includeSnapshot: true });
     seedUploadedAudioJobs(server.DB, {
       packageId,
-      candidateId: blocked.candidate.candidateId,
-      items: blocked.candidate.audioScan.items,
+      candidateId: blockedDetail.candidate.candidateId,
+      items: blockedDetail.candidate.audioScan.items,
     });
 
     const validated = await validatePackage(server, packageId, { includeSnapshot: true });
@@ -1618,8 +1629,10 @@ test('content operations API supports admin package lifecycle through separate a
       }),
       adminHeaders(),
     );
-    const published = await readPayload(publishResponse);
+    const publishedText = await publishResponse.text();
     assert.equal(publishResponse.status, 200);
+    assert.ok(Buffer.byteLength(publishedText, 'utf8') < 200_000);
+    const published = JSON.parse(publishedText);
     assert.equal(published.release.packageId, packageId);
     assert.equal(published.release.publishedByAccountId, ADMIN_ID);
     assert.equal(published.release.history.approvedByAccountId, ADMIN_ID);

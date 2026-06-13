@@ -278,7 +278,9 @@ async function contentOperationPackageDetail(repository, packageId) {
     repository.listContentOperationEvents({ packageId, limit: 50 }),
   ]);
   return {
-    package: serialiseContentOperationPackage(contentPackage),
+    package: serialiseContentOperationPackage(contentPackage, {
+      includeCandidateReadinessDetails: true,
+    }),
     events: events.map(serialiseContentOperationEvent),
   };
 }

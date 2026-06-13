@@ -28,6 +28,7 @@
 //  - Non-zero exit propagates.
 import { spawn } from 'node:child_process';
 import { readdir, writeFile } from 'node:fs/promises';
+import { availableParallelism } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { getShardFiles } from './shard-shuffle.mjs';
@@ -107,6 +108,42 @@ const FLAGS_WITH_VALUE = new Set([
   '-g',
 ]);
 
+export function resolveDefaultConcurrency({
+  argv = process.argv.slice(2),
+  env = process.env,
+  platform = process.platform,
+  available = availableParallelism(),
+} = {}) {
+  const explicit = argv.find((arg) => /^--test-concurrency=(?:true|false|\d+)$/i.test(arg));
+  if (explicit) {
+    const value = explicit.split('=')[1].toLowerCase();
+    if (value === 'true') return true;
+    if (value === 'false') return false;
+    return Math.max(1, Number(value));
+  }
+
+  const detachedIndex = argv.indexOf('--test-concurrency');
+  if (detachedIndex >= 0 && detachedIndex + 1 < argv.length) {
+    const value = String(argv[detachedIndex + 1]).toLowerCase();
+    if (value === 'true') return true;
+    if (value === 'false') return false;
+    if (/^\d+$/.test(value)) return Math.max(1, Number(value));
+  }
+
+  const envValue = String(env.KS2_NODE_TEST_CONCURRENCY || '').trim().toLowerCase();
+  if (envValue) {
+    if (envValue === 'true') return true;
+    if (envValue === 'false') return false;
+    if (/^\d+$/.test(envValue)) return Math.max(1, Number(envValue));
+  }
+
+  if (platform === 'win32') {
+    return Math.max(1, Math.min(4, Number(available) || 1));
+  }
+
+  return true;
+}
+
 export async function buildSpawnArgs(argv, discover = resolveTestFiles) {
   if (hasUserPositional(argv)) {
     // User-supplied positional path: honour it exactly and do not tack
@@ -169,7 +206,7 @@ if (isDirectInvocation) {
     }
 
     // Parse relevant flags from argv
-    const runOptions = { files, concurrency: true };
+    const runOptions = { files, concurrency: resolveDefaultConcurrency({ argv: userArgv }) };
     let shardIndex = null;
     let shardTotal = null;
 

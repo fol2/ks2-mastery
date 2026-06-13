@@ -43,6 +43,10 @@
 //    surfaces and the reverse-case regardless of viewport. When a
 //    future surface is added to the U6 table, there is NO need to
 //    touch this config block — the per-call override already dominates.
+const PLAYWRIGHT_PORT = Number(process.env.KS2_PLAYWRIGHT_PORT || 4173);
+const PLAYWRIGHT_ORIGIN = `http://127.0.0.1:${PLAYWRIGHT_PORT}`;
+const REUSE_EXISTING_SERVER = process.env.KS2_REUSE_EXISTING_PLAYWRIGHT_SERVER === '1';
+
 export default {
   testDir: './tests',
   // Playwright scenes live under `tests/playwright/*.playwright.test.mjs`.
@@ -94,9 +98,11 @@ export default {
     // `scripts/audit-client-bundle.mjs`). The env var is set via the
     // `env:` block below; Playwright propagates it into the spawned
     // shell, which then passes it down to `scripts/build-client.mjs`.
-    command: 'node ./scripts/build-bundles.mjs && node ./scripts/build-public.mjs && node ./tests/helpers/browser-app-server.js --serve-only --port 4173 --with-worker-api',
-    url: 'http://127.0.0.1:4173',
-    reuseExistingServer: !process.env.CI,
+    command: `node ./scripts/build-bundles.mjs && node ./scripts/build-public.mjs && node ./tests/helpers/browser-app-server.js --serve-only --port ${PLAYWRIGHT_PORT} --with-worker-api`,
+    url: PLAYWRIGHT_ORIGIN,
+    // Never silently reuse an arbitrary local process on the default port.
+    // Local operators can opt in after confirming the server is this repo.
+    reuseExistingServer: REUSE_EXISTING_SERVER,
     // SH2-U6: extended from 60s to 180s because the build pipeline
     // (esbuild bundle + public copy) can exceed 60s on a cold cache or
     // when multiple worktrees share the same host. Failed webserver
@@ -119,7 +125,7 @@ export default {
     },
   },
   use: {
-    baseURL: 'http://127.0.0.1:4173',
+    baseURL: PLAYWRIGHT_ORIGIN,
     trace: 'retain-on-failure',
   },
   projects: [

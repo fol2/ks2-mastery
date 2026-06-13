@@ -13,7 +13,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { buildSpawnArgs, hasUserPositional } from '../scripts/run-node-tests.mjs';
+import { buildSpawnArgs, hasUserPositional, resolveDefaultConcurrency } from '../scripts/run-node-tests.mjs';
 
 test('hasUserPositional: bare file path counts as positional', () => {
   assert.equal(hasUserPositional(['tests/smoke.test.js']), true);
@@ -76,5 +76,53 @@ test('buildSpawnArgs: empty discovery with no positional throws', async () => {
   await assert.rejects(
     async () => buildSpawnArgs([], async () => []),
     /no test files discovered/,
+  );
+});
+
+test('resolveDefaultConcurrency: caps default Windows concurrency for esbuild-heavy SSR tests', () => {
+  assert.equal(
+    resolveDefaultConcurrency({
+      argv: [],
+      env: {},
+      platform: 'win32',
+      available: 16,
+    }),
+    4,
+  );
+});
+
+test('resolveDefaultConcurrency: keeps non-Windows default delegated to node:test', () => {
+  assert.equal(
+    resolveDefaultConcurrency({
+      argv: [],
+      env: {},
+      platform: 'linux',
+      available: 16,
+    }),
+    true,
+  );
+});
+
+test('resolveDefaultConcurrency: explicit CLI value overrides platform default', () => {
+  assert.equal(
+    resolveDefaultConcurrency({
+      argv: ['--test-concurrency=7'],
+      env: {},
+      platform: 'win32',
+      available: 16,
+    }),
+    7,
+  );
+});
+
+test('resolveDefaultConcurrency: environment override supports serial local diagnostics', () => {
+  assert.equal(
+    resolveDefaultConcurrency({
+      argv: [],
+      env: { KS2_NODE_TEST_CONCURRENCY: '1' },
+      platform: 'win32',
+      available: 16,
+    }),
+    1,
   );
 });

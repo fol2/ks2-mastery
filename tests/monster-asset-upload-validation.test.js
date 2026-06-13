@@ -749,7 +749,7 @@ test('monster image uploads are bound to candidate approval and publish proof', 
     const staleApproval = await staleApprovalResponse.json();
     assert.equal(staleApproval.code, 'content_operation_candidate_operations_stale');
 
-    const currentCandidate = await validatePackage(server, contentPackage.packageId);
+    const currentCandidate = await validatePackage(server, contentPackage.packageId, { includeSnapshot: true });
     assert.equal(currentCandidate.candidate.assetScan.uploadCount, 1);
     assert.notEqual(currentCandidate.candidate.assetScan.hash, firstCandidate.candidate.assetScan.hash);
     assert.equal(currentCandidate.candidate.assetScan.assetReferenceManifest.referenceCount, 1);

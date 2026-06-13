@@ -34,6 +34,48 @@ function asArray(value) {
   return Array.isArray(value) ? value : [];
 }
 
+function isPlainObject(value) {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+}
+
+function compactAssetReferenceManifest(manifest = null) {
+  if (!isPlainObject(manifest)) return manifest ?? null;
+  const {
+    references,
+    ...summary
+  } = manifest;
+  return {
+    ...summary,
+    referenceCount: Number(manifest.referenceCount ?? asArray(references).length) || 0,
+  };
+}
+
+function compactReadinessScan(scan = null) {
+  if (!isPlainObject(scan)) return scan ?? null;
+  const summary = { ...scan };
+  delete summary.items;
+  delete summary.bySlug;
+  if (isPlainObject(summary.strictAudioReadiness)) {
+    const {
+      items: strictItems,
+      ...strictSummary
+    } = summary.strictAudioReadiness;
+    summary.strictAudioReadiness = {
+      ...strictSummary,
+      affectedCount: Number(summary.strictAudioReadiness.affectedCount ?? asArray(strictItems).length) || 0,
+    };
+  }
+  if (isPlainObject(summary.assetReferenceManifest)) {
+    summary.assetReferenceManifest = compactAssetReferenceManifest(summary.assetReferenceManifest);
+  }
+  return summary;
+}
+
+function serialiseReadinessScan(scan = null, { includeDetails = false } = {}) {
+  if (!isPlainObject(scan)) return scan ?? null;
+  return includeDetails ? scan : compactReadinessScan(scan);
+}
+
 function normaliseValidation(validation = null) {
   if (!validation || typeof validation !== 'object' || Array.isArray(validation)) {
     return {
@@ -208,13 +250,20 @@ export function serialiseContentOperationActor(actor = {}) {
   };
 }
 
-export function serialiseContentOperationPackage(contentPackage = {}, { compact = false } = {}) {
+export function serialiseContentOperationPackage(contentPackage = {}, {
+  compact = false,
+  includeCandidateReadinessDetails = false,
+} = {}) {
   const latestCandidate = contentPackage.latestCandidate || null;
   const envelope = buildContentOperationBlockerEnvelope({
     validation: latestCandidate?.validation || null,
     conflicts: latestCandidate?.conflicts || null,
-    audio: latestCandidate?.audioScan || null,
-    assets: latestCandidate?.assetScan || null,
+    audio: serialiseReadinessScan(latestCandidate?.audioScan || null, {
+      includeDetails: includeCandidateReadinessDetails,
+    }),
+    assets: serialiseReadinessScan(latestCandidate?.assetScan || null, {
+      includeDetails: includeCandidateReadinessDetails,
+    }),
     rewards: latestCandidate?.rewardScan || null,
     visibility: latestCandidate?.visibilityScan || null,
     publishReadiness: packagePublishReadiness(contentPackage),
@@ -237,7 +286,10 @@ export function serialiseContentOperationPackage(contentPackage = {}, { compact 
     publishedAt: contentPackage.publishedAt ?? null,
     supersededByPackageId: contentPackage.supersededByPackageId || null,
     operationCount: Array.isArray(contentPackage.operations) ? contentPackage.operations.length : undefined,
-    latestCandidate: latestCandidate ? serialiseContentOperationCandidate(latestCandidate, { compact }) : null,
+    latestCandidate: latestCandidate ? serialiseContentOperationCandidate(latestCandidate, {
+      compact,
+      includeReadinessDetails: includeCandidateReadinessDetails,
+    }) : null,
     blockers: envelope,
   };
   if (!compact && Array.isArray(contentPackage.operations)) {
@@ -263,7 +315,14 @@ export function serialiseContentOperation(operation = {}) {
   };
 }
 
-export function serialiseContentOperationCandidate(candidate = {}, { includeSnapshot = false, compact = false } = {}) {
+export function serialiseContentOperationCandidate(candidate = {}, {
+  includeSnapshot = false,
+  includeReadinessDetails = false,
+  compact = false,
+} = {}) {
+  const includeDetailedScans = includeSnapshot || includeReadinessDetails;
+  const audioScan = serialiseReadinessScan(candidate.audioScan, { includeDetails: includeDetailedScans });
+  const assetScan = serialiseReadinessScan(candidate.assetScan, { includeDetails: includeDetailedScans });
   const base = {
     candidateId: candidate.candidateId,
     packageId: candidate.packageId,
@@ -275,8 +334,8 @@ export function serialiseContentOperationCandidate(candidate = {}, { includeSnap
     blockers: buildContentOperationBlockerEnvelope({
       validation: candidate.validation,
       conflicts: candidate.conflicts,
-      audio: candidate.audioScan,
-      assets: candidate.assetScan,
+      audio: audioScan,
+      assets: assetScan,
       rewards: candidate.rewardScan,
       visibility: candidate.visibilityScan,
       compact,
@@ -285,8 +344,8 @@ export function serialiseContentOperationCandidate(candidate = {}, { includeSnap
     ...(includeSnapshot ? { candidate: candidate.candidate || null } : {}),
   };
   if (!compact) {
-    base.audioScan = candidate.audioScan || null;
-    base.assetScan = candidate.assetScan || null;
+    base.audioScan = audioScan;
+    base.assetScan = assetScan;
     base.conflicts = asArray(candidate.conflicts);
   }
   return base;

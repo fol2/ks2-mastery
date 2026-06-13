@@ -686,12 +686,46 @@ function hasAudioOrAssetSignals(contentPackage) {
     || blockerSectionHasSignals(contentPackage.blockers?.assets);
 }
 
+function readinessScanHasItemDetails(scan) {
+  return Array.isArray(scan?.items) && scan.items.length > 0;
+}
+
+function assetScanHasReferenceDetails(scan) {
+  return Array.isArray(scan?.assetReferenceManifest?.references)
+    && scan.assetReferenceManifest.references.length > 0;
+}
+
+function mergeCandidateWithDetail(candidate, detailCandidate) {
+  if (
+    !candidate
+    || !detailCandidate
+    || !candidate.candidateId
+    || candidate.candidateId !== detailCandidate.candidateId
+  ) {
+    return candidate;
+  }
+  return {
+    ...detailCandidate,
+    ...candidate,
+    audioScan: readinessScanHasItemDetails(candidate.audioScan)
+      ? candidate.audioScan
+      : (detailCandidate.audioScan || candidate.audioScan),
+    assetScan: readinessScanHasItemDetails(candidate.assetScan) || assetScanHasReferenceDetails(candidate.assetScan)
+      ? candidate.assetScan
+      : (detailCandidate.assetScan || candidate.assetScan),
+    conflicts: candidate.conflicts?.length ? candidate.conflicts : detailCandidate.conflicts,
+  };
+}
+
 function latestCandidateForPackage(contentPackage, lifecycleState) {
   if (
     lifecycleState?.candidate
     && lifecycleState.packageId === contentPackage.packageId
   ) {
-    return normaliseContentOperationCandidate(lifecycleState.candidate);
+    return mergeCandidateWithDetail(
+      normaliseContentOperationCandidate(lifecycleState.candidate),
+      contentPackage.latestCandidate,
+    );
   }
   return contentPackage.latestCandidate || null;
 }
