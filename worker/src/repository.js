@@ -10210,11 +10210,13 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
         };
       return { adminHub };
     },
-    async readAdminMonsterVisualConfig(accountId) {
+    async readAdminMonsterVisualConfig(accountId, { includeFull = false } = {}) {
       await assertAdminHubActor(db, accountId);
       const nowTs = nowFactory();
       return {
-        monsterVisualConfig: await readMonsterVisualConfigState(db, nowTs),
+        monsterVisualConfig: includeFull
+          ? await readMonsterVisualConfigState(db, nowTs)
+          : await readCompactMonsterVisualConfigAdminState(db, nowTs),
       };
     },
     async readAdminOpsKpi(accountId) {

@@ -451,8 +451,9 @@ test('GET /api/hubs/admin can opt into admin ops siblings while preserving exist
     assert.ok(hub.importValidationStatus);
     assert.ok(hub.auditLogLookup);
     assert.ok(hub.monsterVisualConfig);
-    assert.equal(hub.monsterVisualConfig.compact, false);
-    assert.ok(hub.monsterVisualConfig.draft);
+    assert.equal(hub.monsterVisualConfig.compact, true);
+    assert.equal(hub.monsterVisualConfig.hydrationStatus, 'deferred');
+    assert.equal(hub.monsterVisualConfig.draft, null);
 
     // Admin ops sibling fields present.
     assert.ok(hub.dashboardKpis);
@@ -468,6 +469,30 @@ test('GET /api/hubs/admin can opt into admin ops siblings while preserving exist
     assert.ok(Array.isArray(hub.errorLogSummary.entries));
     assert.equal(hub.productionEvidence.schema, 3);
     assert.ok(hub.productionEvidence.metrics && typeof hub.productionEvidence.metrics === 'object');
+  } finally {
+    server.close();
+  }
+});
+
+test('GET /api/hubs/admin can opt into the full monster visual config separately', async () => {
+  const server = createWorkerRepositoryServer();
+  try {
+    const now = Date.now();
+    seedAdminAndOps(server, now);
+
+    const response = await server.fetchAs('adult-admin', 'https://repo.test/api/hubs/admin?includeVisualConfig=true', {}, {
+      'x-ks2-dev-platform-role': 'admin',
+    });
+    const payload = await response.json();
+
+    assert.equal(response.status, 200);
+    const hub = payload.adminHub;
+
+    assert.ok(hub.monsterVisualConfig);
+    assert.equal(hub.monsterVisualConfig.compact, false);
+    assert.ok(hub.monsterVisualConfig.draft);
+    assert.equal(hub.dashboardKpis.accounts.total, 0);
+    assert.equal(Object.prototype.hasOwnProperty.call(hub, 'productionEvidence'), false);
   } finally {
     server.close();
   }

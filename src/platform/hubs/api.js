@@ -219,8 +219,10 @@ export function createHubApi({
         body: JSON.stringify({ draft, mutation }),
       }, authSession);
     },
-    async readMonsterVisualConfig() {
-      const url = buildRequestUrl(baseUrl, '/api/admin/monster-visual-config');
+    async readMonsterVisualConfig({ includeFull = false } = {}) {
+      const url = buildRequestUrl(baseUrl, '/api/admin/monster-visual-config', {
+        includeFull: includeFull ? 'true' : null,
+      });
       return fetchHubJson(fetch, url, { method: 'GET' }, authSession);
     },
     async publishMonsterVisualConfig({ mutation } = {}) {

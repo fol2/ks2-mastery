@@ -1415,7 +1415,6 @@ async function refreshAdminHubBootstrapPanels() {
     () => refreshAdminOpsActivity(),
     () => refreshAdminOpsErrorEvents(),
     () => refreshAdminOpsAccountsMetadata(),
-    () => refreshAdminMonsterVisualConfig(),
   ];
   for (const refreshStep of refreshSteps) {
     if (!isAdminHubRouteActive()) return;

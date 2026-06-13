@@ -175,10 +175,30 @@ test('admin hub exposes seeded global monster visual config state', async () => 
   }
 });
 
-test('admin monster visual config narrow read exposes the full state', async () => {
+test('admin monster visual config narrow read defaults to compact state', async () => {
   const server = createWorkerRepositoryServer();
   try {
     const response = await fetchAdmin(server, '/api/admin/monster-visual-config');
+    const payload = await json(response);
+    const visual = payload.monsterVisualConfig;
+
+    assert.equal(response.status, 200);
+    assert.equal(payload.ok, true);
+    assert.equal(visual.status.publishedVersion, 0);
+    assert.equal(visual.status.draftRevision, 0);
+    assert.equal(visual.compact, true);
+    assert.equal(visual.hydrationStatus, 'deferred');
+    assert.equal(visual.draft, null);
+    assert.equal(visual.published, null);
+  } finally {
+    server.close();
+  }
+});
+
+test('admin monster visual config narrow read can opt into the full state', async () => {
+  const server = createWorkerRepositoryServer();
+  try {
+    const response = await fetchAdmin(server, '/api/admin/monster-visual-config?includeFull=true');
     const payload = await json(response);
     const visual = payload.monsterVisualConfig;
 

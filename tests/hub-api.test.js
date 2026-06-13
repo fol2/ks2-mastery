@@ -106,12 +106,19 @@ test('hub api client reads the admin monster visual config narrow endpoint', asy
   });
 
   await api.readMonsterVisualConfig();
+  await api.readMonsterVisualConfig({ includeFull: true });
 
-  assert.equal(calls.length, 1);
+  assert.equal(calls.length, 2);
   const requestUrl = new URL(calls[0].url);
   assert.equal(requestUrl.pathname, '/api/admin/monster-visual-config');
+  assert.equal(requestUrl.searchParams.get('includeFull'), null);
   assert.equal(calls[0].init.method, 'GET');
   assert.equal(calls[0].init.headers['x-test-auth'], 'adult-ops');
+  const fullRequestUrl = new URL(calls[1].url);
+  assert.equal(fullRequestUrl.pathname, '/api/admin/monster-visual-config');
+  assert.equal(fullRequestUrl.searchParams.get('includeFull'), 'true');
+  assert.equal(calls[1].init.method, 'GET');
+  assert.equal(calls[1].init.headers['x-test-auth'], 'adult-ops');
 });
 
 test('hub api client supports same-origin relative URLs when no base URL is configured', async () => {
@@ -474,7 +481,7 @@ async function adminFetch(server, path, init = {}) {
 }
 
 async function adminHubVisual(server) {
-  const response = await adminFetch(server, '/api/admin/monster-visual-config');
+  const response = await adminFetch(server, '/api/admin/monster-visual-config?includeFull=true');
   const payload = await response.json();
   return payload.monsterVisualConfig;
 }
