@@ -3852,6 +3852,14 @@ function releaseSurfaceLabels(surfaces = []) {
   return surfaces.map((surface) => surface.label || surface.key).filter(Boolean).join(', ');
 }
 
+function releaseSurfaceSummary(surfaces = [], count = 0, noun = 'surface') {
+  const labels = releaseSurfaceLabels(surfaces);
+  if (labels) return labels;
+  const safeCount = Number(count) || 0;
+  if (!safeCount) return '';
+  return `${safeCount} ${noun}${safeCount === 1 ? '' : 's'}`;
+}
+
 function releaseChangedEntityLines(changedEntities = null) {
   return (changedEntities?.preview || [])
     .slice(0, 3)
@@ -3924,8 +3932,15 @@ function ReleaseTable({
             const changedEntities = history?.changedEntities || null;
             const productionProof = history?.productionProof || null;
             const proofStatus = productionProof?.status || (release.hasCallerProof ? 'recorded' : 'missing');
-            const missingSurfaces = releaseSurfaceLabels(productionProof?.missingSurfaces || []);
-            const linkedSurfaces = releaseSurfaceLabels(productionProof?.linkedSurfaces || []);
+            const missingSurfaces = releaseSurfaceSummary(
+              productionProof?.missingSurfaces || [],
+              productionProof?.missingSurfaceCount,
+            );
+            const linkedSurfaces = releaseSurfaceSummary(
+              productionProof?.linkedSurfaces || [],
+              productionProof?.linkedSurfaceCount,
+              'linked surface',
+            );
             const proofWarnings = Array.isArray(productionProof?.warnings) ? productionProof.warnings : [];
             const capture = productionProof?.capturedAt
               ? `Captured by ${productionProof.capturedByAccountId || 'unknown'} ${formatTimestamp(productionProof.capturedAt)}`
