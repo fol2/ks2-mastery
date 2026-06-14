@@ -4,7 +4,7 @@ import { combineCommandEvents } from '../../projections/events.js';
 import { buildCommandProjectionReadModel } from '../../projections/read-models.js';
 import { projectArithmeticRewards } from '../../projections/rewards.js';
 import { resolveProjectionInput } from '../projection-input.js';
-import { createServerArithmeticEngine } from './engine.js';
+import { ARITHMETIC_EVENT_TYPES, createServerArithmeticEngine } from './engine.js';
 import { buildArithmeticReadModel } from './read-models.js';
 
 export const ARITHMETIC_COMMANDS = Object.freeze([
@@ -16,6 +16,15 @@ export const ARITHMETIC_COMMANDS = Object.freeze([
   'save-prefs',
   'reset-learner',
 ]);
+
+const ARITHMETIC_PROJECTION_EVENT_TYPES = new Set([
+  ARITHMETIC_EVENT_TYPES.REWARD_UNIT_SECURED,
+]);
+
+function hasProjectionEvents(events = []) {
+  return Array.isArray(events)
+    && events.some((event) => ARITHMETIC_PROJECTION_EVENT_TYPES.has(event?.type));
+}
 
 export function createArithmeticCommandHandlers({ now, random } = {}) {
   async function handleArithmeticCommand(command, context) {
@@ -45,7 +54,7 @@ export function createArithmeticCommandHandlers({ now, random } = {}) {
     });
 
     const domainEvents = Array.isArray(result.events) ? result.events : [];
-    const needsProjection = result.changed !== false && domainEvents.length > 0;
+    const needsProjection = result.changed !== false && hasProjectionEvents(domainEvents);
     const projectionInput = needsProjection
       ? await resolveProjectionInput(context, {
           learnerId: command.learnerId,
@@ -69,7 +78,7 @@ export function createArithmeticCommandHandlers({ now, random } = {}) {
           existingEvents: projectionState.events,
           seedTokens: projectionInput?.tokens || [],
         })
-      : { events: [], domainEvents: [], reactionEvents: [], toastEvents: [] };
+      : { events: domainEvents, domainEvents, reactionEvents: [], toastEvents: [] };
     const projections = needsProjection
       ? buildCommandProjectionReadModel({
           gameState: projectedRewards.gameState,

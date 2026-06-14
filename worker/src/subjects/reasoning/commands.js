@@ -21,6 +21,15 @@ export const REASONING_COMMANDS = Object.freeze([
   'reset-learner',
 ]);
 
+const REASONING_PROJECTION_EVENT_TYPES = new Set([
+  'reasoning.evidence-earned',
+]);
+
+function hasProjectionEvents(events = []) {
+  return Array.isArray(events)
+    && events.some((event) => REASONING_PROJECTION_EVENT_TYPES.has(event?.type));
+}
+
 export function createReasoningCommandHandlers({ now, random } = {}) {
   async function handleReasoningCommand(command, context) {
     if (!REASONING_COMMANDS.includes(command.command)) {
@@ -52,7 +61,7 @@ export function createReasoningCommandHandlers({ now, random } = {}) {
     });
 
     const domainEvents = Array.isArray(result.events) ? result.events : [];
-    const needsProjection = result.changed !== false && domainEvents.length > 0;
+    const needsProjection = result.changed !== false && hasProjectionEvents(domainEvents);
     const projectionInput = needsProjection
       ? await resolveProjectionInput(context, {
           learnerId: command.learnerId,
@@ -76,7 +85,7 @@ export function createReasoningCommandHandlers({ now, random } = {}) {
           existingEvents: projectionState.events,
           seedTokens: projectionInput?.tokens || [],
         })
-      : { events: [], domainEvents: [], reactionEvents: [], toastEvents: [] };
+      : { events: domainEvents, domainEvents, reactionEvents: [], toastEvents: [] };
     const projections = needsProjection
       ? buildCommandProjectionReadModel({
           gameState: projectedRewards.gameState,

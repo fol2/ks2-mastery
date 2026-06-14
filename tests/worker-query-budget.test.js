@@ -502,6 +502,52 @@ test('U3 query budget: subject command hot-path 2000-event learner ≤ BUDGET_CO
   }
 });
 
+test('U3 query budget: Arithmetic and Reasoning session starts do not scan event_log history', async () => {
+  const cases = [
+    ['arithmetic', { mode: 'smart', goal: '10q' }],
+    ['reasoning', { mode: 'worked', viewMode: 'one', roundLength: 3 }],
+  ];
+
+  for (const [subjectId, payload] of cases) {
+    const harness = createCommandHarness({ subjectId });
+    try {
+      insertProjectionWindowFillerEvents(harness.DB, {
+        count: 2000,
+        startAt: Date.UTC(2026, 3, 24, 17, 30, 0),
+      });
+
+      harness.DB.clearQueryLog();
+      const start = await harness.command('start-session', payload);
+      assert.equal(start.response.status, 200, `${subjectId} start-session failed: ${JSON.stringify(start.body)}`);
+
+      const capacity = start.body.meta?.capacity;
+      assert.ok(capacity, `${subjectId} start-session must expose meta.capacity`);
+      assert.equal(
+        capacity.projectionFallback,
+        undefined,
+        `${subjectId} start-session should not enter projection fallback for non-reward events`,
+      );
+      assert.ok(
+        capacity.d1RowsRead < 20,
+        `${subjectId} start-session should stay below lightweight read budget; measured ${capacity.d1RowsRead}`,
+      );
+      assert.ok(
+        start.body.domainEvents?.some((event) => event?.type === `${subjectId}.session-started`),
+        `${subjectId} start-session must still return its domain event`,
+      );
+
+      const reads = eventLogReads(harness.DB);
+      assert.equal(
+        reads.length,
+        0,
+        `${subjectId} start-session must not scan event_log history; saw ${reads.length} reads`,
+      );
+    } finally {
+      harness.close();
+    }
+  }
+});
+
 // ---------------------------------------------------------------------------
 // Scenario 4 — Parent Hub recent-sessions
 // ---------------------------------------------------------------------------
