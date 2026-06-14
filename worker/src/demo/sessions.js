@@ -112,12 +112,13 @@ async function protectDemoReset(db, accountId, now) {
   }
 }
 
-async function enforceDemoRateLimit(db, checks, now, message) {
+async function enforceDemoRateLimit(db, checks, now, message, { cleanup = true } = {}) {
   for (const check of checks) {
     const result = await consumeRateLimit(db, {
       ...check,
       now,
       windowMs: check.windowMs || DEMO_WINDOW_MS,
+      cleanup,
     });
     if (result.allowed) continue;
     await recordDemoMetric(db, 'rate_limit_blocks', now);
@@ -151,7 +152,7 @@ export async function protectDemoSubjectCommand({ env, request, session, now = D
       identifier: accountSession,
       limit: DEMO_LIMITS.commandSession,
     },
-  ], now, 'Too many demo practice requests. Please wait a few minutes and try again.');
+  ], now, 'Too many demo practice requests. Please wait a few minutes and try again.', { cleanup: false });
 }
 
 export async function protectDemoParentHubRead({ env, request, session, now = Date.now(), capacity = null } = {}) {

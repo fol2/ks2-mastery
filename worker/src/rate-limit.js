@@ -140,7 +140,14 @@ export function rateLimitResponse({ code, retryAfterSeconds = 0, extra = {} } = 
   });
 }
 
-export async function consumeRateLimit(envOrDb, { bucket, identifier, limit, windowMs, now = Date.now() } = {}) {
+export async function consumeRateLimit(envOrDb, {
+  bucket,
+  identifier,
+  limit,
+  windowMs,
+  now = Date.now(),
+  cleanup = true,
+} = {}) {
   if (!bucket || !identifier || !limit || !windowMs) {
     return { allowed: true, retryAfterSeconds: 0 };
   }
@@ -162,7 +169,9 @@ export async function consumeRateLimit(envOrDb, { bucket, identifier, limit, win
   `, [limiterKey, windowStartedAt, now]);
   const count = Number(row?.request_count || 1);
   const storedWindow = Number(row?.window_started_at || windowStartedAt);
-  await opportunisticCleanup(db, now);
+  if (cleanup !== false) {
+    await opportunisticCleanup(db, now);
+  }
   return {
     allowed: count <= limit,
     retryAfterSeconds: Math.max(1, Math.ceil(((storedWindow + windowMs) - now) / 1000)),
