@@ -222,6 +222,73 @@ function createProductionServer() {
   });
 }
 
+function delay(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function createDelayedD1(db, {
+  delayMs = 20,
+  matchers = [],
+} = {}) {
+  const stats = {
+    delayedCount: 0,
+    inFlight: 0,
+    maxInFlight: 0,
+    delayedSql: [],
+  };
+
+  function shouldDelay(sql) {
+    return matchers.some((matcher) => matcher.test(String(sql || '')));
+  }
+
+  async function delayedOperation(sql, operation) {
+    if (!shouldDelay(sql)) return operation();
+    stats.delayedCount += 1;
+    stats.delayedSql.push(String(sql || '').replace(/\s+/g, ' ').trim().slice(0, 96));
+    stats.inFlight += 1;
+    stats.maxInFlight = Math.max(stats.maxInFlight, stats.inFlight);
+    try {
+      await delay(delayMs);
+      return await operation();
+    } finally {
+      stats.inFlight -= 1;
+    }
+  }
+
+  function wrapStatement(statement, sql) {
+    return {
+      bind(...params) {
+        statement.bind(...params);
+        return this;
+      },
+      first(columnName) {
+        return delayedOperation(sql, () => statement.first(columnName));
+      },
+      all() {
+        return delayedOperation(sql, () => statement.all());
+      },
+      run() {
+        return statement.run();
+      },
+    };
+  }
+
+  return {
+    __stats: stats,
+    db: db.db,
+    supportsSqlTransactions: db.supportsSqlTransactions,
+    prepare(sql) {
+      return wrapStatement(db.prepare(sql), sql);
+    },
+    batch(statements) {
+      return db.batch(statements);
+    },
+    exec(sql) {
+      return db.exec(sql);
+    },
+  };
+}
+
 test('production bootstrap keeps high-history public payloads bounded and redacted', async () => {
   const server = createProductionServer();
   const { accountId, cookie } = await registerProductionAccount(server);
@@ -369,6 +436,59 @@ test('production bootstrap keeps high-history public payloads bounded and redact
   assert.equal(phaseJson.includes('top-secret-prompt-sentence'), false);
 
   server.close();
+});
+
+test('production bootstrap overlaps independent bounded read groups', async () => {
+  const server = createProductionServer();
+  const { accountId, cookie } = await registerProductionAccount(server);
+
+  try {
+    insertLearner(server, accountId, {
+      id: 'learner-parallel-a',
+      name: 'Ava',
+      sortIndex: 0,
+      selected: true,
+      stateRevision: 7,
+    });
+    insertLearner(server, accountId, {
+      id: 'learner-parallel-b',
+      name: 'Ben',
+      sortIndex: 1,
+      stateRevision: 11,
+    });
+    seedHighHistoryLearner(server, accountId, 'learner-parallel-a');
+    seedHighHistoryLearner(server, accountId, 'learner-parallel-b');
+
+    const delayedDb = createDelayedD1(server.DB, {
+      delayMs: 35,
+      matchers: [
+        /\bFROM platform_monster_visual_config\b/i,
+        /\bFROM account_learner_memberships\b/i,
+        /\bFROM content_operation_releases\b/i,
+        /\bFROM adult_account_list_revisions\b/i,
+        /\bFROM child_subject_state\b/i,
+        /\bFROM child_game_state\b/i,
+        /\bFROM event_log\b/i,
+      ],
+    });
+    server.env.DB = delayedDb;
+
+    const response = await server.fetchRaw(`${BASE_URL}/api/bootstrap`, {
+      headers: { cookie },
+    });
+    const payload = await response.json();
+
+    assert.equal(response.status, 200);
+    assert.equal(payload.ok, true);
+    assert.equal(payload.meta?.capacity?.bootstrapMode, 'selected-learner-bounded');
+    assert.ok(delayedDb.__stats.delayedCount >= 6, 'test fixture should delay the bounded bootstrap read group.');
+    assert.ok(
+      delayedDb.__stats.maxInFlight >= 2,
+      `bounded bootstrap reads should overlap; max in-flight delayed reads was ${delayedDb.__stats.maxInFlight}`,
+    );
+  } finally {
+    server.close();
+  }
 });
 
 test('P7 public demo bootstrap reuses authenticated account snapshot and ratchets query count', async () => {
