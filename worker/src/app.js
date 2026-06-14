@@ -19,7 +19,10 @@ import {
   measureUtf8Bytes,
   validateRequestId,
 } from './logger.js';
-import { createWorkerRepository } from './repository.js';
+import {
+  PUBLIC_BOOTSTRAP_CAPACITY_VERSION,
+  createWorkerRepository,
+} from './repository.js';
 import { handleTextToSpeechRequest } from './tts.js';
 import {
   createDemoSession,
@@ -104,11 +107,12 @@ const CSP_REPORT_IP_LIMIT = 20;
 const PUBLIC_BOOTSTRAP_IN_FLIGHT_LIMIT = 64;
 const publicBootstrapInFlight = new Map();
 
-function publicBootstrapInFlightKey({ accountId, preferredLearnerId = null }) {
+function publicBootstrapInFlightKey({ accountId, preferredLearnerId = null, lastKnownRevision = null }) {
   return [
     'public-v2',
     accountId || '',
     preferredLearnerId || '',
+    lastKnownRevision || '',
   ].join('\u0000');
 }
 
@@ -116,14 +120,24 @@ function stampPublicBootstrapCapacity(capacity, bundle) {
   if (!capacity || !bundle || typeof bundle !== 'object') return;
   if (bundle.bootstrapCapacity != null && typeof capacity.setBootstrapCapacity === 'function') {
     capacity.setBootstrapCapacity(bundle.bootstrapCapacity);
+  } else if (bundle.notModified && typeof capacity.setBootstrapCapacity === 'function') {
+    capacity.setBootstrapCapacity({
+      version: PUBLIC_BOOTSTRAP_CAPACITY_VERSION,
+      mode: 'public-bounded',
+    });
   }
   if (typeof capacity.setBootstrapMode === 'function') {
-    capacity.setBootstrapMode('selected-learner-bounded');
+    capacity.setBootstrapMode(bundle.notModified ? 'not-modified' : 'selected-learner-bounded');
   }
 }
 
-async function readPublicBootstrapInFlight({ accountId, preferredLearnerId = null, capacity = null }, loadBundle) {
-  const key = publicBootstrapInFlightKey({ accountId, preferredLearnerId });
+async function readPublicBootstrapInFlight({
+  accountId,
+  preferredLearnerId = null,
+  lastKnownRevision = null,
+  capacity = null,
+}, loadBundle) {
+  const key = publicBootstrapInFlightKey({ accountId, preferredLearnerId, lastKnownRevision });
   const existing = publicBootstrapInFlight.get(key);
   if (existing) {
     const bundle = await existing;
@@ -1538,10 +1552,11 @@ export function createWorkerApp({
             ? body.preferredLearnerId
             : null;
           const usePublic = shouldUsePublicReadModels(request, env);
-          const bundle = usePublic && !lastKnownRevision
+          const bundle = usePublic
             ? await readPublicBootstrapInFlight({
               accountId: session.accountId,
               preferredLearnerId,
+              lastKnownRevision,
               capacity,
             }, () => repository.bootstrapV2(session.accountId, {
               publicReadModels: true,

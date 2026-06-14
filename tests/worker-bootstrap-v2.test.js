@@ -142,6 +142,68 @@ async function readJsonBody(response) {
   try { return JSON.parse(text); } catch { return null; }
 }
 
+function timeoutAfter(ms, message) {
+  return new Promise((_, reject) => {
+    setTimeout(() => reject(new Error(message)), ms);
+  });
+}
+
+function installDelayedResolvedReleaseLookup(server) {
+  const originalPrepare = server.env.DB.prepare.bind(server.env.DB);
+  let releaseLookupCount = 0;
+  let delayed = false;
+  let releaseLookupStartedResolve;
+  let releaseLookupReleaseResolve;
+  const releaseLookupStarted = new Promise((resolve) => { releaseLookupStartedResolve = resolve; });
+  const releaseLookupRelease = new Promise((resolve) => { releaseLookupReleaseResolve = resolve; });
+
+  server.env.DB.prepare = (sql) => {
+    const statement = originalPrepare(sql);
+    const normalised = String(sql || '').replace(/\s+/g, ' ').trim();
+    const isResolvedReleaseLookup = normalised.includes('FROM content_operation_account_overrides')
+      && normalised.includes('UNION ALL')
+      && normalised.includes('FROM content_operation_releases');
+    if (!isResolvedReleaseLookup) return statement;
+
+    return {
+      bind(...params) {
+        statement.bind(...params);
+        return this;
+      },
+      async first(columnName = undefined) {
+        releaseLookupCount += 1;
+        if (!delayed) {
+          delayed = true;
+          releaseLookupStartedResolve();
+          await releaseLookupRelease;
+        }
+        return statement.first(columnName);
+      },
+      async all() {
+        return statement.all();
+      },
+      async run() {
+        return statement.run();
+      },
+    };
+  };
+
+  return {
+    count() {
+      return releaseLookupCount;
+    },
+    releaseFirstLookup() {
+      releaseLookupReleaseResolve();
+    },
+    waitForFirstLookup() {
+      return releaseLookupStarted;
+    },
+    restore() {
+      server.env.DB.prepare = originalPrepare;
+    },
+  };
+}
+
 test('public bootstrap in-flight dedupe shares concurrent full bundles without retaining resolved cache', async () => {
   __clearPublicBootstrapInFlightForTests();
   const bundle = {
@@ -199,6 +261,73 @@ test('public bootstrap in-flight dedupe shares concurrent full bundles without r
     capacityHits.filter((hit) => hit.type === 'capacity').length,
     2,
     'both callers keep bootstrapCapacity metadata on their response',
+  );
+});
+
+test('public bootstrap in-flight dedupe keys concurrent notModified probes by revision', async () => {
+  __clearPublicBootstrapInFlightForTests();
+  const bundle = {
+    ok: true,
+    notModified: true,
+    revision: {
+      hash: 'hash-a',
+    },
+  };
+  const capacityHits = [];
+  const makeCapacity = (label) => ({
+    setBootstrapCapacity(value) {
+      capacityHits.push({ label, type: 'capacity', value });
+    },
+    setBootstrapMode(value) {
+      capacityHits.push({ label, type: 'mode', value });
+    },
+  });
+  let resolveLoader;
+  let loaderCalls = 0;
+  const loaderGate = new Promise((resolve) => { resolveLoader = resolve; });
+  const loadBundle = async () => {
+    loaderCalls += 1;
+    await loaderGate;
+    return bundle;
+  };
+
+  const first = __readPublicBootstrapInFlightForTests({
+    accountId: 'adult-u7',
+    preferredLearnerId: 'learner-a',
+    lastKnownRevision: 'hash-a',
+    capacity: makeCapacity('first'),
+  }, loadBundle);
+  const second = __readPublicBootstrapInFlightForTests({
+    accountId: 'adult-u7',
+    preferredLearnerId: 'learner-a',
+    lastKnownRevision: 'hash-a',
+    capacity: makeCapacity('second'),
+  }, loadBundle);
+  const differentRevision = __readPublicBootstrapInFlightForTests({
+    accountId: 'adult-u7',
+    preferredLearnerId: 'learner-a',
+    lastKnownRevision: 'hash-b',
+    capacity: makeCapacity('differentRevision'),
+  }, loadBundle);
+
+  await Promise.resolve();
+  assert.equal(loaderCalls, 2, 'matching revisions share one loader while a different revision gets its own probe');
+  assert.equal(__publicBootstrapInFlightSizeForTests(), 2);
+  resolveLoader();
+
+  assert.strictEqual(await first, bundle);
+  assert.strictEqual(await second, bundle);
+  assert.strictEqual(await differentRevision, bundle);
+  assert.equal(__publicBootstrapInFlightSizeForTests(), 0);
+  assert.deepEqual(
+    capacityHits.filter((hit) => hit.type === 'mode').map((hit) => hit.value),
+    ['not-modified', 'not-modified', 'not-modified'],
+    'shared notModified probes stamp notModified mode on every caller',
+  );
+  assert.equal(
+    capacityHits.filter((hit) => hit.type === 'capacity' && hit.value?.mode === 'public-bounded').length,
+    3,
+    'shared notModified probes keep bootstrapCapacity metadata on every caller',
   );
 });
 
@@ -657,6 +786,49 @@ test('U7 scenario 3: POST notModified with matching revision hash returns < 2 KB
     assert.equal(payload.revision.hash, lastKnownRevision);
   } finally {
     server.close();
+  }
+});
+
+test('CDP stress: concurrent POST notModified probes share one public bootstrap loader', async () => {
+  __clearPublicBootstrapInFlightForTests();
+  const server = createServer();
+  let gate = null;
+  try {
+    insertLearner(server, 'adult-u7', { id: 'learner-solo', name: 'Solo', sortIndex: 0, selected: true });
+    insertSubjectState(server, 'adult-u7', 'learner-solo');
+
+    const probe = await getBootstrap(server);
+    const probePayload = await readJsonBody(probe);
+    const lastKnownRevision = probePayload.revision.hash;
+
+    gate = installDelayedResolvedReleaseLookup(server);
+    const first = postBootstrap(server, { lastKnownRevision, preferredLearnerId: 'learner-solo' });
+    await Promise.race([
+      gate.waitForFirstLookup(),
+      timeoutAfter(1_000, 'Timed out waiting for the first notModified release lookup.'),
+    ]);
+    const second = postBootstrap(server, { lastKnownRevision, preferredLearnerId: 'learner-solo' });
+    await Promise.resolve();
+    gate.releaseFirstLookup();
+
+    const [firstResponse, secondResponse] = await Promise.all([first, second]);
+    assert.equal(firstResponse.status, 200);
+    assert.equal(secondResponse.status, 200);
+    const [firstText, secondText] = await Promise.all([firstResponse.text(), secondResponse.text()]);
+    const firstPayload = JSON.parse(firstText);
+    const secondPayload = JSON.parse(secondText);
+    assert.equal(firstPayload.notModified, true);
+    assert.equal(secondPayload.notModified, true);
+    assert.equal(firstPayload.meta?.capacity?.bootstrapMode, 'not-modified');
+    assert.equal(secondPayload.meta?.capacity?.bootstrapMode, 'not-modified');
+    assert.equal(secondPayload.meta?.capacity?.bootstrapCapacity?.mode, 'public-bounded');
+    assert.ok(firstText.length < 2_048, `first notModified body ${firstText.length} bytes < 2 KB`);
+    assert.ok(secondText.length < 2_048, `second notModified body ${secondText.length} bytes < 2 KB`);
+    assert.equal(gate.count(), 1, 'same-revision concurrent notModified probes share the in-flight D1 probe');
+  } finally {
+    gate?.restore();
+    server.close();
+    __clearPublicBootstrapInFlightForTests();
   }
 });
 
