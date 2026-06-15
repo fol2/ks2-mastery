@@ -1225,7 +1225,10 @@ async function loadBootstrapForContext(origin, options, context, scenario) {
     timeoutMs: options.timeoutMs,
   });
   const learnerId = measurement.payload?.learners?.selectedId || context.learnerId;
-  const revision = Number(measurement.payload?.learners?.byId?.[learnerId]?.stateRevision);
+  const revision = Number(
+    measurement.payload?.syncState?.learnerRevisions?.[learnerId]
+      ?? measurement.payload?.learners?.byId?.[learnerId]?.stateRevision,
+  );
   return {
     measurement,
     context: {

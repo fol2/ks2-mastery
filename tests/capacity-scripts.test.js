@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -327,6 +327,95 @@ test('classroom load production auth guard accepts explicit authorization header
     assert.equal(calls.every((call) => call.init.headers.authorization === 'Bearer explicit'), true);
   } finally {
     globalThis.fetch = previousFetch;
+  }
+});
+
+test('classroom load uses bootstrap syncState revisions for manifest sessions with history', async () => {
+  const tempDir = mkdtempSync(join(tmpdir(), 'ks2-capacity-'));
+  const manifestPath = join(tempDir, 'manifest.json');
+  const previousFetch = globalThis.fetch;
+  const commandBodies = [];
+  const grammarQuestion = createGrammarQuestion({
+    templateId: 'fronted_adverbial_choose',
+    seed: 1,
+  });
+
+  writeFileSync(manifestPath, JSON.stringify([{
+    learnerId: 'learner-history',
+    sessionCookie: 'ks2_session=history; Path=/; HttpOnly',
+    createdAt: new Date(0).toISOString(),
+    sourceIp: 'test',
+  }]));
+
+  globalThis.fetch = async (url, init = {}) => {
+    const parsed = new URL(String(url));
+    if (parsed.pathname === '/api/bootstrap') {
+      return jsonResponse({
+        ok: true,
+        learners: {
+          selectedId: 'learner-history',
+          byId: {
+            'learner-history': {
+              id: 'learner-history',
+              name: 'History Learner',
+            },
+          },
+          allIds: ['learner-history'],
+        },
+        syncState: {
+          learnerRevisions: {
+            'learner-history': 7,
+          },
+        },
+      });
+    }
+
+    if (parsed.pathname === '/api/subjects/grammar/command') {
+      const body = JSON.parse(init.body);
+      commandBodies.push(body);
+      const subjectReadModel = body.command === 'start-session'
+        ? {
+            phase: 'session',
+            session: {
+              currentItem: {
+                templateId: 'fronted_adverbial_choose',
+                seed: 1,
+                inputSpec: grammarQuestion.inputSpec,
+              },
+            },
+          }
+        : { phase: body.command === 'submit-answer' ? 'feedback' : 'summary' };
+      return jsonResponse({
+        ok: true,
+        mutation: { appliedRevision: Number(body.expectedLearnerRevision || 0) + 1 },
+        subjectReadModel,
+      });
+    }
+
+    return jsonResponse({ ok: false, code: 'not_found' }, { status: 404 });
+  };
+
+  try {
+    const report = await runClassroomLoadTest([
+      '--production',
+      '--origin', 'https://ks2.eugnel.uk',
+      '--confirm-production-load',
+      '--confirm-high-production-load',
+      '--session-manifest', manifestPath,
+      '--learners', '1',
+      '--bootstrap-burst', '1',
+      '--rounds', '1',
+    ]);
+
+    assert.equal(report.ok, true);
+    assert.equal(commandBodies.length, 3);
+    assert.deepEqual(
+      commandBodies.map((body) => body.expectedLearnerRevision),
+      [7, 8, 9],
+    );
+  } finally {
+    globalThis.fetch = previousFetch;
+    rmSync(tempDir, { recursive: true, force: true });
   }
 });
 
