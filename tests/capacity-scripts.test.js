@@ -74,6 +74,7 @@ test('classroom load script dry-run reports the planned scenarios without networ
     assert.equal(report.plan.scenarios[0].requests, 8);
     assert.equal(report.plan.scenarios[1].name, 'human-paced-grammar-round');
     assert.equal(report.plan.scenarios[1].rounds, 2);
+    assert.equal(report.plan.scenarios[1].concurrency, 1);
     assert.equal(report.plan.expectedRequests, 36);
     assert.equal(report.summary.totalRequests, 0);
     assert.equal(report.sessionSourceMode, 'none');
@@ -94,11 +95,13 @@ test('classroom load script can plan mixed subject command coverage', async () =
     '--bootstrap-burst', '4',
     '--rounds', '1',
     '--subjects', 'grammar,arithmetic,reasoning',
+    '--command-concurrency', '2',
   ]);
 
   assert.equal(report.ok, true);
   assert.deepEqual(report.plan.subjects, ['grammar', 'arithmetic', 'reasoning']);
   assert.equal(report.plan.scenarios[1].name, 'human-paced-subject-round');
+  assert.equal(report.plan.scenarios[1].concurrency, 2);
   assert.equal(report.plan.scenarios[1].commandsPerRound, 9);
   assert.equal(report.plan.expectedRequests, 24);
 });

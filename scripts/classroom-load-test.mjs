@@ -317,6 +317,7 @@ export function parseClassroomLoadArgs(argv = process.argv.slice(2)) {
     rounds: 1,
     subjects: ['grammar'],
     pacingMs: 0,
+    commandConcurrency: 1,
     timeoutMs: DEFAULT_TIMEOUT_MS,
     cookie: '',
     bearer: '',
@@ -396,6 +397,10 @@ export function parseClassroomLoadArgs(argv = process.argv.slice(2)) {
     } else if (arg === '--pacing-ms') {
       assignOnce(arg);
       options.pacingMs = nonNegativeInteger(readOptionValue(argv, index, arg), arg);
+      index += 1;
+    } else if (arg === '--command-concurrency') {
+      assignOnce(arg);
+      options.commandConcurrency = positiveInteger(readOptionValue(argv, index, arg), arg);
       index += 1;
     } else if (arg === '--timeout-ms') {
       assignOnce(arg);
@@ -512,6 +517,7 @@ export function buildClassroomLoadPlan(options = {}) {
   const rounds = positiveInteger(options.rounds ?? 1, '--rounds');
   const subjects = normaliseSubjects((options.subjects || ['grammar']).join(','));
   const pacingMs = nonNegativeInteger(options.pacingMs ?? 0, '--pacing-ms');
+  const commandConcurrency = positiveInteger(options.commandConcurrency ?? 1, '--command-concurrency');
   const virtualLearners = Array.from({ length: learners }, (_, index) => ({
     index,
     label: `learner-${String(index + 1).padStart(2, '0')}`,
@@ -537,6 +543,7 @@ export function buildClassroomLoadPlan(options = {}) {
         subjects,
         rounds,
         pacingMs,
+        concurrency: Math.min(commandConcurrency, learners),
         commandsPerRound: 3 * subjects.length,
         endpoint: `POST /api/subjects/{${subjects.join(',')}}/command`,
       },
@@ -1440,6 +1447,36 @@ async function runColdBootstrapBurst(origin, options, contexts, plan) {
 async function runHumanPacedRounds(origin, options, contexts, plan) {
   const measurements = [];
   const subjects = normaliseSubjects((plan.subjects || options.subjects || ['grammar']).join(','));
+  const commandConcurrency = positiveInteger(options.commandConcurrency ?? 1, '--command-concurrency');
+  if (commandConcurrency > 1) {
+    async function runLearner(index) {
+      const learnerMeasurements = [];
+      let current = contexts[index];
+      for (let round = 1; round <= options.rounds; round += 1) {
+        for (const subjectId of subjects) {
+          const result = await runSubjectRound(origin, options, current, round, subjectId);
+          current = result.context;
+          learnerMeasurements.push(...result.measurements);
+          await wait(options.pacingMs);
+        }
+      }
+      return { index, context: current, measurements: learnerMeasurements };
+    }
+
+    for (let start = 0; start < contexts.length; start += commandConcurrency) {
+      const slice = Array.from(
+        { length: Math.min(commandConcurrency, contexts.length - start) },
+        (_, offset) => start + offset,
+      );
+      const results = await Promise.all(slice.map((index) => runLearner(index)));
+      for (const result of results) {
+        contexts[result.index] = result.context;
+        measurements.push(...result.measurements);
+      }
+    }
+    return measurements;
+  }
+
   for (let round = 1; round <= options.rounds; round += 1) {
     for (let index = 0; index < contexts.length; index += 1) {
       for (const subjectId of subjects) {
@@ -1740,6 +1777,7 @@ export function usage() {
     '  --rounds <number>                 Human-paced subject rounds per learner, default 1',
     '  --subjects <list>                 Comma-separated subject command flows: grammar, arithmetic, reasoning',
     '  --pacing-ms <number>              Delay between learner command groups, default 0',
+    '  --command-concurrency <number>    Concurrent learner command flows, default 1',
     '  --timeout-ms <number>             Per-request timeout, default 15000',
     '  --cookie <cookie>                 Cookie header for an existing authenticated run',
     '  --bearer <token>                  Authorization bearer token',
