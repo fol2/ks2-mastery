@@ -766,7 +766,7 @@ function buildAnalytics(data, nowValue) {
   };
 }
 
-function buildStats(data, nowValue) {
+function buildStats(data, nowValue, { includeContent = true } = {}) {
   const events = data.events || [];
   const totals = normaliseTotals(data.totals, events);
   const total = totals.questions;
@@ -787,7 +787,7 @@ function buildStats(data, nowValue) {
       securedSkills,
       streakDays: data.streakDays || 0,
       evidenceStars: toNonNegativeInt(data.evidenceTotal) || data.evidenceKeys?.length || 0,
-      content: reasoningContentSummary(),
+      ...(includeContent ? { content: reasoningContentSummary() } : {}),
     },
     skills,
   };
@@ -803,10 +803,10 @@ function parentSummary(stats, analytics) {
   return `Reasoning accuracy is ${overview.accuracy}% across ${overview.totalQuestions} marked questions, with independent accuracy at ${overview.independentAccuracy}%.${weakCopy}`;
 }
 
-function buildReadModel({ learnerId, state, data, projections, nowValue }) {
-  const stats = buildStats(data, nowValue);
+function buildReadModel({ learnerId, state, data, projections, nowValue, includeContent = true }) {
+  const stats = buildStats(data, nowValue, { includeContent });
   const analytics = buildAnalytics(data, nowValue);
-  return {
+  const model = {
     subjectId: 'reasoning',
     version: 1,
     learnerId,
@@ -815,7 +815,6 @@ function buildReadModel({ learnerId, state, data, projections, nowValue }) {
     prefs: state.prefs || data.prefs || clone(DEFAULT_PREFS),
     pendingCommand: '',
     error: state.error || '',
-    content: reasoningContentSummary(),
     session: buildSessionReadModel(state.session || null, state.phase === 'summary'),
     feedback: buildFeedback(state.session, state.feedback),
     summary: state.summary ? clone(state.summary) : null,
@@ -824,6 +823,8 @@ function buildReadModel({ learnerId, state, data, projections, nowValue }) {
     parentSummary: parentSummary(stats, analytics),
     projections: projections ? { available: true } : undefined,
   };
+  if (includeContent) model.content = reasoningContentSummary();
+  return model;
 }
 
 function moveIndex(session, move = {}) {

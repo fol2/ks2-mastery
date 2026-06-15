@@ -891,4 +891,5 @@ test('arithmetic eventless commands skip projection reads', async () => {
   assert.deepEqual(response.events, []);
   assert.deepEqual(response.domainEvents, []);
   assert.equal(response.projectionContext, undefined);
+  assert.equal(response.subjectReadModel.content, undefined);
 });

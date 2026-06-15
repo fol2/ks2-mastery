@@ -9,13 +9,21 @@ function normaliseState(state = {}) {
   return state && typeof state === 'object' && !Array.isArray(state) ? state : {};
 }
 
-export function buildReasoningReadModel({ learnerId = '', state = {}, data = {}, projections = null, nowValue = Date.now() } = {}) {
+export function buildReasoningReadModel({
+  learnerId = '',
+  state = {},
+  data = {},
+  projections = null,
+  nowValue = Date.now(),
+  includeContent = true,
+} = {}) {
   return buildReasoningReadModelFromEngine({
     learnerId,
     state: normaliseState(state),
     data: normaliseData(data),
     projections,
     nowValue,
+    includeContent,
   });
 }
 

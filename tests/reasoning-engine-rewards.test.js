@@ -632,6 +632,8 @@ test('worker subject runtime wires reasoning command handlers', async () => {
   assert.equal(started.subjectReadModel.phase, 'session');
   assert.ok(started.subjectReadModel.session.currentQuestion.id);
   assert.equal(started.subjectReadModel.session.currentQuestion.evaluate, undefined);
+  assert.equal(started.subjectReadModel.content, undefined);
+  assert.equal(started.subjectReadModel.stats.overview.content, undefined);
   assert.ok(started.runtimeWrite.state.session.id);
 });
 

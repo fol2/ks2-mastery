@@ -67,10 +67,19 @@ function parentSummary(stats, analytics) {
   return text;
 }
 
-export function buildArithmeticReadModel({ learnerId = '', state = {}, data = {}, stats = null, analytics = null, content = null, projections = null } = {}) {
+export function buildArithmeticReadModel({
+  learnerId = '',
+  state = {},
+  data = {},
+  stats = null,
+  analytics = null,
+  content = null,
+  projections = null,
+  includeContent = true,
+} = {}) {
   const overview = stats || { overview: {}, skills: [] };
   const detail = analytics || { skills: [], strands: [], misconceptions: [], recentAttempts: [] };
-  return {
+  const model = {
     version: 1,
     subjectId: 'arithmetic',
     learnerId,
@@ -83,8 +92,9 @@ export function buildArithmeticReadModel({ learnerId = '', state = {}, data = {}
     error: state.error || '',
     stats: overview,
     analytics: detail,
-    content: content || arithmeticContentSummary(),
     parentSummary: parentSummary(overview, detail),
     projections: projections || null,
   };
+  if (includeContent) model.content = content || arithmeticContentSummary();
+  return model;
 }

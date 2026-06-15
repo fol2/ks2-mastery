@@ -1,4 +1,3 @@
-import { arithmeticContentSummary } from '../../../../shared/arithmetic/content.js';
 import { NotFoundError } from '../../errors.js';
 import { combineCommandEvents } from '../../projections/events.js';
 import { buildCommandProjectionReadModel } from '../../projections/read-models.js';
@@ -97,7 +96,7 @@ export function createArithmeticCommandHandlers({ now, random } = {}) {
         data: result.data,
         stats: result.stats,
         analytics: result.analytics,
-        content: arithmeticContentSummary(),
+        includeContent: false,
         projections,
       }),
       projections,

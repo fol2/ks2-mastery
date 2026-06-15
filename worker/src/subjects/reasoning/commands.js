@@ -1,4 +1,3 @@
-import { reasoningContentSummary } from '../../../../shared/reasoning/content.js';
 import { NotFoundError } from '../../errors.js';
 import { combineCommandEvents } from '../../projections/events.js';
 import { buildCommandProjectionReadModel } from '../../projections/read-models.js';
@@ -104,9 +103,9 @@ export function createReasoningCommandHandlers({ now, random } = {}) {
         data: result.data,
         stats: result.stats,
         analytics: result.analytics,
-        content: reasoningContentSummary(),
         projections,
         nowValue,
+        includeContent: false,
       }),
       projections,
       events: projectedEvents.events,
