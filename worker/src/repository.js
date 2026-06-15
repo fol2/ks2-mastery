@@ -8011,11 +8011,7 @@ async function bootstrapBundle(db, accountId, {
   // empty and non-empty branches can stamp them consistently. These
   // queries are free when `revisionEnvelope=false` (we skip them).
   const accountRevisionValue = Number(account?.repo_revision) || 0;
-  const {
-    accountLearnerListRevision,
-    selectedLearnerRevision,
-    revisionHash,
-  } = await measureBootstrapPhase(capacity, BOOTSTRAP_PHASE_TIMING.revisionHash, async () => {
+  const revisionEnvelopePromise = measureBootstrapPhase(capacity, BOOTSTRAP_PHASE_TIMING.revisionHash, async () => {
     const accountLearnerListRevisionPromise = revisionEnvelope
       ? readAccountLearnerListRevision(db, accountId)
       : Promise.resolve(0);
@@ -8053,6 +8049,7 @@ async function bootstrapBundle(db, accountId, {
       revisionHash: nextRevisionHash,
     };
   });
+  void revisionEnvelopePromise.catch(() => {});
 
   // U7: compact `account.learnerList` entries for unselected learners.
   // When `boundedToSelected` is false (legacy callers), this stays empty
@@ -8069,6 +8066,11 @@ async function bootstrapBundle(db, accountId, {
   );
 
   if (!learnerIds.length) {
+    const {
+      accountLearnerListRevision,
+      selectedLearnerRevision,
+      revisionHash,
+    } = await revisionEnvelopePromise;
     const emptyMode = boundedToSelected ? 'selected-learner-bounded' : null;
     const capacityMeta = publicReadModels ? bootstrapCapacityMeta({
       publicReadModels,
@@ -8267,6 +8269,11 @@ async function bootstrapBundle(db, accountId, {
     subjectStatesFallbackMode,
   }) : null;
   if (capacityMeta && boundedToSelected) capacityMeta.bootstrapMode = 'selected-learner-bounded';
+  const {
+    accountLearnerListRevision,
+    selectedLearnerRevision,
+    revisionHash,
+  } = await revisionEnvelopePromise;
 
   return measureBootstrapPhaseSync(capacity, BOOTSTRAP_PHASE_TIMING.responseConstruction, () => ({
     ...normaliseRepositoryBundle({
