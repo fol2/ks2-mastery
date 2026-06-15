@@ -346,11 +346,25 @@ function createCommandHarness({ subjectId = 'spelling', accountId = 'adult-cmd' 
     return { response, body };
   }
 
+  async function bootstrap() {
+    const response = await app.fetch(new Request(`${BASE_URL}/api/bootstrap`, {
+      method: 'GET',
+      headers: {
+        accept: 'application/json',
+        'x-ks2-public-read-models': '1',
+        'x-ks2-dev-account-id': accountId,
+      },
+    }), env, {});
+    const body = await response.json();
+    return { response, body };
+  }
+
   return {
     DB,
     env,
     app,
     command,
+    bootstrap,
     close() { DB.close(); },
     get revision() { return revision; },
     set revision(value) { revision = value; },
@@ -578,6 +592,54 @@ test('U3 query budget: Arithmetic and Reasoning session starts do not scan event
         0,
         `${subjectId} start-session must not probe sqlite_master on the hot path; saw ${metadataReads.length} reads`,
       );
+    } finally {
+      harness.close();
+    }
+  }
+});
+
+test('U3 query budget: Arithmetic and Reasoning bootstrap first-paint payloads stay compact', async () => {
+  const cases = [
+    ['arithmetic', { mode: 'smart', goal: '10q' }],
+    ['reasoning', { mode: 'worked', viewMode: 'one', roundLength: 3 }],
+  ];
+
+  for (const [subjectId, payload] of cases) {
+    const harness = createCommandHarness({ subjectId });
+    try {
+      const start = await harness.command('start-session', payload);
+      assert.equal(start.response.status, 200, `${subjectId} start-session failed: ${JSON.stringify(start.body)}`);
+
+      const bootstrap = await harness.bootstrap();
+      assert.equal(bootstrap.response.status, 200, `${subjectId} bootstrap failed: ${JSON.stringify(bootstrap.body)}`);
+      assert.equal(bootstrap.body.meta?.capacity?.bootstrapMode, 'selected-learner-bounded');
+
+      const state = bootstrap.body.subjectStates?.[`learner-cmd::${subjectId}`]?.ui;
+      assert.ok(state, `${subjectId} state must be present`);
+      assert.ok(state.session?.currentQuestion || state.session?.questions?.length,
+        `${subjectId} active session must remain resumable from bootstrap`);
+      assert.equal('content' in state, false,
+        `${subjectId} bootstrap must not duplicate static content already bundled on the client`);
+      assert.equal(Array.isArray(state.stats?.skills), false,
+        `${subjectId} bootstrap must not ship heavyweight stats.skills`);
+      assert.equal(state.stats?.overview?.content, undefined,
+        `${subjectId} bootstrap must not duplicate content inside stats.overview`);
+
+      if (subjectId === 'arithmetic') {
+        assert.equal(Array.isArray(state.analytics?.skills), false,
+          'arithmetic bootstrap analytics must omit skill rows');
+        assert.equal(Array.isArray(state.analytics?.recentAttempts), false,
+          'arithmetic bootstrap analytics must omit recent-attempt history');
+      } else {
+        assert.equal(Array.isArray(state.analytics?.templates), false,
+          'reasoning bootstrap analytics must omit template rows');
+        assert.equal(Array.isArray(state.analytics?.recentActivity), false,
+          'reasoning bootstrap analytics must omit recent activity');
+      }
+
+      const subjectStateBytes = Buffer.byteLength(JSON.stringify(bootstrap.body.subjectStates || {}));
+      assert.ok(subjectStateBytes < 18_000,
+        `${subjectId} bootstrap subjectStates should stay below 18 KB; measured ${subjectStateBytes}`);
     } finally {
       harness.close();
     }

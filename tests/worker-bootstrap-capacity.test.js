@@ -403,7 +403,7 @@ test('production bootstrap keeps high-history public payloads bounded and redact
   // revisions must miss the notModified probe. CDP stress hardening
   // 2026-06-13 bumped 5 -> 6 so selected-learner subject state
   // analytics switch to compact first-paint projections.
-  assert.equal(payload.meta.capacity.bootstrapCapacity.version, 6);
+  assert.equal(payload.meta.capacity.bootstrapCapacity.version, 7);
   assert.equal(payload.meta.capacity.bootstrapCapacity.mode, 'public-bounded');
   assert.equal('bootstrapPhaseTimings' in payload.meta.capacity, false, 'phase timings stay out of child-facing meta.capacity.');
 

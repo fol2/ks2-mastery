@@ -410,11 +410,11 @@ test('U7 scenario 15: envelope shape snapshot matches BOOTSTRAP_CAPACITY_VERSION
   // Content Operations Centre T5A: bumped 4 -> 5 when spelling public
   // read-model revision hashes started including the active content release.
   //
-  // CDP stress hardening 2026-06-13: bumped 5 -> 6 when selected-bounded
-  // bootstrap non-spelling subject states switched to compact first-paint
-  // projections rather than full analytics read-models.
-  assert.equal(BOOTSTRAP_CAPACITY_VERSION, 6,
-    'CDP stress hardening bumps BOOTSTRAP_CAPACITY_VERSION 5->6 so compact first-paint projections miss the notModified probe.');
+  // CDP stress hardening 2026-06-15: bumped 6 -> 7 when selected-bounded
+  // Arithmetic and Reasoning first-paint state dropped duplicated static
+  // content and heavyweight analytics/stat lists.
+  assert.equal(BOOTSTRAP_CAPACITY_VERSION, 7,
+    'CDP stress hardening bumps BOOTSTRAP_CAPACITY_VERSION 6->7 so lighter Arithmetic/Reasoning first-paint projections miss the notModified probe.');
   // Closed union for meta.capacity.bootstrapMode (canonical U7 enum).
   assert.deepEqual(
     [...BOOTSTRAP_MODES].sort(),

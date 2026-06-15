@@ -696,10 +696,7 @@ function compactReadingAnalytics(analytics) {
 function compactArithmeticAnalytics(analytics) {
   if (!analytics || typeof analytics !== 'object' || Array.isArray(analytics)) return null;
   const output = {
-    skills: compactList(analytics.skills, 30, compactSkillAnalyticsEntry),
     strands: compactList(analytics.strands, 8, compactSkillAnalyticsEntry),
-    misconceptions: compactList(analytics.misconceptions, 6, compactSkillAnalyticsEntry),
-    recentAttempts: compactList(analytics.recentAttempts, 5, compactRecentActivityEntry),
   };
   return Object.fromEntries(Object.entries(output).filter(([, value]) => (
     value && (!Array.isArray(value) || value.length)
@@ -710,11 +707,7 @@ function compactReasoningAnalytics(analytics) {
   if (!analytics || typeof analytics !== 'object' || Array.isArray(analytics)) return null;
   const output = {
     ...(compactObjectFields(analytics, ['available'], { stringMaxLength: 80 }) || {}),
-    skills: compactList(analytics.skills, 24, compactSkillAnalyticsEntry),
-    templates: compactList(analytics.templates, 16, compactSkillAnalyticsEntry),
-    misconceptionPatterns: compactList(analytics.misconceptionPatterns, 6, compactSkillAnalyticsEntry),
-    reviewQueue: compactList(analytics.reviewQueue, 6, compactRecentActivityEntry),
-    recentActivity: compactList(analytics.recentActivity, 5, compactRecentActivityEntry),
+    skills: compactList(analytics.skills, 8, compactSkillAnalyticsEntry),
   };
   return Object.fromEntries(Object.entries(output).filter(([, value]) => (
     value && (!Array.isArray(value) || value.length)
@@ -728,6 +721,25 @@ const BOOTSTRAP_ANALYTICS_COMPACTORS = Object.freeze({
   arithmetic: compactArithmeticAnalytics,
   reasoning: compactReasoningAnalytics,
 });
+
+const BOOTSTRAP_LIGHT_SUBJECTS = new Set(['arithmetic', 'reasoning']);
+
+function compactBootstrapSubjectStats(subjectId, stats) {
+  if (!BOOTSTRAP_LIGHT_SUBJECTS.has(subjectId)) return stats;
+  if (!stats || typeof stats !== 'object' || Array.isArray(stats)) return stats;
+  const overview = compactObjectFields(stats.overview, [
+    'totalQuestions',
+    'accuracy',
+    'independentAccuracy',
+    'due',
+    'weak',
+    'securedSkills',
+    'streakDays',
+    'evidenceStars',
+    'securedRewardUnits',
+  ], { stringMaxLength: 80 });
+  return overview ? { overview } : {};
+}
 
 function compactBootstrapPublicSubjectUi(subjectId, ui) {
   if (!ui || typeof ui !== 'object' || Array.isArray(ui)) return ui;
@@ -753,7 +765,11 @@ function compactBootstrapPublicSubjectUi(subjectId, ui) {
     'audio',
     'postMastery',
   ]) {
-    if (Object.prototype.hasOwnProperty.call(ui, key)) compact[key] = ui[key];
+    if (!Object.prototype.hasOwnProperty.call(ui, key)) continue;
+    if (key === 'content' && BOOTSTRAP_LIGHT_SUBJECTS.has(subjectId)) continue;
+    compact[key] = key === 'stats'
+      ? compactBootstrapSubjectStats(subjectId, ui[key])
+      : ui[key];
   }
   const compactAnalytics = BOOTSTRAP_ANALYTICS_COMPACTORS[subjectId]?.(ui.analytics);
   if (compactAnalytics && Object.keys(compactAnalytics).length) {

@@ -45,10 +45,14 @@ export const PUBLIC_BOOTSTRAP_RECENT_EVENT_LIMIT_PER_LEARNER = 50;
 // bounded bootstrap switched non-spelling subjects from full public read
 // models to compact first-paint projections. Stable clients must miss once so
 // heavy cached `subjectStates.*.ui` analytics do not survive indefinitely.
+// CDP stress hardening 2026-06-15: bumped 6 -> 7 when Arithmetic and
+// Reasoning first-paint payloads dropped duplicated static content and
+// heavyweight analytics/stat lists. Stable clients must miss once so old
+// 30 KB+ cached subject states are replaced by the smaller hot path.
 // Any additive required field on the bootstrap envelope MUST bump this in
 // the same PR. `tests/worker-bootstrap-v2.test.js` has a snapshot test that
 // fails if the envelope shape changes without a version bump (scenario 15).
-export const PUBLIC_BOOTSTRAP_CAPACITY_VERSION = 6;
+export const PUBLIC_BOOTSTRAP_CAPACITY_VERSION = 7;
 export const BOOTSTRAP_CAPACITY_VERSION = PUBLIC_BOOTSTRAP_CAPACITY_VERSION;
 
 // U7: closed union for `meta.capacity.bootstrapMode` when the public
