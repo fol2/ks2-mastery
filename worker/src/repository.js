@@ -8122,6 +8122,19 @@ async function bootstrapBundle(db, accountId, {
   let subjectStatesFallbackMode = null;
   let subjectRows;
   let gameRows;
+  let sessionRowsPromise;
+  const startSessionRowsRead = (rowsForActiveSessionLookup) => (
+    measureBootstrapPhase(capacity, BOOTSTRAP_PHASE_TIMING.sessions, () => (
+      publicReadModels
+        ? listPublicBootstrapSessionRows(db, queryLearnerIds, rowsForActiveSessionLookup)
+        : all(db, `
+          SELECT id, learner_id, subject_id, session_kind, status, session_state_json, summary_json, created_at, updated_at
+          FROM practice_sessions
+          WHERE learner_id IN (${placeholders})
+          ORDER BY updated_at DESC, id DESC
+        `, queryLearnerIds)
+    ))
+  );
   const eventRowsPromise = measureBootstrapPhase(capacity, BOOTSTRAP_PHASE_TIMING.events, () => (
     publicReadModels
       ? listPublicBootstrapEventRows(db, queryLearnerIds)
@@ -8149,14 +8162,10 @@ async function bootstrapBundle(db, accountId, {
         WHERE learner_id IN (${subjectStatePlaceholders})
       `, subjectStateLearnerIds)
     ));
-    const [subjectRowsResult, gameRowsResult] = await Promise.allSettled([
-      subjectRowsPromise,
-      gameRowsPromise,
-    ]);
-    if (subjectRowsResult.status === 'rejected') throw subjectRowsResult.reason;
-    if (gameRowsResult.status === 'rejected') throw gameRowsResult.reason;
-    subjectRows = subjectRowsResult.value;
-    gameRows = gameRowsResult.value;
+    subjectRows = await subjectRowsPromise;
+    sessionRowsPromise = startSessionRowsRead(subjectRows);
+    void sessionRowsPromise.catch(() => {});
+    gameRows = await gameRowsPromise;
   } catch (error) {
     // Only fall back when a selectedId exists — empty/no-learner paths are
     // handled by the earlier `!learnerIds.length` branch, and a null
@@ -8186,17 +8195,9 @@ async function bootstrapBundle(db, accountId, {
         WHERE learner_id IN (${fallbackPlaceholders})
       `, subjectStateIdsUsed)
     ));
+    sessionRowsPromise = startSessionRowsRead(subjectRows);
+    void sessionRowsPromise.catch(() => {});
   }
-  const sessionRowsPromise = measureBootstrapPhase(capacity, BOOTSTRAP_PHASE_TIMING.sessions, () => (
-    publicReadModels
-      ? listPublicBootstrapSessionRows(db, queryLearnerIds, subjectRows)
-      : all(db, `
-        SELECT id, learner_id, subject_id, session_kind, status, session_state_json, summary_json, created_at, updated_at
-        FROM practice_sessions
-        WHERE learner_id IN (${placeholders})
-        ORDER BY updated_at DESC, id DESC
-      `, queryLearnerIds)
-  ));
   const [sessionRows, eventRows] = await Promise.all([
     sessionRowsPromise,
     eventRowsPromise,
