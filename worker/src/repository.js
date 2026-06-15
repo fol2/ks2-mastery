@@ -1889,48 +1889,12 @@ async function readLearnerReadModel(db, learnerId, modelKey) {
   return row ? normaliseLearnerReadModelRow(row, key) : emptyLearnerReadModel(key);
 }
 
-// U6 hot-path optimisation: every subject command called
-// `capacityReadModelTablesAvailable(db)` which issued a SELECT against
-// sqlite_master. The presence of the capacity read-model tables does
-// not change across the lifetime of a Worker isolate (migrations only
-// add them once), so cache the result per underlying DB handle — but
-// only the *true* outcome. A transient false would be re-checked on
-// the next request so a mid-lifetime migration can unlock the feature
-// without restarting the isolate. WeakMap keying on the raw D1 handle
-// survives the capacity-wrapped proxy used by `withCapacityCollector`
-// because the wrapper exposes `originalDatabase` on its prototype; we
-// resolve to the underlying handle before caching.
-const capacityReadModelTablesCache = new WeakMap();
-
-function underlyingDbHandle(db) {
-  // The capacity-collector wrapper forwards most calls via prototype
-  // but keeps a reference to the unwrapped handle on `__rawDb` (set in
-  // d1.js). Fall back to `db` itself for raw handles.
-  return db && db.__rawDb ? db.__rawDb : db;
-}
-
-async function capacityReadModelTablesAvailable(db) {
-  const cacheKey = underlyingDbHandle(db);
-  if (cacheKey && capacityReadModelTablesCache.has(cacheKey)) {
-    return capacityReadModelTablesCache.get(cacheKey);
-  }
-  try {
-    const rows = await all(db, `
-      SELECT name
-      FROM sqlite_master
-      WHERE type = 'table'
-        AND name IN (${sqlPlaceholders(CAPACITY_READ_MODEL_TABLES.length)})
-    `, CAPACITY_READ_MODEL_TABLES);
-    const tableNames = new Set(rows.map((row) => row.name).filter(Boolean));
-    const available = CAPACITY_READ_MODEL_TABLES.every((tableName) => tableNames.has(tableName));
-    if (available && cacheKey) {
-      capacityReadModelTablesCache.set(cacheKey, true);
-    }
-    return available;
-  } catch (error) {
-    if (isMissingCapacityReadModelTableError(error)) return false;
-    throw error;
-  }
+// Production D1 schema is migration-managed. Do not probe sqlite_master from
+// subject-command hot paths: D1 reports that metadata scan as every table and
+// index row in the database, which created a first-request rows-read outlier
+// for each fresh Worker isolate.
+async function capacityReadModelTablesAvailable() {
+  return true;
 }
 
 async function upsertLearnerActivityFeedRows(db, activityRows = []) {

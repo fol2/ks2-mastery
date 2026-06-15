@@ -98,7 +98,7 @@ const MIN_ADMIN_DEBUG_BUNDLE_TRACKED_QUERIES = 10;
 // requireLearnerReadAccess [2nd, within runSubjectCommand] + learner+account
 // revision CAS + child_subject_state [2nd read for subject dispatch] +
 // active_session scan + content-operation release checks + projection
-// read-model + child_game_state + event_log + sqlite_master + 6 batch writes).
+// read-model + child_game_state + event_log + 6 batch writes).
 // The 2x child_subject_state reads are inherent to the Hero launch
 // architecture: resolveHeroStartTaskCommand recomputes the quest from
 // live subject state, then runSubjectCommand re-reads it for dispatch.
@@ -563,11 +563,20 @@ test('U3 query budget: Arithmetic and Reasoning session starts do not scan event
         `${subjectId} start-session must still return its domain event`,
       );
 
-      const reads = eventLogReads(harness.DB);
+      const queryLog = harness.DB.takeQueryLog();
+      const reads = queryLog
+        .filter((entry) => entry.sql && /\bevent_log\b/i.test(entry.sql));
       assert.equal(
         reads.length,
         0,
         `${subjectId} start-session must not scan event_log history; saw ${reads.length} reads`,
+      );
+      const metadataReads = queryLog
+        .filter((entry) => entry.sql && /\bsqlite_master\b/i.test(entry.sql));
+      assert.equal(
+        metadataReads.length,
+        0,
+        `${subjectId} start-session must not probe sqlite_master on the hot path; saw ${metadataReads.length} reads`,
       );
     } finally {
       harness.close();
