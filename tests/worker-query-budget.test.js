@@ -381,6 +381,33 @@ test('U3 query budget: latest subject session lookup stays subject-scoped for ol
   }
 });
 
+test('U3 query budget: active session abandon update stays bounded for old learners', () => {
+  const DB = createMigratedSqliteD1Database();
+  try {
+    const columns = DB.db
+      .prepare('PRAGMA index_info(idx_practice_sessions_active_learner_subject)')
+      .all()
+      .map((row) => row.name);
+    assert.deepEqual(columns, ['learner_id', 'subject_id', 'id']);
+
+    const plan = DB.db.prepare(`
+      EXPLAIN QUERY PLAN
+      UPDATE practice_sessions
+      SET status = 'abandoned',
+          updated_at = ?,
+          updated_by_account_id = ?
+      WHERE learner_id = ?
+        AND subject_id = ?
+        AND status = 'active'
+        AND id <> ?
+    `).all(NOW, 'adult-old', 'learner-old', 'arithmetic', 'new-session').map((row) => row.detail).join('\n');
+    assert.match(plan, /idx_practice_sessions_active_learner_subject/);
+    assert.doesNotMatch(plan, /idx_practice_sessions_learner_subject/);
+  } finally {
+    DB.close();
+  }
+});
+
 // ---------------------------------------------------------------------------
 // Scenario 1 — Bootstrap POST (selected-learner-bounded, 3-learner fixture)
 // ---------------------------------------------------------------------------
