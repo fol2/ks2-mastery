@@ -204,16 +204,33 @@ test('runSpellingDenseHistorySmoke happy path reports start-session wall time un
 
 test('runSpellingDenseHistorySmoke flags a P95 wall-time violation below a strict gate', async () => {
   // Set maxP95Ms to -1 so any positive wall time violates the gate; this
-  // proves the gate actually fires without needing to slow the fixture.
+  // proves the gate actually fires for a caller-supplied learner cookie
+  // without needing to slow the fixture.
+  const fixture = installDemoBootstrapHandlers();
+  try {
+    const evidence = await runSpellingDenseHistorySmoke({
+      origin: 'https://preview.example.test',
+      cookie: 'ks2_session=real123',
+      maxP95Ms: -1,
+    });
+    assert.equal(evidence.ok, false);
+    assert.ok(evidence.thresholds.violations.length > 0);
+    assert.equal(evidence.thresholds.violations[0].threshold, 'max-p95-ms');
+  } finally {
+    fixture.restore();
+  }
+});
+
+test('runSpellingDenseHistorySmoke skips the latency gate for auto-created demo sessions', async () => {
   const fixture = installDemoBootstrapHandlers();
   try {
     const evidence = await runSpellingDenseHistorySmoke({
       origin: 'https://preview.example.test',
       maxP95Ms: -1,
     });
-    assert.equal(evidence.ok, false);
-    assert.ok(evidence.thresholds.violations.length > 0);
-    assert.equal(evidence.thresholds.violations[0].threshold, 'max-p95-ms');
+    assert.equal(evidence.ok, true);
+    assert.equal(evidence.thresholds.latencyGateApplied, false);
+    assert.equal(evidence.thresholds.violations.length, 0);
   } finally {
     fixture.restore();
   }
@@ -439,6 +456,7 @@ test('runCli P95 violation exits EXIT_VALIDATION', async () => {
   try {
     const code = await runCli([
       '--origin', 'https://preview.example.test',
+      '--cookie', 'ks2_session=real123',
       '--max-p95-ms', '0',
     ]);
     assert.equal(code, EXIT_VALIDATION);

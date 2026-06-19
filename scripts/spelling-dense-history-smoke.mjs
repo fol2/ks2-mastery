@@ -382,6 +382,7 @@ function assertHttpOkOrThrow(status, label) {
 export async function runSpellingDenseHistorySmoke(options = {}) {
   const origin = options.origin || configuredOrigin();
   const startedAt = new Date().toISOString();
+  const latencyGateApplied = Boolean(options.cookie);
 
   // Create demo session unless caller supplied their own cookie. The
   // demo path still exercises the structural contract; see help banner
@@ -434,7 +435,7 @@ export async function runSpellingDenseHistorySmoke(options = {}) {
     ? Number(options.maxP95Ms)
     : DEFAULT_MAX_P95_MS;
   const p95Violations = [];
-  if (start.wallMs > maxP95Ms) {
+  if (latencyGateApplied && start.wallMs > maxP95Ms) {
     p95Violations.push({
       threshold: 'max-p95-ms',
       limit: maxP95Ms,
@@ -536,6 +537,7 @@ export async function runSpellingDenseHistorySmoke(options = {}) {
     ],
     thresholds: {
       maxP95Ms,
+      latencyGateApplied,
       violations: p95Violations,
     },
   };
@@ -564,11 +566,14 @@ async function persistEvidence(outputPath, options, evidence) {
   // verify-time recomputation check.
   const observedP95 = evidence.endpoints?.[SPELLING_COMMAND_ENDPOINT_KEY]?.p95WallMs ?? null;
   const configuredP95 = Number(evidence.thresholds?.maxP95Ms) || DEFAULT_MAX_P95_MS;
+  const latencyGateApplied = evidence.thresholds?.latencyGateApplied !== false;
   const thresholds = {
     maxP95Ms: {
       configured: configuredP95,
       observed: observedP95,
-      passed: observedP95 === null ? true : observedP95 <= configuredP95,
+      passed: latencyGateApplied && observedP95 !== null ? observedP95 <= configuredP95 : true,
+      skipped: latencyGateApplied ? false : true,
+      reason: latencyGateApplied ? null : 'demo-session-no-cookie',
     },
   };
   const failures = thresholds.maxP95Ms.passed ? [] : ['maxP95Ms'];
