@@ -153,6 +153,10 @@ function normaliseTtsCacheLookupOnly(value) {
   return value === true || cleanText(value).toLowerCase() === 'true';
 }
 
+function normaliseTtsCachePlaybackOnly(value) {
+  return value === true || cleanText(value).toLowerCase() === 'true';
+}
+
 function ttsInstructions(slow = false, wordOnly = false) {
   if (wordOnly) {
     return 'Use natural British English pronunciation for a KS2 vocabulary preview. Read exactly the supplied word once and do not add extra words.';
@@ -453,9 +457,68 @@ async function getBufferedAudioObject(bucket, key, { extension, source, attempts
   }
 }
 
+async function audioObjectBytes(object) {
+  if (typeof object?.arrayBuffer === 'function') return await object.arrayBuffer();
+  return await new Response(object?.body || new Uint8Array()).arrayBuffer();
+}
+
+function migratedAudioObject({ bytes, sourceObject, contentType }) {
+  return {
+    body: bytes,
+    httpMetadata: {
+      ...(sourceObject?.httpMetadata || {}),
+      contentType,
+    },
+    customMetadata: sourceObject?.customMetadata || {},
+  };
+}
+
+async function copyLegacyAudioToPrimary(bucket, {
+  legacyObject,
+  primaryKey,
+  metadata,
+  extension,
+} = {}) {
+  const contentType = objectContentType(legacyObject, extension);
+  let bytes;
+  try {
+    bytes = await audioObjectBytes(legacyObject);
+  } catch (error) {
+    console.error('[ks2-tts] R2 legacy primary migration failed', {
+      extension,
+      keyKind: metadata?.kind || 'sentence',
+      ...audioCacheErrorFields(error),
+    });
+    return legacyObject;
+  }
+  try {
+    await bucket.put(primaryKey, bytes, {
+      httpMetadata: { contentType },
+      customMetadata: {
+        model: metadata.model || SPELLING_AUDIO_MODEL,
+        voice: metadata.voice,
+        contentKey: metadata.contentKey,
+        slug: metadata.slug,
+        source: 'worker-legacy-primary-migration',
+        kind: metadata.kind || 'sentence',
+        ...(metadata.speed ? { speed: metadata.speed } : {}),
+        ...(Number.isInteger(metadata.sentenceIndex) ? { sentenceIndex: String(metadata.sentenceIndex) } : {}),
+      },
+    });
+  } catch (error) {
+    console.error('[ks2-tts] R2 legacy primary migration failed', {
+      extension,
+      keyKind: metadata?.kind || 'sentence',
+      ...audioCacheErrorFields(error),
+    });
+  }
+  return migratedAudioObject({ bytes, sourceObject: legacyObject, contentType });
+}
+
 async function readBufferedGeminiAudio(env, payload, options = {}) {
   const lookupTelemetry = options.telemetry || null;
   const lookupAttempts = [];
+  const allowLegacyMigration = options.allowLegacyMigration === true;
   const metadata = await bufferedAudioMetadata(payload, options);
   if (!metadata) {
     logTtsR2CacheLookup(lookupTelemetry, {
@@ -524,6 +587,17 @@ async function readBufferedGeminiAudio(env, payload, options = {}) {
         contentType: 'audio/wav',
         cacheUnavailable: true,
       };
+    }
+    if (object && source === 'legacy' && allowLegacyMigration) {
+      if (typeof options.beforeLegacyMigration === 'function') {
+        await options.beforeLegacyMigration();
+      }
+      object = await copyLegacyAudioToPrimary(bucket, {
+        legacyObject: object,
+        primaryKey: key,
+        metadata,
+        extension,
+      });
     }
     if (!object) continue;
     const responseMetadata = source === 'legacy'
@@ -935,6 +1009,8 @@ export async function handleTextToSpeechRequest({
   const body = await readJson(request);
   const cacheOnly = normaliseTtsCacheOnly(body?.cacheOnly);
   const cacheLookupOnly = normaliseTtsCacheLookupOnly(body?.cacheLookupOnly);
+  const cachePlaybackOnly = !cacheLookupOnly && normaliseTtsCachePlaybackOnly(body?.cachePlaybackOnly);
+  const cacheReadOnly = cacheLookupOnly || cachePlaybackOnly;
   const payload = {
     ...(await resolveSpellingAudioRequest({
       repository,
@@ -942,10 +1018,11 @@ export async function handleTextToSpeechRequest({
       body,
     })),
     accountId: session.accountId,
-    provider: cacheOnly || cacheLookupOnly ? 'gemini' : normaliseRemoteTtsProvider(body?.provider),
+    provider: cacheOnly || cacheReadOnly ? 'gemini' : normaliseRemoteTtsProvider(body?.provider),
     bufferedGeminiVoice: normaliseBufferedGeminiVoice(body?.bufferedGeminiVoice || body?.cachedVoice),
     cacheOnly,
     cacheLookupOnly,
+    cachePlaybackOnly,
   };
   const openAi = openAiConfig(env);
   const gemini = geminiConfig(env);
@@ -973,23 +1050,25 @@ export async function handleTextToSpeechRequest({
   }
 
   async function tryGemini(fallbackFrom = '') {
-    if (cacheLookupOnly) await protectLookupRequest();
+    if (cacheReadOnly) await protectLookupRequest();
     else if (!cacheOnly) await protectAudioRequest();
     const cacheHit = await readBufferedGeminiAudio(env, payload, {
       model: geminiForPayload.model,
-      telemetry: cacheLookupOnly ? {
+      allowLegacyMigration: cachePlaybackOnly,
+      beforeLegacyMigration: cachePlaybackOnly ? protectAudioRequest : null,
+      telemetry: cacheReadOnly ? {
         enabled: true,
         requestId,
       } : null,
     });
     if (cacheHit?.object) {
-      if (cacheLookupOnly) await protectAudioRequest();
+      if (cacheReadOnly) await protectAudioRequest();
       const output = cacheOnly ? cacheOnlyResponse('hit', cacheHit) : cachedGeminiAudioResponse(cacheHit);
       return cacheOnly ? output : await finish(output, fallbackFrom);
     }
-    if (cacheLookupOnly && cacheHit?.cacheUnavailable) return cacheOnlyResponse('unavailable', cacheHit);
-    if (cacheLookupOnly && !cacheHit?.metadata) return cacheOnlyResponse('uncacheable');
-    if (cacheLookupOnly) return cacheOnlyResponse('miss', cacheHit);
+    if (cacheReadOnly && cacheHit?.cacheUnavailable) return cacheOnlyResponse('unavailable', cacheHit);
+    if (cacheReadOnly && !cacheHit?.metadata) return cacheOnlyResponse('uncacheable');
+    if (cacheReadOnly) return cacheOnlyResponse('miss', cacheHit);
     if (cacheOnly && cacheHit?.cacheUnavailable) return cacheOnlyResponse('unavailable', cacheHit);
     if (cacheOnly && !cacheHit?.metadata) return cacheOnlyResponse('uncacheable');
     if (cacheOnly) {
