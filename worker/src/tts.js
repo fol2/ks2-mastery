@@ -383,11 +383,95 @@ function audioCacheErrorFields(error) {
   };
 }
 
+function monotonicNowMs() {
+  try {
+    if (typeof performance !== 'undefined' && typeof performance.now === 'function') return performance.now();
+  } catch {
+    // Fall through to Date.now below.
+  }
+  return Date.now();
+}
+
+function roundedMs(value) {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed < 0) return 0;
+  return Math.round(parsed);
+}
+
+function ttsR2LookupAttempt({ extension, source, object, startedAt, failed = false }) {
+  return {
+    extension,
+    source,
+    hit: Boolean(object),
+    failed: Boolean(failed),
+    durationMs: roundedMs(monotonicNowMs() - startedAt),
+  };
+}
+
+function logTtsR2CacheLookup(telemetry, {
+  cacheState,
+  metadata = null,
+  source = '',
+  extension = '',
+  attempts = [],
+} = {}) {
+  if (!telemetry?.enabled) return;
+  const logEntry = {
+    event: 'tts_r2_cache_lookup',
+    requestId: cleanText(telemetry.requestId) || 'unknown',
+    provider: 'gemini',
+    cache: cacheState || 'unknown',
+    source: source || 'none',
+    kind: metadata?.kind || 'sentence',
+    extension: extension || 'none',
+    lookupCount: attempts.length,
+    r2Ms: roundedMs(attempts.reduce((sum, attempt) => sum + Number(attempt.durationMs || 0), 0)),
+    attempts: attempts.map((attempt) => ({
+      extension: attempt.extension,
+      source: attempt.source,
+      hit: Boolean(attempt.hit),
+      durationMs: roundedMs(attempt.durationMs),
+      ...(attempt.failed ? { failed: true } : {}),
+    })),
+  };
+  try {
+    console.log(JSON.stringify(logEntry));
+  } catch {
+    // Best-effort telemetry must not affect audio playback.
+  }
+}
+
+async function getBufferedAudioObject(bucket, key, { extension, source, attempts }) {
+  const startedAt = monotonicNowMs();
+  try {
+    const object = await bucket.get(key);
+    attempts.push(ttsR2LookupAttempt({ extension, source, object, startedAt }));
+    return object;
+  } catch (error) {
+    attempts.push(ttsR2LookupAttempt({ extension, source, object: null, startedAt, failed: true }));
+    throw error;
+  }
+}
+
 async function readBufferedGeminiAudio(env, payload, options = {}) {
+  const lookupTelemetry = options.telemetry || null;
+  const lookupAttempts = [];
   const metadata = await bufferedAudioMetadata(payload, options);
-  if (!metadata) return null;
+  if (!metadata) {
+    logTtsR2CacheLookup(lookupTelemetry, {
+      cacheState: 'uncacheable',
+      attempts: lookupAttempts,
+    });
+    return null;
+  }
   const bucket = spellingAudioBucket(env);
   if (!bucket) {
+    logTtsR2CacheLookup(lookupTelemetry, {
+      cacheState: 'unavailable',
+      metadata,
+      extension: 'wav',
+      attempts: lookupAttempts,
+    });
     return {
       object: null,
       metadata,
@@ -405,9 +489,17 @@ async function readBufferedGeminiAudio(env, payload, options = {}) {
     let objectKey = key;
     let source = 'primary';
     try {
-      object = await bucket.get(key);
+      object = await getBufferedAudioObject(bucket, key, {
+        extension,
+        source: 'primary',
+        attempts: lookupAttempts,
+      });
       if (!object && fallbackKey) {
-        object = await bucket.get(fallbackKey);
+        object = await getBufferedAudioObject(bucket, fallbackKey, {
+          extension,
+          source: 'legacy',
+          attempts: lookupAttempts,
+        });
         objectKey = fallbackKey;
         if (object) source = 'legacy';
       }
@@ -417,6 +509,12 @@ async function readBufferedGeminiAudio(env, payload, options = {}) {
         keyKind: metadata.kind || 'sentence',
         triedFallback: Boolean(fallbackKey),
         ...audioCacheErrorFields(error),
+      });
+      logTtsR2CacheLookup(lookupTelemetry, {
+        cacheState: 'unavailable',
+        metadata,
+        extension,
+        attempts: lookupAttempts,
       });
       return {
         object: null,
@@ -431,6 +529,13 @@ async function readBufferedGeminiAudio(env, payload, options = {}) {
     const responseMetadata = source === 'legacy'
       ? { ...metadata, model: SPELLING_AUDIO_MODEL }
       : metadata;
+    logTtsR2CacheLookup(lookupTelemetry, {
+      cacheState: 'hit',
+      metadata: responseMetadata,
+      source,
+      extension,
+      attempts: lookupAttempts,
+    });
     return {
       object,
       metadata: responseMetadata,
@@ -440,6 +545,12 @@ async function readBufferedGeminiAudio(env, payload, options = {}) {
       source,
     };
   }
+  logTtsR2CacheLookup(lookupTelemetry, {
+    cacheState: 'miss',
+    metadata,
+    extension: 'wav',
+    attempts: lookupAttempts,
+  });
   return {
     object: null,
     metadata,
@@ -819,6 +930,7 @@ export async function handleTextToSpeechRequest({
   repository,
   now = Date.now(),
   fetchFn = fetch,
+  requestId = '',
 } = {}) {
   const body = await readJson(request);
   const cacheOnly = normaliseTtsCacheOnly(body?.cacheOnly);
@@ -863,7 +975,13 @@ export async function handleTextToSpeechRequest({
   async function tryGemini(fallbackFrom = '') {
     if (cacheLookupOnly) await protectLookupRequest();
     else if (!cacheOnly) await protectAudioRequest();
-    const cacheHit = await readBufferedGeminiAudio(env, payload, { model: geminiForPayload.model });
+    const cacheHit = await readBufferedGeminiAudio(env, payload, {
+      model: geminiForPayload.model,
+      telemetry: cacheLookupOnly ? {
+        enabled: true,
+        requestId,
+      } : null,
+    });
     if (cacheHit?.object) {
       if (cacheLookupOnly) await protectAudioRequest();
       const output = cacheOnly ? cacheOnlyResponse('hit', cacheHit) : cachedGeminiAudioResponse(cacheHit);

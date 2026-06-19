@@ -2411,6 +2411,7 @@ export function createWorkerApp({
             repository,
             now: now(),
             fetchFn,
+            requestId: validatedRequestId,
           });
         }
 

@@ -198,6 +198,20 @@ function createMemoryR2Bucket({ hit = null, failGet = false, failPut = false } =
   };
 }
 
+function ttsR2CacheLookupLogs(logs) {
+  const entries = [];
+  for (const args of logs) {
+    const line = Array.isArray(args) ? args[0] : args;
+    try {
+      const parsed = JSON.parse(String(line || ''));
+      if (parsed?.event === 'tts_r2_cache_lookup') entries.push(parsed);
+    } catch {
+      // Ignore unrelated console output.
+    }
+  }
+  return entries;
+}
+
 test('TTS route requires an authenticated account session', async () => {
   const server = createWorkerRepositoryServer({
     env: { OPENAI_API_KEY: 'test-openai-key' },
@@ -642,6 +656,96 @@ test('TTS route serves cached audio for lookup-only requests before selected pro
   }
 });
 
+test('TTS route logs lookup-only R2 timing for primary miss then legacy hit', async () => {
+  const originalFetch = globalThis.fetch;
+  const originalConsoleLog = console.log;
+  const logs = [];
+  let providerCalls = 0;
+  globalThis.fetch = async () => {
+    providerCalls += 1;
+    throw new Error('Provider should not be called for lookup-only cached audio.');
+  };
+  console.log = (...args) => {
+    logs.push(args);
+  };
+  const bucket = {
+    gets: [],
+    puts: [],
+    async get(key) {
+      this.gets.push(key);
+      if (/\/Sulafat\/standard\/early\/\d+\.mp3$/.test(String(key))) {
+        return {
+          body: Uint8Array.from([7, 8, 9]),
+          httpMetadata: { contentType: 'audio/mpeg' },
+          customMetadata: {},
+        };
+      }
+      return null;
+    },
+    async put() {
+      throw new Error('Lookup-only cached audio must not write to R2.');
+    },
+  };
+  const requestId = 'ks2_req_11111111-1111-4111-8111-111111111111';
+
+  const server = createWorkerRepositoryServer({
+    env: {
+      SPELLING_AUDIO_BUCKET: bucket,
+    },
+  });
+  try {
+    const prompt = await startSpellingPrompt(server);
+    const response = await server.fetch('https://repo.test/api/tts', {
+      ...ttsRequest({
+        learnerId: prompt.learnerId,
+        promptToken: prompt.promptToken,
+        provider: 'openai',
+        bufferedGeminiVoice: 'Sulafat',
+        cacheLookupOnly: true,
+      }),
+      headers: {
+        'content-type': 'application/json',
+        'x-ks2-request-id': requestId,
+      },
+    });
+    const bytes = new Uint8Array(await response.arrayBuffer());
+    const telemetry = ttsR2CacheLookupLogs(logs);
+    const rawLogs = logs.flat().join('\n');
+
+    assert.equal(response.status, 200);
+    assert.equal(response.headers.get('x-ks2-tts-cache'), 'hit');
+    assert.equal(response.headers.get('x-ks2-tts-cache-source'), 'legacy');
+    assert.deepEqual([...bytes], [7, 8, 9]);
+    assert.equal(providerCalls, 0);
+    assert.equal(bucket.gets.length, 2);
+    assert.match(bucket.gets[0], /\/Sulafat\/standard\/[^/]+\/early\/\d+\.mp3$/);
+    assert.match(bucket.gets[1], /\/Sulafat\/standard\/early\/\d+\.mp3$/);
+    assert.equal(telemetry.length, 1);
+    assert.equal(telemetry[0].requestId, requestId);
+    assert.equal(telemetry[0].provider, 'gemini');
+    assert.equal(telemetry[0].cache, 'hit');
+    assert.equal(telemetry[0].source, 'legacy');
+    assert.equal(telemetry[0].kind, 'sentence');
+    assert.equal(telemetry[0].extension, 'mp3');
+    assert.equal(telemetry[0].lookupCount, 2);
+    assert.ok(Number.isFinite(Number(telemetry[0].r2Ms)));
+    assert.deepEqual(telemetry[0].attempts.map(({ extension, source, hit, failed }) => ({
+      extension,
+      source,
+      hit,
+      failed: Boolean(failed),
+    })), [
+      { extension: 'mp3', source: 'primary', hit: false, failed: false },
+      { extension: 'mp3', source: 'legacy', hit: true, failed: false },
+    ]);
+    assert.doesNotMatch(rawLogs, /adult-a|learner-a|promptToken|early|birds|Sulafat/);
+  } finally {
+    globalThis.fetch = originalFetch;
+    console.log = originalConsoleLog;
+    server.close();
+  }
+});
+
 test('TTS route serves cached word-bank word audio for lookup-only requests', async () => {
   const originalFetch = globalThis.fetch;
   globalThis.fetch = async () => {
@@ -739,12 +843,18 @@ test('TTS route blocks lookup-only cached playback when playback quota is exhaus
 
 test('TTS route returns a lookup-only cache miss without generating audio', async () => {
   const originalFetch = globalThis.fetch;
+  const originalConsoleLog = console.log;
+  const logs = [];
   let providerCalls = 0;
   globalThis.fetch = async () => {
     providerCalls += 1;
     return geminiAudioResponse();
   };
+  console.log = (...args) => {
+    logs.push(args);
+  };
   const bucket = createMemoryR2Bucket();
+  const requestId = 'ks2_req_22222222-2222-4222-8222-222222222222';
 
   const server = createWorkerRepositoryServer({
     env: {
@@ -754,21 +864,48 @@ test('TTS route returns a lookup-only cache miss without generating audio', asyn
   });
   try {
     const prompt = await startSpellingPrompt(server);
-    const response = await server.fetch('https://repo.test/api/tts', ttsRequest({
-      learnerId: prompt.learnerId,
-      promptToken: prompt.promptToken,
-      provider: 'openai',
-      bufferedGeminiVoice: 'Sulafat',
-      cacheLookupOnly: true,
-    }));
+    const response = await server.fetch('https://repo.test/api/tts', {
+      ...ttsRequest({
+        learnerId: prompt.learnerId,
+        promptToken: prompt.promptToken,
+        provider: 'openai',
+        bufferedGeminiVoice: 'Sulafat',
+        cacheLookupOnly: true,
+      }),
+      headers: {
+        'content-type': 'application/json',
+        'x-ks2-request-id': requestId,
+      },
+    });
+    const telemetry = ttsR2CacheLookupLogs(logs);
+    const rawLogs = logs.flat().join('\n');
 
     assert.equal(response.status, 204);
     assert.equal(response.headers.get('x-ks2-tts-cache'), 'miss');
     assert.equal(providerCalls, 0);
     assert.equal(bucket.gets.length, 3);
     assert.equal(bucket.puts.length, 0);
+    assert.equal(telemetry.length, 1);
+    assert.equal(telemetry[0].requestId, requestId);
+    assert.equal(telemetry[0].cache, 'miss');
+    assert.equal(telemetry[0].source, 'none');
+    assert.equal(telemetry[0].kind, 'sentence');
+    assert.equal(telemetry[0].extension, 'wav');
+    assert.equal(telemetry[0].lookupCount, 3);
+    assert.deepEqual(telemetry[0].attempts.map(({ extension, source, hit, failed }) => ({
+      extension,
+      source,
+      hit,
+      failed: Boolean(failed),
+    })), [
+      { extension: 'mp3', source: 'primary', hit: false, failed: false },
+      { extension: 'mp3', source: 'legacy', hit: false, failed: false },
+      { extension: 'wav', source: 'primary', hit: false, failed: false },
+    ]);
+    assert.doesNotMatch(rawLogs, /adult-a|learner-a|promptToken|early|birds|Sulafat/);
   } finally {
     globalThis.fetch = originalFetch;
+    console.log = originalConsoleLog;
     server.close();
   }
 });
