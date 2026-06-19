@@ -175,6 +175,18 @@ const SKILLS = {
       return null;
     }
 
+    function parsePercentageInput(value) {
+      const s = String(value || "")
+        .trim()
+        .replace(/,/g, "")
+        .replace(/−/g, "-")
+        .replace(/\s+/g, "")
+        .replace(/(?:%|percent|percentage|percentages)$/i, "");
+      if (s === "") return null;
+      if (/^-?\d+(\.\d+)?$/.test(s)) return Number(s);
+      return null;
+    }
+
     function parseMoneyAmount(value) {
       const s = String(value || "").trim().replace(/,/g, "").replace(/\s+/g, "");
       const amountText = s.startsWith("£") ? s.slice(1) : s;
@@ -6146,7 +6158,7 @@ const TEMPLATE_MAP = Object.fromEntries(TEMPLATES.map((template) => [template.id
           },
           evaluate: (resp) => {
             const decimalAnswer = parseFractionOrNumber(resp.decimal);
-            const percentAnswer = parseNumberInput(resp.percent);
+            const percentAnswer = parsePercentageInput(resp.percent);
             let score = 0;
             if (equalNumeric(decimalAnswer, item.decimal)) score += 1;
             if (percentAnswer === item.percent) score += 1;
@@ -6198,7 +6210,7 @@ const TEMPLATE_MAP = Object.fromEntries(TEMPLATES.map((template) => [template.id
           },
           evaluate: (resp) => {
             const fractionAnswer = parseFractionOrNumber(resp.fraction);
-            const percentAnswer = parseNumberInput(resp.percent);
+            const percentAnswer = parsePercentageInput(resp.percent);
             let score = 0;
             if (equalNumeric(fractionAnswer, item.n / item.d)) score += 1;
             if (percentAnswer === item.percent) score += 1;
@@ -6551,7 +6563,7 @@ const TEMPLATE_MAP = Object.fromEntries(TEMPLATES.map((template) => [template.id
             ]
           },
           evaluate: (resp) => {
-            const percentAnswer = parseNumberInput(resp.percent);
+            const percentAnswer = parsePercentageInput(resp.percent);
             let score = 0;
             if (resp.reason === "times100") score += 1;
             if (percentAnswer === item.percent) score += 1;

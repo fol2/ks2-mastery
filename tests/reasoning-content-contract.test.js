@@ -97,6 +97,16 @@ test('reasoning templates generate, mark and serialise cleanly across smoke seed
   assert.deepEqual(failures, []);
 });
 
+test('reasoning fraction-to-percentage marker accepts learner percentage notation', () => {
+  const question = generateReasoningQuestion('fdp_fraction_to_decimal_percent', 2);
+  assert.match(question.stemHtml, /<strong>3\/10<\/strong>/);
+
+  const marked = evaluateReasoningQuestion(question, { decimal: '0.3', percent: '30%' });
+  assert.equal(marked.correct, true);
+  assert.equal(marked.score, 2);
+  assert.equal(marked.maxScore, 2);
+});
+
 
 test('reasoning generated templates keep stable item ids and do not emit malformed maths text', () => {
   const malformed = /\b(?:undefined|NaN|Infinity|\[object Object\])\b/i;
