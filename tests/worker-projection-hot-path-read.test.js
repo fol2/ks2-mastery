@@ -1,11 +1,11 @@
 // U6 — Projection hot-path consumption.
 //
 // These tests anchor the refactor from `readLearnerProjectionBundle()` (which
-// scanned a bounded 200-event window on every command) to
-// `readLearnerProjectionInput()` which consumes the persisted
-// `command.projection.v1` read model as the hot-path input. The bounded
-// window is now migration/fallback only; when fallback fails we reject with
-// 503 `projection_unavailable` rather than silently scan full history.
+// scanned a bounded 200-event window on every command) to consuming the
+// persisted `command.projection.v1` read model as the hot-path input. Spelling
+// now treats missing/stale projection rows as optional derived work: it
+// continues the primary learner flow in degraded mode, writes a lightweight
+// baseline, and avoids surfacing a learner-facing 503.
 //
 // Scenarios follow the plan U6 test list (2026-04-25-002).
 
@@ -174,7 +174,8 @@ test('U6 scenario 1: 2000-event learner hot path issues zero event_log reads aft
       startAt: Date.UTC(2026, 3, 24, 17, 30, 0),
     });
 
-    // First command primes the projection via miss-rehydrated bounded fallback.
+    // First command primes the projection via the lightweight degraded
+    // baseline path.
     const first = await harness.command('start-session', {
       mode: 'single',
       slug: 'possess',
@@ -220,10 +221,10 @@ test('U6 scenario 2: grammar no-op command short-circuits before loading project
 });
 
 // ---------------------------------------------------------------------------
-// Scenario 3 — First command on a fresh learner triggers miss-rehydrated
-//   and sets meta.capacity.projectionFallback === 'miss-rehydrated'.
+// Scenario 3 — First command on a fresh learner skips bounded fallback,
+//   continues degraded, and writes a projection baseline.
 // ---------------------------------------------------------------------------
-test('U6 scenario 3: first command on fresh learner emits projectionFallback=miss-rehydrated', async () => {
+test('U6 scenario 3: first command on fresh learner emits projectionFallback=degraded and writes baseline', async () => {
   const harness = createHarness();
   try {
     const result = await harness.command('start-session', {
@@ -237,9 +238,10 @@ test('U6 scenario 3: first command on fresh learner emits projectionFallback=mis
     assert.ok(capacity, 'command response must carry meta.capacity (U3).');
     assert.equal(
       capacity.projectionFallback,
-      'miss-rehydrated',
-      `first command must be miss-rehydrated; got ${String(capacity.projectionFallback)}`,
+      'degraded',
+      `first command must be degraded; got ${String(capacity.projectionFallback)}`,
     );
+    assert.ok(readProjectionRow(harness.DB), 'degraded first command must still write a projection baseline');
   } finally {
     harness.close();
   }
@@ -253,10 +255,10 @@ test('U6 scenario 3: first command on fresh learner emits projectionFallback=mis
 //   an empty dedupe seed (which would let the next command's
 //   `combineCommandEvents` admit a duplicate `reward.monster` event during
 //   the one-command migration window). Treat a present-but-tokens-absent
-//   row as `miss-rehydrated` so the bounded fallback repopulates the ring
-//   on first touch and self-heals.
+//   row as `degraded` so Spelling skips reward side effects for one command,
+//   writes the missing token field, and self-heals.
 // ---------------------------------------------------------------------------
-test('U6 scenario 3b: pre-U6 v1 row without recentEventTokens degrades to miss-rehydrated', async () => {
+test('U6 scenario 3b: pre-U6 v1 row without recentEventTokens degrades and self-heals', async () => {
   const harness = createHarness();
   try {
     // Prime the learner so the revision + mutation-receipt chain works.
@@ -290,13 +292,13 @@ test('U6 scenario 3b: pre-U6 v1 row without recentEventTokens degrades to miss-r
     `).run(preU6Payload, COMMAND_PROJECTION_MODEL_KEY);
 
     // Run the next hot-path command. The reader must recognise the
-    // pre-U6 shape (field absent, not [] empty) and degrade to the
-    // miss-rehydrated path so the bounded fallback repopulates the ring.
+    // pre-U6 shape (field absent, not [] empty) and degrade rather than
+    // re-scanning event_log.
     const migration = await harness.command('submit-answer', { answer: 'possess' });
     assert.equal(migration.response.status, 200, JSON.stringify(migration.body));
     assert.equal(
       migration.body.meta?.capacity?.projectionFallback,
-      'miss-rehydrated',
+      'degraded',
       'pre-U6 v1 row must NOT land on the hit path (empty dedupe seed risk)',
     );
 
@@ -374,9 +376,9 @@ test('U6 scenario 4: 60 back-to-back commands stay on hit path (no stale-catchup
 
 // ---------------------------------------------------------------------------
 // Scenario 5 — Stale projection (source_revision < currentRevision - 200)
-//   → stale-catchup; bounded window ≤ 200 events; next command hits.
+//   → degraded baseline rewrite; next command hits.
 // ---------------------------------------------------------------------------
-test('U6 scenario 5: stale projection triggers stale-catchup then hit on next command', async () => {
+test('U6 scenario 5: stale projection degrades once then hits on next command', async () => {
   const harness = createHarness();
   try {
     // Prime projection.
@@ -401,7 +403,12 @@ test('U6 scenario 5: stale projection triggers stale-catchup then hit on next co
 
     const stale = await harness.command('submit-answer', { answer: 'possess' });
     assert.equal(stale.response.status, 200, JSON.stringify(stale.body));
-    assert.equal(stale.body.meta?.capacity?.projectionFallback, 'stale-catchup');
+    assert.equal(stale.body.meta?.capacity?.projectionFallback, 'degraded');
+
+    const healed = await harness.command('continue-session');
+    if (healed.body.meta?.capacity) {
+      assert.equal(healed.body.meta.capacity.projectionFallback, 'hit');
+    }
   } finally {
     harness.close();
   }
@@ -450,9 +457,9 @@ test('U6 scenario 6: persisted version newer than reader → newer-opaque, no ov
 });
 
 // ---------------------------------------------------------------------------
-// Scenario 7 — Newer reader + version: 0 writer → miss-rehydrated, overwrite.
+// Scenario 7 — Newer reader + version: 0 writer → degraded, overwrite.
 // ---------------------------------------------------------------------------
-test('U6 scenario 7: persisted version older than reader → miss-rehydrated, overwrite with newer shape', async () => {
+test('U6 scenario 7: persisted version older than reader → degraded, overwrite with newer shape', async () => {
   const harness = createHarness();
   try {
     const first = await harness.command('start-session', {
@@ -476,7 +483,7 @@ test('U6 scenario 7: persisted version older than reader → miss-rehydrated, ov
 
     const followUp = await harness.command('submit-answer', { answer: 'possess' });
     assert.equal(followUp.response.status, 200, JSON.stringify(followUp.body));
-    assert.equal(followUp.body.meta?.capacity?.projectionFallback, 'miss-rehydrated');
+    assert.equal(followUp.body.meta?.capacity?.projectionFallback, 'degraded');
 
     const row = readProjectionRow(harness.DB);
     const persisted = JSON.parse(row.model_json);
@@ -583,10 +590,12 @@ test('U6 scenario 11: derivedWriteSkipped reason closed union rejects unknown to
 });
 
 // ---------------------------------------------------------------------------
-// Scenario 12 — Projection missing AND bounded fallback fails → 503
-//   projection_unavailable (retryable:false), no full-history scan.
+// Scenario 12 — Projection missing while event_log is unavailable → 200
+//   degraded. Spelling does not touch the bounded fallback on this path.
+//   The primary spelling flow must continue; reward/read-model side effects
+//   are omitted so the learner does not see a 503 for optional projection work.
 // ---------------------------------------------------------------------------
-test('U6 scenario 12: projection missing + bounded fallback fails → 503 projection_unavailable', async () => {
+test('U6 scenario 12: projection missing + event_log unavailable → spelling continues degraded', async () => {
   const harness = createHarness();
   try {
     // Monkey-patch the DB's prepare() so SELECTs from event_log reject.
@@ -609,13 +618,19 @@ test('U6 scenario 12: projection missing + bounded fallback fails → 503 projec
       slug: 'possess',
       length: 1,
     });
-    assert.equal(result.response.status, 503, `expected 503, got ${result.response.status}: ${JSON.stringify(result.body)}`);
-    assert.equal(result.body?.error, 'projection_unavailable');
-    assert.equal(result.body?.retryable, false);
-    assert.ok(
-      typeof result.body?.requestId === 'string' && result.body.requestId.startsWith('ks2_req_'),
-      'response must include a request id',
-    );
+    assert.equal(result.response.status, 200, JSON.stringify(result.body));
+    assert.equal(result.body?.ok, true);
+    assert.equal(result.body?.meta?.capacity?.projectionFallback, 'degraded');
+    assert.equal(result.body?.error, undefined);
+    assert.equal(result.body?.subjectReadModel?.phase, 'session');
+    assert.ok(readProjectionRow(harness.DB), 'degraded start must write a lightweight projection baseline');
+
+    const submit = await harness.command('submit-answer', { answer: 'possess' });
+    assert.equal(submit.response.status, 200, JSON.stringify(submit.body));
+    assert.equal(submit.body?.ok, true);
+    assert.equal(submit.body?.meta?.capacity?.projectionFallback, 'hit');
+    assert.equal(submit.body?.error, undefined);
+    assert.ok(submit.body?.subjectReadModel, 'submit must still return a live spelling read model');
   } finally {
     harness.close();
   }
@@ -694,12 +709,13 @@ test('U6 scenario 18: recentEventTokens ring size (250) strictly exceeds lag win
 });
 
 // ---------------------------------------------------------------------------
-// Scenario 19 — 2000-event learner → meta.capacity.queryCount ≤ 13 on hot path.
-// Phase D / U14 added one query to the session-lookup path (the JOIN of
-// `account_ops_metadata` for ops_status + status_revision), so the budget
-// lifts from 12 to 13. The rest of the hot path is unchanged.
+// Scenario 19 — 2000-event learner → meta.capacity.queryCount ≤ 7 on hot path.
+// P95 follow-up folded writable membership into the learner revision/receipt
+// read, reused the auth account snapshot, and preloaded subject_state +
+// latest_session + projection in the mutation preflight, so the hot path
+// measures 6 queries with +1 headroom.
 // ---------------------------------------------------------------------------
-test('U6 scenario 19: 2000-event learner hot-path queryCount ≤ 13', async () => {
+test('U6 scenario 19: 2000-event learner hot-path queryCount ≤ 7', async () => {
   const harness = createHarness();
   try {
     insertProjectionWindowFillerEvents(harness.DB, {
@@ -720,11 +736,10 @@ test('U6 scenario 19: 2000-event learner hot-path queryCount ≤ 13', async () =
     const capacity = hot.body.meta?.capacity;
     assert.ok(capacity, 'hot-path command must expose meta.capacity');
     assert.ok(
-      capacity.queryCount <= 13,
-      `hot-path queryCount must be ≤ 13 for 2000-event learner; got ${capacity.queryCount}`,
+      capacity.queryCount <= 7,
+      `hot-path queryCount must be ≤ 7 for 2000-event learner; got ${capacity.queryCount}`,
     );
   } finally {
     harness.close();
   }
 });
-

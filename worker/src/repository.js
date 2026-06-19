@@ -156,6 +156,7 @@ import {
   activityFeedRowFromEventRow,
   appendRecentEventTokens,
   COMMAND_PROJECTION_MODEL_KEY,
+  COMMAND_PROJECTION_RECENT_EVENT_LIMIT,
   COMMAND_PROJECTION_SCHEMA_VERSION,
   emptyLearnerReadModel,
   mergeRecentEventTokens,
@@ -234,7 +235,7 @@ import { getReadModelDerivedWriteBreaker } from './circuit-breaker-server.js';
 
 // U7: the classroom summary paginates at 50 learners per page (plan R11).
 const CLASSROOM_LEARNERS_SUMMARY_PAGE_LIMIT = 50;
-const PROJECTION_RECENT_EVENT_LIMIT = 200;
+const PROJECTION_RECENT_EVENT_LIMIT = COMMAND_PROJECTION_RECENT_EVENT_LIMIT;
 const CAPACITY_READ_MODEL_TABLES = Object.freeze([
   'learner_read_models',
   'learner_activity_feed',
@@ -1941,11 +1942,26 @@ async function readLearnerReadModel(db, learnerId, modelKey) {
       FROM learner_read_models
       WHERE learner_id = ? AND model_key = ?
     `, [learnerId, key]);
+    markLearnerReadModelsTableAvailable(db);
   } catch (error) {
     if (isMissingTableError(error, 'learner_read_models')) return emptyLearnerReadModel(key);
     throw error;
   }
   return row ? normaliseLearnerReadModelRow(row, key) : emptyLearnerReadModel(key);
+}
+
+const learnerReadModelsTableCache = new WeakMap();
+
+function underlyingDbHandle(db) {
+  // The capacity-collector wrapper forwards most calls via prototype
+  // but keeps a reference to the unwrapped handle on `__rawDb` (set in
+  // d1.js). Fall back to `db` itself for raw handles.
+  return db && db.__rawDb ? db.__rawDb : db;
+}
+
+function markLearnerReadModelsTableAvailable(db) {
+  const cacheKey = underlyingDbHandle(db);
+  if (cacheKey) learnerReadModelsTableCache.set(cacheKey, true);
 }
 
 // Production D1 schema is migration-managed. Do not probe sqlite_master from
@@ -8428,25 +8444,221 @@ async function readSubjectRuntimeBundle(db, accountId, learnerId, subjectId = 's
   // command path) MUST omit this flag.
   skipAccessCheck = false,
 } = {}) {
+  const row = skipAccessCheck
+    ? await first(db, `
+      SELECT
+        state.learner_id AS state_learner_id,
+        state.subject_id AS state_subject_id,
+        state.ui_json AS state_ui_json,
+        state.data_json AS state_data_json,
+        state.updated_at AS state_updated_at,
+        session.id AS session_id,
+        session.learner_id AS session_learner_id,
+        session.subject_id AS session_subject_id,
+        session.session_kind AS session_kind,
+        session.status AS session_status,
+        session.session_state_json AS session_state_json,
+        session.summary_json AS session_summary_json,
+        session.created_at AS session_created_at,
+        session.updated_at AS session_updated_at
+      FROM (SELECT 1) anchor
+      LEFT JOIN (
+        SELECT learner_id, subject_id, ui_json, data_json, updated_at
+        FROM child_subject_state
+        WHERE learner_id = ? AND subject_id = ?
+        LIMIT 1
+      ) state ON 1 = 1
+      LEFT JOIN (
+        SELECT id, learner_id, subject_id, session_kind, status, session_state_json, summary_json, created_at, updated_at
+        FROM practice_sessions
+        WHERE learner_id = ? AND subject_id = ?
+        ORDER BY updated_at DESC, id DESC
+        LIMIT 1
+      ) session ON 1 = 1
+    `, [learnerId, subjectId, learnerId, subjectId])
+    : await first(db, `
+      SELECT
+        membership.role AS membership_role,
+        state.learner_id AS state_learner_id,
+        state.subject_id AS state_subject_id,
+        state.ui_json AS state_ui_json,
+        state.data_json AS state_data_json,
+        state.updated_at AS state_updated_at,
+        session.id AS session_id,
+        session.learner_id AS session_learner_id,
+        session.subject_id AS session_subject_id,
+        session.session_kind AS session_kind,
+        session.status AS session_status,
+        session.session_state_json AS session_state_json,
+        session.summary_json AS session_summary_json,
+        session.created_at AS session_created_at,
+        session.updated_at AS session_updated_at
+      FROM (SELECT 1) anchor
+      LEFT JOIN account_learner_memberships membership
+        ON membership.account_id = ? AND membership.learner_id = ?
+      LEFT JOIN (
+        SELECT learner_id, subject_id, ui_json, data_json, updated_at
+        FROM child_subject_state
+        WHERE learner_id = ? AND subject_id = ?
+        LIMIT 1
+      ) state ON 1 = 1
+      LEFT JOIN (
+        SELECT id, learner_id, subject_id, session_kind, status, session_state_json, summary_json, created_at, updated_at
+        FROM practice_sessions
+        WHERE learner_id = ? AND subject_id = ?
+        ORDER BY updated_at DESC, id DESC
+        LIMIT 1
+      ) session ON 1 = 1
+    `, [accountId, learnerId, learnerId, subjectId, learnerId, subjectId]);
+  if (!skipAccessCheck && !writableRole(row?.membership_role)) {
+    throw new ForbiddenError('Learner access denied.', {
+      learnerId,
+      required: 'owner-or-member',
+    });
+  }
+  const subjectRow = row?.state_learner_id
+    ? {
+      learner_id: row.state_learner_id,
+      subject_id: row.state_subject_id,
+      ui_json: row.state_ui_json,
+      data_json: row.state_data_json,
+      updated_at: row.state_updated_at,
+    }
+    : null;
+  const latestSessionRow = row?.session_id
+    ? {
+      id: row.session_id,
+      learner_id: row.session_learner_id,
+      subject_id: row.session_subject_id,
+      session_kind: row.session_kind,
+      status: row.session_status,
+      session_state_json: row.session_state_json,
+      summary_json: row.session_summary_json,
+      created_at: row.session_created_at,
+      updated_at: row.session_updated_at,
+    }
+    : null;
+  return {
+    subjectRecord: subjectRow ? subjectStateRowToRecord(subjectRow) : normaliseSubjectStateRecord({}),
+    latestSession: latestSessionRow ? practiceSessionRowToRecord(latestSessionRow) : null,
+  };
+}
+
+function spellingCommandRuntimeFromRow(row, modelKey, { prefix = '' } = {}) {
+  const value = (name) => row?.[`${prefix}${name}`];
+  const subjectRow = value('state_learner_id')
+    ? {
+      learner_id: value('state_learner_id'),
+      subject_id: value('state_subject_id'),
+      ui_json: value('state_ui_json'),
+      data_json: value('state_data_json'),
+      updated_at: value('state_updated_at'),
+    }
+    : null;
+  const latestSessionRow = value('session_id')
+    ? {
+      id: value('session_id'),
+      learner_id: value('session_learner_id'),
+      subject_id: value('session_subject_id'),
+      session_kind: value('session_kind'),
+      status: value('session_status'),
+      session_state_json: value('session_state_json'),
+      summary_json: value('session_summary_json'),
+      created_at: value('session_created_at'),
+      updated_at: value('session_updated_at'),
+    }
+    : null;
+  const readModelRow = value('read_model_learner_id')
+    ? {
+      learner_id: value('read_model_learner_id'),
+      model_key: value('read_model_key'),
+      model_json: value('read_model_json'),
+      source_revision: value('read_model_source_revision'),
+      generated_at: value('read_model_generated_at'),
+      updated_at: value('read_model_updated_at'),
+    }
+    : null;
+
+  return {
+    subjectRecord: subjectRow ? subjectStateRowToRecord(subjectRow) : normaliseSubjectStateRecord({}),
+    latestSession: latestSessionRow ? practiceSessionRowToRecord(latestSessionRow) : null,
+    activeSessionId: value('active_session_id') || null,
+    commandProjectionReadModel: readModelRow
+      ? normaliseLearnerReadModelRow(readModelRow, modelKey)
+      : emptyLearnerReadModel(modelKey),
+  };
+}
+
+async function readSpellingCommandRuntimeBundle(db, accountId, learnerId, {
+  skipAccessCheck = false,
+  projectionModelKey = COMMAND_PROJECTION_MODEL_KEY,
+} = {}) {
   if (!skipAccessCheck) {
     await requireLearnerWriteAccess(db, accountId, learnerId);
   }
-  const row = await first(db, `
-    SELECT learner_id, subject_id, ui_json, data_json, updated_at
-    FROM child_subject_state
-    WHERE learner_id = ? AND subject_id = ?
-  `, [learnerId, subjectId]);
-  const latestSession = await first(db, `
-    SELECT id, learner_id, subject_id, session_kind, status, session_state_json, summary_json, created_at, updated_at
-    FROM practice_sessions
-    WHERE learner_id = ? AND subject_id = ?
-    ORDER BY updated_at DESC, id DESC
-    LIMIT 1
-  `, [learnerId, subjectId]);
-  return {
-    subjectRecord: row ? subjectRuntimeRowToRecord(row) : normaliseSubjectStateRecord({}),
-    latestSession: latestSession ? practiceSessionRowToRecord(latestSession) : null,
-  };
+  const modelKey = normaliseReadModelKey(projectionModelKey, COMMAND_PROJECTION_MODEL_KEY);
+  let row;
+  try {
+    row = await first(db, `
+      SELECT
+        state.learner_id AS state_learner_id,
+        state.subject_id AS state_subject_id,
+        state.ui_json AS state_ui_json,
+        state.data_json AS state_data_json,
+        state.updated_at AS state_updated_at,
+        session.id AS session_id,
+        session.learner_id AS session_learner_id,
+        session.subject_id AS session_subject_id,
+        session.session_kind AS session_kind,
+        session.status AS session_status,
+        session.session_state_json AS session_state_json,
+        session.summary_json AS session_summary_json,
+        session.created_at AS session_created_at,
+        session.updated_at AS session_updated_at,
+        active_session.id AS active_session_id,
+        read_model.learner_id AS read_model_learner_id,
+        read_model.model_key AS read_model_key,
+        read_model.model_json AS read_model_json,
+        read_model.source_revision AS read_model_source_revision,
+        read_model.generated_at AS read_model_generated_at,
+        read_model.updated_at AS read_model_updated_at
+      FROM (SELECT 1) anchor
+      LEFT JOIN (
+        SELECT learner_id, subject_id, ui_json, data_json, updated_at
+        FROM child_subject_state
+        WHERE learner_id = ? AND subject_id = 'spelling'
+        LIMIT 1
+      ) state ON 1 = 1
+      LEFT JOIN (
+        SELECT id, learner_id, subject_id, session_kind, status, session_state_json, summary_json, created_at, updated_at
+        FROM practice_sessions
+        WHERE learner_id = ? AND subject_id = 'spelling'
+        ORDER BY updated_at DESC, id DESC
+        LIMIT 1
+      ) session ON 1 = 1
+      LEFT JOIN (
+        SELECT id
+        FROM practice_sessions
+        WHERE learner_id = ? AND subject_id = 'spelling' AND status = 'active'
+        ORDER BY updated_at DESC, id DESC
+        LIMIT 1
+      ) active_session ON 1 = 1
+      LEFT JOIN learner_read_models read_model
+        ON read_model.learner_id = ? AND read_model.model_key = ?
+    `, [learnerId, learnerId, learnerId, learnerId, modelKey]);
+    markLearnerReadModelsTableAvailable(db);
+  } catch (error) {
+    if (!isMissingTableError(error, 'learner_read_models')) throw error;
+    const runtimeRecord = await readSubjectRuntimeBundle(db, accountId, learnerId, 'spelling', {
+      skipAccessCheck: true,
+    });
+    return {
+      ...runtimeRecord,
+      commandProjectionReadModel: emptyLearnerReadModel(modelKey),
+    };
+  }
+
+  return spellingCommandRuntimeFromRow(row, modelKey);
 }
 
 function subjectRuntimeRowToRecord(row) {
@@ -8761,6 +8973,7 @@ function buildSubjectRuntimePersistencePlan(db, accountId, learnerId, subjectId,
   // `stale-catchup`.
   skipProjectionReadModelWrite = false,
   skipActivePracticeSessionWrite = false,
+  activePracticeSessionKnownAbsent = false,
 } = {}) {
   const nextState = normaliseSubjectStateRecord({
     ui: runtime?.state || null,
@@ -8797,8 +9010,11 @@ function buildSubjectRuntimePersistencePlan(db, accountId, learnerId, subjectId,
       // when the caller confirmed the current active session id is the
       // same one we are about to upsert. The UPDATE's `id <> ?` filter
       // means it would match zero rows in that case.
+      const activeSessionKnownSame = typeof currentActiveSessionId === 'string'
+        && currentActiveSessionId === session.id;
       const shouldEmitAbandon = session.status === 'active'
-        && (currentActiveSessionId == null || currentActiveSessionId !== session.id);
+        && activePracticeSessionKnownAbsent !== true
+        && !activeSessionKnownSame;
       if (shouldEmitAbandon) {
         statements.push(bindStatement(db, `
           UPDATE practice_sessions
@@ -9062,6 +9278,117 @@ async function writeLearnersSnapshot(db, accountId, snapshot, nowTs) {
 
 // withAccountMutation, withLearnerMutation → mutation-repository.js
 
+async function readSubjectCommandPreflightRow(db, {
+  accountId,
+  learnerId,
+  requestId,
+}) {
+  return first(db, `
+    SELECT
+      l.id AS learner_id,
+      l.state_revision AS learner_state_revision,
+      m.role AS membership_role,
+      r.account_id AS receipt_account_id,
+      r.request_id AS receipt_request_id,
+      r.scope_type AS receipt_scope_type,
+      r.scope_id AS receipt_scope_id,
+      r.mutation_kind AS receipt_mutation_kind,
+      r.request_hash AS receipt_request_hash,
+      r.response_json AS receipt_response_json,
+      r.status_code AS receipt_status_code,
+      r.correlation_id AS receipt_correlation_id,
+      r.applied_at AS receipt_applied_at
+    FROM learner_profiles l
+    LEFT JOIN account_learner_memberships m
+      ON m.account_id = ? AND m.learner_id = l.id
+    LEFT JOIN mutation_receipts r
+      ON r.account_id = ? AND r.request_id = ?
+    WHERE l.id = ?
+  `, [accountId, accountId, requestId, learnerId]);
+}
+
+async function readSpellingSubjectCommandPreflightRow(db, {
+  accountId,
+  learnerId,
+  requestId,
+  modelKey,
+}) {
+  return first(db, `
+    SELECT
+      l.id AS learner_id,
+      l.state_revision AS learner_state_revision,
+      m.role AS membership_role,
+      r.account_id AS receipt_account_id,
+      r.request_id AS receipt_request_id,
+      r.scope_type AS receipt_scope_type,
+      r.scope_id AS receipt_scope_id,
+      r.mutation_kind AS receipt_mutation_kind,
+      r.request_hash AS receipt_request_hash,
+      r.response_json AS receipt_response_json,
+      r.status_code AS receipt_status_code,
+      r.correlation_id AS receipt_correlation_id,
+      r.applied_at AS receipt_applied_at,
+      state.learner_id AS spelling_state_learner_id,
+      state.subject_id AS spelling_state_subject_id,
+      state.ui_json AS spelling_state_ui_json,
+      state.data_json AS spelling_state_data_json,
+      state.updated_at AS spelling_state_updated_at,
+      session.id AS spelling_session_id,
+      session.learner_id AS spelling_session_learner_id,
+      session.subject_id AS spelling_session_subject_id,
+      session.session_kind AS spelling_session_kind,
+      session.status AS spelling_session_status,
+      session.session_state_json AS spelling_session_state_json,
+      session.summary_json AS spelling_session_summary_json,
+      session.created_at AS spelling_session_created_at,
+      session.updated_at AS spelling_session_updated_at,
+      active_session.id AS spelling_active_session_id,
+      read_model.learner_id AS spelling_read_model_learner_id,
+      read_model.model_key AS spelling_read_model_key,
+      read_model.model_json AS spelling_read_model_json,
+      read_model.source_revision AS spelling_read_model_source_revision,
+      read_model.generated_at AS spelling_read_model_generated_at,
+      read_model.updated_at AS spelling_read_model_updated_at
+    FROM learner_profiles l
+    LEFT JOIN account_learner_memberships m
+      ON m.account_id = ? AND m.learner_id = l.id
+    LEFT JOIN mutation_receipts r
+      ON r.account_id = ? AND r.request_id = ?
+    LEFT JOIN (
+      SELECT learner_id, subject_id, ui_json, data_json, updated_at
+      FROM child_subject_state
+      WHERE learner_id = ? AND subject_id = 'spelling'
+      LIMIT 1
+    ) state ON 1 = 1
+    LEFT JOIN (
+      SELECT id, learner_id, subject_id, session_kind, status, session_state_json, summary_json, created_at, updated_at
+      FROM practice_sessions
+      WHERE learner_id = ? AND subject_id = 'spelling'
+      ORDER BY updated_at DESC, id DESC
+      LIMIT 1
+    ) session ON 1 = 1
+    LEFT JOIN (
+      SELECT id
+      FROM practice_sessions
+      WHERE learner_id = ? AND subject_id = 'spelling' AND status = 'active'
+      ORDER BY updated_at DESC, id DESC
+      LIMIT 1
+    ) active_session ON 1 = 1
+    LEFT JOIN learner_read_models read_model
+      ON read_model.learner_id = l.id AND read_model.model_key = ?
+    WHERE l.id = ?
+  `, [
+    accountId,
+    accountId,
+    requestId,
+    learnerId,
+    learnerId,
+    learnerId,
+    modelKey,
+    learnerId,
+  ]);
+}
+
 async function runSubjectCommandMutation(db, {
   accountId,
   command,
@@ -9097,36 +9424,55 @@ async function runSubjectCommandMutation(db, {
   }, 'learner');
   const requestHash = mutationPayloadHash(kind, payload);
 
-  await requireLearnerWriteAccess(db, accountId, command.learnerId);
-
   // U6 queryCount budget: fold the mutation-receipt idempotency lookup
   // and the learner revision read into a single LEFT JOIN so the hot
   // path issues one SELECT instead of two. NULL-padded columns signal
   // "no existing receipt" and a missing `learner_id` signals "learner
   // not found" (and the request terminates the same way as the prior
-  // two-query flow).
-  const combinedRow = await first(db, `
-    SELECT
-      l.id AS learner_id,
-      l.state_revision AS learner_state_revision,
-      r.account_id AS receipt_account_id,
-      r.request_id AS receipt_request_id,
-      r.scope_type AS receipt_scope_type,
-      r.scope_id AS receipt_scope_id,
-      r.mutation_kind AS receipt_mutation_kind,
-      r.request_hash AS receipt_request_hash,
-      r.response_json AS receipt_response_json,
-      r.status_code AS receipt_status_code,
-      r.correlation_id AS receipt_correlation_id,
-      r.applied_at AS receipt_applied_at
-    FROM learner_profiles l
-    LEFT JOIN mutation_receipts r
-      ON r.account_id = ? AND r.request_id = ?
-    WHERE l.id = ?
-  `, [accountId, nextMutation.requestId, command.learnerId]);
+  // two-query flow). P95 follow-up: also fold the writable membership
+  // check into the same query so subject commands do not spend a
+  // separate D1 round trip proving access immediately before reading
+  // the learner revision.
+  const canPreloadSpellingRuntime = command.subjectId === 'spelling';
+  const spellingRuntimeModelKey = COMMAND_PROJECTION_MODEL_KEY;
+  let combinedRow;
+  let preloadedCommandRuntime = null;
+  if (canPreloadSpellingRuntime) {
+    try {
+      combinedRow = await readSpellingSubjectCommandPreflightRow(db, {
+        accountId,
+        learnerId: command.learnerId,
+        requestId: nextMutation.requestId,
+        modelKey: spellingRuntimeModelKey,
+      });
+      markLearnerReadModelsTableAvailable(db);
+      preloadedCommandRuntime = spellingCommandRuntimeFromRow(combinedRow, spellingRuntimeModelKey, {
+        prefix: 'spelling_',
+      });
+    } catch (error) {
+      if (!isMissingTableError(error, 'learner_read_models')) throw error;
+      combinedRow = await readSubjectCommandPreflightRow(db, {
+        accountId,
+        learnerId: command.learnerId,
+        requestId: nextMutation.requestId,
+      });
+    }
+  } else {
+    combinedRow = await readSubjectCommandPreflightRow(db, {
+      accountId,
+      learnerId: command.learnerId,
+      requestId: nextMutation.requestId,
+    });
+  }
 
   if (!combinedRow || !combinedRow.learner_id) {
     throw new NotFoundError('Learner was not found.', { learnerId: command.learnerId });
+  }
+  if (!writableRole(combinedRow.membership_role)) {
+    throw new ForbiddenError('Learner access denied.', {
+      learnerId: command.learnerId,
+      required: 'owner-or-member',
+    });
   }
 
   const existingReceipt = combinedRow.receipt_request_id
@@ -9198,7 +9544,10 @@ async function runSubjectCommandMutation(db, {
     // Re-run the command against fresh state for each attempt so the
     // rebased plan sees the concurrent winner's reward/counts/token ring
     // (via the subject handler's internal `resolveProjectionInput` call).
-    const freshApplyRaw = await applyCommand();
+    const freshApplyRaw = await applyCommand(preloadedCommandRuntime
+      ? { commandRuntime: preloadedCommandRuntime }
+      : undefined);
+    preloadedCommandRuntime = null;
     const freshPayload = isPlainObject(freshApplyRaw) ? freshApplyRaw : {};
     const {
       runtimeWrite: freshRuntimeWrite = null,
@@ -9234,7 +9583,9 @@ async function runSubjectCommandMutation(db, {
     };
     const attemptStatements = [];
     if (freshRuntimeWrite) {
-      const includeCapacityReadModels = await capacityReadModelTablesAvailable(db);
+      const includeCapacityReadModels = await capacityReadModelTablesAvailable(db, {
+        requireActivityFeed: false,
+      });
       const plan = buildSubjectRuntimePersistencePlan(
         db,
         accountId,
@@ -9255,7 +9606,8 @@ async function runSubjectCommandMutation(db, {
           // Feedback progress is source-of-truth in child_subject_state.
           // Keep practice_sessions for start/completion history, not every answer.
           skipActivePracticeSessionWrite: command.command === 'submit-answer',
-          currentActiveSessionId: freshRuntimeWrite.previousActiveSessionId || null,
+          currentActiveSessionId: freshRuntimeWrite.previousActiveSessionId,
+          activePracticeSessionKnownAbsent: freshRuntimeWrite.activeSessionKnownAbsent === true,
         },
       );
       attemptStatements.push(...plan.statements);
@@ -9824,6 +10176,9 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
     },
     async readSubjectRuntime(accountId, learnerId, subjectId = 'spelling', options = {}) {
       return readSubjectRuntimeBundle(db, accountId, learnerId, subjectId, options);
+    },
+    async readSpellingCommandRuntime(accountId, learnerId, options = {}) {
+      return readSpellingCommandRuntimeBundle(db, accountId, learnerId, options);
     },
     async readLearnerProjectionState(accountId, learnerId) {
       return readLearnerProjectionBundle(db, accountId, learnerId);

@@ -77,11 +77,10 @@ export class BackendUnavailableError extends HttpError {
 /**
  * Thrown from the command hot path when the command.projection.v1 read
  * model is missing AND the bounded 200-event fallback rehydrate itself
- * fails (e.g. D1 5xx). Produces a 503 response payload shaped
- * `{ok: false, error: 'projection_unavailable', retryable: false, requestId}`
- * so the client's `isCommandBackendExhausted()` classifier can move the
- * command to pending without transport-retry, jitter, or bootstrap
- * recovery. See U6 plan section for rationale.
+ * fails (e.g. D1 5xx). Route handlers may still map this to a 503 response
+ * for command types that cannot degrade safely. Spelling catches this error
+ * inside its subject handler and continues without reward/read-model side
+ * effects so the learner flow is not interrupted by optional projection work.
  */
 export class ProjectionUnavailableError extends HttpError {
   constructor(message = 'Command projection is unavailable.', extra = {}) {

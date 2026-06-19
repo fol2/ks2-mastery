@@ -133,13 +133,15 @@ function demoSessionIdentifier(session = {}) {
   return cleanText(session.sessionId || session.sessionHash || session.accountId) || 'unknown-demo-session';
 }
 
-export async function protectDemoSubjectCommand({ env, request, session, now = Date.now(), capacity = null } = {}) {
+export async function protectDemoSubjectCommand({ env, request, session, account = null, now = Date.now(), capacity = null } = {}) {
   if (!session?.demo) return;
   // U3 round 1 (P1 #03): wrap the D1 handle when a capacity collector
   // is supplied so every rate-limit query and the demo-active guard are
   // counted. Previously 5+ queries per command bypassed the proxy.
   const db = requireDatabaseWithCapacity(env, capacity);
-  await requireActiveDemoAccount(db, session.accountId, now);
+  if (!hasActiveDemoAccountSnapshot(account, now)) {
+    await requireActiveDemoAccount(db, session.accountId, now);
+  }
   const accountSession = `${session.accountId}:${demoSessionIdentifier(session)}`;
   await enforceDemoRateLimit(db, [
     {

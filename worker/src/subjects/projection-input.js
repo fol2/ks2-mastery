@@ -19,8 +19,8 @@
 //       * `bootstrap` carries the bounded-fallback game state + events for
 //         the non-hit modes so the caller can still hydrate rewards.
 //
-// Returning `null` is NEVER used — a `ProjectionUnavailableError` flows
-// directly from the repository to the command route's 503 handler.
+// Returning `null` is NEVER used. Callers either consume the returned input
+// or choose a subject-specific degraded path for `ProjectionUnavailableError`.
 
 const MONSTER_CODEX_SYSTEM_ID = 'monster-codex';
 

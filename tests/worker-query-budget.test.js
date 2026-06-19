@@ -13,7 +13,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { createWorkerApp } from '../worker/src/app.js';
+import { createSession } from '../worker/src/auth.js';
 import { COMMAND_PROJECTION_MODEL_KEY } from '../worker/src/read-models/learner-read-models.js';
+import { __setRequestLimitsCleanupRngForTests } from '../worker/src/rate-limit.js';
 import { createWorkerRepositoryServer } from './helpers/worker-server.js';
 import { createMigratedSqliteD1Database } from './helpers/sqlite-d1.js';
 import { createApiPlatformRepositories } from '../src/platform/core/repositories/index.js';
@@ -30,11 +32,11 @@ import { createApiPlatformRepositories } from '../src/platform/core/repositories
 // child_subject_state unbounded + game_state + practice_sessions +
 // event_log + spelling content). P7 removed the duplicate account point read.
 // May 2026 hotfix removed the spelling content table read from bootstrap
-// public read-model hydration, lowering the path to 9. Content Operations
-// Centre adds one bounded global release revision lookup, so the measured path
-// is back to 10 without returning to account_subject_content.
+// public read-model hydration. Content Operations Centre adds one bounded
+// release revision lookup, and the P95 follow-up reuses the authenticated
+// account snapshot, so the measured path is now 9.
 // Headroom +1.
-const MEASURED_BOOTSTRAP_MULTI_LEARNER = 10;
+const MEASURED_BOOTSTRAP_MULTI_LEARNER = 9;
 const BUDGET_BOOTSTRAP_MULTI_LEARNER = MEASURED_BOOTSTRAP_MULTI_LEARNER + 1;
 
 // Measured: 5 queries for the notModified probe (ops_status JOIN +
@@ -43,15 +45,25 @@ const BUDGET_BOOTSTRAP_MULTI_LEARNER = MEASURED_BOOTSTRAP_MULTI_LEARNER + 1;
 // is loaded.
 const BUDGET_BOOTSTRAP_NOT_MODIFIED = 6;
 
-// U6 established: projection hit path — zero event_log reads. Measured:
-// 13 queries on the 2000-event single-learner harness (ops_status JOIN +
-// ensureAccount + membership + learner+account revision + subject_state +
-// active_session + spelling_content + projection read-model + 5 batch
-// writes). Phase D / U14 added the account_ops_metadata JOIN.
-// Content Operations Centre moved spelling runtime reads through the
-// override/global release precedence checks; the command hot path now carries
-// two release lookups while still avoiding account_subject_content.
-const BUDGET_COMMAND_HOT_PATH = 15;
+// U6 established: projection hit path — zero event_log reads. P95 follow-up
+// measured 7 queries after preloading subject_state + latest_session +
+// projection read-model in the mutation preflight while Content Operations
+// keeps one bounded release lookup. Headroom +1.
+const BUDGET_COMMAND_HOT_PATH = 8;
+// First start-session pays the practice-session insert path before the
+// projection row is primed, but it must not spend an extra sqlite_master probe.
+// Measured 8 queries after the active-session no-op abandon UPDATE is skipped
+// when the combined read proves there is no active session. Headroom +1.
+const BUDGET_COMMAND_START_PATH = 9;
+
+// Measured after folding TTS membership access into the subject-runtime read:
+// auth account read + combined access/runtime read + one bounded Content
+// Operations release lookup + two TTS limiter writes. Keep this exact because
+// adding a D1 read is visible to every spelling card.
+const MEASURED_TTS_SESSION_PLAYBACK = 5;
+const BUDGET_TTS_SESSION_PLAYBACK = 5;
+const MEASURED_TTS_SIGNED_SESSION_PLAYBACK = 4;
+const BUDGET_TTS_SIGNED_SESSION_PLAYBACK = 4;
 
 // Measured: 6 queries for parent hub recent-sessions (ops_status JOIN +
 // ensureAccount upsert + account select + membership list + learner
@@ -60,12 +72,11 @@ const BUDGET_PARENT_RECENT_SESSIONS = 7;
 
 // P7 measured: 10 queries for GET bootstrap full bundle. May 2026 hotfix
 // removed the spelling content table read from public read-model hydration,
-// leaving the route-level account snapshot reuse and 9 measured queries.
-// Content Operations Centre adds one bounded global release revision lookup,
-// so the measured path is back to 10 without returning to
-// account_subject_content.
+// and the P95 follow-up reused the auth account snapshot. Content Operations
+// Centre keeps one bounded release revision lookup, leaving 9 measured
+// queries without returning to account_subject_content.
 // Headroom +1.
-const MEASURED_BOOTSTRAP_GET_FULL = 10;
+const MEASURED_BOOTSTRAP_GET_FULL = 9;
 const BUDGET_BOOTSTRAP_GET_FULL = MEASURED_BOOTSTRAP_GET_FULL + 1;
 const MEASURED_BOOTSTRAP_GET_WITH_CACHED_MONSTER_POINTER = MEASURED_BOOTSTRAP_GET_FULL - 1;
 
@@ -86,11 +97,11 @@ const BUDGET_ADMIN_OPS_KPI = 21;
 // with LIKE filter). Headroom +1.
 const BUDGET_ADMIN_ACCOUNTS_SEARCH = 5;
 
-// Measured: 10 queries for Admin debug-bundle (ops_status JOIN +
-// ensureAccount upsert + assertAdminHubActorForBundle SELECT + seven
+// Measured: 9 queries for Admin debug-bundle (ops_status JOIN with reusable
+// account snapshot + assertAdminHubActorForBundle SELECT + seven
 // bundle-section aggregation queries). Headroom +1.
-const BUDGET_ADMIN_DEBUG_BUNDLE = 11;
-const MIN_ADMIN_DEBUG_BUNDLE_TRACKED_QUERIES = 10;
+const BUDGET_ADMIN_DEBUG_BUNDLE = 10;
+const MIN_ADMIN_DEBUG_BUNDLE_TRACKED_QUERIES = 9;
 
 // Measured: 22 queries for Hero command POST start-task (ops_status JOIN +
 // ensureAccount upsert + requireLearnerReadAccess + readHeroSubjectReadModels
@@ -206,6 +217,16 @@ function createServer() {
 async function readJsonBody(response) {
   const text = await response.text();
   try { return JSON.parse(text); } catch { return null; }
+}
+
+function sessionCookieForToken(token) {
+  return `ks2_session=${encodeURIComponent(token)}`;
+}
+
+function refreshedSessionCookie(response, fallbackCookie = '') {
+  const setCookie = response.headers.get('set-cookie') || '';
+  const match = /ks2_session=([^;]+)/.exec(setCookie);
+  return match ? `ks2_session=${match[1]}` : fallbackCookie;
 }
 
 async function postBootstrap(server, body = {}, extraHeaders = {}) {
@@ -510,13 +531,19 @@ test('U3 query budget: subject command hot-path 2000-event learner ≤ BUDGET_CO
       startAt: Date.UTC(2026, 3, 24, 17, 30, 0),
     });
 
-    // First command primes the projection via miss-rehydrated fallback.
+    // First command primes the projection via the degraded baseline path.
     const first = await harness.command('start-session', {
       mode: 'single',
       slug: 'possess',
       length: 1,
     });
     assert.equal(first.response.status, 200, JSON.stringify(first.body));
+    const firstCapacity = first.body.meta?.capacity;
+    assert.ok(firstCapacity, 'start command must expose meta.capacity');
+    assert.ok(
+      firstCapacity.queryCount <= BUDGET_COMMAND_START_PATH,
+      `command start-session queryCount must be ≤ ${BUDGET_COMMAND_START_PATH}; measured ${firstCapacity.queryCount}`,
+    );
 
     // Second command rides the hot path with the projection already primed.
     harness.DB.clearQueryLog();
@@ -643,6 +670,167 @@ test('U3 query budget: Arithmetic and Reasoning bootstrap first-paint payloads s
     } finally {
       harness.close();
     }
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Scenario 3b — TTS session playback (real route, cached/provider-independent)
+// ---------------------------------------------------------------------------
+test('U3 query budget: TTS session playback ≤ BUDGET_TTS_SESSION_PLAYBACK', async () => {
+  const harness = createCommandHarness();
+  const originalFetch = globalThis.fetch;
+  __setRequestLimitsCleanupRngForTests(() => 1);
+  globalThis.fetch = async () => new Response(new Uint8Array([1, 2, 3]), {
+    status: 200,
+    headers: { 'content-type': 'audio/mpeg' },
+  });
+
+  try {
+    const start = await harness.command('start-session', {
+      mode: 'single',
+      slug: 'early',
+      length: 1,
+    });
+    assert.equal(start.response.status, 200, JSON.stringify(start.body));
+    assert.ok(start.body.audio?.promptToken, 'start-session must return a TTS prompt token');
+
+    harness.DB.clearQueryLog();
+    const response = await harness.app.fetch(new Request(`${BASE_URL}/api/tts`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-ks2-dev-account-id': 'adult-cmd',
+      },
+      body: JSON.stringify({
+        learnerId: 'learner-cmd',
+        promptToken: start.body.audio.promptToken,
+      }),
+    }), {
+      ...harness.env,
+      OPENAI_API_KEY: 'test-openai-key',
+    }, {});
+    const failureBody = response.status === 200 ? '' : await response.clone().text();
+    assert.equal(response.status, 200, failureBody);
+    await response.arrayBuffer();
+
+    const queries = harness.DB.takeQueryLog();
+    assert.ok(
+      queries.length <= BUDGET_TTS_SESSION_PLAYBACK,
+      `TTS session playback query count must be ≤ ${BUDGET_TTS_SESSION_PLAYBACK}; measured ${queries.length}`,
+    );
+    assert.equal(
+      queries.length,
+      MEASURED_TTS_SESSION_PLAYBACK,
+      `TTS session playback query count should stay at ${MEASURED_TTS_SESSION_PLAYBACK}; measured ${queries.length}`,
+    );
+    assert.equal(
+      queries.filter((entry) => /membership\.role AS membership_role/i.test(entry.sql || '')).length,
+      1,
+      'TTS should fold learner access into the subject-runtime read.',
+    );
+    assert.equal(
+      queries.filter((entry) => /\bFROM account_learner_memberships\b\s+WHERE account_id = \? AND learner_id = \?/i.test(entry.sql || '')).length,
+      0,
+      'TTS must not spend a standalone learner-access read before subject runtime.',
+    );
+  } finally {
+    globalThis.fetch = originalFetch;
+    __setRequestLimitsCleanupRngForTests(Math.random);
+    harness.close();
+  }
+});
+
+test('U3 query budget: signed production TTS playback skips auth session D1 read', async () => {
+  const DB = createMigratedSqliteD1Database();
+  const originalFetch = globalThis.fetch;
+  __setRequestLimitsCleanupRngForTests(() => 1);
+  globalThis.fetch = async () => new Response(new Uint8Array([4, 5, 6]), {
+    status: 200,
+    headers: { 'content-type': 'audio/mpeg' },
+  });
+
+  try {
+    seedAccountLearner(DB, { accountId: 'adult-signed', learnerId: 'learner-cmd' });
+    const app = createWorkerApp({ now: () => NOW });
+    const env = {
+      DB,
+      AUTH_MODE: 'production',
+      ENVIRONMENT: 'test',
+      APP_HOSTNAME: 'repo.test',
+      SESSION_SECRET: 'test-session-secret-for-signed-hot-path-budget',
+      OPENAI_API_KEY: 'test-openai-key',
+    };
+    const session = await createSession(env, 'adult-signed', 'email', Date.now());
+    let cookie = sessionCookieForToken(session.token);
+
+    const startResponse = await app.fetch(new Request(`${BASE_URL}/api/subjects/spelling/command`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        origin: BASE_URL,
+        'sec-fetch-site': 'same-origin',
+        cookie,
+      },
+      body: JSON.stringify({
+        command: 'start-session',
+        learnerId: 'learner-cmd',
+        requestId: 'budget-signed-start-1',
+        expectedLearnerRevision: 0,
+        payload: { mode: 'single', slug: 'early', length: 1 },
+      }),
+    }), env, {});
+    const startBody = await readJsonBody(startResponse);
+    assert.equal(startResponse.status, 200, JSON.stringify(startBody));
+    assert.ok(startBody.audio?.promptToken, 'start-session must return a TTS prompt token');
+    cookie = refreshedSessionCookie(startResponse, cookie);
+
+    DB.clearQueryLog();
+    const response = await app.fetch(new Request(`${BASE_URL}/api/tts`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        origin: BASE_URL,
+        'sec-fetch-site': 'same-origin',
+        cookie,
+      },
+      body: JSON.stringify({
+        learnerId: 'learner-cmd',
+        promptToken: startBody.audio.promptToken,
+      }),
+    }), env, {});
+    const failureBody = response.status === 200 ? '' : await response.clone().text();
+    assert.equal(response.status, 200, failureBody);
+    await response.arrayBuffer();
+
+    const queries = DB.takeQueryLog();
+    assert.ok(
+      queries.length <= BUDGET_TTS_SIGNED_SESSION_PLAYBACK,
+      `signed TTS playback query count must be ≤ ${BUDGET_TTS_SIGNED_SESSION_PLAYBACK}; measured ${queries.length}`,
+    );
+    assert.equal(
+      queries.length,
+      MEASURED_TTS_SIGNED_SESSION_PLAYBACK,
+      `signed TTS playback query count should stay at ${MEASURED_TTS_SIGNED_SESSION_PLAYBACK}; measured ${queries.length}`,
+    );
+    assert.equal(
+      queries.filter((entry) => /\bFROM account_sessions\b/i.test(entry.sql || '')).length,
+      0,
+      'signed TTS playback must not read account_sessions on the hot path.',
+    );
+    assert.equal(
+      queries.filter((entry) => /\bFROM adult_accounts\b/i.test(entry.sql || '') || /\bJOIN adult_accounts\b/i.test(entry.sql || '')).length,
+      0,
+      'signed TTS playback must not read adult_accounts for auth on the hot path.',
+    );
+    assert.equal(
+      queries.filter((entry) => /membership\.role AS membership_role/i.test(entry.sql || '')).length,
+      1,
+      'signed TTS should still fold learner access into the subject-runtime read.',
+    );
+  } finally {
+    globalThis.fetch = originalFetch;
+    __setRequestLimitsCleanupRngForTests(Math.random);
+    DB.close();
   }
 });
 

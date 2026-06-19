@@ -115,7 +115,10 @@ const BOOTSTRAP_PHASE_TIMING_ALLOWED = new Set(BOOTSTRAP_PHASE_TIMING_NAMES);
 //   - `'stale-catchup'` — row present but source_revision too old; bounded
 //     catch-up refreshed it
 //   - `'rejected'` — projection missing AND bounded fallback itself failed;
-//     command returned 503 projection_unavailable
+//     an unhandled command returned 503 projection_unavailable
+//   - `'degraded'` — Spelling skipped optional projection work (missing,
+//     stale, malformed, or temporarily unreadable read model) and continued
+//     without reward/read-model side effects
 //   - `'newer-opaque'` — persisted row version is newer than reader knows;
 //     command continues without the `recentEventTokens` optimisation and
 //     does NOT overwrite the newer row (rollback safety)
@@ -129,6 +132,7 @@ const PROJECTION_FALLBACK_ALLOWED = new Set([
   'miss-rehydrated',
   'stale-catchup',
   'rejected',
+  'degraded',
   'newer-opaque',
 ]);
 

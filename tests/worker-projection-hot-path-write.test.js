@@ -4,8 +4,8 @@
 // scanned a bounded 200-event window on every command) to
 // `readLearnerProjectionInput()` which consumes the persisted
 // `command.projection.v1` read model as the hot-path input. The bounded
-// window is now migration/fallback only; when fallback fails we reject with
-// 503 `projection_unavailable` rather than silently scan full history.
+// window is now migration/fallback only; Spelling degrades when fallback
+// fails so the learner flow continues without a full-history scan.
 //
 // Scenarios follow the plan U6 test list (2026-04-25-002).
 
@@ -296,12 +296,12 @@ test('U6 scenario 10: concurrent-retry-exhausted surfaces derivedWriteSkipped', 
     assert.ok(Number.isFinite(skipped.currentRevision), 'currentRevision hint must be numeric');
 
     // The next command on the same learner sees the post-write state and
-    // does NOT stay on stale-catchup indefinitely (the invariant is that
+    // does NOT stay degraded indefinitely (the invariant is that
     // the system converges to hit after the primary state settles).
     const follow = await harness.command('continue-session');
     if (follow.body.meta?.capacity) {
       assert.ok(
-        ['hit', 'miss-rehydrated', 'stale-catchup'].includes(follow.body.meta.capacity.projectionFallback),
+        ['hit', 'degraded', 'miss-rehydrated', 'stale-catchup'].includes(follow.body.meta.capacity.projectionFallback),
         `follow-up must ride a known path; got ${follow.body.meta.capacity.projectionFallback}`,
       );
     }
@@ -389,7 +389,7 @@ test('U6 scenario 17: response reflects primary state post-write even when proje
     });
     assert.equal(first.response.status, 200, JSON.stringify(first.body));
     // Force the projection row stale so the next command runs through
-    // the stale-catchup path (a divergence from the hot path). The
+    // the degraded baseline path (a divergence from the hot path). The
     // primary state write must still surface in the response body.
     harness.DB.db.prepare(`
       UPDATE learner_read_models
@@ -404,19 +404,19 @@ test('U6 scenario 17: response reflects primary state post-write even when proje
     const follow = await harness.command('submit-answer', { answer: 'possess' });
     assert.equal(follow.response.status, 200, JSON.stringify(follow.body));
     // The capacity telemetry confirms we did NOT ride the hot path.
-    assert.equal(follow.body.meta?.capacity?.projectionFallback, 'stale-catchup');
+    assert.equal(follow.body.meta?.capacity?.projectionFallback, 'degraded');
     // The response still carries the primary state post-write view
     // (subject read model reflects the submit-answer outcome).
     assert.ok(
       follow.body.subjectReadModel,
-      'stale-catchup path must still return the post-write subject read model',
+      'degraded path must still return the post-write subject read model',
     );
     // A subsequent command rides the hit path against the refreshed row.
     const hit = await harness.command('continue-session');
     if (hit.body.meta?.capacity) {
       assert.ok(
-        ['hit', 'miss-rehydrated', null].includes(hit.body.meta.capacity.projectionFallback),
-        `follow-up command must not stay on stale-catchup; saw ${hit.body.meta.capacity.projectionFallback}`,
+        ['hit', null].includes(hit.body.meta.capacity.projectionFallback),
+        `follow-up command must not stay degraded; saw ${hit.body.meta.capacity.projectionFallback}`,
       );
     }
   } finally {
@@ -432,4 +432,3 @@ test('U6 scenario 17: response reflects primary state post-write even when proje
 // and `tests/worker-punctuation-runtime.test.js`, both rehabilitated in the
 // U6 fixer pass to stub `readLearnerProjectionInput`.
 // ---------------------------------------------------------------------------
-

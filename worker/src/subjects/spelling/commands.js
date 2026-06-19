@@ -1,6 +1,6 @@
 import { resolveRuntimeSnapshot } from '../../../../src/subjects/spelling/content/model.js';
 import { readSeededSpellingContentBundle } from '../../generated-spelling-content-seed.js';
-import { NotFoundError } from '../../errors.js';
+import { NotFoundError, isProjectionUnavailableError } from '../../errors.js';
 import { combineCommandEvents } from '../../projections/events.js';
 import {
   MONSTER_CELEBRATION_REPLAY_REQUEST_TYPE,
@@ -8,7 +8,13 @@ import {
   monsterCelebrationReplayReferenceIds,
 } from '../../projections/monster-replays.js';
 import { buildCommandProjectionReadModel } from '../../projections/read-models.js';
-import { projectSpellingRewards } from '../../projections/rewards.js';
+import { MONSTER_CODEX_SYSTEM_ID, projectSpellingRewards } from '../../projections/rewards.js';
+import {
+  COMMAND_PROJECTION_MODEL_KEY,
+  COMMAND_PROJECTION_RECENT_EVENT_LIMIT,
+  COMMAND_PROJECTION_SCHEMA_VERSION,
+  normaliseCommandProjectionPayload,
+} from '../../read-models/learner-read-models.js';
 import { buildSpellingAudioCue } from './audio.js';
 import { createServerSpellingEngine } from './engine.js';
 import { buildSpellingReadModel } from './read-models.js';
@@ -92,6 +98,167 @@ async function readRuntimeContent(context) {
   };
 }
 
+function emptyRewardProjection(domainEvents = []) {
+  return buildCommandProjectionReadModel({
+    gameState: {},
+    domainEvents,
+    reactionEvents: [],
+    toastEvents: [],
+  });
+}
+
+function projectionRewardState(projection) {
+  const state = projection?.rewards?.state;
+  return state && typeof state === 'object' && !Array.isArray(state) ? state : {};
+}
+
+function hasProjectionTokenField(rawPayload) {
+  return rawPayload && typeof rawPayload === 'object' && !Array.isArray(rawPayload)
+    && Object.prototype.hasOwnProperty.call(rawPayload, 'recentEventTokens')
+    && Array.isArray(rawPayload.recentEventTokens);
+}
+
+function stampProjectionFallback(context, mode) {
+  if (context.capacity && typeof context.capacity.setProjectionFallback === 'function') {
+    context.capacity.setProjectionFallback(mode);
+  }
+}
+
+function degradedProjectionInput({
+  projection = emptyRewardProjection(),
+  sourceRevision = 0,
+  rawRow = null,
+  writeBaseline = true,
+} = {}) {
+  const normalisedProjection = projection && typeof projection === 'object' && !Array.isArray(projection)
+    ? projection
+    : emptyRewardProjection();
+  const projectionContext = writeBaseline
+    ? {
+      mode: 'degraded',
+      projection: normalisedProjection,
+      sourceRevision,
+      rawRow,
+    }
+    : null;
+  return {
+    mode: 'degraded',
+    degraded: true,
+    projectionState: { gameState: {}, events: [] },
+    tokens: [],
+    projection: normalisedProjection,
+    projectionContext,
+    bootstrap: null,
+    rawRow,
+  };
+}
+
+async function resolveSpellingProjectionFromReadModel(context, {
+  learnerId,
+  currentRevision,
+  readModel,
+} = {}) {
+  const hasPreloadedReadModel = readModel !== undefined;
+  if (!hasPreloadedReadModel && typeof context.repository.readLearnerReadModel !== 'function') return null;
+
+  let existingRow;
+  if (hasPreloadedReadModel) {
+    existingRow = readModel;
+  } else {
+    try {
+      existingRow = await context.repository.readLearnerReadModel(learnerId, COMMAND_PROJECTION_MODEL_KEY);
+    } catch {
+      stampProjectionFallback(context, 'degraded');
+      return degradedProjectionInput({ writeBaseline: false });
+    }
+  }
+
+  const missing = !existingRow || existingRow.missing;
+  const rawPayload = missing ? null : existingRow.model;
+  const normalised = rawPayload
+    ? normaliseCommandProjectionPayload(rawPayload, { fallbackVersion: 0 })
+    : emptyRewardProjection();
+  const persistedVersion = Number(normalised?.version) || 0;
+  const persistedRevision = existingRow ? Number(existingRow.sourceRevision) || 0 : 0;
+  const effectiveRevision = Math.max(0, Number(currentRevision) || 0);
+  const minAcceptableRevision = Math.max(0, effectiveRevision - COMMAND_PROJECTION_RECENT_EVENT_LIMIT);
+
+  if (!missing && persistedVersion > COMMAND_PROJECTION_SCHEMA_VERSION) {
+    stampProjectionFallback(context, 'newer-opaque');
+    return degradedProjectionInput({
+      projection: normalised,
+      sourceRevision: persistedRevision,
+      rawRow: existingRow,
+      writeBaseline: false,
+    });
+  }
+
+  if (!missing
+    && persistedVersion === COMMAND_PROJECTION_SCHEMA_VERSION
+    && persistedRevision >= minAcceptableRevision
+    && hasProjectionTokenField(rawPayload)
+  ) {
+    stampProjectionFallback(context, 'hit');
+    return {
+      mode: 'hit',
+      degraded: false,
+      projectionState: {
+        gameState: { [MONSTER_CODEX_SYSTEM_ID]: projectionRewardState(normalised) },
+        events: [],
+      },
+      tokens: Array.isArray(normalised.recentEventTokens) ? normalised.recentEventTokens : [],
+      projection: normalised,
+      projectionContext: null,
+      bootstrap: null,
+      rawRow: existingRow,
+    };
+  }
+
+  stampProjectionFallback(context, 'degraded');
+  return degradedProjectionInput({
+    projection: normalised,
+    sourceRevision: persistedRevision,
+    rawRow: existingRow || null,
+    writeBaseline: true,
+  });
+}
+
+async function resolveSpellingProjectionInput(context, {
+  learnerId,
+  currentRevision,
+  readModel,
+} = {}) {
+  const lightweightInput = await resolveSpellingProjectionFromReadModel(context, {
+    learnerId,
+    currentRevision,
+    readModel,
+  });
+  if (lightweightInput) return lightweightInput;
+
+  try {
+    return await resolveProjectionInput(context, {
+      learnerId,
+      currentRevision,
+      capacity: context.capacity || null,
+    });
+  } catch (error) {
+    if (!isProjectionUnavailableError(error)) throw error;
+    if (context.capacity && typeof context.capacity.setProjectionFallback === 'function') {
+      context.capacity.setProjectionFallback('degraded');
+    }
+    return {
+      mode: 'degraded',
+      degraded: true,
+      projectionState: { gameState: {}, events: [] },
+      tokens: [],
+      projection: emptyRewardProjection(),
+      projectionContext: null,
+      bootstrap: null,
+      rawRow: null,
+    };
+  }
+}
+
 export function createSpellingCommandHandlers({ now, random } = {}) {
   async function handleSpellingCommand(command, context) {
     if (!SPELLING_COMMANDS.includes(command.command)) {
@@ -103,14 +270,20 @@ export function createSpellingCommandHandlers({ now, random } = {}) {
     }
 
     const nowValue = Number.isFinite(Number(context.now)) ? Number(context.now) : Date.now();
-    const runtimeRecord = await context.repository.readSubjectRuntime(
-      context.session.accountId,
-      command.learnerId,
-      'spelling',
-      // U6 queryCount budget: runSubjectCommandMutation already ran
-      // requireLearnerWriteAccess; skip the duplicate membership read.
-      { skipAccessCheck: true },
-    );
+    const runtimeRecord = context.commandRuntime || (typeof context.repository.readSpellingCommandRuntime === 'function'
+      ? await context.repository.readSpellingCommandRuntime(
+        context.session.accountId,
+        command.learnerId,
+        // U6 queryCount budget: runSubjectCommandMutation already ran
+        // requireLearnerWriteAccess; skip the duplicate membership read.
+        { skipAccessCheck: true },
+      )
+      : await context.repository.readSubjectRuntime(
+        context.session.accountId,
+        command.learnerId,
+        'spelling',
+        { skipAccessCheck: true },
+      ));
     const contentResult = await readRuntimeContent(context);
     const snapshot = contentResult.snapshot;
     if (!snapshot?.words?.length) {
@@ -158,32 +331,34 @@ export function createSpellingCommandHandlers({ now, random } = {}) {
       command: command.command,
       payload: command.payload,
     });
-    // U6: consume the persisted projection read model as the hot-path
-    // input. The loader throws `ProjectionUnavailableError` when both the
-    // row and the bounded fallback fail; that flows up to the 503
-    // `projection_unavailable` response in the route handler.
-    const projectionInput = await resolveProjectionInput(context, {
+    const domainEvents = Array.isArray(result.events) ? result.events : [];
+    // Projection is a derived reward/read-model dependency. If it is
+    // temporarily unavailable, keep the primary spelling command flowing and
+    // omit reward side effects for this response.
+    const projectionInput = await resolveSpellingProjectionInput(context, {
       learnerId: command.learnerId,
       currentRevision: Number(command.expectedLearnerRevision) || 0,
-      capacity: context.capacity || null,
+      readModel: runtimeRecord.commandProjectionReadModel,
     });
     const projectionState = projectionInput.projectionState;
-    const projectedRewards = projectSpellingRewards({
-      learnerId: command.learnerId,
-      domainEvents: result.events,
-      gameState: projectionState.gameState,
-      // P2 U12 MEDIUM (u12-corr-02): thread the bounded-fallback event list
-      // so the achievement subscriber sees prior Guardian mission history +
-      // Pattern Quest completions from earlier commands. Without this, the
-      // Worker-twin achievement path never unlocks Guardian 7-day — each
-      // command starts from an empty `existingEvents` list and cumulative
-      // state collapses to just `result.events`. Matches client path at
-      // `src/platform/events/runtime.js:69` where `existingEvents` is
-      // `repositories.eventLog.list()`.
-      existingEvents: projectionState.events,
-    });
+    const projectedRewards = projectionInput.degraded
+      ? { gameState: {}, changedGameState: {}, rewardEvents: [] }
+      : projectSpellingRewards({
+        learnerId: command.learnerId,
+        domainEvents,
+        gameState: projectionState.gameState,
+        // P2 U12 MEDIUM (u12-corr-02): thread the bounded-fallback event list
+        // so the achievement subscriber sees prior Guardian mission history +
+        // Pattern Quest completions from earlier commands. Without this, the
+        // Worker-twin achievement path never unlocks Guardian 7-day — each
+        // command starts from an empty `existingEvents` list and cumulative
+        // state collapses to just `result.events`. Matches client path at
+        // `src/platform/events/runtime.js:69` where `existingEvents` is
+        // `repositories.eventLog.list()`.
+        existingEvents: projectionState.events,
+      });
     let replayEvents = [];
-    if (result.state?.phase === 'summary') {
+    if (!projectionInput.degraded && result.state?.phase === 'summary') {
       const replayContext = await replayContextEvents(context, command.learnerId);
       replayEvents = monsterCelebrationReplayEvents([
         ...projectionState.events,
@@ -200,12 +375,19 @@ export function createSpellingCommandHandlers({ now, random } = {}) {
     // On miss/stale/newer-opaque the events list is populated from the
     // bounded fallback and tokens are either the refreshed ring or null
     // (newer-opaque).
-    const projectedEvents = combineCommandEvents({
-      domainEvents: result.events,
-      reactionEvents: [...projectedRewards.rewardEvents, ...replayEvents],
-      existingEvents: projectionState.events,
-      seedTokens: projectionInput.tokens || [],
-    });
+    const projectedEvents = projectionInput.degraded
+      ? {
+        events: domainEvents,
+        domainEvents,
+        reactionEvents: [],
+        toastEvents: [],
+      }
+      : combineCommandEvents({
+        domainEvents,
+        reactionEvents: [...projectedRewards.rewardEvents, ...replayEvents],
+        existingEvents: projectionState.events,
+        seedTokens: projectionInput.tokens || [],
+      });
     const replayAudioCue = await buildSpellingAudioCue({
       learnerId: command.learnerId,
       state: result.state,
@@ -216,12 +398,14 @@ export function createSpellingCommandHandlers({ now, random } = {}) {
       audio: result.audio,
     }) : null;
 
-    const projections = buildCommandProjectionReadModel({
-      gameState: projectedRewards.gameState,
-      domainEvents: projectedEvents.domainEvents,
-      reactionEvents: projectedEvents.reactionEvents,
-      toastEvents: projectedEvents.toastEvents,
-    });
+    const projections = projectionInput.degraded
+      ? emptyRewardProjection(projectedEvents.domainEvents)
+      : buildCommandProjectionReadModel({
+        gameState: projectedRewards.gameState,
+        domainEvents: projectedEvents.domainEvents,
+        reactionEvents: projectedEvents.reactionEvents,
+        toastEvents: projectedEvents.toastEvents,
+      });
 
     return {
       learnerId: command.learnerId,
@@ -250,19 +434,22 @@ export function createSpellingCommandHandlers({ now, random } = {}) {
         state: result.state,
         data: result.data,
         practiceSession: result.practiceSession,
-        gameState: projectedRewards.changedGameState,
+        gameState: projectionInput.degraded ? {} : projectedRewards.changedGameState,
         events: projectedEvents.events,
         // U6 queryCount budget: when the engine re-uses the same
         // practice session id, tell the persistence plan so the
-        // no-op abandon UPDATE can be elided.
-        previousActiveSessionId: runtimeRecord.latestSession?.status === 'active'
-          ? runtimeRecord.latestSession.id
-          : null,
+        // no-op abandon UPDATE can be elided. The combined command
+        // runtime read can also prove "no active session" with null.
+        previousActiveSessionId: Object.prototype.hasOwnProperty.call(runtimeRecord, 'activeSessionId')
+          ? runtimeRecord.activeSessionId
+          : (runtimeRecord.latestSession?.status === 'active' ? runtimeRecord.latestSession.id : undefined),
+        activeSessionKnownAbsent: Object.prototype.hasOwnProperty.call(runtimeRecord, 'activeSessionId')
+          && runtimeRecord.activeSessionId == null,
       },
       // U6: share the projection input shape with the persistence plan so
       // the `recentEventTokens` ring is appended (not overwritten) and any
       // non-v1 fields from a newer writer are preserved on overwrite.
-      projectionContext: projectionInput,
+      projectionContext: projectionInput.projectionContext || (projectionInput.degraded ? null : projectionInput),
     };
   }
 

@@ -9,12 +9,14 @@ export const COMMAND_PROJECTION_MODEL_KEY = 'command.projection.v1';
 // bump to 2 with an explicit migration path.
 export const COMMAND_PROJECTION_SCHEMA_VERSION = 1;
 
+export const COMMAND_PROJECTION_RECENT_EVENT_LIMIT = 200;
+
 // U6: bounded ring of the most-recent event tokens stored inside the
 // persisted projection shape so the hot-path dedupe (combineCommandEvents)
-// does not need to reload event_log. 250 is a strict superset of
-// PROJECTION_RECENT_EVENT_LIMIT (200) so the token set always covers the
-// bounded-fallback window; a Smart Review session (60-120 commands) fits
-// comfortably inside the ring.
+// does not need to reload event_log. The token ring is a strict superset of
+// COMMAND_PROJECTION_RECENT_EVENT_LIMIT so it always covers the bounded
+// fallback window; a Smart Review session (60-120 commands) fits comfortably
+// inside the ring.
 export const RECENT_EVENT_TOKEN_RING_LIMIT = 250;
 
 function ringClamp(tokens, limit = RECENT_EVENT_TOKEN_RING_LIMIT) {

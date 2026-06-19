@@ -508,8 +508,8 @@ test('P7 public demo bootstrap reuses authenticated account snapshot and ratchet
     assert.equal(response.status, 200);
     assert.equal(payload.ok, true);
     assert.equal(payload.meta?.capacity?.bootstrapMode, 'selected-learner-bounded');
-    assert.equal(payload.meta?.capacity?.queryCount, 10,
-      'Content Operations release revision tracking adds one bounded lookup while preserving the P7 account-read reduction.');
+    assert.equal(payload.meta?.capacity?.queryCount, 9,
+      'P95 follow-up reuses the authenticated account snapshot while Content Operations keeps one bounded release-revision lookup.');
     assert.equal(payload.meta.capacity.d1RowsWritten, 0);
     assert.ok(payload.bootstrapCapacity, 'bootstrap capacity metadata remains present');
     assert.equal(payload.bootstrapCapacity.mode, 'public-bounded');
@@ -520,8 +520,8 @@ test('P7 public demo bootstrap reuses authenticated account snapshot and ratchet
     ));
     assert.equal(
       adultAccountReads.length,
-      1,
-      'bootstrap should perform only the ensureAccount() idempotence read for the adult account',
+      0,
+      'bootstrap should reuse the authenticated adult account snapshot without an ensureAccount() point read',
     );
     assert.equal(
       queryLog.some((entry) => entry.operation === 'first' && /SELECT id, account_type, demo_expires_at\s+FROM adult_accounts\s+WHERE id = \?/i.test(entry.sql)),

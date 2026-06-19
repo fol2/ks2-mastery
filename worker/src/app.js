@@ -1432,6 +1432,7 @@ export function createWorkerApp({
             env,
             request,
             session,
+            account,
             command,
             now: now(),
             capacity,
@@ -1440,7 +1441,7 @@ export function createWorkerApp({
             const result = await repository.runSubjectCommand(
               session.accountId,
               command,
-              () => subjectRuntime.dispatch(command, {
+              (preloaded = {}) => subjectRuntime.dispatch(command, {
                 env,
                 request,
                 session,
@@ -1448,6 +1449,7 @@ export function createWorkerApp({
                 repository,
                 now: now(),
                 capacity,
+                commandRuntime: preloaded.commandRuntime || null,
               }),
             );
             return withSessionRefresh(json({
@@ -2261,6 +2263,7 @@ export function createWorkerApp({
               env,
               request,
               session,
+              account,
               command: subjectCommand,
               now: now(),
               capacity,
@@ -2269,7 +2272,7 @@ export function createWorkerApp({
               const result = await repository.runSubjectCommand(
                 session.accountId,
                 subjectCommand,
-                () => subjectRuntime.dispatch(subjectCommand, {
+                (preloaded = {}) => subjectRuntime.dispatch(subjectCommand, {
                   env,
                   request,
                   session,
@@ -2277,6 +2280,7 @@ export function createWorkerApp({
                   repository,
                   now: now(),
                   capacity,
+                  commandRuntime: preloaded.commandRuntime || null,
                 }),
               );
 
