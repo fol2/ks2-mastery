@@ -824,6 +824,16 @@ const SEO_AUDIT_SECURITY_HEADERS = {
   'reporting-endpoints': 'csp-endpoint="/api/security/csp-report"',
 };
 
+const CLOUDFLARE_INSIGHTS_TEST_SCRIPT = '<script defer src="https://static.cloudflareinsights.com/beacon.min.js/vTEST123" data-cf-beacon=\'{"token":"test"}\' crossorigin="anonymous"></script>';
+const UNEXPECTED_SEO_TEST_SCRIPT = '<script src="/src/bundles/app.bundle.js"></script>';
+
+function seoAuditPlatformInjectedScripts({ cloudflareInsights = false, unexpectedScript = false } = {}) {
+  return [
+    cloudflareInsights ? CLOUDFLARE_INSIGHTS_TEST_SCRIPT : '',
+    unexpectedScript ? UNEXPECTED_SEO_TEST_SCRIPT : '',
+  ].filter(Boolean);
+}
+
 function seoAuditRootHtml({ omitCanonical = false } = {}) {
   return [
     '<!doctype html><html lang="en-GB"><head>',
@@ -860,7 +870,15 @@ function seoAuditRootHtml({ omitCanonical = false } = {}) {
   ].join('');
 }
 
-function seoAuditPracticePageHtml(page, { omitCanonical = false, forbiddenToken = '' } = {}) {
+function seoAuditPracticePageHtml(
+  page,
+  {
+    omitCanonical = false,
+    forbiddenToken = '',
+    cloudflareInsights = false,
+    unexpectedScript = false,
+  } = {},
+) {
   const canonicalUrl = canonicalPracticePageUrl(page);
   return [
     '<!doctype html><html lang="en-GB"><head>',
@@ -883,11 +901,15 @@ function seoAuditPracticePageHtml(page, { omitCanonical = false, forbiddenToken 
     '<a href="/about/">About KS2 Mastery</a>',
     '<a href="/">KS2 Mastery home</a>',
     '</main>',
+    ...seoAuditPlatformInjectedScripts({ cloudflareInsights, unexpectedScript }),
     '</body></html>',
   ].join('');
 }
 
-function seoAuditIdentityPageHtml(page, { forbiddenToken = '' } = {}) {
+function seoAuditIdentityPageHtml(
+  page,
+  { forbiddenToken = '', cloudflareInsights = false, unexpectedScript = false } = {},
+) {
   const canonicalUrl = canonicalIdentityPageUrl(page);
   return [
     '<!doctype html><html lang="en-GB"><head>',
@@ -912,11 +934,15 @@ function seoAuditIdentityPageHtml(page, { forbiddenToken = '' } = {}) {
     ...INTENT_SEO_PAGES.map((intentPage) => `<a href="/${intentPage.slug}/">${intentPage.heading}</a>`),
     '<a href="/demo">Try demo</a>',
     '</main>',
+    ...seoAuditPlatformInjectedScripts({ cloudflareInsights, unexpectedScript }),
     '</body></html>',
   ].join('');
 }
 
-function seoAuditIntentPageHtml(page, { forbiddenToken = '' } = {}) {
+function seoAuditIntentPageHtml(
+  page,
+  { forbiddenToken = '', cloudflareInsights = false, unexpectedScript = false } = {},
+) {
   const canonicalUrl = canonicalIntentPageUrl(page);
   return [
     '<!doctype html><html lang="en-GB"><head>',
@@ -939,6 +965,7 @@ function seoAuditIntentPageHtml(page, { forbiddenToken = '' } = {}) {
     '<a href="/demo">Try demo</a>',
     '<a href="/">KS2 Mastery home</a>',
     '</main>',
+    ...seoAuditPlatformInjectedScripts({ cloudflareInsights, unexpectedScript }),
     '</body></html>',
   ].join('');
 }
@@ -1010,6 +1037,8 @@ function createSeoAuditStubServer(options = {}) {
           forbiddenToken: options.practiceForbiddenTokenSlug === page.slug
             ? 'OPENAI_API_KEY'
             : '',
+          cloudflareInsights: options.injectCloudflareInsights === true,
+          unexpectedScript: options.practiceUnexpectedScriptSlug === page.slug,
         }));
         return;
       }
@@ -1024,6 +1053,8 @@ function createSeoAuditStubServer(options = {}) {
           forbiddenToken: options.identityForbiddenTokenSlug === page.slug
             ? 'OPENAI_API_KEY'
             : '',
+          cloudflareInsights: options.injectCloudflareInsights === true,
+          unexpectedScript: options.identityUnexpectedScriptSlug === page.slug,
         }));
         return;
       }
@@ -1038,6 +1069,8 @@ function createSeoAuditStubServer(options = {}) {
           forbiddenToken: options.intentForbiddenTokenSlug === page.slug
             ? 'OPENAI_API_KEY'
             : '',
+          cloudflareInsights: options.injectCloudflareInsights === true,
+          unexpectedScript: options.intentUnexpectedScriptSlug === page.slug,
         }));
         return;
       }
@@ -1242,6 +1275,55 @@ test('production bundle audit fetches SEO HTML without custom Accept to avoid Cl
       timeout: 8000,
     });
     assert.match(stdout, /Production bundle audit passed/);
+  } finally {
+    await closeServer(server);
+  }
+});
+
+test('production bundle audit allows platform-injected Cloudflare Insights on static SEO pages', async () => {
+  const server = createSeoAuditStubServer({ injectCloudflareInsights: true });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+
+  try {
+    const { port } = server.address();
+    const { stdout } = await execFileAsync(process.execPath, [
+      './scripts/production-bundle-audit.mjs',
+      '--skip-local',
+      '--url',
+      `http://127.0.0.1:${port}/`,
+    ], {
+      cwd: process.cwd(),
+      timeout: 8000,
+    });
+    assert.match(stdout, /Production bundle audit passed/);
+  } finally {
+    await closeServer(server);
+  }
+});
+
+test('production bundle audit fails when a static SEO page includes an app script', async () => {
+  const server = createSeoAuditStubServer({ practiceUnexpectedScriptSlug: 'ks2-spelling-practice' });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+
+  try {
+    const { port } = server.address();
+    await assert.rejects(async () => {
+      await execFileAsync(process.execPath, [
+        './scripts/production-bundle-audit.mjs',
+        '--skip-local',
+        '--url',
+        `http://127.0.0.1:${port}/`,
+      ], {
+        cwd: process.cwd(),
+        timeout: 8000,
+      });
+    }, (error) => {
+      assert.match(
+        error.stderr,
+        /Production SEO page \/ks2-spelling-practice\/ must remain static apart from the Cloudflare Insights beacon; found unexpected script tag/,
+      );
+      return true;
+    });
   } finally {
     await closeServer(server);
   }
