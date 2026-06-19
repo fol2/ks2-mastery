@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
+import { createSession } from '../worker/src/auth.js';
 import { createWorkerRepositoryServer } from './helpers/worker-server.js';
 
 function productionServer(env = {}) {
@@ -204,6 +205,90 @@ test('production logout clears the server session and cookie', async () => {
   const authSessionPayload = await authSession.json();
   assert.equal(authSession.status, 200);
   assert.equal(authSessionPayload.session, null);
+
+  server.close();
+});
+
+test('production signed session cookie still honours DB-backed logout on protected session route', async () => {
+  const server = productionServer({
+    SESSION_SECRET: 'test-session-secret-for-logout-contract',
+  });
+  const register = await postJson(server, '/api/auth/register', {
+    email: 'signed-logout@example.test',
+    password: 'password-1234',
+  });
+  const cookie = cookieFrom(register);
+
+  assert.equal(register.status, 201);
+  assert.match(cookie, /^ks2_session=ks2s1\./, 'registration should mint a signed session when SESSION_SECRET is configured');
+
+  const beforeLogout = await server.fetchRaw('https://repo.test/api/session', {
+    headers: { cookie },
+  });
+  assert.equal(beforeLogout.status, 200);
+
+  const logout = await postJson(server, '/api/auth/logout', {}, { cookie });
+  assert.equal(logout.status, 200);
+
+  const afterLogout = await server.fetchRaw('https://repo.test/api/session', {
+    headers: { cookie },
+  });
+  assert.equal(afterLogout.status, 401);
+
+  server.close();
+});
+
+test('production hot path upgrades a legacy opaque session to a signed snapshot cookie', async () => {
+  const server = productionServer({
+    SESSION_SECRET: 'test-session-secret-for-hot-path-refresh',
+  });
+  const accountId = 'adult-legacy-refresh';
+  const learnerId = 'learner-legacy-refresh';
+  const now = Date.now();
+
+  server.DB.db.prepare(`
+    INSERT INTO learner_profiles (id, name, year_group, avatar_color, goal, daily_minutes, created_at, updated_at, state_revision)
+    VALUES (?, 'Legacy Learner', 'Y5', '#3E6FA8', 'sats', 15, ?, ?, 0)
+  `).run(learnerId, now, now);
+  server.DB.db.prepare(`
+    INSERT INTO adult_accounts (id, email, display_name, platform_role, selected_learner_id, created_at, updated_at, repo_revision)
+    VALUES (?, 'legacy-refresh@example.test', 'Legacy Refresh', 'parent', ?, ?, ?, 0)
+  `).run(accountId, learnerId, now, now);
+  server.DB.db.prepare(`
+    INSERT INTO account_learner_memberships (account_id, learner_id, role, sort_index, created_at, updated_at)
+    VALUES (?, ?, 'owner', 0, ?, ?)
+  `).run(accountId, learnerId, now, now);
+
+  const legacySession = await createSession(
+    { ...server.env, SESSION_SECRET: '', AUTH_SESSION_SECRET: '', KS2_SESSION_SECRET: '' },
+    accountId,
+    'email',
+    now,
+  );
+  const legacyCookie = `ks2_session=${legacySession.token}`;
+  assert.doesNotMatch(legacyCookie, /^ks2_session=ks2s1\./, 'test precondition: legacy cookie is opaque');
+
+  const response = await server.fetchRaw('https://repo.test/api/subjects/spelling/command', {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      origin: 'https://repo.test',
+      'sec-fetch-site': 'same-origin',
+      cookie: legacyCookie,
+    },
+    body: JSON.stringify({
+      command: 'start-session',
+      learnerId,
+      requestId: 'legacy-refresh-start-1',
+      expectedLearnerRevision: 0,
+      payload: { mode: 'single', slug: 'early', length: 1 },
+    }),
+  });
+  const payload = await response.json();
+  const refreshedCookie = cookieFrom(response);
+
+  assert.equal(response.status, 200, JSON.stringify(payload));
+  assert.match(refreshedCookie, /^ks2_session=ks2s1\./, 'hot path should refresh an opaque session into a signed snapshot cookie');
 
   server.close();
 });

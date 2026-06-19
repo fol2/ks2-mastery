@@ -1332,11 +1332,54 @@ function subjectCommandReceiptResponse(response = {}, {
   };
 }
 
+function accountSnapshotRow(session) {
+  const snapshot = session?.accountSnapshot;
+  if (!snapshot || typeof snapshot !== 'object' || Array.isArray(snapshot)) return null;
+  if (snapshot.id !== session?.accountId) return null;
+  return {
+    id: snapshot.id,
+    email: snapshot.email || null,
+    display_name: snapshot.display_name || null,
+    platform_role: snapshot.platform_role || 'parent',
+    selected_learner_id: snapshot.selected_learner_id || null,
+    created_at: asTs(snapshot.created_at, 0),
+    updated_at: asTs(snapshot.updated_at, 0),
+    repo_revision: Number(snapshot.repo_revision) || 0,
+    account_type: snapshot.account_type || 'real',
+    demo_expires_at: Number(snapshot.demo_expires_at) || null,
+  };
+}
+
 async function ensureAccount(db, session, nowTs) {
-  const existing = await first(db, 'SELECT * FROM adult_accounts WHERE id = ?', [session.accountId]);
   const sessionPlatformRole = typeof session?.platformRole === 'string' && session.platformRole
     ? normalisePlatformRole(session.platformRole)
     : null;
+  const trustedSnapshot = accountSnapshotRow(session);
+  if (trustedSnapshot) {
+    const nextEmail = session?.email || trustedSnapshot.email || null;
+    const nextDisplayName = session?.displayName || trustedSnapshot.display_name || null;
+    const nextPlatformRole = sessionPlatformRole || trustedSnapshot.platform_role || 'parent';
+    if (
+      (trustedSnapshot.email || null) === nextEmail
+      && (trustedSnapshot.display_name || null) === nextDisplayName
+      && (trustedSnapshot.platform_role || 'parent') === nextPlatformRole
+    ) {
+      return trustedSnapshot;
+    }
+
+    const updated = await first(db, `
+      UPDATE adult_accounts
+      SET email = ?,
+          display_name = ?,
+          platform_role = ?,
+          updated_at = ?
+      WHERE id = ?
+      RETURNING *
+    `, [nextEmail, nextDisplayName, nextPlatformRole, nowTs, session.accountId]);
+    if (updated) return updated;
+  }
+
+  const existing = await first(db, 'SELECT * FROM adult_accounts WHERE id = ?', [session.accountId]);
   if (!existing) {
     return first(db, `
       INSERT INTO adult_accounts (id, email, display_name, platform_role, selected_learner_id, created_at, updated_at)

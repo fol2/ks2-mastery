@@ -7,6 +7,7 @@ import {
   loginWithEmail,
   registerWithEmail,
   requireMutationCapability,
+  sessionCookie,
   startSocialLogin,
 } from './auth.js';
 import { all, requireDatabase, requireDatabaseWithCapacity, run } from './d1.js';
@@ -384,6 +385,10 @@ async function handleCspReportRequest({ request, env, now }) {
 function withCookies(response, cookies = []) {
   cookies.filter(Boolean).forEach((cookie) => response.headers.append('set-cookie', cookie));
   return response;
+}
+
+function withSessionRefresh(response, request, session) {
+  return withCookies(response, session?.refreshToken ? [sessionCookie(request, session.refreshToken)] : []);
 }
 
 function redirect(location, status = 302, cookies = []) {
@@ -798,6 +803,11 @@ const CAPACITY_RELEVANT_PATH_PATTERNS = [
 
 function isCapacityRelevantPath(pathname) {
   return CAPACITY_RELEVANT_PATH_PATTERNS.some((re) => re.test(pathname || ''));
+}
+
+function allowsSessionSnapshot(pathname, method) {
+  if (method !== 'POST') return false;
+  return pathname === '/api/tts' || /^\/api\/subjects\/[^/]+\/command$/.test(pathname || '');
 }
 
 async function readResponseBytesAndBody(response) {
@@ -1381,7 +1391,9 @@ export function createWorkerApp({
         }
 
         const repository = createWorkerRepository({ env, now, capacity });
-        const session = await auth.requireSession(request);
+        const session = await auth.requireSession(request, {
+          allowSessionSnapshot: allowsSessionSnapshot(url.pathname, request.method),
+        });
         const account = await repository.ensureAccount(session);
         resolvedPlatformRole = account?.platform_role || session.platformRole || 'parent';
 
@@ -1438,10 +1450,10 @@ export function createWorkerApp({
                 capacity,
               }),
             );
-            return json({
+            return withSessionRefresh(json({
               ok: true,
               ...result,
-            });
+            }), request, session);
           } catch (error) {
             // U6: surface a `projection_unavailable` 503 with the validated
             // request id so the client classifier
@@ -2404,7 +2416,7 @@ export function createWorkerApp({
 
         if (url.pathname === '/api/tts' && request.method === 'POST') {
           requireMutationCapability(session);
-          return await handleTextToSpeechRequest({
+          return withSessionRefresh(await handleTextToSpeechRequest({
             env,
             request,
             session,
@@ -2412,7 +2424,7 @@ export function createWorkerApp({
             now: now(),
             fetchFn,
             requestId: validatedRequestId,
-          });
+          }), request, session);
         }
 
         if (url.pathname === '/api/content/spelling' && request.method === 'GET') {

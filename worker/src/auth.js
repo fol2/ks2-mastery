@@ -24,6 +24,8 @@ import { consumeRateLimit, rateLimitSubject } from './rate-limit.js';
 
 const SESSION_COOKIE_NAME = 'ks2_session';
 const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+const SIGNED_SESSION_TOKEN_PREFIX = 'ks2s1';
+const SESSION_SNAPSHOT_REFRESH_MS = 5 * 60 * 1000;
 const OAUTH_TTL_SECONDS = 10 * 60;
 const AUTH_WINDOW_MS = 10 * 60 * 1000;
 const AUTH_LIMITS = {
@@ -191,6 +193,162 @@ export function randomToken(size = 32) {
 export async function sha256(value) {
   const digest = await crypto.subtle.digest('SHA-256', encoder.encode(String(value)));
   return bytesToBase64Url(new Uint8Array(digest));
+}
+
+function sessionSigningSecret(env = {}) {
+  return cleanText(env.SESSION_SECRET || env.AUTH_SESSION_SECRET || env.KS2_SESSION_SECRET);
+}
+
+function sessionSnapshotRefreshMs(env = {}) {
+  const configured = Number(env.SESSION_SNAPSHOT_REFRESH_MS);
+  if (!Number.isFinite(configured) || configured <= 0) return SESSION_SNAPSHOT_REFRESH_MS;
+  return Math.min(Math.max(configured, 30_000), 15 * 60 * 1000);
+}
+
+async function sessionSigningKey(env = {}, usages = ['sign']) {
+  const secret = sessionSigningSecret(env);
+  if (!secret) return null;
+  return crypto.subtle.importKey(
+    'raw',
+    encoder.encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    usages,
+  );
+}
+
+function parseSignedSessionTokenParts(token) {
+  const parts = String(token || '').split('.');
+  if (parts.length !== 4 || parts[0] !== SIGNED_SESSION_TOKEN_PREFIX) return null;
+  const [, opaqueToken, payload, signature] = parts;
+  if (!opaqueToken || !payload || !signature) return null;
+  return { opaqueToken, payload, signature, signingInput: `${SIGNED_SESSION_TOKEN_PREFIX}.${opaqueToken}.${payload}` };
+}
+
+function sessionStorageToken(token) {
+  return parseSignedSessionTokenParts(token)?.opaqueToken || token;
+}
+
+function accountSnapshotFromRow(row, accountId, { accountType = 'real', demoExpiresAt = null } = {}) {
+  if (!row || !accountId) return null;
+  return {
+    id: accountId,
+    email: row.email || null,
+    display_name: row.display_name || null,
+    platform_role: row.platform_role || 'parent',
+    account_type: row.account_type || accountType || 'real',
+    demo_expires_at: Number(row.demo_expires_at) || demoExpiresAt || null,
+    selected_learner_id: row.selected_learner_id || null,
+    repo_revision: Number(row.repo_revision) || 0,
+    created_at: Number(row.account_created_at ?? row.created_at) || 0,
+    updated_at: Number(row.account_updated_at ?? row.updated_at) || 0,
+  };
+}
+
+function signedSessionPayloadFromSession(session, now, env = {}) {
+  if (!session?.accountId || !session?.sessionId || !session?.accountSnapshot) return null;
+  const expiresAt = Number(session.expiresAt);
+  if (!Number.isFinite(expiresAt) || expiresAt <= now) return null;
+  return {
+    v: 1,
+    accountId: session.accountId,
+    provider: session.provider || 'session',
+    sessionId: session.sessionId,
+    sessionKind: session.sessionKind || (session.demo ? 'demo' : 'real'),
+    accountType: session.accountType || 'real',
+    demo: Boolean(session.demo),
+    demoExpiresAt: Number(session.demoExpiresAt) || null,
+    opsStatus: session.opsStatus || 'active',
+    statusRevision: Math.max(0, Number(session.statusRevision) || 0),
+    statusRevisionAtIssue: Math.max(0, Number(session.statusRevisionAtIssue) || 0),
+    expiresAt,
+    refreshAt: Math.min(expiresAt, now + sessionSnapshotRefreshMs(env)),
+    email: session.email || null,
+    displayName: session.displayName || null,
+    platformRole: normalisePlatformRole(session.platformRole || session.accountSnapshot.platform_role),
+    accountSnapshot: session.accountSnapshot,
+  };
+}
+
+async function createSignedSessionToken(env, opaqueToken, session, now = Date.now()) {
+  if (!opaqueToken) return null;
+  const key = await sessionSigningKey(env, ['sign']);
+  if (!key) return null;
+  const payload = signedSessionPayloadFromSession(session, now, env);
+  if (!payload) return null;
+  const encodedPayload = bytesToBase64Url(encoder.encode(JSON.stringify(payload)));
+  const signingInput = `${SIGNED_SESSION_TOKEN_PREFIX}.${opaqueToken}.${encodedPayload}`;
+  const signature = await crypto.subtle.sign('HMAC', key, encoder.encode(signingInput));
+  return `${signingInput}.${bytesToBase64Url(new Uint8Array(signature))}`;
+}
+
+function attachSessionRefreshToken(session, token) {
+  if (!session || !token) return session;
+  Object.defineProperty(session, 'refreshToken', {
+    value: token,
+    enumerable: false,
+    configurable: true,
+  });
+  return session;
+}
+
+function sessionFromSignedPayload(payload = {}, sessionHash, now = Date.now()) {
+  if (payload?.v !== 1) return null;
+  if (!payload.accountId || !payload.sessionId) return null;
+  const expiresAt = Number(payload.expiresAt);
+  const refreshAt = Number(payload.refreshAt);
+  if (!Number.isFinite(expiresAt) || expiresAt <= now) return null;
+  if (!Number.isFinite(refreshAt) || refreshAt <= now) return null;
+  const accountSnapshot = payload.accountSnapshot && typeof payload.accountSnapshot === 'object' && !Array.isArray(payload.accountSnapshot)
+    ? accountSnapshotFromRow(payload.accountSnapshot, payload.accountId, {
+      accountType: payload.accountType || 'real',
+      demoExpiresAt: payload.demoExpiresAt || null,
+    })
+    : null;
+  if (!accountSnapshot || accountSnapshot.id !== payload.accountId) return null;
+  const sessionKind = payload.sessionKind || (payload.demo ? 'demo' : 'real');
+  const accountType = payload.accountType || accountSnapshot.account_type || 'real';
+  const demoExpiresAt = Number(payload.demoExpiresAt) || Number(accountSnapshot.demo_expires_at) || null;
+  if (sessionKind === 'demo' && (!demoExpiresAt || demoExpiresAt <= now)) return null;
+  return {
+    accountId: payload.accountId,
+    email: payload.email || accountSnapshot.email || null,
+    displayName: payload.displayName || accountSnapshot.display_name || null,
+    platformRole: normalisePlatformRole(payload.platformRole || accountSnapshot.platform_role),
+    provider: payload.provider || 'session',
+    sessionKind,
+    sessionId: payload.sessionId,
+    sessionHash,
+    expiresAt,
+    accountType,
+    demo: Boolean(payload.demo) && sessionKind === 'demo' && accountType === 'demo',
+    demoExpiresAt,
+    opsStatus: payload.opsStatus || 'active',
+    statusRevision: Math.max(0, Number(payload.statusRevision) || 0),
+    statusRevisionAtIssue: Math.max(0, Number(payload.statusRevisionAtIssue) || 0),
+    accountSnapshot,
+  };
+}
+
+async function accountSessionFromSignedSnapshot(env, token, now = Date.now()) {
+  const parts = parseSignedSessionTokenParts(token);
+  if (!parts) return null;
+  const key = await sessionSigningKey(env, ['verify']);
+  if (!key) return null;
+  let valid = false;
+  try {
+    valid = await crypto.subtle.verify(
+      'HMAC',
+      key,
+      base64UrlToBytes(parts.signature),
+      encoder.encode(parts.signingInput),
+    );
+  } catch {
+    return null;
+  }
+  if (!valid) return null;
+  const payload = base64UrlToJson(parts.payload);
+  return sessionFromSignedPayload(payload, await sha256(parts.opaqueToken), now);
 }
 
 async function hashPassword(password, salt = randomToken(16)) {
@@ -483,19 +641,40 @@ export class SessionCreationSuspendedError extends Error {
 // predate migration 0011). Missing column (partial migration) → soft-fail
 // to active/0 so deploy order is not load-bearing.
 async function readAccountOpsStatusForSession(db, accountId) {
-  if (!accountId) return { opsStatus: 'active', statusRevision: 0 };
+  if (!accountId) return { opsStatus: 'active', statusRevision: 0, accountSnapshot: null };
   try {
     const row = await first(
       db,
-      'SELECT ops_status, status_revision FROM account_ops_metadata WHERE account_id = ?',
+      `
+        SELECT
+          a.id AS account_id,
+          a.email,
+          a.display_name,
+          a.platform_role,
+          a.account_type,
+          a.demo_expires_at,
+          a.selected_learner_id,
+          a.repo_revision,
+          a.created_at AS account_created_at,
+          a.updated_at AS account_updated_at,
+          COALESCE(m.ops_status, 'active') AS ops_status,
+          COALESCE(m.status_revision, 0) AS status_revision
+        FROM adult_accounts a
+        LEFT JOIN account_ops_metadata m ON m.account_id = a.id
+        WHERE a.id = ?
+      `,
       [accountId],
     );
-    if (!row) return { opsStatus: 'active', statusRevision: 0 };
+    if (!row) return { opsStatus: 'active', statusRevision: 0, accountSnapshot: null };
     return {
       opsStatus: typeof row.ops_status === 'string' && row.ops_status
         ? row.ops_status
         : 'active',
       statusRevision: Math.max(0, Number(row.status_revision) || 0),
+      accountSnapshot: accountSnapshotFromRow(row, accountId, {
+        accountType: row.account_type || 'real',
+        demoExpiresAt: Number(row.demo_expires_at) || null,
+      }),
     };
   } catch (error) {
     const message = String(error?.message || '').toLowerCase();
@@ -513,7 +692,7 @@ async function readAccountOpsStatusForSession(db, accountId) {
       } catch {
         // Swallow — telemetry is best-effort.
       }
-      return { opsStatus: 'active', statusRevision: 0 };
+      return { opsStatus: 'active', statusRevision: 0, accountSnapshot: null };
     }
     throw error;
   }
@@ -525,7 +704,7 @@ export async function createSession(env, accountId, provider, now = Date.now(), 
   // account never produces a session artefact. payment_hold still gets a
   // session (user needs to reach billing UI — U14 enforces mutation
   // capability at the request boundary).
-  const { opsStatus, statusRevision } = await readAccountOpsStatusForSession(db, accountId);
+  const { opsStatus, statusRevision, accountSnapshot } = await readAccountOpsStatusForSession(db, accountId);
   if (opsStatus === 'suspended') {
     try {
       // Capacity telemetry: repeated rejections signal a returning-after-
@@ -540,8 +719,8 @@ export async function createSession(env, accountId, provider, now = Date.now(), 
     }
     throw new SessionCreationSuspendedError(accountId);
   }
-  const token = randomToken(32);
-  const hash = await sha256(token);
+  const opaqueToken = randomToken(32);
+  const hash = await sha256(opaqueToken);
   const sessionId = `session-${randomToken(12)}`;
   const expiresAt = Number.isFinite(Number(options.expiresAt))
     ? Number(options.expiresAt)
@@ -581,7 +760,26 @@ export async function createSession(env, accountId, provider, now = Date.now(), 
       VALUES (?, ?, ?, ?, ?, ?, ?)
     `, [sessionId, accountId, hash, provider, now, expiresAt, sessionKind]);
   }
-  return { token, hash, sessionId, expiresAt, sessionKind, statusRevisionAtIssue: statusRevision };
+  const session = {
+    accountId,
+    email: accountSnapshot?.email || null,
+    displayName: accountSnapshot?.display_name || null,
+    platformRole: normalisePlatformRole(accountSnapshot?.platform_role),
+    provider: provider || 'session',
+    sessionKind,
+    sessionId,
+    sessionHash: hash,
+    expiresAt,
+    accountType: accountSnapshot?.account_type || (sessionKind === 'demo' ? 'demo' : 'real'),
+    demo: sessionKind === 'demo' && (accountSnapshot?.account_type || 'real') === 'demo',
+    demoExpiresAt: Number(accountSnapshot?.demo_expires_at) || null,
+    opsStatus,
+    statusRevision,
+    statusRevisionAtIssue: statusRevision,
+    accountSnapshot,
+  };
+  const signedToken = await createSignedSessionToken(env, opaqueToken, session, now);
+  return { token: signedToken || opaqueToken, hash, sessionId, expiresAt, sessionKind, statusRevisionAtIssue: statusRevision };
 }
 
 // Phase D / U14: log enforcement-unavailable once per request so a partial
@@ -602,8 +800,12 @@ function logEnforcementUnavailable(phase, reason) {
   }
 }
 
-async function accountSessionFromToken(env, token, now = Date.now(), capacity = null) {
+async function accountSessionFromToken(env, token, now = Date.now(), capacity = null, { allowSessionSnapshot = false } = {}) {
   if (!token) return null;
+  if (allowSessionSnapshot) {
+    const snapshotSession = await accountSessionFromSignedSnapshot(env, token, now);
+    if (snapshotSession) return snapshotSession;
+  }
   // U3 round 1 (P1 #03): when a capacity collector is present, wrap the
   // D1 handle so the session-lookup `first()` is counted. Production
   // authenticated requests previously undercounted by 1 because the
@@ -611,7 +813,8 @@ async function accountSessionFromToken(env, token, now = Date.now(), capacity = 
   const db = capacity != null
     ? requireDatabaseWithCapacity(env, capacity)
     : requireDatabase(env);
-  const hash = await sha256(token);
+  const storageToken = sessionStorageToken(token);
+  const hash = await sha256(storageToken);
   // Phase D / U14: JOIN `account_ops_metadata` so each authenticated
   // request carries `ops_status` + `status_revision` + the session's
   // `status_revision_at_issue`. LEFT JOIN so legacy accounts with no
@@ -632,6 +835,10 @@ async function accountSessionFromToken(env, token, now = Date.now(), capacity = 
       a.platform_role,
       a.account_type,
       a.demo_expires_at,
+      a.selected_learner_id,
+      a.repo_revision,
+      a.created_at AS account_created_at,
+      a.updated_at AS account_updated_at,
       COALESCE(m.ops_status, 'active') AS ops_status,
       COALESCE(m.status_revision, 0) AS current_status_revision
     FROM account_sessions s
@@ -674,7 +881,11 @@ async function accountSessionFromToken(env, token, now = Date.now(), capacity = 
         a.display_name,
         a.platform_role,
         a.account_type,
-        a.demo_expires_at
+        a.demo_expires_at,
+        a.selected_learner_id,
+        a.repo_revision,
+        a.created_at AS account_created_at,
+        a.updated_at AS account_updated_at
       FROM account_sessions s
       JOIN adult_accounts a ON a.id = s.account_id
       WHERE s.session_hash = ?
@@ -716,7 +927,7 @@ async function accountSessionFromToken(env, token, now = Date.now(), capacity = 
     });
     throw err;
   }
-  return {
+  const session = {
     accountId: row.account_id,
     email: row.email || null,
     displayName: row.display_name || null,
@@ -725,20 +936,38 @@ async function accountSessionFromToken(env, token, now = Date.now(), capacity = 
     sessionKind,
     sessionId: row.session_id,
     sessionHash: row.session_hash,
+    expiresAt: Number(row.expires_at) || 0,
     accountType,
     demo: sessionKind === 'demo' && accountType === 'demo',
     demoExpiresAt,
     opsStatus,
     statusRevision: enforcementAvailable ? currentStatusRevision : 0,
     statusRevisionAtIssue: enforcementAvailable ? statusRevisionAtIssue : 0,
+    accountSnapshot: {
+      id: row.account_id,
+      email: row.email || null,
+      display_name: row.display_name || null,
+      platform_role: row.platform_role || 'parent',
+      account_type: accountType,
+      demo_expires_at: demoExpiresAt,
+      selected_learner_id: row.selected_learner_id || null,
+      repo_revision: Number(row.repo_revision) || 0,
+      created_at: Number(row.account_created_at) || 0,
+      updated_at: Number(row.account_updated_at) || 0,
+    },
   };
+  const refreshToken = await createSignedSessionToken(env, storageToken, {
+    ...session,
+    expiresAt: Number(row.expires_at) || 0,
+  }, now);
+  return attachSessionRefreshToken(session, refreshToken);
 }
 
 export async function deleteCurrentSession(env, request) {
   const token = readSessionToken(request);
   if (!token) return;
   const db = requireDatabase(env);
-  await run(db, 'DELETE FROM account_sessions WHERE session_hash = ?', [await sha256(token)]);
+  await run(db, 'DELETE FROM account_sessions WHERE session_hash = ?', [await sha256(sessionStorageToken(token))]);
 }
 
 export async function registerWithEmail(env, request, payload = {}) {
@@ -1355,6 +1584,7 @@ export function createDevelopmentSessionProvider() {
       let currentStatusRevision = 0;
       let statusRevisionAtIssue = 0;
       let enforcementAvailable = false;
+      let accountRow = null;
       const rawBinding = env?.DB;
       // Route the metadata lookup through the capacity-wrapped D1 handle
       // so the query is counted in request-level telemetry (mirrors the
@@ -1366,12 +1596,22 @@ export function createDevelopmentSessionProvider() {
         try {
           const row = await first(dbBinding, `
             SELECT COALESCE(m.ops_status, 'active') AS ops_status,
-                   COALESCE(m.status_revision, 0) AS current_status_revision
+                   COALESCE(m.status_revision, 0) AS current_status_revision,
+                   a.email,
+                   a.display_name,
+                   a.platform_role,
+                   a.account_type,
+                   a.demo_expires_at,
+                   a.selected_learner_id,
+                   a.repo_revision,
+                   a.created_at AS account_created_at,
+                   a.updated_at AS account_updated_at
             FROM adult_accounts a
             LEFT JOIN account_ops_metadata m ON m.account_id = a.id
             WHERE a.id = ?
           `, [accountId]);
           if (row) {
+            accountRow = row;
             opsStatus = typeof row.ops_status === 'string' && row.ops_status
               ? row.ops_status
               : 'active';
@@ -1411,6 +1651,18 @@ export function createDevelopmentSessionProvider() {
         opsStatus,
         statusRevision: currentStatusRevision,
         statusRevisionAtIssue,
+        accountSnapshot: accountRow ? {
+          id: accountId,
+          email: accountRow.email || null,
+          display_name: accountRow.display_name || null,
+          platform_role: accountRow.platform_role || 'parent',
+          account_type: accountRow.account_type || (isDemo ? 'demo' : 'real'),
+          demo_expires_at: Number(accountRow.demo_expires_at) || demoExpiresAt || null,
+          selected_learner_id: accountRow.selected_learner_id || null,
+          repo_revision: Number(accountRow.repo_revision) || 0,
+          created_at: Number(accountRow.account_created_at) || 0,
+          updated_at: Number(accountRow.account_updated_at) || 0,
+        } : null,
       };
     },
   };
@@ -1419,10 +1671,10 @@ export function createDevelopmentSessionProvider() {
 export function createProductionSessionProvider() {
   return {
     kind: 'production',
-    async getSession(request, env, { capacity = null } = {}) {
+    async getSession(request, env, { capacity = null, allowSessionSnapshot = false } = {}) {
       // U3 round 1 (P1 #03): thread the per-request capacity collector
       // so the session-lookup query is counted.
-      return accountSessionFromToken(env, readSessionToken(request), Date.now(), capacity);
+      return accountSessionFromToken(env, readSessionToken(request), Date.now(), capacity, { allowSessionSnapshot });
     },
   };
 }
@@ -1551,14 +1803,14 @@ export function createSessionAuthBoundary({ env = {}, sessionProvider, capacity 
         productionReady: provider.kind === 'production',
       };
     },
-    async getSession(request) {
+    async getSession(request, options = {}) {
       // U3 round 1 (P1 #03): the production session provider uses this
       // third argument to thread the capacity collector through to
       // `accountSessionFromToken()`. Development stub ignores it.
-      return provider.getSession(request, env, { capacity });
+      return provider.getSession(request, env, { capacity, ...options });
     },
-    async requireSession(request) {
-      const session = await provider.getSession(request, env, { capacity });
+    async requireSession(request, options = {}) {
+      const session = await provider.getSession(request, env, { capacity, ...options });
       if (!session) throw new UnauthenticatedError();
       // U6 (plan KTD F-07): default-on Sec-Fetch-Site check for every
       // authenticated route. Running it here means any route that calls
