@@ -41,7 +41,7 @@ test("policy defines default-src 'none' (deny-by-default)", () => {
   assert.deepEqual(directives.get('default-src'), ["'none'"]);
 });
 
-test('policy script-src lists self, every inline script hash, strict-dynamic, and Turnstile', () => {
+test('policy script-src lists self, every inline script hash, strict-dynamic, Turnstile, and Cloudflare Insights', () => {
   const value = directives.get('script-src')?.[0] || '';
   assert.match(value, /'self'/, "script-src must include 'self'");
   for (const hash of CSP_INLINE_SCRIPT_HASHES) {
@@ -49,15 +49,21 @@ test('policy script-src lists self, every inline script hash, strict-dynamic, an
   }
   assert.match(value, /'strict-dynamic'/, "script-src must enable 'strict-dynamic'");
   assert.match(value, /https:\/\/challenges\.cloudflare\.com/, 'script-src must allow Turnstile');
+  assert.match(
+    value,
+    /https:\/\/static\.cloudflareinsights\.com/,
+    'script-src must allow Cloudflare Insights script loading',
+  );
 });
 
-test('policy script-src-elem mirrors script-src hashes without strict-dynamic (HTML element form)', () => {
+test('policy script-src-elem mirrors script-src hashes and script element origins without strict-dynamic', () => {
   const value = directives.get('script-src-elem')?.[0] || '';
   assert.match(value, /'self'/);
   for (const hash of CSP_INLINE_SCRIPT_HASHES) {
     assert.ok(value.includes(`'${hash}'`), `script-src-elem must list inline script hash ${hash}`);
   }
   assert.match(value, /https:\/\/challenges\.cloudflare\.com/);
+  assert.match(value, /https:\/\/static\.cloudflareinsights\.com/);
 });
 
 test('index inline-script CSP hashes are limited to the expected theme and JSON-LD blocks', async () => {
@@ -103,11 +109,16 @@ test('policy font-src allows self plus Google Fonts static host', () => {
   assert.match(value, /https:\/\/fonts\.gstatic\.com/);
 });
 
-test('policy connect-src includes Google Fonts CSS + static origins (security F-05)', () => {
+test('policy connect-src includes Google Fonts and Cloudflare Insights beacon origins', () => {
   const value = directives.get('connect-src')?.[0] || '';
   assert.match(value, /'self'/);
   assert.match(value, /https:\/\/fonts\.googleapis\.com/, 'regression: connect-src lost the googleapis origin');
   assert.match(value, /https:\/\/fonts\.gstatic\.com/, 'regression: connect-src lost the gstatic origin');
+  assert.match(
+    value,
+    /https:\/\/cloudflareinsights\.com/,
+    'regression: connect-src lost the Cloudflare Insights beacon origin',
+  );
 });
 
 test('policy media-src allows self plus blob:', () => {

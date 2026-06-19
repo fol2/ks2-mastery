@@ -804,8 +804,23 @@ test('CSP_POLICY_VALUE includes all baseline directives', () => {
   }
   assert.match(policy, /manifest-src 'self'/, 'manifest-src must be explicit (F-06)');
   assert.match(policy, /worker-src 'none'/, 'worker-src must deny Service Workers (F-06)');
+  assert.match(
+    policy,
+    /script-src[^;]*https:\/\/static\.cloudflareinsights\.com/,
+    'script-src must allow Cloudflare Insights script loading',
+  );
+  assert.match(
+    policy,
+    /script-src-elem[^;]*https:\/\/static\.cloudflareinsights\.com/,
+    'script-src-elem must allow Cloudflare Insights script loading',
+  );
   assert.match(policy, /connect-src[^;]*https:\/\/fonts\.googleapis\.com/, 'connect-src must list Google Fonts CSS origin');
   assert.match(policy, /connect-src[^;]*https:\/\/fonts\.gstatic\.com/, 'connect-src must list Google Fonts static origin');
+  assert.match(
+    policy,
+    /connect-src[^;]*https:\/\/cloudflareinsights\.com/,
+    'connect-src must list Cloudflare Insights beacon origin',
+  );
   assert.match(policy, /frame-ancestors 'none'/);
   assert.match(policy, /base-uri 'none'/);
   assert.match(policy, /object-src 'none'/);

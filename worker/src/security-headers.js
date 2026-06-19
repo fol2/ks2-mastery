@@ -95,13 +95,13 @@ export const PERMISSIONS_POLICY = [
 // to produce the header value.
 const CSP_DIRECTIVES = Object.freeze([
   "default-src 'none'",
-  `script-src 'self' ${CSP_INLINE_SCRIPT_HASH_DIRECTIVES} 'strict-dynamic' https://challenges.cloudflare.com`,
-  `script-src-elem 'self' ${CSP_INLINE_SCRIPT_HASH_DIRECTIVES} https://challenges.cloudflare.com`,
+  `script-src 'self' ${CSP_INLINE_SCRIPT_HASH_DIRECTIVES} 'strict-dynamic' https://challenges.cloudflare.com https://static.cloudflareinsights.com`,
+  `script-src-elem 'self' ${CSP_INLINE_SCRIPT_HASH_DIRECTIVES} https://challenges.cloudflare.com https://static.cloudflareinsights.com`,
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "style-src-elem 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "img-src 'self' data: blob:",
   "font-src 'self' https://fonts.gstatic.com",
-  "connect-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com",
+  "connect-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com https://cloudflareinsights.com",
   "media-src 'self' blob:",
   "form-action 'self'",
   "frame-ancestors 'none'",

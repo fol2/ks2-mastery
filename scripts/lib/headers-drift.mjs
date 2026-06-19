@@ -33,6 +33,8 @@ const REQUIRED_CSP_SUBSTRINGS = [
   "manifest-src 'self'",
   "worker-src 'none'",
   'connect-src',
+  'static.cloudflareinsights.com',
+  'cloudflareinsights.com',
   'fonts.googleapis.com',
   'fonts.gstatic.com',
   'report-uri /api/security/csp-report',
