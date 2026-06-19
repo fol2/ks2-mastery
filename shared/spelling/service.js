@@ -1292,7 +1292,15 @@ export function defaultSpellingPrefs() {
   return normalisePrefs();
 }
 
-export function createSpellingService({ repository, storage, tts, now, random, contentSnapshot } = {}) {
+export function createSpellingService({
+  repository,
+  storage,
+  tts,
+  now,
+  random,
+  contentSnapshot,
+  cloneContentSnapshot = true,
+} = {}) {
   const clock = clockFrom(now);
   const persistence = repository || {
     storage: storage || globalThis.localStorage || createNoopStorage(),
@@ -1326,17 +1334,27 @@ export function createSpellingService({ repository, storage, tts, now, random, c
     return before.message !== after.message;
   }
   const randomFn = typeof random === 'function' ? random : Math.random;
-  const runtimeWords = Array.isArray(contentSnapshot?.words)
-    ? cloneSerialisable(contentSnapshot.words)
-    : cloneSerialisable(DEFAULT_WORDS);
-  const runtimeWordBySlug = contentSnapshot?.wordBySlug && typeof contentSnapshot.wordBySlug === 'object' && !Array.isArray(contentSnapshot.wordBySlug)
-    ? cloneSerialisable(contentSnapshot.wordBySlug)
-    : Object.fromEntries(runtimeWords.map((word) => [word.slug, cloneSerialisable(word)]));
-  const runtimeContentSnapshot = contentSnapshot && typeof contentSnapshot === 'object' && !Array.isArray(contentSnapshot)
-    ? cloneSerialisable(contentSnapshot)
+  const sourceWords = Array.isArray(contentSnapshot?.words) ? contentSnapshot.words : DEFAULT_WORDS;
+  const runtimeWords = cloneContentSnapshot ? cloneSerialisable(sourceWords) : sourceWords;
+  const sourceWordBySlug = contentSnapshot?.wordBySlug
+    && typeof contentSnapshot.wordBySlug === 'object'
+    && !Array.isArray(contentSnapshot.wordBySlug)
+    ? contentSnapshot.wordBySlug
+    : null;
+  const runtimeWordBySlug = sourceWordBySlug
+    ? (cloneContentSnapshot ? cloneSerialisable(sourceWordBySlug) : sourceWordBySlug)
+    : Object.fromEntries(runtimeWords.map((word) => [
+      word.slug,
+      cloneContentSnapshot ? cloneSerialisable(word) : word,
+    ]));
+  const sourceContentSnapshot = contentSnapshot && typeof contentSnapshot === 'object' && !Array.isArray(contentSnapshot)
+    ? contentSnapshot
     : {};
-  runtimeContentSnapshot.words = cloneSerialisable(runtimeWords);
-  runtimeContentSnapshot.wordBySlug = cloneSerialisable(runtimeWordBySlug);
+  const runtimeContentSnapshot = cloneContentSnapshot
+    ? cloneSerialisable(sourceContentSnapshot)
+    : { ...sourceContentSnapshot };
+  runtimeContentSnapshot.words = cloneContentSnapshot ? cloneSerialisable(runtimeWords) : runtimeWords;
+  runtimeContentSnapshot.wordBySlug = cloneContentSnapshot ? cloneSerialisable(runtimeWordBySlug) : runtimeWordBySlug;
   const isRuntimeKnownSlug = (slug) => isKnownSlug(slug, runtimeWordBySlug);
   const engine = createLegacySpellingEngine({
     words: runtimeWords,
@@ -1891,9 +1909,9 @@ export function createSpellingService({ repository, storage, tts, now, random, c
     return record;
   }
 
-  function getAnalyticsSnapshot(learnerId) {
+  function getAnalyticsSnapshot(learnerId, { includeWordGroups = true } = {}) {
     const progressStore = progressSnapshot(learnerId);
-    return {
+    const snapshot = {
       version: SPELLING_SERVICE_STATE_VERSION,
       generatedAt: clock(),
       pools: {
@@ -1904,8 +1922,9 @@ export function createSpellingService({ repository, storage, tts, now, random, c
         secureExtension: getStats(learnerId, 'secure-extension', progressStore),
         extra: getStats(learnerId, 'extra', progressStore),
       },
-      wordGroups: analyticsWordGroups(learnerId, progressStore),
     };
+    if (includeWordGroups) snapshot.wordGroups = analyticsWordGroups(learnerId, progressStore);
+    return snapshot;
   }
 
   /**

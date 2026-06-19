@@ -209,6 +209,17 @@ test('analytics snapshot is explicit and normalised', () => {
   assert.equal(mollusc.year, 'extra');
 });
 
+test('analytics snapshot can skip word groups for compact command responses', () => {
+  const { service } = makeService();
+  const snapshot = service.getAnalyticsSnapshot('learner-a', { includeWordGroups: false });
+
+  assert.equal(snapshot.version, SPELLING_SERVICE_STATE_VERSION);
+  assert.ok(Number.isFinite(snapshot.generatedAt));
+  assert.deepEqual(Object.keys(snapshot.pools), ['all', 'core', 'y34', 'y56', 'secureExtension', 'extra']);
+  assert.equal(snapshot.pools.all.total > 0, true);
+  assert.equal(snapshot.wordGroups, undefined);
+});
+
 test('analytics snapshot reuses one learner progress read', () => {
   const storage = installMemoryStorage();
   const repositories = createLocalPlatformRepositories({ storage });

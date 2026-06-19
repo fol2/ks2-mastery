@@ -448,6 +448,7 @@ export function createServerSpellingEngine({
         now: clock,
         random,
         contentSnapshot,
+        cloneContentSnapshot: false,
         tts: {
           speak() {},
           stop() {},
@@ -546,7 +547,7 @@ export function createServerSpellingEngine({
           y56: service.getStats(learnerId, 'y5-6'),
           extra: service.getStats(learnerId, 'extra'),
         },
-        analytics: service.getAnalyticsSnapshot(learnerId),
+        analytics: service.getAnalyticsSnapshot(learnerId, { includeWordGroups: false }),
         postMastery,
       };
     },

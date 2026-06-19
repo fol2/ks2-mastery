@@ -238,6 +238,32 @@ test('server spelling engine preserves deterministic selection and retry progres
   assert.deepEqual(serverSubmitted.data.progress, {});
 });
 
+test('server spelling engine returns compact analytics on the command path', () => {
+  const now = () => Date.UTC(2026, 0, 1);
+  const server = createServerSpellingEngine({
+    now,
+    random: makeSeededRandom(42),
+    contentSnapshot: contentSnapshot(),
+  });
+
+  const result = server.apply({
+    learnerId: 'learner-a',
+    subjectRecord: { ui: null, data: {} },
+    latestSession: null,
+    command: 'start-session',
+    payload: {
+      mode: 'single',
+      slug: 'possess',
+      length: 1,
+    },
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.state.session.serverAuthority, SPELLING_SERVER_AUTHORITY);
+  assert.equal(result.analytics.wordGroups, undefined);
+  assert.equal(result.analytics.pools.core.total > 0, true);
+});
+
 test('worker spelling command route starts, submits, continues, and completes server-side', async () => {
   const server = createWorkerRepositoryServer();
   seedAccountLearner(server.DB);
@@ -272,6 +298,9 @@ test('worker spelling command route starts, submits, continues, and completes se
     assert.equal(step.body.subjectReadModel.phase, 'session');
     assert.equal(step.body.subjectReadModel.session.serverAuthority, SPELLING_SERVER_AUTHORITY);
     assert.equal(step.body.mutation.appliedRevision, 1);
+    assert.deepEqual(step.body.subjectReadModel.analytics.wordGroups, []);
+    assert.equal(step.body.subjectReadModel.analytics.wordBank.source, 'server-read-model-api');
+    assert.equal(step.body.subjectReadModel.analytics.pools.core.total > 0, true);
     const answer = 'possess';
     assert.equal(step.body.subjectReadModel.session.currentCard.word, undefined);
     assert.equal(step.body.subjectReadModel.session.currentCard.prompt.sentence, undefined);
