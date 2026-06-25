@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { gzipSync } from 'node:zlib';
 
 import {
   buildCutoverState,
@@ -8,6 +9,7 @@ import {
   resolveFirstGlobalReleaseSeedSource,
 } from '../scripts/migrate-spelling-content-to-global-release.mjs';
 import {
+  encodeContentOperationSnapshot,
   decodeContentOperationSnapshot,
   isEncodedContentOperationSnapshot,
 } from '../src/subjects/spelling/content/release-snapshot-codec.js';
@@ -27,6 +29,23 @@ function splitSqlStatements(sql) {
     .map((statement) => `${statement};`);
 }
 
+test('content operations snapshot codec writes Brotli snapshots and still reads legacy gzip snapshots', async () => {
+  const encoded = await encodeContentOperationSnapshot({ ok: true, source: 'codec-test' });
+  assert.match(encoded, /^brotli-base64:/);
+  assert.equal(isEncodedContentOperationSnapshot(encoded), true);
+  assert.deepEqual(JSON.parse(await decodeContentOperationSnapshot(encoded)), {
+    ok: true,
+    source: 'codec-test',
+  });
+
+  const legacy = `gzip-base64:${gzipSync('{"ok":true,"source":"legacy-gzip"}').toString('base64')}`;
+  assert.equal(isEncodedContentOperationSnapshot(legacy), true);
+  assert.deepEqual(JSON.parse(await decodeContentOperationSnapshot(legacy)), {
+    ok: true,
+    source: 'legacy-gzip',
+  });
+});
+
 test('content operations seed script builds idempotent first-release SQL', async () => {
   const DB = createMigratedSqliteD1Database();
   try {
@@ -41,7 +60,7 @@ test('content operations seed script builds idempotent first-release SQL', async
     assert.equal(plan.release.subjectId, 'spelling');
     assert.equal(plan.release.publishedAt, 1_777_000_000_000);
     assert.equal(plan.proof.seed.source.type, 'bundled_fallback');
-    assert.equal(plan.snapshotStorage.encoding, 'gzip-base64');
+    assert.equal(plan.snapshotStorage.encoding, 'brotli-base64');
     assert.ok(plan.snapshotStorage.byteLength < 2_000_000);
     assert.ok(plan.snapshotStorage.sqlChunkCount > 1);
     assert.ok(plan.summary.wordCount > 0);

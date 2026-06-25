@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 
 import { createLocalPlatformRepositories } from '../src/platform/core/repositories/index.js';
 import { cloneSerialisable } from '../src/platform/core/repositories/helpers.js';
@@ -22,8 +23,40 @@ import {
   normaliseCoverageTier,
 } from '../src/subjects/spelling/content/taxonomy.js';
 import { SEEDED_SPELLING_CONTENT_BUNDLE } from '../src/subjects/spelling/data/content-data.js';
+import {
+  applySourceToBundle,
+  validateSource as validateElevenPlusSecureVocabularySource,
+} from '../scripts/apply-spelling-11-plus-secure-vocabulary.mjs';
 import { coreOnlyVersionOneContent } from './helpers/spelling-content.js';
 import { installMemoryStorage } from './helpers/memory-storage.js';
+
+const ELEVEN_PLUS_SOURCE_ID = 'spelling-11-plus-secure-vocabulary-2026-06-25';
+const ELEVEN_PLUS_SOURCE_TITLE = '11+ Vocabulary: 300 Words and Meanings';
+const ELEVEN_PLUS_PUBLISHED_AT = Date.parse('2026-06-25T20:30:00.000Z');
+const ELEVEN_PLUS_SECURE_VOCABULARY_SOURCE = JSON.parse(readFileSync(
+  new URL('../content/spelling-11-plus-secure-vocabulary-2026-06-25.json', import.meta.url),
+  'utf8',
+));
+
+function assertElevenPlusProvenance(word, slug, scope) {
+  assert.ok(word, `${scope} ${slug} should exist`);
+  assert.ok(
+    word.provenance?.source?.includes(ELEVEN_PLUS_SOURCE_ID),
+    `${scope} ${slug} should include the 11 plus source in provenance.source`,
+  );
+  assert.ok(
+    word.provenance?.note?.includes(ELEVEN_PLUS_SOURCE_TITLE),
+    `${scope} ${slug} should include the 11 plus source title in provenance.note`,
+  );
+  assert.ok(
+    word.provenance?.note?.includes(ELEVEN_PLUS_SOURCE_ID),
+    `${scope} ${slug} should include the 11 plus source id in provenance.note`,
+  );
+  assert.ok(
+    word.provenance.importedAt >= ELEVEN_PLUS_PUBLISHED_AT,
+    `${scope} ${slug} should carry the 11 plus import timestamp`,
+  );
+}
 
 function makeTts() {
   return {
@@ -203,8 +236,8 @@ test('seeded spelling content validates and round-trips through the portable exp
   assert.equal(validation.bundle.modelVersion, SPELLING_CONTENT_MODEL_VERSION);
   assert.equal(SPELLING_CONTENT_MODEL_VERSION, 10, 'Spelling content model keeps the even-version convention.');
   assert.equal(validation.errors.length, 0);
-  assert.equal(validation.bundle.releases.length, 7);
-  assert.equal(validation.bundle.publication.publishedVersion, 7);
+  assert.equal(validation.bundle.releases.length, 9);
+  assert.equal(validation.bundle.publication.publishedVersion, 9);
   assert.ok(validation.bundle.draft.wordLists
     .filter((list) => list.id.startsWith('statutory-'))
     .every((list) => list.spellingPool === 'core'));
@@ -223,7 +256,7 @@ test('seeded spelling content validates and round-trips through the portable exp
   assert.ok(validation.bundle.releases.at(-1).snapshot.words.every((word) => word.explanation));
   const summary = buildSpellingContentSummary(validation.bundle);
   assert.equal(summary.statutoryCoreCount, 213);
-  assert.equal(summary.secureExtensionCount, 1215);
+  assert.equal(summary.secureExtensionCount, 1439);
   assert.equal(summary.enrichmentExtraCount, 52);
 
   // P2 U10: every core word carries a patternIds field AND either at least
@@ -244,7 +277,7 @@ test('seeded spelling content validates and round-trips through the portable exp
   const exported = content.exportPortable();
   const roundTripped = extractPortableSpellingContent(exported);
   assert.equal(roundTripped.draft.words.length, validation.bundle.draft.words.length);
-  assert.equal(roundTripped.releases.at(-1).version, 7);
+  assert.equal(roundTripped.releases.at(-1).version, 9);
 });
 
 test('seeded spelling content includes the Extra expansion and current word-family variants', () => {
@@ -349,6 +382,215 @@ test('seeded spelling content includes the Extra expansion and current word-fami
   assert.ok(currentExtraWords.every((word) => (word.variants || []).every((variant) => variant.explanation && variant.sentence)));
 });
 
+test('seeded spelling content includes James 11 plus secure vocabulary meanings', () => {
+  const sourceWords = ELEVEN_PLUS_SECURE_VOCABULARY_SOURCE.words;
+  assert.equal(sourceWords.length, 300);
+  assert.equal(new Set(sourceWords.map((word) => word.slug)).size, 300);
+
+  const validation = validateSpellingContentBundle(SEEDED_SPELLING_CONTENT_BUNDLE);
+  assert.equal(validation.ok, true);
+  const summary = buildSpellingContentSummary(validation.bundle);
+  assert.equal(summary.statutoryCoreCount, 213);
+  assert.equal(summary.secureExtensionCount, 1439);
+  assert.equal(summary.enrichmentExtraCount, 52);
+  assert.equal(summary.runtimeWordCount, 1704);
+  assert.equal(validation.bundle.publication.currentReleaseId, 'spelling-r9');
+  assert.equal(validation.bundle.publication.publishedVersion, 9);
+
+  const draftWords = Object.fromEntries(validation.bundle.draft.words.map((word) => [word.slug, word]));
+  const runtimeWords = validation.bundle.releases.at(-1).snapshot.wordBySlug;
+  const missing = sourceWords.filter((sourceWord) => !runtimeWords[sourceWord.slug]);
+  assert.deepEqual(missing, []);
+
+  const sourceRuntimeWords = sourceWords.map((sourceWord) => runtimeWords[sourceWord.slug]);
+  assert.equal(
+    sourceRuntimeWords.filter((word) => word.coverageTier === SPELLING_COVERAGE_TIER.SECURE_EXTENSION).length,
+    280,
+  );
+  assert.equal(
+    sourceRuntimeWords.filter((word) => word.coverageTier === SPELLING_COVERAGE_TIER.STATUTORY_CORE).length,
+    20,
+  );
+  assert.equal(sourceRuntimeWords.some((word) => word.coverageTier === SPELLING_COVERAGE_TIER.ENRICHMENT_EXTRA), false);
+
+  for (const sourceWord of sourceWords) {
+    const draftWord = draftWords[sourceWord.slug];
+    const runtimeWord = runtimeWords[sourceWord.slug];
+    assert.ok(
+      runtimeWord.explanation.includes(sourceWord.meaning),
+      `${sourceWord.slug} should include the supplied 11 plus meaning`,
+    );
+    assert.ok(runtimeWord.explanation.length >= 12);
+    assertElevenPlusProvenance(draftWord, sourceWord.slug, 'draft');
+    assertElevenPlusProvenance(runtimeWord, sourceWord.slug, 'runtime');
+  }
+
+  assert.equal(draftWords.cautious.coverageTier, SPELLING_COVERAGE_TIER.SECURE_EXTENSION);
+  assert.ok(draftWords.cautious.provenance.source.includes('ks2-spelling-secure-vocabulary-source-v1'));
+  assertElevenPlusProvenance(draftWords.cautious, 'cautious', 'draft existing secure-extension word');
+  assertElevenPlusProvenance(runtimeWords.cautious, 'cautious', 'runtime existing secure-extension word');
+
+  assert.equal(draftWords.mischievous.coverageTier, SPELLING_COVERAGE_TIER.STATUTORY_CORE);
+  assert.ok(draftWords.mischievous.provenance.source.includes('legacy/vendor/word-list.js'));
+  assertElevenPlusProvenance(draftWords.mischievous, 'mischievous', 'draft existing statutory-core word');
+  assertElevenPlusProvenance(runtimeWords.mischievous, 'mischievous', 'runtime existing statutory-core word');
+
+  assert.equal(draftWords.benevolent.coverageTier, SPELLING_COVERAGE_TIER.SECURE_EXTENSION);
+  assert.equal(draftWords.benevolent.provenance.source, ELEVEN_PLUS_SOURCE_ID);
+});
+
+test('11 plus secure vocabulary source validation requires approved ledger and word metadata', () => {
+  const validSource = validateElevenPlusSecureVocabularySource(ELEVEN_PLUS_SECURE_VOCABULARY_SOURCE);
+  assert.equal(validSource.words.length, 300);
+
+  const invalidCases = [
+    [
+      'source review is not approved',
+      (source) => {
+        source.source.reviewStatus = 'pending_review';
+      },
+      /source\.reviewStatus/,
+    ],
+    [
+      'source target tier is not secure extension',
+      (source) => {
+        source.source.targetCoverageTier = SPELLING_COVERAGE_TIER.ENRICHMENT_EXTRA;
+      },
+      /source\.targetCoverageTier/,
+    ],
+    [
+      'source supplied date is tampered',
+      (source) => {
+        source.source.suppliedAt = '1999-01-01';
+      },
+      /source\.suppliedAt/,
+    ],
+    [
+      'source attachment path is tampered',
+      (source) => {
+        source.source.sourceAttachmentPath = '/tmp/not-the-attachment.txt';
+      },
+      /source\.sourceAttachmentPath/,
+    ],
+    [
+      'source text hash is tampered',
+      (source) => {
+        source.source.sourceTextSha256 = '0000000000000000000000000000000000000000000000000000000000000000';
+      },
+      /source\.sourceTextSha256/,
+    ],
+    [
+      'source word meaning is tampered',
+      (source) => {
+        source.words[0].meaning = 'secretly changed meaning';
+      },
+      /wordsSha256/,
+    ],
+    [
+      'word review status is not approved',
+      (source) => {
+        source.words[0].reviewStatus = 'candidate_source_supplied_not_adult_approved';
+      },
+      /words\[0\] amiable\.reviewStatus/,
+    ],
+    [
+      'word safety status is not approved',
+      (source) => {
+        source.words[0].safetyStatus = 'pending_safety_review';
+      },
+      /words\[0\] amiable\.safetyStatus/,
+    ],
+    [
+      'accepted spellings are missing',
+      (source) => {
+        delete source.words[0].acceptedSpellings;
+      },
+      /words\[0\] amiable\.acceptedSpellings/,
+    ],
+    [
+      'accepted spellings omit the canonical spelling',
+      (source) => {
+        source.words[0].acceptedSpellings = ['amiably'];
+      },
+      /must include the canonical spelling amiable/,
+    ],
+    [
+      'UK spelling decision is missing',
+      (source) => {
+        delete source.words[0].ukSpellingDecision;
+      },
+      /words\[0\] amiable\.ukSpellingDecision/,
+    ],
+    [
+      'year band is missing',
+      (source) => {
+        delete source.words[0].yearBand;
+      },
+      /words\[0\] amiable\.yearBand/,
+    ],
+    [
+      'family root is missing',
+      (source) => {
+        delete source.words[0].familyRoot;
+      },
+      /words\[0\] amiable\.familyRoot/,
+    ],
+    [
+      'morphology tags are missing',
+      (source) => {
+        source.words[0].morphologyTags = [];
+      },
+      /words\[0\] amiable\.morphologyTags/,
+    ],
+  ];
+
+  for (const [caseName, mutate, expectedError] of invalidCases) {
+    const source = cloneSerialisable(ELEVEN_PLUS_SECURE_VOCABULARY_SOURCE);
+    mutate(source);
+    assert.throws(
+      () => validateElevenPlusSecureVocabularySource(source),
+      expectedError,
+      caseName,
+    );
+  }
+});
+
+test('11 plus secure vocabulary importer is idempotent after the source is present', () => {
+  const source = validateElevenPlusSecureVocabularySource(ELEVEN_PLUS_SECURE_VOCABULARY_SOURCE);
+  const validation = validateSpellingContentBundle(SEEDED_SPELLING_CONTENT_BUNDLE);
+  assert.equal(validation.ok, true);
+
+  const before = validation.bundle;
+  const result = applySourceToBundle({
+    source,
+    contentBundle: before,
+    publishedAt: ELEVEN_PLUS_PUBLISHED_AT,
+  });
+
+  assert.equal(result.manifest.mode, 'noop');
+  assert.equal(result.manifest.imported.newSecureExtensionWordCount, 0);
+  assert.equal(result.manifest.imported.existingWordMeaningUpdateCount, 0);
+  assert.equal(result.manifest.imported.existingWordSourceNoteUpdateCount, 0);
+  assert.equal(result.manifest.imported.existingWordProvenanceUpdateCount, 0);
+  assert.deepEqual(result.manifest.taskOutcome.initialImport, {
+    baseline: 'origin/main content/spelling.seed.json before the 2026-06-25 11 plus import',
+    newSecureExtensionWordCount: 224,
+    newSecureExtensionSentenceCount: 224,
+    newSecureExtensionWordListCount: 15,
+    existingWordCount: 76,
+    existingByTier: {
+      [SPELLING_COVERAGE_TIER.SECURE_EXTENSION]: 56,
+      [SPELLING_COVERAGE_TIER.STATUTORY_CORE]: 20,
+    },
+    enrichmentExtraCollisionCount: 0,
+    sourceWordCount: 300,
+  });
+  assert.equal(result.bundle.draft.version, before.draft.version);
+  assert.deepEqual(result.bundle.publication, before.publication);
+  assert.deepEqual(result.bundle.releases, before.releases);
+  assert.equal(JSON.stringify(result.bundle), JSON.stringify(before));
+});
+
 test('extra spelling pool validates without statutory year groups and publishes as Extra runtime words', () => {
   const bundle = addExtraWordList(SEEDED_SPELLING_CONTENT_BUNDLE);
   const validation = validateSpellingContentBundle(bundle);
@@ -408,7 +650,7 @@ test('secure-extension content stays separate from statutory-core and publishes 
 
   const summary = buildSpellingContentSummary(published);
   assert.equal(summary.statutoryCoreCount, 213);
-  assert.equal(summary.secureExtensionCount, 1216);
+  assert.equal(summary.secureExtensionCount, 1440);
   assert.equal(summary.enrichmentExtraCount, 52);
 });
 

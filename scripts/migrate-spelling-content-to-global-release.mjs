@@ -13,6 +13,7 @@ import {
   contentOperationHash,
 } from '../src/subjects/spelling/content/operations-model.js';
 import {
+  contentOperationSnapshotEncoding,
   encodeContentOperationSnapshot,
 } from '../src/subjects/spelling/content/release-snapshot-codec.js';
 import {
@@ -451,7 +452,7 @@ export async function buildFirstGlobalReleaseSeedPlan({
     source: seedSource,
     compatibilityPolicy,
     snapshotStorage: {
-      encoding: 'gzip-base64',
+      encoding: contentOperationSnapshotEncoding(snapshotJson),
       byteLength: Buffer.byteLength(snapshotJson, 'utf8'),
       sqlChunkCount: snapshotSql.chunkCount,
     },

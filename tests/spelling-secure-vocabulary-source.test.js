@@ -388,16 +388,20 @@ test('secure vocabulary runtime import publishes approved secure-extension words
     contentBundle: imported.bundle,
   });
   const runtimeWord = imported.bundle.releases.at(-1).snapshot.wordBySlug.cartographytest;
+  const retainedExternalSecureCount = SEEDED_SPELLING_CONTENT_BUNDLE.releases.at(-1).snapshot.words
+    .filter((word) => word.coverageTier === 'secure-extension')
+    .filter((word) => word.provenance?.source === 'spelling-11-plus-secure-vocabulary-2026-06-25')
+    .length;
 
   assert.equal(imported.manifest.imported.secureExtensionWordCount, 1);
   assert.equal(imported.manifest.imported.skippedExistingExtraWordCount, 1);
   assert.deepEqual(imported.manifest.imported.skippedExistingExtraWordSlugs, ['admission']);
-  assert.equal(imported.manifest.release.id, 'spelling-r8');
+  assert.equal(imported.manifest.release.id, 'spelling-r10');
   assert.equal(report.ok, true);
   assert.equal(report.issueCount, 0);
   assert.equal(report.summary.statutoryCoreCount, 213);
   assert.equal(report.summary.enrichmentExtraCount, 52);
-  assert.equal(report.summary.secureExtensionCount, 1);
+  assert.equal(report.summary.secureExtensionCount, retainedExternalSecureCount + 1);
   assert.deepEqual(report.reclassifiedExistingExtraWords, ['admission']);
   assert.equal(runtimeWord.coverageTier, 'secure-extension');
   assert.equal(runtimeWord.spellingPool, 'core');

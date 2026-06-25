@@ -1,4 +1,5 @@
 const SNAPSHOT_GZIP_BASE64_PREFIX = 'gzip-base64:';
+const SNAPSHOT_BROTLI_BASE64_PREFIX = 'brotli-base64:';
 
 function bytesToBase64(bytes) {
   if (typeof btoa !== 'function') {
@@ -26,37 +27,60 @@ function base64ToBytes(base64) {
   return bytes;
 }
 
-async function gzipBytes(bytes) {
+async function compressBytes(bytes, format) {
   if (typeof CompressionStream !== 'function') {
     throw new Error('CompressionStream is not available in this runtime.');
   }
-  const stream = new Blob([bytes]).stream().pipeThrough(new CompressionStream('gzip'));
+  const stream = new Blob([bytes]).stream().pipeThrough(new CompressionStream(format));
   return new Uint8Array(await new Response(stream).arrayBuffer());
 }
 
-async function gunzipBytes(bytes) {
+async function tryCompressBytes(bytes, format) {
+  try {
+    return await compressBytes(bytes, format);
+  } catch {
+    return null;
+  }
+}
+
+async function decompressBytes(bytes, format) {
   if (typeof DecompressionStream !== 'function') {
     throw new Error('DecompressionStream is not available in this runtime.');
   }
-  const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
+  const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream(format));
   return new Uint8Array(await new Response(stream).arrayBuffer());
 }
 
 export async function encodeContentOperationSnapshot(value) {
   const json = typeof value === 'string' ? value : JSON.stringify(value);
   const bytes = new TextEncoder().encode(json);
-  const compressed = await gzipBytes(bytes);
+  const brotliCompressed = await tryCompressBytes(bytes, 'brotli');
+  if (brotliCompressed) {
+    return `${SNAPSHOT_BROTLI_BASE64_PREFIX}${bytesToBase64(brotliCompressed)}`;
+  }
+  const compressed = await compressBytes(bytes, 'gzip');
   return `${SNAPSHOT_GZIP_BASE64_PREFIX}${bytesToBase64(compressed)}`;
 }
 
 export async function decodeContentOperationSnapshot(encoded) {
   const value = String(encoded || '');
-  if (!value.startsWith(SNAPSHOT_GZIP_BASE64_PREFIX)) return value;
-  const compressed = base64ToBytes(value.slice(SNAPSHOT_GZIP_BASE64_PREFIX.length));
-  const decompressed = await gunzipBytes(compressed);
+  const brotli = value.startsWith(SNAPSHOT_BROTLI_BASE64_PREFIX);
+  const gzip = value.startsWith(SNAPSHOT_GZIP_BASE64_PREFIX);
+  if (!brotli && !gzip) return value;
+  const prefix = brotli ? SNAPSHOT_BROTLI_BASE64_PREFIX : SNAPSHOT_GZIP_BASE64_PREFIX;
+  const compressed = base64ToBytes(value.slice(prefix.length));
+  const decompressed = await decompressBytes(compressed, brotli ? 'brotli' : 'gzip');
   return new TextDecoder().decode(decompressed);
 }
 
 export function isEncodedContentOperationSnapshot(value) {
-  return String(value || '').startsWith(SNAPSHOT_GZIP_BASE64_PREFIX);
+  const text = String(value || '');
+  return text.startsWith(SNAPSHOT_BROTLI_BASE64_PREFIX) || text.startsWith(SNAPSHOT_GZIP_BASE64_PREFIX);
+}
+
+export function contentOperationSnapshotEncoding(value) {
+  const text = String(value || '');
+  if (text.startsWith(SNAPSHOT_BROTLI_BASE64_PREFIX)) return 'brotli-base64';
+  if (text.startsWith(SNAPSHOT_GZIP_BASE64_PREFIX)) return 'gzip-base64';
+  return 'plain';
 }

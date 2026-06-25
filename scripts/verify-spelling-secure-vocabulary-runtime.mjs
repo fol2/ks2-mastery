@@ -316,7 +316,10 @@ export function verifySecureVocabularyRuntime({
     });
   }
 
-  compareCount(issues, 'summary.secureExtensionCount', summary.secureExtensionCount, expectedImportedSecureCount);
+  // Secure vocabulary can now be supplied by multiple approved sources. This
+  // verifier is scoped to the audited source passed in, so the runtime total
+  // may be higher while the per-word provenance checks below stay exact.
+  compareAtLeast(issues, 'summary.secureExtensionCount', summary.secureExtensionCount, expectedImportedSecureCount);
   compareCount(issues, 'summary.statutoryCoreCount', summary.statutoryCoreCount, expectedStatutoryCoreCount);
   compareAtLeast(issues, 'summary.enrichmentExtraCount', summary.enrichmentExtraCount, expectedEnrichmentExtraCount);
   compareCount(issues, 'approvedSecureWords.length', approvedSecureWords.length, expectedSecureCount);
@@ -359,12 +362,12 @@ export function verifySecureVocabularyRuntime({
     const generatedSummary = generatedModule.SEEDED_SPELLING_CONTENT_SUMMARY || null;
     const generatedSnapshot = generatedModule.SEEDED_SPELLING_PUBLISHED_SNAPSHOT || null;
     const generatedBySlug = generatedSnapshot?.wordBySlug || {};
-    if (!generatedSummary || generatedSummary.secureExtensionCount !== expectedImportedSecureCount) {
+    if (!generatedSummary || generatedSummary.secureExtensionCount < expectedImportedSecureCount) {
       reportIssue(issues, {
         code: SECURE_VOCABULARY_GENERATED_MODULE_MISMATCH,
         path: 'generatedModule.SEEDED_SPELLING_CONTENT_SUMMARY.secureExtensionCount',
         actual: generatedSummary?.secureExtensionCount ?? null,
-        expected: expectedImportedSecureCount,
+        expected: `>= ${expectedImportedSecureCount}`,
       });
     }
     for (const sourceWord of importedApprovedSecureWords) {

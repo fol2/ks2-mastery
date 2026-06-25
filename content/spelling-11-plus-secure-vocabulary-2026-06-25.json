@@ -1,0 +1,5716 @@
+{
+  "kind": "ks2-spelling-11-plus-secure-vocabulary-source",
+  "version": 1,
+  "source": {
+    "title": "11+ Vocabulary: 300 Words and Meanings",
+    "suppliedBy": "James",
+    "suppliedAt": "2026-06-25",
+    "sourceAttachmentPath": "/Users/nelsonto/.codex/attachments/0c412cd5-cd3f-419a-baae-02eae8b8fe57/pasted-text.txt",
+    "sourceTextSha256": "a5e0e6117ee764c859504429707875f5b132697c84f47d56604cc22320952b75",
+    "reviewStatus": "owner_supplied_adult_approved_for_secure_extension_import",
+    "targetCoverageTier": "secure-extension",
+    "duplicatePolicy": "update_existing_word_meanings_without_duplicating_slugs"
+  },
+  "words": [
+    {
+      "sourceRecordId": "11plus-01-01",
+      "word": "amiable",
+      "slug": "amiable",
+      "meaning": "friendly and pleasant",
+      "section": "CHARACTER AND BEHAVIOUR",
+      "sectionIndex": 1,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "amiable"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: amiable.",
+      "familyRoot": "amiable",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-01-02",
+      "word": "arrogant",
+      "slug": "arrogant",
+      "meaning": "believing you are better or more important than others",
+      "section": "CHARACTER AND BEHAVIOUR",
+      "sectionIndex": 1,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "arrogant"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: arrogant.",
+      "familyRoot": "arrogant",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-01-03",
+      "word": "benevolent",
+      "slug": "benevolent",
+      "meaning": "kind and willing to help",
+      "section": "CHARACTER AND BEHAVIOUR",
+      "sectionIndex": 1,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "benevolent"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: benevolent.",
+      "familyRoot": "benevolent",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-01-04",
+      "word": "cautious",
+      "slug": "cautious",
+      "meaning": "careful to avoid danger or mistakes",
+      "section": "CHARACTER AND BEHAVIOUR",
+      "sectionIndex": 1,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "cautious"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: cautious.",
+      "familyRoot": "cautious",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-01-05",
+      "word": "compassionate",
+      "slug": "compassionate",
+      "meaning": "caring about suffering and wanting to help",
+      "section": "CHARACTER AND BEHAVIOUR",
+      "sectionIndex": 1,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "compassionate"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: compassionate.",
+      "familyRoot": "compassionate",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-01-06",
+      "word": "considerate",
+      "slug": "considerate",
+      "meaning": "thinking about other people's needs and feelings",
+      "section": "CHARACTER AND BEHAVIOUR",
+      "sectionIndex": 1,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "considerate"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: considerate.",
+      "familyRoot": "considerate",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-01-07",
+      "word": "courteous",
+      "slug": "courteous",
+      "meaning": "polite and respectful",
+      "section": "CHARACTER AND BEHAVIOUR",
+      "sectionIndex": 1,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "courteous"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: courteous.",
+      "familyRoot": "courteous",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-01-08",
+      "word": "cunning",
+      "slug": "cunning",
+      "meaning": "clever at getting what you want, sometimes dishonestly",
+      "section": "CHARACTER AND BEHAVIOUR",
+      "sectionIndex": 1,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "cunning"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: cunning.",
+      "familyRoot": "cunning",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-01-09",
+      "word": "diligent",
+      "slug": "diligent",
+      "meaning": "working carefully and steadily",
+      "section": "CHARACTER AND BEHAVIOUR",
+      "sectionIndex": 1,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "diligent"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: diligent.",
+      "familyRoot": "diligent",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-01-10",
+      "word": "generous",
+      "slug": "generous",
+      "meaning": "willing to give or share more than expected",
+      "section": "CHARACTER AND BEHAVIOUR",
+      "sectionIndex": 1,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "generous"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: generous.",
+      "familyRoot": "generous",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-01-11",
+      "word": "gullible",
+      "slug": "gullible",
+      "meaning": "too ready to believe things and easily tricked",
+      "section": "CHARACTER AND BEHAVIOUR",
+      "sectionIndex": 1,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "gullible"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: gullible.",
+      "familyRoot": "gullible",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-01-12",
+      "word": "humble",
+      "slug": "humble",
+      "meaning": "not boastful or proud",
+      "section": "CHARACTER AND BEHAVIOUR",
+      "sectionIndex": 1,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "humble"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: humble.",
+      "familyRoot": "humble",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-01-13",
+      "word": "impulsive",
+      "slug": "impulsive",
+      "meaning": "acting suddenly without enough thought",
+      "section": "CHARACTER AND BEHAVIOUR",
+      "sectionIndex": 1,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "impulsive"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: impulsive.",
+      "familyRoot": "impulsive",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-01-14",
+      "word": "industrious",
+      "slug": "industrious",
+      "meaning": "hard-working and busy",
+      "section": "CHARACTER AND BEHAVIOUR",
+      "sectionIndex": 1,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "industrious"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: industrious.",
+      "familyRoot": "industrious",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-01-15",
+      "word": "mischievous",
+      "slug": "mischievous",
+      "meaning": "playfully causing trouble",
+      "section": "CHARACTER AND BEHAVIOUR",
+      "sectionIndex": 1,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "mischievous"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: mischievous.",
+      "familyRoot": "mischievous",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-01-16",
+      "word": "obstinate",
+      "slug": "obstinate",
+      "meaning": "stubbornly refusing to change your mind",
+      "section": "CHARACTER AND BEHAVIOUR",
+      "sectionIndex": 1,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "obstinate"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: obstinate.",
+      "familyRoot": "obstinate",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-01-17",
+      "word": "patient",
+      "slug": "patient",
+      "meaning": "able to wait calmly",
+      "section": "CHARACTER AND BEHAVIOUR",
+      "sectionIndex": 1,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "patient"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: patient.",
+      "familyRoot": "patient",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-01-18",
+      "word": "prudent",
+      "slug": "prudent",
+      "meaning": "sensible and careful about the future",
+      "section": "CHARACTER AND BEHAVIOUR",
+      "sectionIndex": 1,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "prudent"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: prudent.",
+      "familyRoot": "prudent",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-01-19",
+      "word": "selfish",
+      "slug": "selfish",
+      "meaning": "caring mainly about yourself",
+      "section": "CHARACTER AND BEHAVIOUR",
+      "sectionIndex": 1,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "selfish"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: selfish.",
+      "familyRoot": "selfish",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-01-20",
+      "word": "timid",
+      "slug": "timid",
+      "meaning": "shy and easily frightened",
+      "section": "CHARACTER AND BEHAVIOUR",
+      "sectionIndex": 1,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "timid"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: timid.",
+      "familyRoot": "timid",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-02-01",
+      "word": "anxious",
+      "slug": "anxious",
+      "meaning": "worried or nervous",
+      "section": "FEELINGS AND MOODS",
+      "sectionIndex": 2,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "anxious"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: anxious.",
+      "familyRoot": "anxious",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-02-02",
+      "word": "bewildered",
+      "slug": "bewildered",
+      "meaning": "very confused",
+      "section": "FEELINGS AND MOODS",
+      "sectionIndex": 2,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "bewildered"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: bewildered.",
+      "familyRoot": "bewildered",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-02-03",
+      "word": "cheerful",
+      "slug": "cheerful",
+      "meaning": "happy and positive",
+      "section": "FEELINGS AND MOODS",
+      "sectionIndex": 2,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "cheerful"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: cheerful.",
+      "familyRoot": "cheerful",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-02-04",
+      "word": "content",
+      "slug": "content",
+      "meaning": "pleased and satisfied",
+      "section": "FEELINGS AND MOODS",
+      "sectionIndex": 2,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "content"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: content.",
+      "familyRoot": "content",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-02-05",
+      "word": "dejected",
+      "slug": "dejected",
+      "meaning": "sad and without hope",
+      "section": "FEELINGS AND MOODS",
+      "sectionIndex": 2,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "dejected"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: dejected.",
+      "familyRoot": "dejected",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-02-06",
+      "word": "delighted",
+      "slug": "delighted",
+      "meaning": "very pleased",
+      "section": "FEELINGS AND MOODS",
+      "sectionIndex": 2,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "delighted"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: delighted.",
+      "familyRoot": "delighted",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-02-07",
+      "word": "desperate",
+      "slug": "desperate",
+      "meaning": "feeling little hope and willing to try anything",
+      "section": "FEELINGS AND MOODS",
+      "sectionIndex": 2,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "desperate"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: desperate.",
+      "familyRoot": "desperate",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-02-08",
+      "word": "eager",
+      "slug": "eager",
+      "meaning": "excited and ready",
+      "section": "FEELINGS AND MOODS",
+      "sectionIndex": 2,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "eager"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: eager.",
+      "familyRoot": "eager",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-02-09",
+      "word": "embarrassed",
+      "slug": "embarrassed",
+      "meaning": "uncomfortable or ashamed because of attention or a mistake",
+      "section": "FEELINGS AND MOODS",
+      "sectionIndex": 2,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "embarrassed"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: embarrassed.",
+      "familyRoot": "embarrassed",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-02-10",
+      "word": "envious",
+      "slug": "envious",
+      "meaning": "wishing you had what someone else has",
+      "section": "FEELINGS AND MOODS",
+      "sectionIndex": 2,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "envious"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: envious.",
+      "familyRoot": "envious",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-02-11",
+      "word": "furious",
+      "slug": "furious",
+      "meaning": "extremely angry",
+      "section": "FEELINGS AND MOODS",
+      "sectionIndex": 2,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "furious"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: furious.",
+      "familyRoot": "furious",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-02-12",
+      "word": "gloomy",
+      "slug": "gloomy",
+      "meaning": "sad and without cheer",
+      "section": "FEELINGS AND MOODS",
+      "sectionIndex": 2,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "gloomy"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: gloomy.",
+      "familyRoot": "gloomy",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-02-13",
+      "word": "grateful",
+      "slug": "grateful",
+      "meaning": "thankful",
+      "section": "FEELINGS AND MOODS",
+      "sectionIndex": 2,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "grateful"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: grateful.",
+      "familyRoot": "grateful",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-02-14",
+      "word": "hesitant",
+      "slug": "hesitant",
+      "meaning": "unsure or slow to act",
+      "section": "FEELINGS AND MOODS",
+      "sectionIndex": 2,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "hesitant"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: hesitant.",
+      "familyRoot": "hesitant",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-02-15",
+      "word": "indignant",
+      "slug": "indignant",
+      "meaning": "angry because something seems unfair or wrong",
+      "section": "FEELINGS AND MOODS",
+      "sectionIndex": 2,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "indignant"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: indignant.",
+      "familyRoot": "indignant",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-02-16",
+      "word": "miserable",
+      "slug": "miserable",
+      "meaning": "very unhappy",
+      "section": "FEELINGS AND MOODS",
+      "sectionIndex": 2,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "miserable"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: miserable.",
+      "familyRoot": "miserable",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-02-17",
+      "word": "relieved",
+      "slug": "relieved",
+      "meaning": "glad that something worrying has ended or not happened",
+      "section": "FEELINGS AND MOODS",
+      "sectionIndex": 2,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "relieved"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: relieved.",
+      "familyRoot": "relieved",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-02-18",
+      "word": "resentful",
+      "slug": "resentful",
+      "meaning": "angry because you feel unfairly treated",
+      "section": "FEELINGS AND MOODS",
+      "sectionIndex": 2,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "resentful"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: resentful.",
+      "familyRoot": "resentful",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-02-19",
+      "word": "startled",
+      "slug": "startled",
+      "meaning": "suddenly surprised or frightened",
+      "section": "FEELINGS AND MOODS",
+      "sectionIndex": 2,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "startled"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: startled.",
+      "familyRoot": "startled",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-02-20",
+      "word": "weary",
+      "slug": "weary",
+      "meaning": "very tired",
+      "section": "FEELINGS AND MOODS",
+      "sectionIndex": 2,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "weary"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: weary.",
+      "familyRoot": "weary",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-03-01",
+      "word": "announce",
+      "slug": "announce",
+      "meaning": "tell people something publicly",
+      "section": "SPEAKING AND COMMUNICATION",
+      "sectionIndex": 3,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "announce"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: announce.",
+      "familyRoot": "announce",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-03-02",
+      "word": "argue",
+      "slug": "argue",
+      "meaning": "give reasons or disagree with someone",
+      "section": "SPEAKING AND COMMUNICATION",
+      "sectionIndex": 3,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "argue"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: argue.",
+      "familyRoot": "argue",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-03-03",
+      "word": "boast",
+      "slug": "boast",
+      "meaning": "talk too proudly about your achievements",
+      "section": "SPEAKING AND COMMUNICATION",
+      "sectionIndex": 3,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "boast"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: boast.",
+      "familyRoot": "boast",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-03-04",
+      "word": "confess",
+      "slug": "confess",
+      "meaning": "admit something wrong or secret",
+      "section": "SPEAKING AND COMMUNICATION",
+      "sectionIndex": 3,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "confess"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: confess.",
+      "familyRoot": "confess",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-03-05",
+      "word": "declare",
+      "slug": "declare",
+      "meaning": "say something firmly or formally",
+      "section": "SPEAKING AND COMMUNICATION",
+      "sectionIndex": 3,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "declare"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: declare.",
+      "familyRoot": "declare",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-03-06",
+      "word": "exclaim",
+      "slug": "exclaim",
+      "meaning": "speak suddenly and loudly because of strong feeling",
+      "section": "SPEAKING AND COMMUNICATION",
+      "sectionIndex": 3,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "exclaim"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: exclaim.",
+      "familyRoot": "exclaim",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-03-07",
+      "word": "explain",
+      "slug": "explain",
+      "meaning": "make something clear",
+      "section": "SPEAKING AND COMMUNICATION",
+      "sectionIndex": 3,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "explain"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: explain.",
+      "familyRoot": "explain",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-03-08",
+      "word": "grumble",
+      "slug": "grumble",
+      "meaning": "complain quietly",
+      "section": "SPEAKING AND COMMUNICATION",
+      "sectionIndex": 3,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "grumble"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: grumble.",
+      "familyRoot": "grumble",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-03-09",
+      "word": "inquire",
+      "slug": "inquire",
+      "meaning": "ask for information",
+      "section": "SPEAKING AND COMMUNICATION",
+      "sectionIndex": 3,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "inquire"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: inquire.",
+      "familyRoot": "inquire",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-03-10",
+      "word": "insist",
+      "slug": "insist",
+      "meaning": "state or demand something firmly",
+      "section": "SPEAKING AND COMMUNICATION",
+      "sectionIndex": 3,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "insist"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: insist.",
+      "familyRoot": "insist",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-03-11",
+      "word": "mutter",
+      "slug": "mutter",
+      "meaning": "speak quietly and unclearly",
+      "section": "SPEAKING AND COMMUNICATION",
+      "sectionIndex": 3,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "mutter"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: mutter.",
+      "familyRoot": "mutter",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-03-12",
+      "word": "persuade",
+      "slug": "persuade",
+      "meaning": "cause someone to agree or act by giving reasons",
+      "section": "SPEAKING AND COMMUNICATION",
+      "sectionIndex": 3,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "persuade"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: persuade.",
+      "familyRoot": "persuade",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-03-13",
+      "word": "plead",
+      "slug": "plead",
+      "meaning": "ask urgently or emotionally",
+      "section": "SPEAKING AND COMMUNICATION",
+      "sectionIndex": 3,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "plead"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: plead.",
+      "familyRoot": "plead",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-03-14",
+      "word": "proclaim",
+      "slug": "proclaim",
+      "meaning": "announce something publicly or officially",
+      "section": "SPEAKING AND COMMUNICATION",
+      "sectionIndex": 3,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "proclaim"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: proclaim.",
+      "familyRoot": "proclaim",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-03-15",
+      "word": "reply",
+      "slug": "reply",
+      "meaning": "answer",
+      "section": "SPEAKING AND COMMUNICATION",
+      "sectionIndex": 3,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "reply"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: reply.",
+      "familyRoot": "reply",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-03-16",
+      "word": "request",
+      "slug": "request",
+      "meaning": "ask politely or formally",
+      "section": "SPEAKING AND COMMUNICATION",
+      "sectionIndex": 3,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "request"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: request.",
+      "familyRoot": "request",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-03-17",
+      "word": "stammer",
+      "slug": "stammer",
+      "meaning": "speak with repeated sounds or pauses",
+      "section": "SPEAKING AND COMMUNICATION",
+      "sectionIndex": 3,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "stammer"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: stammer.",
+      "familyRoot": "stammer",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-03-18",
+      "word": "suggest",
+      "slug": "suggest",
+      "meaning": "put forward an idea",
+      "section": "SPEAKING AND COMMUNICATION",
+      "sectionIndex": 3,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "suggest"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: suggest.",
+      "familyRoot": "suggest",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-03-19",
+      "word": "whisper",
+      "slug": "whisper",
+      "meaning": "speak very softly",
+      "section": "SPEAKING AND COMMUNICATION",
+      "sectionIndex": 3,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "whisper"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: whisper.",
+      "familyRoot": "whisper",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-03-20",
+      "word": "yell",
+      "slug": "yell",
+      "meaning": "shout loudly",
+      "section": "SPEAKING AND COMMUNICATION",
+      "sectionIndex": 3,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "yell"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: yell.",
+      "familyRoot": "yell",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-04-01",
+      "word": "assume",
+      "slug": "assume",
+      "meaning": "believe something without proof",
+      "section": "THINKING AND KNOWING",
+      "sectionIndex": 4,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "assume"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: assume.",
+      "familyRoot": "assume",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-04-02",
+      "word": "contemplate",
+      "slug": "contemplate",
+      "meaning": "think carefully for a long time",
+      "section": "THINKING AND KNOWING",
+      "sectionIndex": 4,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "contemplate"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: contemplate.",
+      "familyRoot": "contemplate",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-04-03",
+      "word": "convince",
+      "slug": "convince",
+      "meaning": "make someone believe or agree",
+      "section": "THINKING AND KNOWING",
+      "sectionIndex": 4,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "convince"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: convince.",
+      "familyRoot": "convince",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-04-04",
+      "word": "doubt",
+      "slug": "doubt",
+      "meaning": "feel unsure",
+      "section": "THINKING AND KNOWING",
+      "sectionIndex": 4,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "doubt"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: doubt.",
+      "familyRoot": "doubt",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-04-05",
+      "word": "estimate",
+      "slug": "estimate",
+      "meaning": "make a sensible guess about an amount or value",
+      "section": "THINKING AND KNOWING",
+      "sectionIndex": 4,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "estimate"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: estimate.",
+      "familyRoot": "estimate",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-04-06",
+      "word": "imagine",
+      "slug": "imagine",
+      "meaning": "form a picture or idea in your mind",
+      "section": "THINKING AND KNOWING",
+      "sectionIndex": 4,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "imagine"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: imagine.",
+      "familyRoot": "imagine",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-04-07",
+      "word": "infer",
+      "slug": "infer",
+      "meaning": "work something out from clues",
+      "section": "THINKING AND KNOWING",
+      "sectionIndex": 4,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "infer"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: infer.",
+      "familyRoot": "infer",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-04-08",
+      "word": "intend",
+      "slug": "intend",
+      "meaning": "plan or mean to do something",
+      "section": "THINKING AND KNOWING",
+      "sectionIndex": 4,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "intend"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: intend.",
+      "familyRoot": "intend",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-04-09",
+      "word": "interpret",
+      "slug": "interpret",
+      "meaning": "explain the meaning of something",
+      "section": "THINKING AND KNOWING",
+      "sectionIndex": 4,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "interpret"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: interpret.",
+      "familyRoot": "interpret",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-04-10",
+      "word": "investigate",
+      "slug": "investigate",
+      "meaning": "search carefully for facts",
+      "section": "THINKING AND KNOWING",
+      "sectionIndex": 4,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "investigate"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: investigate.",
+      "familyRoot": "investigate",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-04-11",
+      "word": "notice",
+      "slug": "notice",
+      "meaning": "become aware of something",
+      "section": "THINKING AND KNOWING",
+      "sectionIndex": 4,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "notice"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: notice.",
+      "familyRoot": "notice",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-04-12",
+      "word": "observe",
+      "slug": "observe",
+      "meaning": "watch carefully",
+      "section": "THINKING AND KNOWING",
+      "sectionIndex": 4,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "observe"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: observe.",
+      "familyRoot": "observe",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-04-13",
+      "word": "ponder",
+      "slug": "ponder",
+      "meaning": "think deeply",
+      "section": "THINKING AND KNOWING",
+      "sectionIndex": 4,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "ponder"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: ponder.",
+      "familyRoot": "ponder",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-04-14",
+      "word": "predict",
+      "slug": "predict",
+      "meaning": "say what is likely to happen",
+      "section": "THINKING AND KNOWING",
+      "sectionIndex": 4,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "predict"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: predict.",
+      "familyRoot": "predict",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-04-15",
+      "word": "realise",
+      "slug": "realise",
+      "meaning": "suddenly understand or become aware",
+      "section": "THINKING AND KNOWING",
+      "sectionIndex": 4,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "realise"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: realise.",
+      "familyRoot": "realise",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-04-16",
+      "word": "recall",
+      "slug": "recall",
+      "meaning": "remember",
+      "section": "THINKING AND KNOWING",
+      "sectionIndex": 4,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "recall"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: recall.",
+      "familyRoot": "recall",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-04-17",
+      "word": "recognise",
+      "slug": "recognise",
+      "meaning": "know someone or something you have seen before",
+      "section": "THINKING AND KNOWING",
+      "sectionIndex": 4,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "recognise"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: recognise.",
+      "familyRoot": "recognise",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-04-18",
+      "word": "reflect",
+      "slug": "reflect",
+      "meaning": "think carefully about an idea or past event",
+      "section": "THINKING AND KNOWING",
+      "sectionIndex": 4,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "reflect"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: reflect.",
+      "familyRoot": "reflect",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-04-19",
+      "word": "suppose",
+      "slug": "suppose",
+      "meaning": "think that something is probably true",
+      "section": "THINKING AND KNOWING",
+      "sectionIndex": 4,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "suppose"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: suppose.",
+      "familyRoot": "suppose",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-04-20",
+      "word": "understand",
+      "slug": "understand",
+      "meaning": "know the meaning of something or how it works",
+      "section": "THINKING AND KNOWING",
+      "sectionIndex": 4,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "understand"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: understand.",
+      "familyRoot": "understand",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-05-01",
+      "word": "amble",
+      "slug": "amble",
+      "meaning": "walk slowly and calmly",
+      "section": "MOVEMENT AND SPEED",
+      "sectionIndex": 5,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "amble"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: amble.",
+      "familyRoot": "amble",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-05-02",
+      "word": "bolt",
+      "slug": "bolt",
+      "meaning": "run away suddenly",
+      "section": "MOVEMENT AND SPEED",
+      "sectionIndex": 5,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "bolt"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: bolt.",
+      "familyRoot": "bolt",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-05-03",
+      "word": "bound",
+      "slug": "bound",
+      "meaning": "move forward in large jumps",
+      "section": "MOVEMENT AND SPEED",
+      "sectionIndex": 5,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "bound"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: bound.",
+      "familyRoot": "bound",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-05-04",
+      "word": "crawl",
+      "slug": "crawl",
+      "meaning": "move slowly on hands and knees or close to the ground",
+      "section": "MOVEMENT AND SPEED",
+      "sectionIndex": 5,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "crawl"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: crawl.",
+      "familyRoot": "crawl",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-05-05",
+      "word": "dart",
+      "slug": "dart",
+      "meaning": "move suddenly and quickly",
+      "section": "MOVEMENT AND SPEED",
+      "sectionIndex": 5,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "dart"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: dart.",
+      "familyRoot": "dart",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-05-06",
+      "word": "dash",
+      "slug": "dash",
+      "meaning": "run quickly",
+      "section": "MOVEMENT AND SPEED",
+      "sectionIndex": 5,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "dash"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: dash.",
+      "familyRoot": "dash",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-05-07",
+      "word": "drift",
+      "slug": "drift",
+      "meaning": "move slowly while carried by air or water",
+      "section": "MOVEMENT AND SPEED",
+      "sectionIndex": 5,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "drift"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: drift.",
+      "familyRoot": "drift",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-05-08",
+      "word": "flee",
+      "slug": "flee",
+      "meaning": "run away from danger",
+      "section": "MOVEMENT AND SPEED",
+      "sectionIndex": 5,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "flee"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: flee.",
+      "familyRoot": "flee",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-05-09",
+      "word": "gallop",
+      "slug": "gallop",
+      "meaning": "move at a horse's fastest pace",
+      "section": "MOVEMENT AND SPEED",
+      "sectionIndex": 5,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "gallop"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: gallop.",
+      "familyRoot": "gallop",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-05-10",
+      "word": "glide",
+      "slug": "glide",
+      "meaning": "move smoothly and quietly",
+      "section": "MOVEMENT AND SPEED",
+      "sectionIndex": 5,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "glide"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: glide.",
+      "familyRoot": "glide",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-05-11",
+      "word": "hasten",
+      "slug": "hasten",
+      "meaning": "move or act quickly",
+      "section": "MOVEMENT AND SPEED",
+      "sectionIndex": 5,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "hasten"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: hasten.",
+      "familyRoot": "hasten",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-05-12",
+      "word": "limp",
+      "slug": "limp",
+      "meaning": "walk unevenly because of pain or injury",
+      "section": "MOVEMENT AND SPEED",
+      "sectionIndex": 5,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "limp"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: limp.",
+      "familyRoot": "limp",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-05-13",
+      "word": "lurch",
+      "slug": "lurch",
+      "meaning": "move suddenly and unsteadily",
+      "section": "MOVEMENT AND SPEED",
+      "sectionIndex": 5,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "lurch"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: lurch.",
+      "familyRoot": "lurch",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-05-14",
+      "word": "march",
+      "slug": "march",
+      "meaning": "walk with regular, strong steps",
+      "section": "MOVEMENT AND SPEED",
+      "sectionIndex": 5,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "march"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: march.",
+      "familyRoot": "march",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-05-15",
+      "word": "meander",
+      "slug": "meander",
+      "meaning": "follow a winding route",
+      "section": "MOVEMENT AND SPEED",
+      "sectionIndex": 5,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "meander"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: meander.",
+      "familyRoot": "meander",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-05-16",
+      "word": "plod",
+      "slug": "plod",
+      "meaning": "walk slowly and heavily",
+      "section": "MOVEMENT AND SPEED",
+      "sectionIndex": 5,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "plod"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: plod.",
+      "familyRoot": "plod",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-05-17",
+      "word": "scramble",
+      "slug": "scramble",
+      "meaning": "climb or move quickly using your hands and feet",
+      "section": "MOVEMENT AND SPEED",
+      "sectionIndex": 5,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "scramble"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: scramble.",
+      "familyRoot": "scramble",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-05-18",
+      "word": "stagger",
+      "slug": "stagger",
+      "meaning": "walk unsteadily as if about to fall",
+      "section": "MOVEMENT AND SPEED",
+      "sectionIndex": 5,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "stagger"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: stagger.",
+      "familyRoot": "stagger",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-05-19",
+      "word": "stride",
+      "slug": "stride",
+      "meaning": "walk with long, confident steps",
+      "section": "MOVEMENT AND SPEED",
+      "sectionIndex": 5,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "stride"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: stride.",
+      "familyRoot": "stride",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-05-20",
+      "word": "wander",
+      "slug": "wander",
+      "meaning": "move without a fixed direction",
+      "section": "MOVEMENT AND SPEED",
+      "sectionIndex": 5,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "wander"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: wander.",
+      "familyRoot": "wander",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-06-01",
+      "word": "behold",
+      "slug": "behold",
+      "meaning": "see or look at, often something impressive",
+      "section": "LOOKING AND SEEING",
+      "sectionIndex": 6,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "behold"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: behold.",
+      "familyRoot": "behold",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-06-02",
+      "word": "blink",
+      "slug": "blink",
+      "meaning": "close and open your eyes quickly",
+      "section": "LOOKING AND SEEING",
+      "sectionIndex": 6,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "blink"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: blink.",
+      "familyRoot": "blink",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-06-03",
+      "word": "detect",
+      "slug": "detect",
+      "meaning": "discover or notice something hard to see",
+      "section": "LOOKING AND SEEING",
+      "sectionIndex": 6,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "detect"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: detect.",
+      "familyRoot": "detect",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-06-04",
+      "word": "examine",
+      "slug": "examine",
+      "meaning": "look at something closely",
+      "section": "LOOKING AND SEEING",
+      "sectionIndex": 6,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "examine"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: examine.",
+      "familyRoot": "examine",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-06-05",
+      "word": "gaze",
+      "slug": "gaze",
+      "meaning": "look steadily for a long time",
+      "section": "LOOKING AND SEEING",
+      "sectionIndex": 6,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "gaze"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: gaze.",
+      "familyRoot": "gaze",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-06-06",
+      "word": "glance",
+      "slug": "glance",
+      "meaning": "look quickly",
+      "section": "LOOKING AND SEEING",
+      "sectionIndex": 6,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "glance"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: glance.",
+      "familyRoot": "glance",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-06-07",
+      "word": "glare",
+      "slug": "glare",
+      "meaning": "look angrily",
+      "section": "LOOKING AND SEEING",
+      "sectionIndex": 6,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "glare"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: glare.",
+      "familyRoot": "glare",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-06-08",
+      "word": "glimpse",
+      "slug": "glimpse",
+      "meaning": "see something briefly or partly",
+      "section": "LOOKING AND SEEING",
+      "sectionIndex": 6,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "glimpse"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: glimpse.",
+      "familyRoot": "glimpse",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-06-09",
+      "word": "inspect",
+      "slug": "inspect",
+      "meaning": "check something carefully",
+      "section": "LOOKING AND SEEING",
+      "sectionIndex": 6,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "inspect"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: inspect.",
+      "familyRoot": "inspect",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-06-10",
+      "word": "overlook",
+      "slug": "overlook",
+      "meaning": "fail to notice something",
+      "section": "LOOKING AND SEEING",
+      "sectionIndex": 6,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "overlook"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: overlook.",
+      "familyRoot": "overlook",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-06-11",
+      "word": "peer",
+      "slug": "peer",
+      "meaning": "look closely because something is hard to see",
+      "section": "LOOKING AND SEEING",
+      "sectionIndex": 6,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "peer"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: peer.",
+      "familyRoot": "peer",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-06-12",
+      "word": "peek",
+      "slug": "peek",
+      "meaning": "look quickly or secretly",
+      "section": "LOOKING AND SEEING",
+      "sectionIndex": 6,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "peek"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: peek.",
+      "familyRoot": "peek",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-06-13",
+      "word": "scan",
+      "slug": "scan",
+      "meaning": "look over something quickly to find information",
+      "section": "LOOKING AND SEEING",
+      "sectionIndex": 6,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "scan"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: scan.",
+      "familyRoot": "scan",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-06-14",
+      "word": "scrutinise",
+      "slug": "scrutinise",
+      "meaning": "examine something very carefully",
+      "section": "LOOKING AND SEEING",
+      "sectionIndex": 6,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "scrutinise"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: scrutinise.",
+      "familyRoot": "scrutinise",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-06-15",
+      "word": "spy",
+      "slug": "spy",
+      "meaning": "catch sight of or notice",
+      "section": "LOOKING AND SEEING",
+      "sectionIndex": 6,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "spy"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: spy.",
+      "familyRoot": "spy",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-06-16",
+      "word": "stare",
+      "slug": "stare",
+      "meaning": "look fixedly for a long time",
+      "section": "LOOKING AND SEEING",
+      "sectionIndex": 6,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "stare"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: stare.",
+      "familyRoot": "stare",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-06-17",
+      "word": "survey",
+      "slug": "survey",
+      "meaning": "look carefully over a whole area",
+      "section": "LOOKING AND SEEING",
+      "sectionIndex": 6,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "survey"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: survey.",
+      "familyRoot": "survey",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-06-18",
+      "word": "watch",
+      "slug": "watch",
+      "meaning": "look at something over a period of time",
+      "section": "LOOKING AND SEEING",
+      "sectionIndex": 6,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "watch"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: watch.",
+      "familyRoot": "watch",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-06-19",
+      "word": "witness",
+      "slug": "witness",
+      "meaning": "see an event happen",
+      "section": "LOOKING AND SEEING",
+      "sectionIndex": 6,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "witness"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: witness.",
+      "familyRoot": "witness",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-06-20",
+      "word": "squint",
+      "slug": "squint",
+      "meaning": "look with your eyes partly closed",
+      "section": "LOOKING AND SEEING",
+      "sectionIndex": 6,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "squint"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: squint.",
+      "familyRoot": "squint",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-07-01",
+      "word": "abundant",
+      "slug": "abundant",
+      "meaning": "more than enough",
+      "section": "SIZE, AMOUNT AND DEGREE",
+      "sectionIndex": 7,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "abundant"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: abundant.",
+      "familyRoot": "abundant",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-07-02",
+      "word": "ample",
+      "slug": "ample",
+      "meaning": "plenty, or large enough",
+      "section": "SIZE, AMOUNT AND DEGREE",
+      "sectionIndex": 7,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "ample"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: ample.",
+      "familyRoot": "ample",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-07-03",
+      "word": "colossal",
+      "slug": "colossal",
+      "meaning": "extremely large",
+      "section": "SIZE, AMOUNT AND DEGREE",
+      "sectionIndex": 7,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "colossal"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: colossal.",
+      "familyRoot": "colossal",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-07-04",
+      "word": "considerable",
+      "slug": "considerable",
+      "meaning": "fairly large or important",
+      "section": "SIZE, AMOUNT AND DEGREE",
+      "sectionIndex": 7,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "considerable"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: considerable.",
+      "familyRoot": "considerable",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-07-05",
+      "word": "countless",
+      "slug": "countless",
+      "meaning": "too many to count",
+      "section": "SIZE, AMOUNT AND DEGREE",
+      "sectionIndex": 7,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "countless"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: countless.",
+      "familyRoot": "countless",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-07-06",
+      "word": "enormous",
+      "slug": "enormous",
+      "meaning": "very large",
+      "section": "SIZE, AMOUNT AND DEGREE",
+      "sectionIndex": 7,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "enormous"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: enormous.",
+      "familyRoot": "enormous",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-07-07",
+      "word": "excessive",
+      "slug": "excessive",
+      "meaning": "more than is needed or acceptable",
+      "section": "SIZE, AMOUNT AND DEGREE",
+      "sectionIndex": 7,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "excessive"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: excessive.",
+      "familyRoot": "excessive",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-07-08",
+      "word": "few",
+      "slug": "few",
+      "meaning": "not many",
+      "section": "SIZE, AMOUNT AND DEGREE",
+      "sectionIndex": 7,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "few"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: few.",
+      "familyRoot": "few",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-07-09",
+      "word": "gigantic",
+      "slug": "gigantic",
+      "meaning": "extremely large",
+      "section": "SIZE, AMOUNT AND DEGREE",
+      "sectionIndex": 7,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "gigantic"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: gigantic.",
+      "familyRoot": "gigantic",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-07-10",
+      "word": "immense",
+      "slug": "immense",
+      "meaning": "extremely large or great",
+      "section": "SIZE, AMOUNT AND DEGREE",
+      "sectionIndex": 7,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "immense"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: immense.",
+      "familyRoot": "immense",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-07-11",
+      "word": "insufficient",
+      "slug": "insufficient",
+      "meaning": "not enough",
+      "section": "SIZE, AMOUNT AND DEGREE",
+      "sectionIndex": 7,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "insufficient"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: insufficient.",
+      "familyRoot": "insufficient",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-07-12",
+      "word": "little",
+      "slug": "little",
+      "meaning": "small in amount",
+      "section": "SIZE, AMOUNT AND DEGREE",
+      "sectionIndex": 7,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "little"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: little.",
+      "familyRoot": "little",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-07-13",
+      "word": "massive",
+      "slug": "massive",
+      "meaning": "very large or heavy",
+      "section": "SIZE, AMOUNT AND DEGREE",
+      "sectionIndex": 7,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "massive"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: massive.",
+      "familyRoot": "massive",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-07-14",
+      "word": "meagre",
+      "slug": "meagre",
+      "meaning": "too small in amount",
+      "section": "SIZE, AMOUNT AND DEGREE",
+      "sectionIndex": 7,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "meagre"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: meagre.",
+      "familyRoot": "meagre",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-07-15",
+      "word": "miniature",
+      "slug": "miniature",
+      "meaning": "much smaller than usual",
+      "section": "SIZE, AMOUNT AND DEGREE",
+      "sectionIndex": 7,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "miniature"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: miniature.",
+      "familyRoot": "miniature",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-07-16",
+      "word": "numerous",
+      "slug": "numerous",
+      "meaning": "many",
+      "section": "SIZE, AMOUNT AND DEGREE",
+      "sectionIndex": 7,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "numerous"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: numerous.",
+      "familyRoot": "numerous",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-07-17",
+      "word": "plentiful",
+      "slug": "plentiful",
+      "meaning": "available in large amounts",
+      "section": "SIZE, AMOUNT AND DEGREE",
+      "sectionIndex": 7,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "plentiful"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: plentiful.",
+      "familyRoot": "plentiful",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-07-18",
+      "word": "scarce",
+      "slug": "scarce",
+      "meaning": "hard to find or not enough",
+      "section": "SIZE, AMOUNT AND DEGREE",
+      "sectionIndex": 7,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "scarce"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: scarce.",
+      "familyRoot": "scarce",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-07-19",
+      "word": "slight",
+      "slug": "slight",
+      "meaning": "small in amount or degree",
+      "section": "SIZE, AMOUNT AND DEGREE",
+      "sectionIndex": 7,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "slight"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: slight.",
+      "familyRoot": "slight",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-07-20",
+      "word": "vast",
+      "slug": "vast",
+      "meaning": "extremely large in area or amount",
+      "section": "SIZE, AMOUNT AND DEGREE",
+      "sectionIndex": 7,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "vast"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: vast.",
+      "familyRoot": "vast",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-08-01",
+      "word": "alter",
+      "slug": "alter",
+      "meaning": "change something",
+      "section": "TIME AND CHANGE",
+      "sectionIndex": 8,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "alter"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: alter.",
+      "familyRoot": "alter",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-08-02",
+      "word": "ancient",
+      "slug": "ancient",
+      "meaning": "very old or from long ago",
+      "section": "TIME AND CHANGE",
+      "sectionIndex": 8,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "ancient"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: ancient.",
+      "familyRoot": "ancient",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-08-03",
+      "word": "brief",
+      "slug": "brief",
+      "meaning": "lasting for a short time",
+      "section": "TIME AND CHANGE",
+      "sectionIndex": 8,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "brief"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: brief.",
+      "familyRoot": "brief",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-08-04",
+      "word": "constant",
+      "slug": "constant",
+      "meaning": "continuing without stopping or changing",
+      "section": "TIME AND CHANGE",
+      "sectionIndex": 8,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "constant"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: constant.",
+      "familyRoot": "constant",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-08-05",
+      "word": "contemporary",
+      "slug": "contemporary",
+      "meaning": "from the present time or the same period",
+      "section": "TIME AND CHANGE",
+      "sectionIndex": 8,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "contemporary"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: contemporary.",
+      "familyRoot": "contemporary",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-08-06",
+      "word": "delay",
+      "slug": "delay",
+      "meaning": "make something happen later",
+      "section": "TIME AND CHANGE",
+      "sectionIndex": 8,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "delay"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: delay.",
+      "familyRoot": "delay",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-08-07",
+      "word": "endure",
+      "slug": "endure",
+      "meaning": "last, or suffer something patiently",
+      "section": "TIME AND CHANGE",
+      "sectionIndex": 8,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "endure"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: endure.",
+      "familyRoot": "endure",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-08-08",
+      "word": "eventual",
+      "slug": "eventual",
+      "meaning": "happening in the end",
+      "section": "TIME AND CHANGE",
+      "sectionIndex": 8,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "eventual"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: eventual.",
+      "familyRoot": "eventual",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-08-09",
+      "word": "frequent",
+      "slug": "frequent",
+      "meaning": "happening often",
+      "section": "TIME AND CHANGE",
+      "sectionIndex": 8,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "frequent"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: frequent.",
+      "familyRoot": "frequent",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-08-10",
+      "word": "gradual",
+      "slug": "gradual",
+      "meaning": "happening slowly over time",
+      "section": "TIME AND CHANGE",
+      "sectionIndex": 8,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "gradual"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: gradual.",
+      "familyRoot": "gradual",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-08-11",
+      "word": "immediate",
+      "slug": "immediate",
+      "meaning": "happening at once",
+      "section": "TIME AND CHANGE",
+      "sectionIndex": 8,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "immediate"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: immediate.",
+      "familyRoot": "immediate",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-08-12",
+      "word": "momentary",
+      "slug": "momentary",
+      "meaning": "lasting for a very short time",
+      "section": "TIME AND CHANGE",
+      "sectionIndex": 8,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "momentary"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: momentary.",
+      "familyRoot": "momentary",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-08-13",
+      "word": "permanent",
+      "slug": "permanent",
+      "meaning": "lasting or expected to last for ever",
+      "section": "TIME AND CHANGE",
+      "sectionIndex": 8,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "permanent"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: permanent.",
+      "familyRoot": "permanent",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-08-14",
+      "word": "previous",
+      "slug": "previous",
+      "meaning": "happening before the current one",
+      "section": "TIME AND CHANGE",
+      "sectionIndex": 8,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "previous"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: previous.",
+      "familyRoot": "previous",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-08-15",
+      "word": "rapid",
+      "slug": "rapid",
+      "meaning": "very fast",
+      "section": "TIME AND CHANGE",
+      "sectionIndex": 8,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "rapid"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: rapid.",
+      "familyRoot": "rapid",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-08-16",
+      "word": "recent",
+      "slug": "recent",
+      "meaning": "happening not long ago",
+      "section": "TIME AND CHANGE",
+      "sectionIndex": 8,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "recent"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: recent.",
+      "familyRoot": "recent",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-08-17",
+      "word": "temporary",
+      "slug": "temporary",
+      "meaning": "lasting for only a short time",
+      "section": "TIME AND CHANGE",
+      "sectionIndex": 8,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "temporary"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: temporary.",
+      "familyRoot": "temporary",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-08-18",
+      "word": "transform",
+      "slug": "transform",
+      "meaning": "change completely",
+      "section": "TIME AND CHANGE",
+      "sectionIndex": 8,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "transform"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: transform.",
+      "familyRoot": "transform",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-08-19",
+      "word": "vary",
+      "slug": "vary",
+      "meaning": "be different or change",
+      "section": "TIME AND CHANGE",
+      "sectionIndex": 8,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "vary"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: vary.",
+      "familyRoot": "vary",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-08-20",
+      "word": "wither",
+      "slug": "wither",
+      "meaning": "become dry, shrivelled or weaker",
+      "section": "TIME AND CHANGE",
+      "sectionIndex": 8,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "wither"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: wither.",
+      "familyRoot": "wither",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-09-01",
+      "word": "achieve",
+      "slug": "achieve",
+      "meaning": "succeed in doing something",
+      "section": "SUCCESS, EFFORT AND DIFFICULTY",
+      "sectionIndex": 9,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "achieve"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: achieve.",
+      "familyRoot": "achieve",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-09-02",
+      "word": "attempt",
+      "slug": "attempt",
+      "meaning": "try to do something",
+      "section": "SUCCESS, EFFORT AND DIFFICULTY",
+      "sectionIndex": 9,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "attempt"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: attempt.",
+      "familyRoot": "attempt",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-09-03",
+      "word": "capable",
+      "slug": "capable",
+      "meaning": "able or skilful enough",
+      "section": "SUCCESS, EFFORT AND DIFFICULTY",
+      "sectionIndex": 9,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "capable"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: capable.",
+      "familyRoot": "capable",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-09-04",
+      "word": "challenge",
+      "slug": "challenge",
+      "meaning": "a difficult task that tests your ability",
+      "section": "SUCCESS, EFFORT AND DIFFICULTY",
+      "sectionIndex": 9,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "challenge"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: challenge.",
+      "familyRoot": "challenge",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-09-05",
+      "word": "conquer",
+      "slug": "conquer",
+      "meaning": "defeat or overcome",
+      "section": "SUCCESS, EFFORT AND DIFFICULTY",
+      "sectionIndex": 9,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "conquer"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: conquer.",
+      "familyRoot": "conquer",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-09-06",
+      "word": "determined",
+      "slug": "determined",
+      "meaning": "firmly decided and not giving up",
+      "section": "SUCCESS, EFFORT AND DIFFICULTY",
+      "sectionIndex": 9,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "determined"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: determined.",
+      "familyRoot": "determined",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-09-07",
+      "word": "effort",
+      "slug": "effort",
+      "meaning": "the energy used to do something",
+      "section": "SUCCESS, EFFORT AND DIFFICULTY",
+      "sectionIndex": 9,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "effort"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: effort.",
+      "familyRoot": "effort",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-09-08",
+      "word": "excel",
+      "slug": "excel",
+      "meaning": "be very good at something",
+      "section": "SUCCESS, EFFORT AND DIFFICULTY",
+      "sectionIndex": 9,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "excel"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: excel.",
+      "familyRoot": "excel",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-09-09",
+      "word": "fail",
+      "slug": "fail",
+      "meaning": "not succeed",
+      "section": "SUCCESS, EFFORT AND DIFFICULTY",
+      "sectionIndex": 9,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "fail"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: fail.",
+      "familyRoot": "fail",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-09-10",
+      "word": "formidable",
+      "slug": "formidable",
+      "meaning": "very difficult, powerful or impressive",
+      "section": "SUCCESS, EFFORT AND DIFFICULTY",
+      "sectionIndex": 9,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "formidable"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: formidable.",
+      "familyRoot": "formidable",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-09-11",
+      "word": "improve",
+      "slug": "improve",
+      "meaning": "make or become better",
+      "section": "SUCCESS, EFFORT AND DIFFICULTY",
+      "sectionIndex": 9,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "improve"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: improve.",
+      "familyRoot": "improve",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-09-12",
+      "word": "persevere",
+      "slug": "persevere",
+      "meaning": "keep trying despite difficulty",
+      "section": "SUCCESS, EFFORT AND DIFFICULTY",
+      "sectionIndex": 9,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "persevere"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: persevere.",
+      "familyRoot": "persevere",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-09-13",
+      "word": "reluctant",
+      "slug": "reluctant",
+      "meaning": "unwilling or hesitant",
+      "section": "SUCCESS, EFFORT AND DIFFICULTY",
+      "sectionIndex": 9,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "reluctant"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: reluctant.",
+      "familyRoot": "reluctant",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-09-14",
+      "word": "require",
+      "slug": "require",
+      "meaning": "need something",
+      "section": "SUCCESS, EFFORT AND DIFFICULTY",
+      "sectionIndex": 9,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "require"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: require.",
+      "familyRoot": "require",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-09-15",
+      "word": "struggle",
+      "slug": "struggle",
+      "meaning": "try hard while finding something difficult",
+      "section": "SUCCESS, EFFORT AND DIFFICULTY",
+      "sectionIndex": 9,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "struggle"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: struggle.",
+      "familyRoot": "struggle",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-09-16",
+      "word": "succeed",
+      "slug": "succeed",
+      "meaning": "achieve the result you wanted",
+      "section": "SUCCESS, EFFORT AND DIFFICULTY",
+      "sectionIndex": 9,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "succeed"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: succeed.",
+      "familyRoot": "succeed",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-09-17",
+      "word": "triumph",
+      "slug": "triumph",
+      "meaning": "a great success or victory",
+      "section": "SUCCESS, EFFORT AND DIFFICULTY",
+      "sectionIndex": 9,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "triumph"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: triumph.",
+      "familyRoot": "triumph",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-09-18",
+      "word": "unable",
+      "slug": "unable",
+      "meaning": "not able",
+      "section": "SUCCESS, EFFORT AND DIFFICULTY",
+      "sectionIndex": 9,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "unable"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: unable.",
+      "familyRoot": "unable",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-09-19",
+      "word": "vigorous",
+      "slug": "vigorous",
+      "meaning": "strong and energetic",
+      "section": "SUCCESS, EFFORT AND DIFFICULTY",
+      "sectionIndex": 9,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "vigorous"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: vigorous.",
+      "familyRoot": "vigorous",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-09-20",
+      "word": "withstand",
+      "slug": "withstand",
+      "meaning": "resist force or difficulty without being harmed",
+      "section": "SUCCESS, EFFORT AND DIFFICULTY",
+      "sectionIndex": 9,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "withstand"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: withstand.",
+      "familyRoot": "withstand",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-10-01",
+      "word": "accident",
+      "slug": "accident",
+      "meaning": "an unexpected event that causes harm or damage",
+      "section": "CONFLICT, DANGER AND PROBLEMS",
+      "sectionIndex": 10,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "accident"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: accident.",
+      "familyRoot": "accident",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-10-02",
+      "word": "alarm",
+      "slug": "alarm",
+      "meaning": "a warning of danger, or sudden fear",
+      "section": "CONFLICT, DANGER AND PROBLEMS",
+      "sectionIndex": 10,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "alarm"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: alarm.",
+      "familyRoot": "alarm",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-10-03",
+      "word": "attack",
+      "slug": "attack",
+      "meaning": "try to hurt or damage",
+      "section": "CONFLICT, DANGER AND PROBLEMS",
+      "sectionIndex": 10,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "attack"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: attack.",
+      "familyRoot": "attack",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-10-04",
+      "word": "avoid",
+      "slug": "avoid",
+      "meaning": "keep away from or prevent something",
+      "section": "CONFLICT, DANGER AND PROBLEMS",
+      "sectionIndex": 10,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "avoid"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: avoid.",
+      "familyRoot": "avoid",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-10-05",
+      "word": "beware",
+      "slug": "beware",
+      "meaning": "be careful of danger",
+      "section": "CONFLICT, DANGER AND PROBLEMS",
+      "sectionIndex": 10,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "beware"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: beware.",
+      "familyRoot": "beware",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-10-06",
+      "word": "chaos",
+      "slug": "chaos",
+      "meaning": "complete confusion and disorder",
+      "section": "CONFLICT, DANGER AND PROBLEMS",
+      "sectionIndex": 10,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "chaos"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: chaos.",
+      "familyRoot": "chaos",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-10-07",
+      "word": "conflict",
+      "slug": "conflict",
+      "meaning": "a serious disagreement or fight",
+      "section": "CONFLICT, DANGER AND PROBLEMS",
+      "sectionIndex": 10,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "conflict"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: conflict.",
+      "familyRoot": "conflict",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-10-08",
+      "word": "damage",
+      "slug": "damage",
+      "meaning": "harm that makes something less useful or valuable",
+      "section": "CONFLICT, DANGER AND PROBLEMS",
+      "sectionIndex": 10,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "damage"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: damage.",
+      "familyRoot": "damage",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-10-09",
+      "word": "defend",
+      "slug": "defend",
+      "meaning": "protect from attack or criticism",
+      "section": "CONFLICT, DANGER AND PROBLEMS",
+      "sectionIndex": 10,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "defend"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: defend.",
+      "familyRoot": "defend",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-10-10",
+      "word": "disaster",
+      "slug": "disaster",
+      "meaning": "a terrible event causing great harm",
+      "section": "CONFLICT, DANGER AND PROBLEMS",
+      "sectionIndex": 10,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "disaster"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: disaster.",
+      "familyRoot": "disaster",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-10-11",
+      "word": "escape",
+      "slug": "escape",
+      "meaning": "get away from a place or danger",
+      "section": "CONFLICT, DANGER AND PROBLEMS",
+      "sectionIndex": 10,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "escape"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: escape.",
+      "familyRoot": "escape",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-10-12",
+      "word": "hazard",
+      "slug": "hazard",
+      "meaning": "a possible source of danger",
+      "section": "CONFLICT, DANGER AND PROBLEMS",
+      "sectionIndex": 10,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "hazard"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: hazard.",
+      "familyRoot": "hazard",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-10-13",
+      "word": "hostile",
+      "slug": "hostile",
+      "meaning": "unfriendly or ready to fight",
+      "section": "CONFLICT, DANGER AND PROBLEMS",
+      "sectionIndex": 10,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "hostile"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: hostile.",
+      "familyRoot": "hostile",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-10-14",
+      "word": "injury",
+      "slug": "injury",
+      "meaning": "harm to the body",
+      "section": "CONFLICT, DANGER AND PROBLEMS",
+      "sectionIndex": 10,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "injury"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: injury.",
+      "familyRoot": "injury",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-10-15",
+      "word": "menace",
+      "slug": "menace",
+      "meaning": "a person or thing likely to cause harm",
+      "section": "CONFLICT, DANGER AND PROBLEMS",
+      "sectionIndex": 10,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "menace"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: menace.",
+      "familyRoot": "menace",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-10-16",
+      "word": "obstacle",
+      "slug": "obstacle",
+      "meaning": "something that blocks progress",
+      "section": "CONFLICT, DANGER AND PROBLEMS",
+      "sectionIndex": 10,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "obstacle"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: obstacle.",
+      "familyRoot": "obstacle",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-10-17",
+      "word": "peril",
+      "slug": "peril",
+      "meaning": "serious danger",
+      "section": "CONFLICT, DANGER AND PROBLEMS",
+      "sectionIndex": 10,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "peril"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: peril.",
+      "familyRoot": "peril",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-10-18",
+      "word": "protect",
+      "slug": "protect",
+      "meaning": "keep safe",
+      "section": "CONFLICT, DANGER AND PROBLEMS",
+      "sectionIndex": 10,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "protect"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: protect.",
+      "familyRoot": "protect",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-10-19",
+      "word": "rescue",
+      "slug": "rescue",
+      "meaning": "save someone or something from danger",
+      "section": "CONFLICT, DANGER AND PROBLEMS",
+      "sectionIndex": 10,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "rescue"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: rescue.",
+      "familyRoot": "rescue",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-10-20",
+      "word": "threaten",
+      "slug": "threaten",
+      "meaning": "show an intention to harm, or seem likely to cause harm",
+      "section": "CONFLICT, DANGER AND PROBLEMS",
+      "sectionIndex": 10,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "threaten"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: threaten.",
+      "familyRoot": "threaten",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-11-01",
+      "word": "barren",
+      "slug": "barren",
+      "meaning": "unable to grow plants, or empty",
+      "section": "PLACES, NATURE AND WEATHER",
+      "sectionIndex": 11,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "barren"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: barren.",
+      "familyRoot": "barren",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-11-02",
+      "word": "blizzard",
+      "slug": "blizzard",
+      "meaning": "a severe snowstorm with strong winds",
+      "section": "PLACES, NATURE AND WEATHER",
+      "sectionIndex": 11,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "blizzard"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: blizzard.",
+      "familyRoot": "blizzard",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-11-03",
+      "word": "breeze",
+      "slug": "breeze",
+      "meaning": "a light wind",
+      "section": "PLACES, NATURE AND WEATHER",
+      "sectionIndex": 11,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "breeze"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: breeze.",
+      "familyRoot": "breeze",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-11-04",
+      "word": "climate",
+      "slug": "climate",
+      "meaning": "the usual weather of a place over a long time",
+      "section": "PLACES, NATURE AND WEATHER",
+      "sectionIndex": 11,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "climate"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: climate.",
+      "familyRoot": "climate",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-11-05",
+      "word": "coast",
+      "slug": "coast",
+      "meaning": "land beside the sea",
+      "section": "PLACES, NATURE AND WEATHER",
+      "sectionIndex": 11,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "coast"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: coast.",
+      "familyRoot": "coast",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-11-06",
+      "word": "dense",
+      "slug": "dense",
+      "meaning": "thick or packed closely together",
+      "section": "PLACES, NATURE AND WEATHER",
+      "sectionIndex": 11,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "dense"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: dense.",
+      "familyRoot": "dense",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-11-07",
+      "word": "drought",
+      "slug": "drought",
+      "meaning": "a long period with little or no rain",
+      "section": "PLACES, NATURE AND WEATHER",
+      "sectionIndex": 11,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "drought"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: drought.",
+      "familyRoot": "drought",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-11-08",
+      "word": "fertile",
+      "slug": "fertile",
+      "meaning": "able to grow crops or plants well",
+      "section": "PLACES, NATURE AND WEATHER",
+      "sectionIndex": 11,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "fertile"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: fertile.",
+      "familyRoot": "fertile",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-11-09",
+      "word": "flood",
+      "slug": "flood",
+      "meaning": "water covering land that is usually dry",
+      "section": "PLACES, NATURE AND WEATHER",
+      "sectionIndex": 11,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "flood"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: flood.",
+      "familyRoot": "flood",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-11-10",
+      "word": "forest",
+      "slug": "forest",
+      "meaning": "a large area covered with trees",
+      "section": "PLACES, NATURE AND WEATHER",
+      "sectionIndex": 11,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "forest"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: forest.",
+      "familyRoot": "forest",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-11-11",
+      "word": "fragile",
+      "slug": "fragile",
+      "meaning": "easily broken or damaged",
+      "section": "PLACES, NATURE AND WEATHER",
+      "sectionIndex": 11,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "fragile"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: fragile.",
+      "familyRoot": "fragile",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-11-12",
+      "word": "frost",
+      "slug": "frost",
+      "meaning": "thin ice crystals formed in cold weather",
+      "section": "PLACES, NATURE AND WEATHER",
+      "sectionIndex": 11,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "frost"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: frost.",
+      "familyRoot": "frost",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-11-13",
+      "word": "landscape",
+      "slug": "landscape",
+      "meaning": "the visible features of an area of land",
+      "section": "PLACES, NATURE AND WEATHER",
+      "sectionIndex": 11,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "landscape"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: landscape.",
+      "familyRoot": "landscape",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-11-14",
+      "word": "mist",
+      "slug": "mist",
+      "meaning": "a cloud of tiny water drops near the ground",
+      "section": "PLACES, NATURE AND WEATHER",
+      "sectionIndex": 11,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "mist"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: mist.",
+      "familyRoot": "mist",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-11-15",
+      "word": "mountain",
+      "slug": "mountain",
+      "meaning": "a very high natural area of land",
+      "section": "PLACES, NATURE AND WEATHER",
+      "sectionIndex": 11,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "mountain"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: mountain.",
+      "familyRoot": "mountain",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-11-16",
+      "word": "remote",
+      "slug": "remote",
+      "meaning": "far away or difficult to reach",
+      "section": "PLACES, NATURE AND WEATHER",
+      "sectionIndex": 11,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "remote"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: remote.",
+      "familyRoot": "remote",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-11-17",
+      "word": "shelter",
+      "slug": "shelter",
+      "meaning": "a place or protection from weather or danger",
+      "section": "PLACES, NATURE AND WEATHER",
+      "sectionIndex": 11,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "shelter"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: shelter.",
+      "familyRoot": "shelter",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-11-18",
+      "word": "storm",
+      "slug": "storm",
+      "meaning": "violent weather with strong wind, rain or snow",
+      "section": "PLACES, NATURE AND WEATHER",
+      "sectionIndex": 11,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "storm"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: storm.",
+      "familyRoot": "storm",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-11-19",
+      "word": "terrain",
+      "slug": "terrain",
+      "meaning": "the type and shape of an area of land",
+      "section": "PLACES, NATURE AND WEATHER",
+      "sectionIndex": 11,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "terrain"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: terrain.",
+      "familyRoot": "terrain",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-11-20",
+      "word": "valley",
+      "slug": "valley",
+      "meaning": "low land between hills or mountains",
+      "section": "PLACES, NATURE AND WEATHER",
+      "sectionIndex": 11,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "valley"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: valley.",
+      "familyRoot": "valley",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-12-01",
+      "word": "adorn",
+      "slug": "adorn",
+      "meaning": "decorate something",
+      "section": "OBJECTS AND APPEARANCE",
+      "sectionIndex": 12,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "adorn"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: adorn.",
+      "familyRoot": "adorn",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-12-02",
+      "word": "battered",
+      "slug": "battered",
+      "meaning": "old or damaged by hard use",
+      "section": "OBJECTS AND APPEARANCE",
+      "sectionIndex": 12,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "battered"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: battered.",
+      "familyRoot": "battered",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-12-03",
+      "word": "brilliant",
+      "slug": "brilliant",
+      "meaning": "very bright or shining",
+      "section": "OBJECTS AND APPEARANCE",
+      "sectionIndex": 12,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "brilliant"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: brilliant.",
+      "familyRoot": "brilliant",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-12-04",
+      "word": "broad",
+      "slug": "broad",
+      "meaning": "wide",
+      "section": "OBJECTS AND APPEARANCE",
+      "sectionIndex": 12,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "broad"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: broad.",
+      "familyRoot": "broad",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-12-05",
+      "word": "crooked",
+      "slug": "crooked",
+      "meaning": "bent or not straight",
+      "section": "OBJECTS AND APPEARANCE",
+      "sectionIndex": 12,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "crooked"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: crooked.",
+      "familyRoot": "crooked",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-12-06",
+      "word": "delicate",
+      "slug": "delicate",
+      "meaning": "easily damaged, or fine and gentle",
+      "section": "OBJECTS AND APPEARANCE",
+      "sectionIndex": 12,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "delicate"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: delicate.",
+      "familyRoot": "delicate",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-12-07",
+      "word": "dull",
+      "slug": "dull",
+      "meaning": "not bright or interesting",
+      "section": "OBJECTS AND APPEARANCE",
+      "sectionIndex": 12,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "dull"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: dull.",
+      "familyRoot": "dull",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-12-08",
+      "word": "elegant",
+      "slug": "elegant",
+      "meaning": "graceful and stylish",
+      "section": "OBJECTS AND APPEARANCE",
+      "sectionIndex": 12,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "elegant"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: elegant.",
+      "familyRoot": "elegant",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-12-09",
+      "word": "filthy",
+      "slug": "filthy",
+      "meaning": "extremely dirty",
+      "section": "OBJECTS AND APPEARANCE",
+      "sectionIndex": 12,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "filthy"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: filthy.",
+      "familyRoot": "filthy",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-12-10",
+      "word": "gleaming",
+      "slug": "gleaming",
+      "meaning": "shining brightly",
+      "section": "OBJECTS AND APPEARANCE",
+      "sectionIndex": 12,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "gleaming"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: gleaming.",
+      "familyRoot": "gleaming",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-12-11",
+      "word": "jagged",
+      "slug": "jagged",
+      "meaning": "rough, with sharp uneven points",
+      "section": "OBJECTS AND APPEARANCE",
+      "sectionIndex": 12,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "jagged"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: jagged.",
+      "familyRoot": "jagged",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-12-12",
+      "word": "narrow",
+      "slug": "narrow",
+      "meaning": "not wide",
+      "section": "OBJECTS AND APPEARANCE",
+      "sectionIndex": 12,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "narrow"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: narrow.",
+      "familyRoot": "narrow",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-12-13",
+      "word": "ordinary",
+      "slug": "ordinary",
+      "meaning": "normal and not special",
+      "section": "OBJECTS AND APPEARANCE",
+      "sectionIndex": 12,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "ordinary"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: ordinary.",
+      "familyRoot": "ordinary",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-12-14",
+      "word": "peculiar",
+      "slug": "peculiar",
+      "meaning": "strange or unusual",
+      "section": "OBJECTS AND APPEARANCE",
+      "sectionIndex": 12,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "peculiar"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: peculiar.",
+      "familyRoot": "peculiar",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-12-15",
+      "word": "polished",
+      "slug": "polished",
+      "meaning": "made smooth and shiny",
+      "section": "OBJECTS AND APPEARANCE",
+      "sectionIndex": 12,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "polished"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: polished.",
+      "familyRoot": "polished",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-12-16",
+      "word": "shabby",
+      "slug": "shabby",
+      "meaning": "worn or untidy",
+      "section": "OBJECTS AND APPEARANCE",
+      "sectionIndex": 12,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "shabby"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: shabby.",
+      "familyRoot": "shabby",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-12-17",
+      "word": "smooth",
+      "slug": "smooth",
+      "meaning": "having an even surface with no rough parts",
+      "section": "OBJECTS AND APPEARANCE",
+      "sectionIndex": 12,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "smooth"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: smooth.",
+      "familyRoot": "smooth",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-12-18",
+      "word": "sturdy",
+      "slug": "sturdy",
+      "meaning": "strong and solid",
+      "section": "OBJECTS AND APPEARANCE",
+      "sectionIndex": 12,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "sturdy"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: sturdy.",
+      "familyRoot": "sturdy",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-12-19",
+      "word": "transparent",
+      "slug": "transparent",
+      "meaning": "allowing light through so you can see through it",
+      "section": "OBJECTS AND APPEARANCE",
+      "sectionIndex": 12,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "transparent"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: transparent.",
+      "familyRoot": "transparent",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-12-20",
+      "word": "vivid",
+      "slug": "vivid",
+      "meaning": "very bright, clear or detailed",
+      "section": "OBJECTS AND APPEARANCE",
+      "sectionIndex": 12,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "vivid"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: vivid.",
+      "familyRoot": "vivid",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-13-01",
+      "word": "accurate",
+      "slug": "accurate",
+      "meaning": "correct and exact",
+      "section": "POSITIVE DESCRIPTIONS",
+      "sectionIndex": 13,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "accurate"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: accurate.",
+      "familyRoot": "accurate",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-13-02",
+      "word": "admirable",
+      "slug": "admirable",
+      "meaning": "deserving respect or approval",
+      "section": "POSITIVE DESCRIPTIONS",
+      "sectionIndex": 13,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "admirable"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: admirable.",
+      "familyRoot": "admirable",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-13-03",
+      "word": "calm",
+      "slug": "calm",
+      "meaning": "peaceful and not upset",
+      "section": "POSITIVE DESCRIPTIONS",
+      "sectionIndex": 13,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "calm"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: calm.",
+      "familyRoot": "calm",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-13-04",
+      "word": "clever",
+      "slug": "clever",
+      "meaning": "quick to learn and understand",
+      "section": "POSITIVE DESCRIPTIONS",
+      "sectionIndex": 13,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "clever"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: clever.",
+      "familyRoot": "clever",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-13-05",
+      "word": "convenient",
+      "slug": "convenient",
+      "meaning": "easy and useful for a situation",
+      "section": "POSITIVE DESCRIPTIONS",
+      "sectionIndex": 13,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "convenient"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: convenient.",
+      "familyRoot": "convenient",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-13-06",
+      "word": "delightful",
+      "slug": "delightful",
+      "meaning": "very pleasant",
+      "section": "POSITIVE DESCRIPTIONS",
+      "sectionIndex": 13,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "delightful"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: delightful.",
+      "familyRoot": "delightful",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-13-07",
+      "word": "dependable",
+      "slug": "dependable",
+      "meaning": "able to be trusted",
+      "section": "POSITIVE DESCRIPTIONS",
+      "sectionIndex": 13,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "dependable"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: dependable.",
+      "familyRoot": "dependable",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-13-08",
+      "word": "efficient",
+      "slug": "efficient",
+      "meaning": "working well without wasted time or energy",
+      "section": "POSITIVE DESCRIPTIONS",
+      "sectionIndex": 13,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "efficient"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: efficient.",
+      "familyRoot": "efficient",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-13-09",
+      "word": "excellent",
+      "slug": "excellent",
+      "meaning": "extremely good",
+      "section": "POSITIVE DESCRIPTIONS",
+      "sectionIndex": 13,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "excellent"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: excellent.",
+      "familyRoot": "excellent",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-13-10",
+      "word": "fortunate",
+      "slug": "fortunate",
+      "meaning": "lucky",
+      "section": "POSITIVE DESCRIPTIONS",
+      "sectionIndex": 13,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "fortunate"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: fortunate.",
+      "familyRoot": "fortunate",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-13-11",
+      "word": "graceful",
+      "slug": "graceful",
+      "meaning": "moving in a smooth and attractive way",
+      "section": "POSITIVE DESCRIPTIONS",
+      "sectionIndex": 13,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "graceful"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: graceful.",
+      "familyRoot": "graceful",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-13-12",
+      "word": "honest",
+      "slug": "honest",
+      "meaning": "truthful",
+      "section": "POSITIVE DESCRIPTIONS",
+      "sectionIndex": 13,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "honest"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: honest.",
+      "familyRoot": "honest",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-13-13",
+      "word": "impressive",
+      "slug": "impressive",
+      "meaning": "causing admiration",
+      "section": "POSITIVE DESCRIPTIONS",
+      "sectionIndex": 13,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "impressive"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: impressive.",
+      "familyRoot": "impressive",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-13-14",
+      "word": "lively",
+      "slug": "lively",
+      "meaning": "full of energy and interest",
+      "section": "POSITIVE DESCRIPTIONS",
+      "sectionIndex": 13,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "lively"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: lively.",
+      "familyRoot": "lively",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-13-15",
+      "word": "magnificent",
+      "slug": "magnificent",
+      "meaning": "extremely beautiful or impressive",
+      "section": "POSITIVE DESCRIPTIONS",
+      "sectionIndex": 13,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "magnificent"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: magnificent.",
+      "familyRoot": "magnificent",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-13-16",
+      "word": "pleasant",
+      "slug": "pleasant",
+      "meaning": "enjoyable or friendly",
+      "section": "POSITIVE DESCRIPTIONS",
+      "sectionIndex": 13,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "pleasant"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: pleasant.",
+      "familyRoot": "pleasant",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-13-17",
+      "word": "precious",
+      "slug": "precious",
+      "meaning": "very valuable or greatly loved",
+      "section": "POSITIVE DESCRIPTIONS",
+      "sectionIndex": 13,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "precious"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: precious.",
+      "familyRoot": "precious",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-13-18",
+      "word": "remarkable",
+      "slug": "remarkable",
+      "meaning": "unusual and worthy of notice",
+      "section": "POSITIVE DESCRIPTIONS",
+      "sectionIndex": 13,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "remarkable"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: remarkable.",
+      "familyRoot": "remarkable",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-13-19",
+      "word": "sensible",
+      "slug": "sensible",
+      "meaning": "showing good judgement",
+      "section": "POSITIVE DESCRIPTIONS",
+      "sectionIndex": 13,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "sensible"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: sensible.",
+      "familyRoot": "sensible",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-13-20",
+      "word": "splendid",
+      "slug": "splendid",
+      "meaning": "excellent or impressive",
+      "section": "POSITIVE DESCRIPTIONS",
+      "sectionIndex": 13,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "splendid"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: splendid.",
+      "familyRoot": "splendid",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-14-01",
+      "word": "absurd",
+      "slug": "absurd",
+      "meaning": "very silly or unreasonable",
+      "section": "NEGATIVE DESCRIPTIONS",
+      "sectionIndex": 14,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "absurd"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: absurd.",
+      "familyRoot": "absurd",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-14-02",
+      "word": "awkward",
+      "slug": "awkward",
+      "meaning": "difficult, clumsy or embarrassing",
+      "section": "NEGATIVE DESCRIPTIONS",
+      "sectionIndex": 14,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "awkward"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: awkward.",
+      "familyRoot": "awkward",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-14-03",
+      "word": "careless",
+      "slug": "careless",
+      "meaning": "not giving enough attention",
+      "section": "NEGATIVE DESCRIPTIONS",
+      "sectionIndex": 14,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "careless"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: careless.",
+      "familyRoot": "careless",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-14-04",
+      "word": "cruel",
+      "slug": "cruel",
+      "meaning": "causing pain without caring",
+      "section": "NEGATIVE DESCRIPTIONS",
+      "sectionIndex": 14,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "cruel"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: cruel.",
+      "familyRoot": "cruel",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-14-05",
+      "word": "dreadful",
+      "slug": "dreadful",
+      "meaning": "very bad or unpleasant",
+      "section": "NEGATIVE DESCRIPTIONS",
+      "sectionIndex": 14,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "dreadful"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: dreadful.",
+      "familyRoot": "dreadful",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-14-06",
+      "word": "feeble",
+      "slug": "feeble",
+      "meaning": "weak",
+      "section": "NEGATIVE DESCRIPTIONS",
+      "sectionIndex": 14,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "feeble"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: feeble.",
+      "familyRoot": "feeble",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-14-07",
+      "word": "foolish",
+      "slug": "foolish",
+      "meaning": "showing poor judgement",
+      "section": "NEGATIVE DESCRIPTIONS",
+      "sectionIndex": 14,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "foolish"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: foolish.",
+      "familyRoot": "foolish",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-14-08",
+      "word": "frantic",
+      "slug": "frantic",
+      "meaning": "wild with worry or excitement",
+      "section": "NEGATIVE DESCRIPTIONS",
+      "sectionIndex": 14,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "frantic"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: frantic.",
+      "familyRoot": "frantic",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-14-09",
+      "word": "greedy",
+      "slug": "greedy",
+      "meaning": "wanting more than you need",
+      "section": "NEGATIVE DESCRIPTIONS",
+      "sectionIndex": 14,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "greedy"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: greedy.",
+      "familyRoot": "greedy",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-14-10",
+      "word": "harsh",
+      "slug": "harsh",
+      "meaning": "rough, severe or unkind",
+      "section": "NEGATIVE DESCRIPTIONS",
+      "sectionIndex": 14,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "harsh"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: harsh.",
+      "familyRoot": "harsh",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-14-11",
+      "word": "ignorant",
+      "slug": "ignorant",
+      "meaning": "lacking knowledge",
+      "section": "NEGATIVE DESCRIPTIONS",
+      "sectionIndex": 14,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "ignorant"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: ignorant.",
+      "familyRoot": "ignorant",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-14-12",
+      "word": "inconvenient",
+      "slug": "inconvenient",
+      "meaning": "causing difficulty or trouble",
+      "section": "NEGATIVE DESCRIPTIONS",
+      "sectionIndex": 14,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "inconvenient"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: inconvenient.",
+      "familyRoot": "inconvenient",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-14-13",
+      "word": "lazy",
+      "slug": "lazy",
+      "meaning": "unwilling to work or make an effort",
+      "section": "NEGATIVE DESCRIPTIONS",
+      "sectionIndex": 14,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "lazy"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: lazy.",
+      "familyRoot": "lazy",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-14-14",
+      "word": "nasty",
+      "slug": "nasty",
+      "meaning": "unpleasant or unkind",
+      "section": "NEGATIVE DESCRIPTIONS",
+      "sectionIndex": 14,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "nasty"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: nasty.",
+      "familyRoot": "nasty",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-14-15",
+      "word": "noisy",
+      "slug": "noisy",
+      "meaning": "making a lot of sound",
+      "section": "NEGATIVE DESCRIPTIONS",
+      "sectionIndex": 14,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "noisy"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: noisy.",
+      "familyRoot": "noisy",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-14-16",
+      "word": "ridiculous",
+      "slug": "ridiculous",
+      "meaning": "very silly",
+      "section": "NEGATIVE DESCRIPTIONS",
+      "sectionIndex": 14,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "ridiculous"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: ridiculous.",
+      "familyRoot": "ridiculous",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-14-17",
+      "word": "rude",
+      "slug": "rude",
+      "meaning": "impolite",
+      "section": "NEGATIVE DESCRIPTIONS",
+      "sectionIndex": 14,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "rude"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: rude.",
+      "familyRoot": "rude",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-14-18",
+      "word": "severe",
+      "slug": "severe",
+      "meaning": "very serious or harsh",
+      "section": "NEGATIVE DESCRIPTIONS",
+      "sectionIndex": 14,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "severe"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: severe.",
+      "familyRoot": "severe",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-14-19",
+      "word": "stubborn",
+      "slug": "stubborn",
+      "meaning": "refusing to change your mind",
+      "section": "NEGATIVE DESCRIPTIONS",
+      "sectionIndex": 14,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "stubborn"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: stubborn.",
+      "familyRoot": "stubborn",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-14-20",
+      "word": "worthless",
+      "slug": "worthless",
+      "meaning": "having no value or use",
+      "section": "NEGATIVE DESCRIPTIONS",
+      "sectionIndex": 14,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "worthless"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: worthless.",
+      "familyRoot": "worthless",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-15-01",
+      "word": "acquire",
+      "slug": "acquire",
+      "meaning": "get or obtain something",
+      "section": "USEFUL TRICKY WORDS",
+      "sectionIndex": 15,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "acquire"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: acquire.",
+      "familyRoot": "acquire",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-15-02",
+      "word": "apparent",
+      "slug": "apparent",
+      "meaning": "clear, or seeming to be true",
+      "section": "USEFUL TRICKY WORDS",
+      "sectionIndex": 15,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "apparent"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: apparent.",
+      "familyRoot": "apparent",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-15-03",
+      "word": "appropriate",
+      "slug": "appropriate",
+      "meaning": "suitable or correct for a situation",
+      "section": "USEFUL TRICKY WORDS",
+      "sectionIndex": 15,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "appropriate"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: appropriate.",
+      "familyRoot": "appropriate",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-15-04",
+      "word": "cease",
+      "slug": "cease",
+      "meaning": "stop",
+      "section": "USEFUL TRICKY WORDS",
+      "sectionIndex": 15,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "cease"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: cease.",
+      "familyRoot": "cease",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-15-05",
+      "word": "combine",
+      "slug": "combine",
+      "meaning": "join things together",
+      "section": "USEFUL TRICKY WORDS",
+      "sectionIndex": 15,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "combine"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: combine.",
+      "familyRoot": "combine",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-15-06",
+      "word": "compare",
+      "slug": "compare",
+      "meaning": "look for similarities and differences",
+      "section": "USEFUL TRICKY WORDS",
+      "sectionIndex": 15,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "compare"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: compare.",
+      "familyRoot": "compare",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-15-07",
+      "word": "conceal",
+      "slug": "conceal",
+      "meaning": "hide something",
+      "section": "USEFUL TRICKY WORDS",
+      "sectionIndex": 15,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "conceal"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: conceal.",
+      "familyRoot": "conceal",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-15-08",
+      "word": "consequence",
+      "slug": "consequence",
+      "meaning": "the result of an action",
+      "section": "USEFUL TRICKY WORDS",
+      "sectionIndex": 15,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "consequence"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: consequence.",
+      "familyRoot": "consequence",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-15-09",
+      "word": "contrast",
+      "slug": "contrast",
+      "meaning": "a clear difference",
+      "section": "USEFUL TRICKY WORDS",
+      "sectionIndex": 15,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "contrast"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: contrast.",
+      "familyRoot": "contrast",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-15-10",
+      "word": "curious",
+      "slug": "curious",
+      "meaning": "wanting to know, or strange and unusual",
+      "section": "USEFUL TRICKY WORDS",
+      "sectionIndex": 15,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "curious"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: curious.",
+      "familyRoot": "curious",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-15-11",
+      "word": "essential",
+      "slug": "essential",
+      "meaning": "completely necessary",
+      "section": "USEFUL TRICKY WORDS",
+      "sectionIndex": 15,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "essential"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: essential.",
+      "familyRoot": "essential",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-15-12",
+      "word": "evident",
+      "slug": "evident",
+      "meaning": "clear and easy to see",
+      "section": "USEFUL TRICKY WORDS",
+      "sectionIndex": 15,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "evident"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: evident.",
+      "familyRoot": "evident",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-15-13",
+      "word": "exclude",
+      "slug": "exclude",
+      "meaning": "leave out or not allow in",
+      "section": "USEFUL TRICKY WORDS",
+      "sectionIndex": 15,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "exclude"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: exclude.",
+      "familyRoot": "exclude",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-15-14",
+      "word": "expand",
+      "slug": "expand",
+      "meaning": "become or make larger",
+      "section": "USEFUL TRICKY WORDS",
+      "sectionIndex": 15,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "expand"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: expand.",
+      "familyRoot": "expand",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-15-15",
+      "word": "familiar",
+      "slug": "familiar",
+      "meaning": "known or recognised",
+      "section": "USEFUL TRICKY WORDS",
+      "sectionIndex": 15,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "familiar"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: familiar.",
+      "familyRoot": "familiar",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-15-16",
+      "word": "maintain",
+      "slug": "maintain",
+      "meaning": "keep something at the same level or condition",
+      "section": "USEFUL TRICKY WORDS",
+      "sectionIndex": 15,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "maintain"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: maintain.",
+      "familyRoot": "maintain",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-15-17",
+      "word": "permit",
+      "slug": "permit",
+      "meaning": "allow",
+      "section": "USEFUL TRICKY WORDS",
+      "sectionIndex": 15,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "permit"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: permit.",
+      "familyRoot": "permit",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-15-18",
+      "word": "prohibit",
+      "slug": "prohibit",
+      "meaning": "officially forbid",
+      "section": "USEFUL TRICKY WORDS",
+      "sectionIndex": 15,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "prohibit"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: prohibit.",
+      "familyRoot": "prohibit",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-15-19",
+      "word": "reveal",
+      "slug": "reveal",
+      "meaning": "show or make known what was hidden",
+      "section": "USEFUL TRICKY WORDS",
+      "sectionIndex": 15,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "reveal"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: reveal.",
+      "familyRoot": "reveal",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    },
+    {
+      "sourceRecordId": "11plus-15-20",
+      "word": "tolerate",
+      "slug": "tolerate",
+      "meaning": "allow or endure something you dislike",
+      "section": "USEFUL TRICKY WORDS",
+      "sectionIndex": 15,
+      "yearBand": "Y5-Y6 secure vocabulary",
+      "acceptedSpellings": [
+        "tolerate"
+      ],
+      "ukSpellingDecision": "UK canonical spelling approved: tolerate.",
+      "familyRoot": "tolerate",
+      "morphologyTags": [
+        "base-word"
+      ],
+      "safetyStatus": "approved_for_secure_extension_import",
+      "reviewStatus": "adult_approved_for_secure_extension_import"
+    }
+  ]
+}
