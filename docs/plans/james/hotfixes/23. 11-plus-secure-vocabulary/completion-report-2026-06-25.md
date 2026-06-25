@@ -1,6 +1,6 @@
 # 11 Plus Secure Vocabulary Completion Report
 
-Status: implementation and local verification complete; production deployment is blocked by missing Cloudflare authentication in this Codex environment.
+Status: implementation, local verification, commit, and GitHub push complete; production deployment is blocked by missing Cloudflare authentication in this Codex environment.
 
 ## Scope
 
@@ -43,6 +43,7 @@ The full spelling bundle exposed a storage-size failure in content-operation rel
 ## Verification Evidence
 
 - `pnpm run test`: pass 111938, fail 0, skipped 8.
+- Pre-push `pnpm run test`: pass 111939, fail 0, skipped 8.
 - Affected suite after reviewer fixes: pass 67, fail 0.
 - `node --test tests/spelling-content.test.js` after exact source gate: pass 20, fail 0.
 - `node scripts/apply-spelling-11-plus-secure-vocabulary.mjs --check --json`: passed; current run no-op; initial import evidence records 224 new and 76 existing.
@@ -54,7 +55,7 @@ The full spelling bundle exposed a storage-size failure in content-operation rel
 - First code review: failed on unrelated generated report noise and misleading manifest evidence.
 - First contract audit: failed on existing-word provenance, importer no-op mutation, source validation, manifest evidence, and unrelated generated report noise.
 - Fixes applied: provenance added for all 300 source words; importer no-op made stable; manifest now records initial import outcome; unrelated generated report/build-version files reverted; source validation now cryptographically ties the JSON ledger to James's pasted source.
-- Final reviewer sign-off: pending after production deployment blocker is resolved.
+- Final reviewer sign-off: blocked until the production deployment blocker is resolved.
 
 ## Deployment Evidence
 
@@ -69,4 +70,5 @@ Required unblock: log in Cloudflare Wrangler OAuth on this machine, or provide a
 ## Git Evidence
 
 - Branch: `codex/11-plus-secure-vocabulary`
-- Commit and push: pending until final report and reviewer loop are resolved.
+- Commit: `c4e8d282 Add James's 11 plus secure vocabulary`
+- Push: `origin/codex/11-plus-secure-vocabulary`
