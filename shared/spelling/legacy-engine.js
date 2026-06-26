@@ -1,6 +1,6 @@
 import {
   isEnrichmentExtraWord,
-  isSecureExtensionWord,
+  isSecureVocabularyWord,
   isStatutoryCoreWord,
 } from '../../src/subjects/spelling/content/taxonomy.js';
 
@@ -72,7 +72,7 @@ export function createLegacySpellingEngine({ words, wordMeta, storage, tts, now 
         core: WORDS.filter(function (w) { return isStatutoryCoreWord(w); }),
         "y3-4": WORDS.filter(function (w) { return isStatutoryCoreWord(w) && w.year === "3-4"; }),
         "y5-6": WORDS.filter(function (w) { return isStatutoryCoreWord(w) && w.year === "5-6"; }),
-        "secure-extension": WORDS.filter(function (w) { return isSecureExtensionWord(w); }),
+        "secure-extension": WORDS.filter(function (w) { return isSecureVocabularyWord(w); }),
         extra: WORDS.filter(function (w) { return isEnrichmentExtraWord(w); }),
       };
 

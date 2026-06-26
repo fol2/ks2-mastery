@@ -41,7 +41,7 @@ import {
   isEnrichmentExtraWord,
   isGuardianEligibleSlug,
   isPatternEligibleSlug,
-  isSecureExtensionWord,
+  isSecureVocabularyWord,
   isStatutoryCoreWord,
   normaliseAchievementsMap,
   normaliseBoolean,
@@ -1405,6 +1405,7 @@ export function createSpellingService({
       yearLabel: word.yearLabel,
       spellingPool: word.spellingPool === 'extra' ? 'extra' : 'core',
       coverageTier: coverageTierForWord(word),
+      secureVocabulary: isSecureVocabularyWord(word),
       familyWords: Array.isArray(word.familyWords) ? [...word.familyWords] : [],
       sentence: word.sentence || '',
       explanation: word.explanation || '',
@@ -1438,9 +1439,9 @@ export function createSpellingService({
       year: group.year,
       words: runtimeWords
         .filter((word) => {
-          if (group.key === 'secure-extension') return isSecureExtensionWord(word);
+          if (group.key === 'secure-extension') return isSecureVocabularyWord(word);
           if (group.key === 'extra') return isEnrichmentExtraWord(word);
-          return isStatutoryCoreWord(word) && word.year === group.year;
+          return isStatutoryCoreWord(word) && !isSecureVocabularyWord(word) && word.year === group.year;
         })
         .map((word) => analyticsWordRow(learnerId, word, progressStore)),
     }));

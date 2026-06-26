@@ -200,6 +200,7 @@ function WordBankCard({ learner, analytics, appState, actions, postMastery = nul
   const [draftSearch, setDraftSearch] = React.useState(persistedSearchQuery);
   const statusFilter = appState?.transientUi?.spellingAnalyticsStatusFilter || 'all';
   const yearFilter = appState?.transientUi?.spellingAnalyticsYearFilter || 'all';
+  const wordBankStatus = appState?.transientUi?.spellingWordBankStatus || '';
   React.useEffect(() => {
     setDraftSearch(persistedSearchQuery);
   }, [persistedSearchQuery]);
@@ -228,6 +229,7 @@ function WordBankCard({ learner, analytics, appState, actions, postMastery = nul
   const activeYearFilter = WORD_BANK_YEAR_FILTER_IDS.has(yearFilter) ? yearFilter : 'all';
   const groups = Array.isArray(analytics.wordGroups) ? analytics.wordGroups : [];
   const wordBankMeta = analytics.wordBank || {};
+  const isWordBankLoading = wordBankStatus === 'loading';
   const allWords = groups.flatMap((group) => Array.isArray(group.words) ? group.words : []);
   // SH2-U5: when the learner has zero tracked words we short-circuit to
   // the shared empty-state card. No filters, no toolbar, no group head —
@@ -262,8 +264,16 @@ function WordBankCard({ learner, analytics, appState, actions, postMastery = nul
     // eslint-disable-next-line react-hooks/exhaustive-deps -- see dep note above.
   }, [showGuardianFilters, groups]);
   const filterOptions = { guardianMap, todayDay };
-  const visibleGroups = groups
-    .filter((group) => (activeYearFilter === 'all' ? true : group.key === activeYearFilter))
+  const categoryGroups = activeYearFilter === 'all'
+    ? groups
+    : [{
+        key: activeYearFilter,
+        title: wordBankYearFilterLabel(activeYearFilter),
+        spellingPool: activeYearFilter === 'extra' ? 'extra' : 'core',
+        year: activeYearFilter,
+        words: allWords.filter((word) => wordBankYearFilterMatches(activeYearFilter, word)),
+      }];
+  const visibleGroups = categoryGroups
     .map((group) => ({
       group,
       words: (Array.isArray(group.words) ? group.words : [])
@@ -408,6 +418,8 @@ function WordBankCard({ learner, analytics, appState, actions, postMastery = nul
               type="button"
               className="btn ghost"
               data-action="spelling-word-bank-load-more"
+              disabled={isWordBankLoading}
+              aria-disabled={isWordBankLoading ? 'true' : 'false'}
               onClick={(event) => renderAction(actions, event, 'spelling-word-bank-load-more')}
             >
               Load more

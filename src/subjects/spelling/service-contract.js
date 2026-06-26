@@ -47,8 +47,10 @@ export {
   coverageTierCounts,
   coverageTierForWord,
   coverageTierLabel,
+  isElevenPlusSecureVocabularyWord,
   isEnrichmentExtraWord,
   isSecureExtensionWord,
+  isSecureVocabularyWord,
   isStatutoryCoreWord,
   normaliseCoverageTier,
 } from './content/taxonomy.js';

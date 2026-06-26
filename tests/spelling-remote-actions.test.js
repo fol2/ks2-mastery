@@ -1098,6 +1098,170 @@ test('remote spelling word bank open loads analytics and detail into the store',
   assert.equal(getState().transientUi.spellingWordDetail.slug, 'early');
 });
 
+test('remote spelling word bank category filter fetches Secure vocabulary rows from the worker', async () => {
+  const urls = [];
+  const { getState, store } = createStoreHarness({
+    subjectUi: {
+      spelling: {
+        phase: 'word-bank',
+        analytics: {
+          wordGroups: [{ key: 'y3-4', words: [{ slug: 'accident' }] }],
+          wordBank: { page: 1, hasNextPage: false },
+        },
+        error: '',
+      },
+    },
+  });
+  store.patch((current) => ({
+    transientUi: {
+      ...current.transientUi,
+      spellingAnalyticsStatusFilter: 'weak',
+      spellingAnalyticsWordSearch: 'ami',
+    },
+  }));
+  const handler = createRemoteSpellingActionHandler({
+    store,
+    services: { spelling: {} },
+    tts: createTtsHarness(),
+    subjectCommands: { send: async () => ({}) },
+    readModels: {
+      async readJson(url) {
+        urls.push(url);
+        const parsed = new URL(url, 'https://ks2.test');
+        assert.equal(parsed.searchParams.get('learnerId'), 'learner-a');
+        assert.equal(parsed.searchParams.get('year'), 'secure-extension');
+        assert.equal(parsed.searchParams.get('status'), 'weak');
+        assert.equal(parsed.searchParams.get('q'), 'ami');
+        assert.equal(parsed.searchParams.get('page'), '1');
+        return {
+          wordBank: {
+            analytics: {
+              wordGroups: [{
+                key: 'secure-extension',
+                words: [{ slug: 'amiable', word: 'amiable', explanation: 'friendly and pleasant' }],
+              }],
+              wordBank: {
+                filters: { year: 'secure-extension', status: 'weak', query: 'ami', page: 1 },
+                page: 1,
+                hasNextPage: true,
+              },
+            },
+          },
+        };
+      },
+    },
+  });
+
+  assert.equal(handler.handle('spelling-analytics-year-filter', { value: 'secure-extension' }), true);
+  assert.equal(getState().transientUi.spellingAnalyticsYearFilter, 'secure-extension');
+
+  await flushPromises();
+  assert.equal(urls.length, 1);
+  assert.deepEqual(getState().subjectUi.spelling.analytics.wordGroups[0].words, [{
+    slug: 'amiable',
+    word: 'amiable',
+    explanation: 'friendly and pleasant',
+  }]);
+});
+
+test('remote spelling word bank ignores stale category filter responses', async () => {
+  const requests = [];
+  const { getState, store } = createStoreHarness({
+    subjectUi: {
+      spelling: {
+        phase: 'word-bank',
+        analytics: {
+          wordGroups: [{ key: 'core', words: [{ slug: 'early' }] }],
+          wordBank: { page: 1, hasNextPage: false },
+        },
+        error: '',
+      },
+    },
+  });
+  const handler = createRemoteSpellingActionHandler({
+    store,
+    services: { spelling: {} },
+    tts: createTtsHarness(),
+    subjectCommands: { send: async () => ({}) },
+    readModels: {
+      readJson(url) {
+        const pending = deferred();
+        requests.push({
+          url,
+          year: new URL(url, 'https://ks2.test').searchParams.get('year') || 'all',
+          resolve: pending.resolve,
+        });
+        return pending.promise;
+      },
+    },
+  });
+
+  assert.equal(handler.handle('spelling-analytics-year-filter', { value: 'secure-extension' }), true);
+  assert.equal(handler.handle('spelling-analytics-year-filter', { value: 'y5-6' }), true);
+  assert.equal(requests.length, 2);
+  assert.equal(requests[0].year, 'secure-extension');
+  assert.equal(requests[1].year, 'y5-6');
+
+  requests[1].resolve({
+    wordBank: {
+      analytics: {
+        wordGroups: [{ key: 'y5-6', words: [{ slug: 'accommodate' }] }],
+        wordBank: { filters: { year: 'y5-6', status: 'all', query: '', page: 1 }, page: 1, hasNextPage: false },
+      },
+    },
+  });
+  await flushPromises();
+  assert.equal(getState().transientUi.spellingWordBankStatus, 'loaded');
+  assert.deepEqual(getState().subjectUi.spelling.analytics.wordGroups[0].words, [{ slug: 'accommodate' }]);
+
+  requests[0].resolve({
+    wordBank: {
+      analytics: {
+        wordGroups: [{ key: 'secure-extension', words: [{ slug: 'amiable' }] }],
+        wordBank: { filters: { year: 'secure-extension', status: 'all', query: '', page: 1 }, page: 1, hasNextPage: false },
+      },
+    },
+  });
+  await flushPromises();
+  assert.equal(getState().transientUi.spellingWordBankStatus, 'loaded');
+  assert.deepEqual(getState().subjectUi.spelling.analytics.wordGroups[0].words, [{ slug: 'accommodate' }]);
+});
+
+test('remote spelling word bank blocks load more while a filter refresh is loading', () => {
+  const { store } = createStoreHarness({
+    subjectUi: {
+      spelling: {
+        phase: 'word-bank',
+        analytics: {
+          wordGroups: [{ key: 'y3-4', words: [{ slug: 'accident' }] }],
+          wordBank: { page: 3, hasNextPage: true },
+        },
+        error: '',
+      },
+    },
+    transientUi: {
+      spellingAnalyticsYearFilter: 'secure-extension',
+      spellingWordBankStatus: 'loading',
+    },
+  });
+  const readUrls = [];
+  const handler = createRemoteSpellingActionHandler({
+    store,
+    services: { spelling: {} },
+    tts: createTtsHarness(),
+    subjectCommands: { send: async () => ({}) },
+    readModels: {
+      async readJson(url) {
+        readUrls.push(url);
+        return {};
+      },
+    },
+  });
+
+  assert.equal(handler.handle('spelling-word-bank-load-more'), true);
+  assert.deepEqual(readUrls, []);
+});
+
 test('remote spelling word-bank drill submit is blocked while read-only', () => {
   const { store } = createStoreHarness({
     transientUi: {

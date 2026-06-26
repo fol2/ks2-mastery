@@ -181,7 +181,7 @@ test('analytics snapshot is explicit and normalised', () => {
   assert.equal(snapshot.pools.all.total > 0, true);
   assert.deepEqual(snapshot.pools.all, snapshot.pools.core);
   assert.equal(snapshot.pools.all.accuracy, null);
-  assert.equal(snapshot.pools.secureExtension.total, 1439);
+  assert.equal(snapshot.pools.secureExtension.total, 1459);
   assert.equal(snapshot.pools.extra.total, 52);
   assert.deepEqual(snapshot.wordGroups.map((group) => group.key), ['y3-4', 'y5-6', 'secure-extension', 'extra']);
   assert.equal(snapshot.wordGroups[0].title, 'Years 3-4');
@@ -198,8 +198,9 @@ test('analytics snapshot is explicit and normalised', () => {
   const extraGroup = snapshot.wordGroups.find((group) => group.key === 'extra');
   const secureExtensionGroup = snapshot.wordGroups.find((group) => group.key === 'secure-extension');
   assert.equal(secureExtensionGroup.title, 'Secure vocabulary');
-  assert.equal(secureExtensionGroup.words.length, 1439);
+  assert.equal(secureExtensionGroup.words.length, 1459);
   assert.ok(secureExtensionGroup.words.some((word) => word.slug === 'ability'));
+  assert.ok(secureExtensionGroup.words.some((word) => word.slug === 'mischievous'));
   const mollusc = extraGroup.words.find((word) => word.slug === 'mollusc');
   assert.equal(extraGroup.spellingPool, 'extra');
   assert.ok(mollusc);

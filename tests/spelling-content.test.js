@@ -19,6 +19,7 @@ import {
 import {
   SPELLING_COVERAGE_TIER,
   isEnrichmentExtraWord,
+  isSecureVocabularyWord,
   isStatutoryCoreWord,
   normaliseCoverageTier,
 } from '../src/subjects/spelling/content/taxonomy.js';
@@ -410,6 +411,10 @@ test('seeded spelling content includes James 11 plus secure vocabulary meanings'
   assert.equal(
     sourceRuntimeWords.filter((word) => word.coverageTier === SPELLING_COVERAGE_TIER.STATUTORY_CORE).length,
     20,
+  );
+  assert.equal(
+    sourceRuntimeWords.filter((word) => isSecureVocabularyWord(word)).length,
+    300,
   );
   assert.equal(sourceRuntimeWords.some((word) => word.coverageTier === SPELLING_COVERAGE_TIER.ENRICHMENT_EXTRA), false);
 

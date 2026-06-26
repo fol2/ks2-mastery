@@ -548,6 +548,27 @@ test('worker spelling word bank route returns paginated public rows and detail a
   }
 });
 
+test('worker spelling word bank secure vocabulary filter includes 11 plus statutory overlaps', async () => {
+  const server = createWorkerRepositoryServer();
+  try {
+    seedAccountLearner(server.DB);
+
+    const response = await server.fetch('https://repo.test/api/subjects/spelling/word-bank?learnerId=learner-a&pageSize=10&year=secure-extension&q=mischievous');
+    const payload = await response.json();
+
+    assert.equal(response.status, 200);
+    assert.equal(payload.wordBank.analytics.wordBank.filteredRows, 1);
+    const rows = payload.wordBank.analytics.wordGroups.flatMap((group) => group.words);
+    assert.deepEqual(rows.map((row) => row.slug), ['mischievous']);
+    assert.equal(rows[0].coverageTier, 'statutory-core');
+    assert.equal(rows[0].secureVocabulary, true);
+    const secureGroup = payload.wordBank.analytics.wordGroups.find((group) => group.key === 'secure-extension');
+    assert.deepEqual(secureGroup.words.map((row) => row.slug), ['mischievous']);
+  } finally {
+    server.close();
+  }
+});
+
 test('worker spelling word bank route controls empty, high-page, and invalid-detail cases', async () => {
   const server = createWorkerRepositoryServer();
   try {

@@ -12,7 +12,7 @@ import {
   createLockedPostMasteryState,
   isEnrichmentExtraWord,
   isGuardianEligibleSlug,
-  isSecureExtensionWord,
+  isSecureVocabularyWord,
   isStatutoryCoreWord,
 } from '../service-contract.js';
 
@@ -537,7 +537,7 @@ export function wordBankYearFilterMatches(filter, word) {
   if (filter === 'core') return isStatutoryCoreWord(word);
   if (filter === 'y3-4') return isStatutoryCoreWord(word) && word.year === '3-4';
   if (filter === 'y5-6') return isStatutoryCoreWord(word) && word.year === '5-6';
-  if (filter === 'secure-extension') return isSecureExtensionWord(word);
+  if (filter === 'secure-extension') return isSecureVocabularyWord(word);
   if (filter === 'extra') return isEnrichmentExtraWord(word);
   return true;
 }
@@ -568,13 +568,13 @@ export function wordBankPillClass(status) {
 }
 
 export function spellingPoolLabel(word) {
-  if (isSecureExtensionWord(word)) return 'Secure vocabulary';
+  if (isSecureVocabularyWord(word)) return 'Secure vocabulary';
   if (isEnrichmentExtraWord(word)) return 'Extra';
   return word?.yearLabel || 'Core';
 }
 
 export function spellingPoolContextLabel(word) {
-  if (isSecureExtensionWord(word)) return coverageTierLabel(word?.coverageTier);
+  if (isSecureVocabularyWord(word)) return 'Secure vocabulary';
   if (isEnrichmentExtraWord(word)) return coverageTierLabel(word?.coverageTier);
   return word?.yearLabel || 'Core spelling';
 }
@@ -915,7 +915,7 @@ export function countWordBankExtra(words) {
 }
 
 export function countWordBankSecureExtension(words) {
-  return words.reduce((count, word) => count + (isSecureExtensionWord(word) ? 1 : 0), 0);
+  return words.reduce((count, word) => count + (isSecureVocabularyWord(word) ? 1 : 0), 0);
 }
 
 /**

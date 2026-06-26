@@ -6,7 +6,7 @@ import {
   coverageTierForWord,
   coverageTierLabel,
   isEnrichmentExtraWord,
-  isSecureExtensionWord,
+  isSecureVocabularyWord,
   isStatutoryCoreWord,
 } from '../../../src/subjects/spelling/content/taxonomy.js';
 
@@ -79,7 +79,7 @@ function statusForProgress(progress, now) {
 
 function yearMatches(filter, row) {
   if (filter === 'all') return true;
-  if (filter === 'secure-extension') return isSecureExtensionWord(row);
+  if (filter === 'secure-extension') return isSecureVocabularyWord(row);
   if (filter === 'extra') return isEnrichmentExtraWord(row);
   return isStatutoryCoreWord(row) && row.year === filter.replace(/^y/, '');
 }
@@ -114,6 +114,7 @@ function publicWordRow(word, progress, now, { detail = false, audio = null } = {
     yearLabel: word.yearLabel || (word.year === '5-6' ? 'Years 5-6' : word.year === 'extra' ? 'Extra' : 'Years 3-4'),
     spellingPool: word.spellingPool === 'extra' ? 'extra' : 'core',
     coverageTier: coverageTierForWord(word),
+    secureVocabulary: isSecureVocabularyWord(word),
     familyWords: Array.isArray(word.familyWords) ? [...word.familyWords] : [],
     status: statusForProgress(progress, now),
     stageLabel: stageLabel(progress.stage),
@@ -164,7 +165,7 @@ function poolsFor(words, progressMap, now) {
   const coreWords = words.filter((word) => isStatutoryCoreWord(word));
   const y34Words = coreWords.filter((word) => word.year === '3-4');
   const y56Words = coreWords.filter((word) => word.year === '5-6');
-  const secureExtensionWords = words.filter((word) => isSecureExtensionWord(word));
+  const secureExtensionWords = words.filter((word) => isSecureVocabularyWord(word));
   const extraWords = words.filter((word) => isEnrichmentExtraWord(word));
   return {
     all: withAccuracy(statsForWords(coreWords, progressMap, now)),
@@ -176,7 +177,22 @@ function poolsFor(words, progressMap, now) {
   };
 }
 
-function groupRows(rows) {
+function rowMatchesGroup(row, group, yearFilter) {
+  if (yearFilter === 'secure-extension') {
+    return group.key === 'secure-extension' && isSecureVocabularyWord(row);
+  }
+  if (yearFilter === 'extra') {
+    return group.key === 'extra' && isEnrichmentExtraWord(row);
+  }
+  if (yearFilter === 'y3-4' || yearFilter === 'y5-6') {
+    return group.key === yearFilter && isStatutoryCoreWord(row) && row.year === group.year;
+  }
+  if (group.key === 'secure-extension') return isSecureVocabularyWord(row);
+  if (group.key === 'extra') return isEnrichmentExtraWord(row);
+  return isStatutoryCoreWord(row) && !isSecureVocabularyWord(row) && row.year === group.year;
+}
+
+function groupRows(rows, { yearFilter = 'all' } = {}) {
   const groups = [
     { key: 'y3-4', title: 'Years 3-4', spellingPool: 'core', year: '3-4' },
     { key: 'y5-6', title: 'Years 5-6', spellingPool: 'core', year: '5-6' },
@@ -185,11 +201,7 @@ function groupRows(rows) {
   ];
   return groups.map((group) => ({
     ...group,
-    words: rows.filter((row) => {
-      if (group.key === 'secure-extension') return isSecureExtensionWord(row);
-      if (group.key === 'extra') return isEnrichmentExtraWord(row);
-      return isStatutoryCoreWord(row) && row.year === group.year;
-    }),
+    words: rows.filter((row) => rowMatchesGroup(row, group, yearFilter)),
   }));
 }
 
@@ -267,7 +279,7 @@ export async function buildSpellingWordBankReadModel({
       version: 1,
       generatedAt: Number(now) || Date.now(),
       pools: poolsFor(words, progressMap, now),
-      wordGroups: groupRows(pageRows),
+      wordGroups: groupRows(pageRows, { yearFilter: filters.year }),
       wordBank: {
         filters,
         page: filters.page,

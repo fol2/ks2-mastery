@@ -10,6 +10,9 @@ export const SPELLING_COVERAGE_TIER = Object.freeze({
   ENRICHMENT_EXTRA: 'enrichment-extra',
 });
 
+export const ELEVEN_PLUS_SECURE_VOCABULARY_SOURCE_ID = 'spelling-11-plus-secure-vocabulary-2026-06-25';
+export const ELEVEN_PLUS_SECURE_VOCABULARY_TAG = '11-plus-vocabulary-2026-06-25';
+
 const VALID_COVERAGE_TIERS = new Set(SPELLING_COVERAGE_TIERS);
 
 export function coverageTierFromSpellingPool(spellingPool) {
@@ -63,6 +66,19 @@ export function isStatutoryCoreWord(word) {
 
 export function isSecureExtensionWord(word) {
   return coverageTierForWord(word) === SPELLING_COVERAGE_TIER.SECURE_EXTENSION;
+}
+
+export function isElevenPlusSecureVocabularyWord(word) {
+  if (!word || typeof word !== 'object' || Array.isArray(word)) return false;
+  if (word.secureVocabulary === true) return true;
+  const tags = Array.isArray(word.tags) ? word.tags : [];
+  if (tags.includes(ELEVEN_PLUS_SECURE_VOCABULARY_TAG)) return true;
+  const source = typeof word.provenance?.source === 'string' ? word.provenance.source : '';
+  return source.includes(ELEVEN_PLUS_SECURE_VOCABULARY_SOURCE_ID);
+}
+
+export function isSecureVocabularyWord(word) {
+  return isSecureExtensionWord(word) || isElevenPlusSecureVocabularyWord(word);
 }
 
 export function isEnrichmentExtraWord(word) {

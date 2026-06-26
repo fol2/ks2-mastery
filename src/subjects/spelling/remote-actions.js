@@ -206,6 +206,7 @@ export function createRemoteSpellingActionHandler({
   const preferenceIntentCounters = new Map();
   const latestPreferenceIntents = new Map();
   const scopedRuntimeErrors = new Map();
+  let wordBankRefreshSequence = 0;
 
   function appState() {
     return store?.getState?.() || {};
@@ -213,6 +214,21 @@ export function createRemoteSpellingActionHandler({
 
   function wordBankAnalyticsFromState(state = appState()) {
     return state.subjectUi?.spelling?.analytics || null;
+  }
+
+  function wordBankFiltersFromState(state = appState()) {
+    const transient = state.transientUi || {};
+    const rawYear = String(transient.spellingAnalyticsYearFilter || 'all');
+    const rawStatus = String(transient.spellingAnalyticsStatusFilter || 'all');
+    return {
+      year: WORD_BANK_YEAR_FILTER_IDS.has(rawYear) ? rawYear : 'all',
+      status: WORD_BANK_FILTER_IDS.has(rawStatus) ? rawStatus : 'all',
+      query: String(transient.spellingAnalyticsWordSearch || '').slice(0, 80),
+    };
+  }
+
+  function wordBankFilterSignature(filters = {}) {
+    return [filters.year || 'all', filters.status || 'all', filters.query || ''].join('\u0000');
   }
 
   function currentSpellingRewardEventIds(learnerId) {
@@ -434,13 +450,23 @@ export function createRemoteSpellingActionHandler({
     const state = appState();
     const learnerId = state.learners?.selectedId;
     if (!learnerId) return null;
+    const filters = wordBankFiltersFromState(state);
+    const filterSignature = wordBankFilterSignature(filters);
     const params = new URLSearchParams({
       learnerId,
       page: String(page),
       pageSize: '250',
     });
+    if (filters.year !== 'all') params.set('year', filters.year);
+    if (filters.status !== 'all') params.set('status', filters.status);
+    if (filters.query) params.set('q', filters.query);
     if (detailSlug) params.set('detailSlug', detailSlug);
     const payload = await readModels.readJson(`/api/subjects/spelling/word-bank?${params.toString()}`);
+    const latestState = appState();
+    const latestSignature = wordBankFilterSignature(wordBankFiltersFromState(latestState));
+    if (latestState.subjectUi?.spelling?.phase !== 'word-bank' || latestSignature !== filterSignature) {
+      return null;
+    }
     const wordBank = payload.wordBank || null;
     if (!wordBank?.analytics) return null;
     const current = wordBankAnalyticsFromState();
@@ -458,6 +484,37 @@ export function createRemoteSpellingActionHandler({
       }));
     }
     return wordBank;
+  }
+
+  function refreshWordBankFromFilters() {
+    const state = appState();
+    if (isReadOnly() || state.subjectUi?.spelling?.phase !== 'word-bank') return;
+    const sequence = ++wordBankRefreshSequence;
+    store.patch((current) => ({
+      transientUi: {
+        ...current.transientUi,
+        spellingWordBankStatus: 'loading',
+      },
+    }));
+    loadWordBank({ page: 1 }).then(() => {
+      if (sequence !== wordBankRefreshSequence || appState().subjectUi?.spelling?.phase !== 'word-bank') return;
+      store.patch((current) => ({
+        transientUi: {
+          ...current.transientUi,
+          spellingWordBankStatus: 'loaded',
+        },
+      }));
+    }).catch((error) => {
+      if (sequence !== wordBankRefreshSequence || appState().subjectUi?.spelling?.phase !== 'word-bank') return;
+      globalThis.console?.warn?.('Word bank filter load failed.', error);
+      setRuntimeError(commandErrorMessage(error, 'The word bank could not be loaded.'));
+      store.patch((current) => ({
+        transientUi: {
+          ...current.transientUi,
+          spellingWordBankStatus: 'error',
+        },
+      }));
+    });
   }
 
   function loadedWordBankDetail(state = appState()) {
@@ -780,6 +837,7 @@ export function createRemoteSpellingActionHandler({
           spellingAnalyticsWordSearch: String(data.value || '').slice(0, 80),
         },
       }));
+      refreshWordBankFromFilters();
       return true;
     }
 
@@ -791,6 +849,7 @@ export function createRemoteSpellingActionHandler({
           spellingAnalyticsYearFilter: WORD_BANK_YEAR_FILTER_IDS.has(raw) ? raw : 'all',
         },
       }));
+      refreshWordBankFromFilters();
       return true;
     }
 
@@ -802,6 +861,7 @@ export function createRemoteSpellingActionHandler({
           spellingAnalyticsStatusFilter: WORD_BANK_FILTER_IDS.has(raw) ? raw : 'all',
         },
       }));
+      refreshWordBankFromFilters();
       return true;
     }
 
@@ -929,7 +989,7 @@ export function createRemoteSpellingActionHandler({
 
     if (action === 'spelling-word-bank-load-more') {
       const meta = wordBankAnalyticsFromState(state)?.wordBank || {};
-      if (!meta.hasNextPage || isReadOnly()) return true;
+      if (!meta.hasNextPage || isReadOnly() || state.transientUi?.spellingWordBankStatus === 'loading') return true;
       loadWordBank({
         page: (Number(meta.page) || 1) + 1,
         append: true,
