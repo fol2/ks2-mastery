@@ -1058,17 +1058,19 @@ export function buildGrammarCommandReadModel({
   projections = null,
   now = Date.now(),
   aiEnrichment = null,
+  includePublicSubjectReadModel = false,
 } = {}) {
-  return compactGrammarCommandReadModel(
-    buildGrammarReadModel({
-      learnerId,
-      state,
-      projections,
-      now,
-      aiEnrichment,
-    }),
-    command,
-  );
+  const publicSubjectReadModel = buildGrammarReadModel({
+    learnerId,
+    state,
+    projections,
+    now,
+    aiEnrichment,
+  });
+  const subjectReadModel = compactGrammarCommandReadModel(publicSubjectReadModel, command);
+  return includePublicSubjectReadModel
+    ? { subjectReadModel, publicSubjectReadModel }
+    : subjectReadModel;
 }
 
 // U7 non-scored transfer writing lane read-model projection. The prompt

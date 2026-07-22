@@ -122,6 +122,9 @@ function insertSubjectState(server, learnerId, subjectId, {
 } = {}) {
   const marker = FIXTURE[learnerId]?.[subjectId] || {};
   const stateData = data || { prefs: { mode: 'smart', marker }, progress: { possess: { stage: marker.progress || 0 } } };
+  const publicUi = ui && typeof ui === 'object' && !Array.isArray(ui)
+    ? { ...ui, subjectId, learnerId, prefs: stateData.prefs || {} }
+    : null;
   if (subjectId === 'spelling') {
     upsertBoundedSpellingState(server.DB.db, {
       learnerId,
@@ -130,11 +133,20 @@ function insertSubjectState(server, learnerId, subjectId, {
       data: stateData,
       now: updatedAt,
     });
+    if (publicUi) {
+      runSql(server, `
+        UPDATE spelling_learner_state
+        SET public_ui_json = ?, public_ui_updated_at = ?
+        WHERE learner_id = ?
+      `, [JSON.stringify(publicUi), updatedAt, learnerId]);
+    }
     return;
   }
   runSql(server, `
-    INSERT INTO child_subject_state (learner_id, subject_id, ui_json, data_json, updated_at, updated_by_account_id)
-    VALUES (?, ?, ?, ?, ?, ?)
+    INSERT INTO child_subject_state (
+      learner_id, subject_id, ui_json, data_json,
+      public_ui_json, public_ui_updated_at, updated_at, updated_by_account_id
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
   `, [
     learnerId,
     subjectId,
@@ -143,6 +155,8 @@ function insertSubjectState(server, learnerId, subjectId, {
     // projections. Grammar keeps this marker under `ui.prefs` after the
     // Worker read-model is rebuilt.
     JSON.stringify(stateData),
+    publicUi ? JSON.stringify(publicUi) : null,
+    publicUi ? updatedAt : null,
     updatedAt,
     ACCOUNT_ID,
   ]);

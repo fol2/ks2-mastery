@@ -905,7 +905,9 @@ function compactBootstrapPublicSubjectUi(subjectId, ui) {
     if (key === 'content' && BOOTSTRAP_LIGHT_SUBJECTS.has(subjectId)) continue;
     compact[key] = key === 'stats'
       ? compactBootstrapSubjectStats(subjectId, ui[key])
-      : ui[key];
+      : key === 'summary' && subjectId === 'punctuation'
+        ? publicPunctuationPracticeSessionSummary(ui[key])
+        : ui[key];
   }
   const compactAnalytics = BOOTSTRAP_ANALYTICS_COMPACTORS[subjectId]?.(ui.analytics);
   if (compactAnalytics && Object.keys(compactAnalytics).length) {
@@ -962,7 +964,35 @@ async function publicSubjectStateRowToRecord(row, {
   punctuationItemRows = [],
   now = Date.now(),
   compact = false,
+  preferPersistedProjection = false,
 } = {}) {
+  if (preferPersistedProjection) {
+    const projectionIsCurrent = Number(row?.public_ui_updated_at) === Number(row?.updated_at);
+    const persistedUi = projectionIsCurrent
+      ? safeJsonParse(row?.public_ui_json, null)
+      : null;
+    if (isPlainObject(persistedUi)) {
+      return normaliseSubjectStateRecord({
+        ui: persistedUi,
+        data: {},
+        updatedAt: Number(row?.updated_at) || 0,
+      });
+    }
+    // Spelling has an independently bounded stats row and a lightweight
+    // fallback below. Other subjects must never rebuild their content engines
+    // during bootstrap: a missing derived row degrades to the client defaults
+    // until the next authoritative subject command refreshes the projection.
+    if (row?.subject_id !== 'spelling') {
+      return normaliseSubjectStateRecord({
+        ui: {
+          subjectId: String(row?.subject_id || ''),
+          learnerId: String(row?.learner_id || ''),
+        },
+        data: {},
+        updatedAt: Number(row?.updated_at) || 0,
+      });
+    }
+  }
   const storedRecord = subjectStateRowToRecord(row);
   const record = row?.subject_id === 'punctuation'
     ? composePunctuationGameplaySubjectRecord(storedRecord, punctuationItemRows, now)
@@ -8453,6 +8483,12 @@ function rowKey(row, fields = ['id']) {
   return fields.map((field) => String(row?.[field] ?? '')).join('::');
 }
 
+function isMissingPublicSubjectProjectionColumnError(error) {
+  const message = String(error?.message || '');
+  return /(?:no such column|has no column named)/i.test(message)
+    && /public_ui_(?:json|updated_at)/i.test(message);
+}
+
 function sortSessionRows(rows) {
   return [...rows].sort((a, b) => {
     const updatedDiff = (Number(b.updated_at) || 0) - (Number(a.updated_at) || 0);
@@ -8470,85 +8506,48 @@ function sortEventRowsAscending(rows) {
 }
 
 function subjectStateActiveSessionId(row) {
-  const ui = safeJsonParse(row?.ui_json, {});
+  if (Number(row?.public_ui_updated_at) !== Number(row?.updated_at)) return null;
+  const ui = safeJsonParse(row?.public_ui_json, null);
   const sessionId = ui?.session?.id;
   return typeof sessionId === 'string' && sessionId ? sessionId : null;
 }
 
-function sortSubjectRowsForActiveSessionLookup(rows) {
-  return [...rows].sort((a, b) => {
-    const updatedDiff = (Number(b?.updated_at) || 0) - (Number(a?.updated_at) || 0);
-    if (updatedDiff !== 0) return updatedDiff;
-    return String(a?.subject_id || '').localeCompare(String(b?.subject_id || ''));
-  });
-}
-
-function listPublicBootstrapActiveSessionIds(subjectRows, learnerIds) {
-  const ids = [];
-  const idsSeen = new Set();
-  const rowsByLearner = new Map();
-  const requestedLearners = new Set(learnerIds.map((learnerId) => String(learnerId)));
-
-  for (const row of subjectRows || []) {
-    const learnerId = String(row?.learner_id || '');
-    if (!requestedLearners.has(learnerId)) continue;
-    const rows = rowsByLearner.get(learnerId) || [];
-    rows.push(row);
-    rowsByLearner.set(learnerId, rows);
-  }
-
-  for (const learnerId of learnerIds) {
-    const sessionIdsForLearner = new Set();
-    const rows = sortSubjectRowsForActiveSessionLookup(rowsByLearner.get(String(learnerId)) || [])
-      .slice(0, PUBLIC_BOOTSTRAP_ACTIVE_SESSION_LOOKUP_LIMIT_PER_LEARNER);
-    for (const row of rows) {
-      const sessionId = subjectStateActiveSessionId(row);
-      if (!sessionId || sessionIdsForLearner.has(sessionId)) continue;
-      sessionIdsForLearner.add(sessionId);
-      if (!idsSeen.has(sessionId)) {
-        idsSeen.add(sessionId);
-        ids.push(sessionId);
-      }
-      if (sessionIdsForLearner.size >= PUBLIC_BOOTSTRAP_ACTIVE_SESSION_LIMIT_PER_LEARNER) break;
-    }
-  }
-  return ids;
+function publicBootstrapActiveSessionId(subjectRows, learnerId) {
+  return [...(subjectRows || [])]
+    .filter((row) => String(row?.learner_id || '') === String(learnerId || ''))
+    .sort((left, right) => (Number(right?.updated_at) || 0) - (Number(left?.updated_at) || 0))
+    .slice(0, PUBLIC_BOOTSTRAP_ACTIVE_SESSION_LOOKUP_LIMIT_PER_LEARNER)
+    .map(subjectStateActiveSessionId)
+    .find(Boolean) || null;
 }
 
 async function listPublicBootstrapSessionRows(db, learnerIds, subjectRows = []) {
   if (!learnerIds.length) return [];
   const rowsById = new Map();
-  const placeholders = sqlPlaceholders(learnerIds.length);
-  const activeSessionIds = listPublicBootstrapActiveSessionIds(subjectRows, learnerIds);
-  if (activeSessionIds.length) {
-    const activeRows = await all(db, `
+  for (const learnerId of learnerIds) {
+    const activeSessionId = publicBootstrapActiveSessionId(subjectRows, learnerId);
+    const sessionRows = await all(db, `
       SELECT id, learner_id, subject_id, session_kind, status, session_state_json, summary_json, created_at, updated_at
       FROM practice_sessions
-      WHERE learner_id IN (${placeholders})
-        AND id IN (${sqlPlaceholders(activeSessionIds.length)})
-        AND status = 'active'
-      ORDER BY updated_at DESC, id DESC
-      LIMIT ?
+      WHERE learner_id = ? AND id = ? AND status = 'active'
+      UNION ALL
+      SELECT id, learner_id, subject_id, session_kind, status, session_state_json, summary_json, created_at, updated_at
+      FROM (
+        SELECT id, learner_id, subject_id, session_kind, status, session_state_json, summary_json, created_at, updated_at
+        FROM practice_sessions
+        WHERE learner_id = ? AND id <> ?
+        ORDER BY updated_at DESC, id DESC
+        LIMIT ?
+      )
     `, [
-      ...learnerIds,
-      ...activeSessionIds,
-      learnerIds.length * PUBLIC_BOOTSTRAP_ACTIVE_SESSION_LIMIT_PER_LEARNER,
+      learnerId,
+      activeSessionId || '',
+      learnerId,
+      activeSessionId || '',
+      PUBLIC_BOOTSTRAP_RECENT_SESSION_LIMIT_PER_LEARNER,
     ]);
 
-    for (const row of activeRows) {
-      rowsById.set(rowKey(row), row);
-    }
-  }
-
-  for (const learnerId of learnerIds) {
-    const recentRows = await all(db, `
-      SELECT id, learner_id, subject_id, session_kind, status, session_state_json, summary_json, created_at, updated_at
-      FROM practice_sessions
-      WHERE learner_id = ?
-      ORDER BY updated_at DESC, id DESC
-      LIMIT ?
-    `, [learnerId, PUBLIC_BOOTSTRAP_RECENT_SESSION_LIMIT_PER_LEARNER]);
-    for (const row of recentRows) {
+    for (const row of sessionRows) {
       rowsById.set(rowKey(row), row);
     }
   }
@@ -8577,32 +8576,90 @@ async function listPublicBootstrapEventRows(db, learnerIds) {
   return sortEventRowsAscending(rows);
 }
 
-async function listBootstrapSubjectStateRows(db, learnerIds, { publicReadModels = false } = {}) {
+async function listBootstrapSubjectStateRows(db, learnerIds, {
+  publicReadModels = false,
+  publicProjectionOnly = false,
+} = {}) {
   if (!learnerIds.length) return [];
   const placeholders = sqlPlaceholders(learnerIds.length);
   try {
-    const rows = await all(db, `
-      SELECT learner_id, subject_id, ui_json, data_json, updated_at, NULL AS spelling_stats_json
-      FROM child_subject_state
-      WHERE learner_id IN (${placeholders})
-        AND (
-          subject_id <> 'spelling'
-          OR NOT EXISTS (
+    const rows = publicProjectionOnly
+      ? await all(db, `
+        SELECT
+          state.learner_id,
+          state.subject_id,
+          NULL AS ui_json,
+          '{}' AS data_json,
+          state.updated_at,
+          NULL AS spelling_stats_json,
+          state.public_ui_json,
+          state.public_ui_updated_at
+        FROM child_subject_state AS state
+        WHERE state.learner_id IN (${placeholders})
+          AND (
+            state.subject_id <> 'spelling'
+            OR NOT EXISTS (
+              SELECT 1
+              FROM bounded_gameplay_state_migrations
+              WHERE migration_id = '0023' AND state = 'ready'
+            )
+          )
+        UNION ALL
+        SELECT
+          state.learner_id,
+          'spelling' AS subject_id,
+          state.ui_json,
+          state.data_json,
+          state.updated_at,
+          state.stats_json AS spelling_stats_json,
+          state.public_ui_json,
+          state.public_ui_updated_at
+        FROM spelling_learner_state AS state
+        WHERE state.learner_id IN (${placeholders})
+          AND EXISTS (
             SELECT 1
             FROM bounded_gameplay_state_migrations
             WHERE migration_id = '0023' AND state = 'ready'
           )
-        )
-      UNION ALL
-      SELECT learner_id, 'spelling' AS subject_id, ui_json, data_json, updated_at, stats_json AS spelling_stats_json
-      FROM spelling_learner_state
-      WHERE learner_id IN (${placeholders})
-        AND EXISTS (
-          SELECT 1
-          FROM bounded_gameplay_state_migrations
-          WHERE migration_id = '0023' AND state = 'ready'
-        )
-    `, [...learnerIds, ...learnerIds]);
+      `, [...learnerIds, ...learnerIds])
+      : await all(db, `
+        SELECT
+          learner_id,
+          subject_id,
+          ui_json,
+          data_json,
+          updated_at,
+          NULL AS spelling_stats_json,
+          NULL AS public_ui_json,
+          NULL AS public_ui_updated_at
+        FROM child_subject_state
+        WHERE learner_id IN (${placeholders})
+          AND (
+            subject_id <> 'spelling'
+            OR NOT EXISTS (
+              SELECT 1
+              FROM bounded_gameplay_state_migrations
+              WHERE migration_id = '0023' AND state = 'ready'
+            )
+          )
+        UNION ALL
+        SELECT
+          learner_id,
+          'spelling' AS subject_id,
+          ui_json,
+          data_json,
+          updated_at,
+          stats_json AS spelling_stats_json,
+          NULL AS public_ui_json,
+          NULL AS public_ui_updated_at
+        FROM spelling_learner_state
+        WHERE learner_id IN (${placeholders})
+          AND EXISTS (
+            SELECT 1
+            FROM bounded_gameplay_state_migrations
+            WHERE migration_id = '0023' AND state = 'ready'
+          )
+      `, [...learnerIds, ...learnerIds]);
     // The readiness predicate is evaluated inside the existing subject-state
     // read. This keeps bootstrap at one D1 round trip while preserving the
     // code-first rule that table existence alone never changes authority.
@@ -8632,7 +8689,48 @@ async function listBootstrapSubjectStateRows(db, learnerIds, { publicReadModels 
     if (
       !isMissingTableError(error, 'spelling_learner_state')
       && !isMissingTableError(error, 'bounded_gameplay_state_migrations')
+      && !isMissingPublicSubjectProjectionColumnError(error)
     ) throw error;
+    if (isMissingPublicSubjectProjectionColumnError(error)) {
+      return all(db, `
+        SELECT
+          learner_id,
+          subject_id,
+          ui_json,
+          data_json,
+          updated_at,
+          NULL AS spelling_stats_json,
+          NULL AS public_ui_json,
+          NULL AS public_ui_updated_at
+        FROM child_subject_state
+        WHERE learner_id IN (${placeholders})
+          AND (
+            subject_id <> 'spelling'
+            OR NOT EXISTS (
+              SELECT 1
+              FROM bounded_gameplay_state_migrations
+              WHERE migration_id = '0023' AND state = 'ready'
+            )
+          )
+        UNION ALL
+        SELECT
+          learner_id,
+          'spelling' AS subject_id,
+          ui_json,
+          data_json,
+          updated_at,
+          stats_json AS spelling_stats_json,
+          NULL AS public_ui_json,
+          NULL AS public_ui_updated_at
+        FROM spelling_learner_state
+        WHERE learner_id IN (${placeholders})
+          AND EXISTS (
+            SELECT 1
+            FROM bounded_gameplay_state_migrations
+            WHERE migration_id = '0023' AND state = 'ready'
+          )
+      `, [...learnerIds, ...learnerIds]);
+    }
     if (isMissingTableError(error, 'spelling_learner_state')) {
       await requireLegacyGameplayFallbackAllowed(
         db,
@@ -8642,10 +8740,18 @@ async function listBootstrapSubjectStateRows(db, learnerIds, { publicReadModels 
       );
     }
     return all(db, `
-      SELECT learner_id, subject_id, ui_json, data_json, updated_at, NULL AS spelling_stats_json
-      FROM child_subject_state
-      WHERE learner_id IN (${placeholders})
-    `, learnerIds);
+        SELECT
+          learner_id,
+          subject_id,
+          ui_json,
+          data_json,
+          updated_at,
+          NULL AS spelling_stats_json,
+          NULL AS public_ui_json,
+          NULL AS public_ui_updated_at
+        FROM child_subject_state
+        WHERE learner_id IN (${placeholders})
+      `, learnerIds);
   }
 }
 
@@ -9054,7 +9160,10 @@ async function bootstrapBundle(db, accountId, {
   void eventRowsPromise.catch(() => {});
   try {
     const subjectRowsPromise = measureBootstrapPhase(capacity, BOOTSTRAP_PHASE_TIMING.subjectState, () => (
-      listBootstrapSubjectStateRows(db, subjectStateLearnerIds, { publicReadModels })
+      listBootstrapSubjectStateRows(db, subjectStateLearnerIds, {
+        publicReadModels,
+        publicProjectionOnly: Boolean(boundedToSelected),
+      })
     ));
     const subjectStatePlaceholders = sqlPlaceholders(subjectStateLearnerIds.length);
     const gameRowsPromise = measureBootstrapPhase(capacity, BOOTSTRAP_PHASE_TIMING.gameState, () => (
@@ -9083,7 +9192,10 @@ async function bootstrapBundle(db, accountId, {
     subjectStateIdsUsed = [selectedId];
     subjectStatesFallbackMode = 'degraded-to-selected';
     subjectRows = await measureBootstrapPhase(capacity, BOOTSTRAP_PHASE_TIMING.subjectState, () => (
-      listBootstrapSubjectStateRows(db, subjectStateIdsUsed, { publicReadModels })
+      listBootstrapSubjectStateRows(db, subjectStateIdsUsed, {
+        publicReadModels,
+        publicProjectionOnly: Boolean(boundedToSelected),
+      })
     ));
     const fallbackPlaceholders = sqlPlaceholders(subjectStateIdsUsed.length);
     gameRows = await measureBootstrapPhase(capacity, BOOTSTRAP_PHASE_TIMING.gameState, () => (
@@ -9148,7 +9260,7 @@ async function bootstrapBundle(db, accountId, {
         : readSeededSpellingRuntimeContentBundle('spelling'))
       : null
   ));
-  const publicPunctuationItems = publicReadModels
+  const publicPunctuationItems = publicReadModels && !boundedToSelected
     ? await measureBootstrapPhase(
         capacity,
         BOOTSTRAP_PHASE_TIMING.readModel,
@@ -9166,6 +9278,7 @@ async function bootstrapBundle(db, accountId, {
           punctuationItemRows: publicPunctuationItems.get(subjectStateKey(row.learner_id, row.subject_id)) || [],
           now: publicReadModelNow,
           compact: Boolean(boundedToSelected),
+          preferPersistedProjection: Boolean(boundedToSelected),
         })
         : subjectStateRowToRecord(row);
     }
@@ -10108,7 +10221,16 @@ function guardedWhere(guard) {
           )`;
 }
 
-function buildSpellingGameplayStateStatements(db, accountId, learnerId, runtime, nowTs, guard) {
+function buildSpellingGameplayStateStatements(
+  db,
+  accountId,
+  learnerId,
+  runtime,
+  nowTs,
+  guard,
+  publicUiJson = null,
+  includePublicSubjectProjection = true,
+) {
   const statements = [];
   const nextLearnerData = spellingLearnerData(runtime?.data || {});
   const nextStats = parseSpellingGameplayStats(runtime?.spellingGameplay?.stats || {});
@@ -10117,6 +10239,9 @@ function buildSpellingGameplayStateStatements(db, accountId, learnerId, runtime,
     JSON.stringify(runtime?.state || null),
     JSON.stringify(nextLearnerData),
     JSON.stringify(nextStats),
+    ...(includePublicSubjectProjection
+      ? [publicUiJson, publicUiJson ? nowTs : null]
+      : []),
     nowTs,
     accountId,
   ];
@@ -10126,6 +10251,7 @@ function buildSpellingGameplayStateStatements(db, accountId, learnerId, runtime,
       ui_json,
       data_json,
       stats_json,
+      ${includePublicSubjectProjection ? 'public_ui_json, public_ui_updated_at,' : ''}
       updated_at,
       updated_by_account_id
     )
@@ -10134,6 +10260,9 @@ function buildSpellingGameplayStateStatements(db, accountId, learnerId, runtime,
       ui_json = excluded.ui_json,
       data_json = excluded.data_json,
       stats_json = excluded.stats_json,
+      ${includePublicSubjectProjection ? `
+      public_ui_json = excluded.public_ui_json,
+      public_ui_updated_at = excluded.public_ui_updated_at,` : ''}
       updated_at = excluded.updated_at,
       updated_by_account_id = excluded.updated_by_account_id
   `, guardedParams(learnerParams, guard)));
@@ -10756,6 +10885,8 @@ function activeSubjectGameplayStore(subjectId, runtime) {
 function buildSubjectRuntimePersistencePlan(db, accountId, learnerId, subjectId, runtime, nowTs, {
   guard = null,
   includeCapacityReadModels = true,
+  publicSubjectReadModel = null,
+  includePublicSubjectProjection = true,
   persistEventLog = true,
   persistActivityFeed = true,
   // U6: caller passes the projection input it already loaded so the
@@ -10779,6 +10910,12 @@ function buildSubjectRuntimePersistencePlan(db, accountId, learnerId, subjectId,
   activePracticeSessionKnownAbsent = false,
 } = {}) {
   const gameplayStore = activeSubjectGameplayStore(subjectId, runtime);
+  const compactPublicSubjectReadModel = isPlainObject(publicSubjectReadModel)
+    ? compactBootstrapPublicSubjectUi(subjectId, publicSubjectReadModel)
+    : null;
+  const publicUiJson = compactPublicSubjectReadModel
+    ? JSON.stringify(compactPublicSubjectReadModel)
+    : null;
   const nextState = normaliseSubjectStateRecord({
     ui: gameplayStore?.kind === 'generated-items'
       ? grammarStateWithoutItemMastery(runtime?.state)
@@ -10804,6 +10941,8 @@ function buildSubjectRuntimePersistencePlan(db, accountId, learnerId, subjectId,
       runtime,
       nowTs,
       guard,
+      publicUiJson,
+      includePublicSubjectProjection,
     ));
   } else {
     const subjectParams = [
@@ -10811,15 +10950,29 @@ function buildSubjectRuntimePersistencePlan(db, accountId, learnerId, subjectId,
       subjectId,
       JSON.stringify(nextState.ui),
       JSON.stringify(nextState.data),
+      ...(includePublicSubjectProjection
+        ? [publicUiJson, publicUiJson ? nowTs : null]
+        : []),
       nowTs,
       accountId,
     ];
     statements.push(bindStatement(db, `
-      INSERT INTO child_subject_state (learner_id, subject_id, ui_json, data_json, updated_at, updated_by_account_id)
+      INSERT INTO child_subject_state (
+        learner_id,
+        subject_id,
+        ui_json,
+        data_json,
+        ${includePublicSubjectProjection ? 'public_ui_json, public_ui_updated_at,' : ''}
+        updated_at,
+        updated_by_account_id
+      )
       ${guardedValueSource(subjectParams.length, guard)}
       ON CONFLICT(learner_id, subject_id) DO UPDATE SET
         ui_json = excluded.ui_json,
         data_json = excluded.data_json,
+        ${includePublicSubjectProjection ? `
+        public_ui_json = excluded.public_ui_json,
+        public_ui_updated_at = excluded.public_ui_updated_at,` : ''}
         updated_at = excluded.updated_at,
         updated_by_account_id = excluded.updated_by_account_id
     `, guardedParams(subjectParams, guard)));
@@ -11048,10 +11201,43 @@ function buildSubjectRuntimePersistencePlan(db, accountId, learnerId, subjectId,
   return { statements, summary };
 }
 
+function buildCompatibleSubjectRuntimePersistencePlan(
+  db,
+  accountId,
+  learnerId,
+  subjectId,
+  runtime,
+  nowTs,
+  options = {},
+) {
+  try {
+    return buildSubjectRuntimePersistencePlan(
+      db,
+      accountId,
+      learnerId,
+      subjectId,
+      runtime,
+      nowTs,
+      options,
+    );
+  } catch (error) {
+    if (!isMissingPublicSubjectProjectionColumnError(error)) throw error;
+    return buildSubjectRuntimePersistencePlan(
+      db,
+      accountId,
+      learnerId,
+      subjectId,
+      runtime,
+      nowTs,
+      { ...options, includePublicSubjectProjection: false },
+    );
+  }
+}
+
 async function persistSubjectRuntimeBundle(db, accountId, learnerId, subjectId, runtime, nowTs) {
   const includeCapacityReadModels = await capacityReadModelTablesAvailable(db);
   const compatibleRuntime = await runtimeForAvailableGameplayStore(db, subjectId, runtime);
-  const plan = buildSubjectRuntimePersistencePlan(db, accountId, learnerId, subjectId, compatibleRuntime, nowTs, {
+  const plan = buildCompatibleSubjectRuntimePersistencePlan(db, accountId, learnerId, subjectId, compatibleRuntime, nowTs, {
     includeCapacityReadModels,
   });
   await batch(db, plan.statements);
@@ -11469,6 +11655,7 @@ async function runSubjectCommandMutation(db, {
     const {
       runtimeWrite: freshRuntimeWrite = null,
       projectionContext: freshProjectionContext = null,
+      publicSubjectReadModel: freshPublicSubjectReadModel = null,
       ...freshApplied
     } = freshPayload;
     const mutatesState = Boolean(freshRuntimeWrite) || freshApplied.changed !== false;
@@ -11508,7 +11695,7 @@ async function runSubjectCommandMutation(db, {
         command.subjectId,
         freshRuntimeWrite,
       );
-      const plan = buildSubjectRuntimePersistencePlan(
+      const plan = buildCompatibleSubjectRuntimePersistencePlan(
         db,
         accountId,
         command.learnerId,
@@ -11521,6 +11708,9 @@ async function runSubjectCommandMutation(db, {
           // state and receipts. Normal event/activity history remains off on
           // the subject command hot path.
           includeCapacityReadModels,
+          publicSubjectReadModel: includeProjection
+            ? (freshPublicSubjectReadModel || freshApplied.subjectReadModel || null)
+            : null,
           persistEventLog: false,
           persistActivityFeed: false,
           projectionContext: includeProjection ? freshProjectionContext : null,

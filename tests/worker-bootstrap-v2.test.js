@@ -461,8 +461,8 @@ test('U7 scenario 15: envelope shape snapshot matches BOOTSTRAP_CAPACITY_VERSION
   // CDP stress hardening 2026-06-15: bumped 6 -> 7 when selected-bounded
   // Arithmetic and Reasoning first-paint state dropped duplicated static
   // content and heavyweight analytics/stat lists.
-  assert.equal(BOOTSTRAP_CAPACITY_VERSION, 7,
-    'CDP stress hardening bumps BOOTSTRAP_CAPACITY_VERSION 6->7 so lighter Arithmetic/Reasoning first-paint projections miss the notModified probe.');
+  assert.equal(BOOTSTRAP_CAPACITY_VERSION, 8,
+    'persisted subject projections bump BOOTSTRAP_CAPACITY_VERSION 7->8 so cached engine-built bootstrap payloads miss the notModified probe.');
   // Closed union for meta.capacity.bootstrapMode (canonical U7 enum).
   assert.deepEqual(
     [...BOOTSTRAP_MODES].sort(),
@@ -1257,6 +1257,18 @@ function insertSubjectStateFor(server, accountId, learnerId, subjectId, { ui = {
   ]);
 }
 
+function insertPublicSubjectReadModel(server, learnerId, subjectId, model, updatedAt = NOW) {
+  const table = subjectId === 'spelling' ? 'spelling_learner_state' : 'child_subject_state';
+  const subjectClause = subjectId === 'spelling' ? '' : 'AND subject_id = ?';
+  runSql(server, `
+    UPDATE ${table}
+    SET public_ui_json = ?, public_ui_updated_at = ?
+    WHERE learner_id = ? ${subjectClause}
+  `, subjectId === 'spelling'
+    ? [JSON.stringify(model), updatedAt, learnerId]
+    : [JSON.stringify(model), updatedAt, learnerId, subjectId]);
+}
+
 function insertPracticeSessionFor(server, accountId, learnerId, { id, subjectId = 'spelling' }) {
   runSql(server, `
     INSERT INTO practice_sessions (id, learner_id, subject_id, session_kind, status, session_state_json, summary_json, created_at, updated_at, updated_by_account_id)
@@ -1465,7 +1477,7 @@ test('public bootstrap notModified misses after a spelling content-operation rel
   }
 });
 
-test('fresh bootstrap hydrates Punctuation and Grammar public stats from stored subject state', async () => {
+test('fresh bootstrap reads bounded Punctuation and Grammar projections without rebuilding subject engines', async () => {
   const server = createServer();
   try {
     insertLearner(server, 'adult-u7', { id: 'learner-a', name: 'Alpha', sortIndex: 0, selected: true });
@@ -1475,7 +1487,25 @@ test('fresh bootstrap hydrates Punctuation and Grammar public stats from stored 
     insertSubjectStateFor(server, 'adult-u7', 'learner-a', 'grammar', {
       data: grammarHydrationData({ mode: 'learn' }),
     });
+    insertPublicSubjectReadModel(server, 'learner-a', 'punctuation', {
+      subjectId: 'punctuation',
+      learnerId: 'learner-a',
+      phase: 'setup',
+      prefs: { mode: 'smart', roundLength: '4' },
+      stats: { attempts: 37, correct: 31 },
+      starView: { perMonster: { quotibbit: { total: 2 } } },
+      analytics: { projectionSentinel: 'punctuation-read-model' },
+    });
+    insertPublicSubjectReadModel(server, 'learner-a', 'grammar', {
+      subjectId: 'grammar',
+      learnerId: 'learner-a',
+      phase: 'dashboard',
+      prefs: { mode: 'learn' },
+      stats: { concepts: { total: 18, secured: 9, due: 2, weak: 1 } },
+      analytics: { projectionSentinel: 'grammar-read-model' },
+    });
 
+    server.DB.takeQueryLog();
     const response = await getBootstrap(server);
     assert.equal(response.status, 200);
     const payload = await readJsonBody(response);
@@ -1485,33 +1515,53 @@ test('fresh bootstrap hydrates Punctuation and Grammar public stats from stored 
     assert.ok(punctuation, 'fresh bootstrap includes punctuation subject state');
     assert.deepEqual(punctuation.data, {}, 'punctuation raw data stays stripped');
     assert.equal(punctuation.ui?.learnerId, 'learner-a');
-    assert.equal(punctuation.ui?.stats?.attempts, 1,
-      'punctuation stored attempts hydrate into first-paint stats');
-    assert.equal(punctuation.ui?.stats?.correct, 1,
-      'punctuation stored correct count hydrates into first-paint stats');
+    assert.equal(punctuation.ui?.stats?.attempts, 37,
+      'punctuation first paint consumes the persisted public projection');
+    assert.equal(punctuation.ui?.stats?.correct, 31,
+      'punctuation projection is not rebuilt from the source document');
     assert.ok(punctuation.ui?.starView?.perMonster,
       'punctuation first-paint read-model includes starView');
+    assert.equal(punctuation.ui?.analytics?.projectionSentinel, 'punctuation-read-model');
 
     const grammar = payload.subjectStates?.['learner-a::grammar'];
     assert.ok(grammar, 'fresh bootstrap includes grammar subject state');
     assert.deepEqual(grammar.data, {}, 'grammar raw data stays stripped');
     assert.equal(grammar.ui?.learnerId, 'learner-a');
-    assert.equal(grammar.ui?.prefs?.mode, 'learn',
-      'grammar stored prefs hydrate into first-paint read-model');
-    assert.equal(grammar.ui?.stats?.concepts?.secured, 1,
-      'grammar stored mastery hydrates into first-paint stats');
-    assert.equal(grammar.ui?.analytics?.progressSnapshot?.trackedConcepts, 1,
-      'grammar first-paint analytics tracks stored mastery concepts');
-    assert.equal(grammar.ui?.analytics?.progressSnapshot?.securedConcepts, 1,
-      'grammar first-paint analytics exposes secured concepts');
-    assert.equal(grammar.ui?.analytics?.recentAttempts, undefined,
-      'grammar bootstrap projection omits heavyweight recent attempt history');
-    assert.ok(JSON.stringify(grammar.ui?.analytics || {}).length < 6_000,
-      'grammar bootstrap analytics stays compact for first paint');
-    assert.equal(punctuation.ui?.analytics?.recentMistakes, undefined,
-      'punctuation bootstrap projection omits heavyweight mistake history');
-    assert.ok(JSON.stringify(punctuation.ui?.analytics || {}).length < 6_000,
-      'punctuation bootstrap analytics stays compact for first paint');
+    assert.equal(grammar.ui?.prefs?.mode, 'learn');
+    assert.equal(grammar.ui?.stats?.concepts?.secured, 9,
+      'grammar first paint consumes the persisted public projection');
+    assert.equal(grammar.ui?.analytics?.projectionSentinel, 'grammar-read-model');
+
+    const subjectStateRead = server.DB.takeQueryLog().find((entry) => (
+      entry.operation === 'all' && /FROM child_subject_state/i.test(entry.sql)
+    ));
+    assert.ok(subjectStateRead, 'bootstrap reads the selected learner subject rows');
+    const childSubjectSelect = subjectStateRead.sql.split(/\bUNION ALL\b/i)[0];
+    assert.doesNotMatch(childSubjectSelect, /state\.(?:ui_json|data_json)/i,
+      'public bounded bootstrap must not read growing subject source documents');
+  } finally {
+    server.close();
+  }
+});
+
+test('fresh bootstrap degrades a missing public projection to a bounded shell without rebuilding content', async () => {
+  const server = createServer();
+  try {
+    insertLearner(server, 'adult-u7', { id: 'learner-a', name: 'Alpha', sortIndex: 0, selected: true });
+    insertSubjectStateFor(server, 'adult-u7', 'learner-a', 'punctuation', {
+      data: punctuationHydrationData(),
+    });
+
+    const response = await getBootstrap(server);
+    assert.equal(response.status, 200);
+    const payload = await readJsonBody(response);
+    const punctuation = payload.subjectStates?.['learner-a::punctuation'];
+    assert.ok(punctuation);
+    assert.deepEqual(punctuation.data, {});
+    assert.equal(punctuation.ui?.subjectId, 'punctuation');
+    assert.equal(punctuation.ui?.learnerId, 'learner-a');
+    assert.equal(punctuation.ui?.stats, undefined,
+      'a missing derived projection never falls back to the heavyweight subject engine');
   } finally {
     server.close();
   }
@@ -1523,6 +1573,13 @@ test('PR799 follow-up: stale v3 Grammar hydration cache misses notModified after
     insertLearner(server, 'adult-u7', { id: 'learner-a', name: 'Alpha', sortIndex: 0, selected: true });
     insertSubjectStateFor(server, 'adult-u7', 'learner-a', 'grammar', {
       data: grammarHydrationData({ mode: 'learn' }),
+    });
+    insertPublicSubjectReadModel(server, 'learner-a', 'grammar', {
+      subjectId: 'grammar',
+      learnerId: 'learner-a',
+      phase: 'dashboard',
+      prefs: { mode: 'learn' },
+      stats: { concepts: { total: 18, secured: 1, due: 0, weak: 0 } },
     });
 
     const staleV3Digest = await computeWritableLearnerStatesDigest([
@@ -1545,7 +1602,7 @@ test('PR799 follow-up: stale v3 Grammar hydration cache misses notModified after
       'stale v3 revision must not keep a raw pre-PR799 Grammar cache alive');
     assert.equal(payload.revision?.bootstrapCapacityVersion, BOOTSTRAP_CAPACITY_VERSION);
     assert.notEqual(payload.revision?.hash, staleV3Revision,
-      'server emits a fresh v5 hash after the read-model projection bump');
+      'server emits a fresh current-version hash after the read-model projection bump');
 
     const grammar = payload.subjectStates?.['learner-a::grammar'];
     assert.ok(grammar, 'full bundle includes grammar subject state after probe miss');

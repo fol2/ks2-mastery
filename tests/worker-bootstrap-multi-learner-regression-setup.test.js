@@ -122,6 +122,9 @@ function insertSubjectState(server, learnerId, subjectId, {
 } = {}) {
   const marker = FIXTURE[learnerId]?.[subjectId] || {};
   const stateData = data || { prefs: { mode: 'smart', marker }, progress: { possess: { stage: marker.progress || 0 } } };
+  const publicUi = ui && typeof ui === 'object' && !Array.isArray(ui)
+    ? { ...ui, subjectId, learnerId, prefs: stateData.prefs || {} }
+    : null;
   if (subjectId === 'spelling') {
     upsertBoundedSpellingState(server.DB.db, {
       learnerId,
@@ -130,11 +133,20 @@ function insertSubjectState(server, learnerId, subjectId, {
       data: stateData,
       now: updatedAt,
     });
+    if (publicUi) {
+      runSql(server, `
+        UPDATE spelling_learner_state
+        SET public_ui_json = ?, public_ui_updated_at = ?
+        WHERE learner_id = ?
+      `, [JSON.stringify(publicUi), updatedAt, learnerId]);
+    }
     return;
   }
   runSql(server, `
-    INSERT INTO child_subject_state (learner_id, subject_id, ui_json, data_json, updated_at, updated_by_account_id)
-    VALUES (?, ?, ?, ?, ?, ?)
+    INSERT INTO child_subject_state (
+      learner_id, subject_id, ui_json, data_json,
+      public_ui_json, public_ui_updated_at, updated_at, updated_by_account_id
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
   `, [
     learnerId,
     subjectId,
@@ -143,6 +155,8 @@ function insertSubjectState(server, learnerId, subjectId, {
     // projections. Grammar keeps this marker under `ui.prefs` after the
     // Worker read-model is rebuilt.
     JSON.stringify(stateData),
+    publicUi ? JSON.stringify(publicUi) : null,
+    publicUi ? updatedAt : null,
     updatedAt,
     ACCOUNT_ID,
   ]);
@@ -498,10 +512,13 @@ test('multi-learner #4a: stale active session is included from preloaded subject
     const subjectStateReads = queryLog.filter((entry) => entry.operation === 'all' && /\bFROM child_subject_state\b/i.test(entry.sql));
     assert.equal(subjectStateReads.length, 1,
       'public bootstrap should reuse the preloaded child_subject_state rows for active-session discovery');
-    const activeSessionReads = queryLog.filter((entry) => entry.operation === 'all' && /\bFROM practice_sessions\b/i.test(entry.sql) && /\bAND id IN\b/i.test(entry.sql));
-    assert.equal(activeSessionReads.length, 1, 'active session row lookup still runs when a preloaded active id exists');
-    assert.deepEqual(activeSessionReads[0].params.filter((param) => param === 'learner-a-active-old'), ['learner-a-active-old'],
-      'active session lookup receives the id derived from preloaded subject state');
+    const activeSessionReads = queryLog.filter((entry) => entry.operation === 'all' && /\bFROM practice_sessions\b/i.test(entry.sql) && /\bUNION ALL\b/i.test(entry.sql));
+    assert.equal(activeSessionReads.length, 1, 'active and recent sessions share one bounded selected-learner lookup');
+    assert.deepEqual(
+      activeSessionReads[0].params.filter((param) => param === 'learner-a-active-old'),
+      ['learner-a-active-old', 'learner-a-active-old'],
+      'the compact projection point-reads the canonical active session and excludes it from recent history',
+    );
   } finally {
     server.close();
   }

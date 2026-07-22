@@ -162,6 +162,52 @@ function readProjectionRow(DB, learnerId = 'learner-a') {
   `).get(learnerId, COMMAND_PROJECTION_MODEL_KEY);
 }
 
+function readPublicSubjectProjectionRow(DB, subjectId = 'spelling', learnerId = 'learner-a') {
+  if (subjectId === 'spelling') {
+    return DB.db.prepare(`
+      SELECT public_ui_json AS model_json, public_ui_updated_at AS updated_at
+      FROM spelling_learner_state
+      WHERE learner_id = ?
+    `).get(learnerId);
+  }
+  return DB.db.prepare(`
+    SELECT public_ui_json AS model_json, public_ui_updated_at AS updated_at
+    FROM child_subject_state
+    WHERE learner_id = ? AND subject_id = ?
+  `).get(learnerId, subjectId);
+}
+
+test('subject commands persist their bounded public read model in the source-state batch', async () => {
+  const harness = createHarness();
+  try {
+    const result = await harness.command('start-session', {
+      mode: 'single',
+      slug: 'possess',
+      length: 1,
+    });
+    assert.equal(result.response.status, 200, JSON.stringify(result.body));
+    assert.equal(result.body.publicSubjectReadModel, undefined,
+      'the persistence-only read model must not leak into the command response');
+
+    const row = readPublicSubjectProjectionRow(harness.DB);
+    assert.ok(row, 'the subject public projection is materialised with the source write');
+    const persistedModel = JSON.parse(row.model_json);
+    assert.equal(persistedModel.subjectId, result.body.subjectReadModel.subjectId);
+    assert.equal(persistedModel.learnerId, result.body.subjectReadModel.learnerId);
+    assert.equal(persistedModel.phase, result.body.subjectReadModel.phase);
+    assert.deepEqual(persistedModel.stats, result.body.subjectReadModel.stats);
+    assert.equal(persistedModel.projections, undefined,
+      'bootstrap projection excludes command-only reward/event payloads');
+    const state = harness.DB.db.prepare(`
+      SELECT updated_at FROM spelling_learner_state WHERE learner_id = 'learner-a'
+    `).get();
+    assert.equal(row.updated_at, state.updated_at,
+      'bootstrap can reject a stale projection by comparing source timestamps');
+  } finally {
+    harness.close();
+  }
+});
+
 // ---------------------------------------------------------------------------
 // Scenario 1 — 2000-event learner issues a spelling command after first write
 //   → zero `SELECT ... FROM event_log` statements on the hot path.

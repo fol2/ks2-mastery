@@ -52,7 +52,7 @@ export const PUBLIC_BOOTSTRAP_RECENT_EVENT_LIMIT_PER_LEARNER = 50;
 // Any additive required field on the bootstrap envelope MUST bump this in
 // the same PR. `tests/worker-bootstrap-v2.test.js` has a snapshot test that
 // fails if the envelope shape changes without a version bump (scenario 15).
-export const PUBLIC_BOOTSTRAP_CAPACITY_VERSION = 7;
+export const PUBLIC_BOOTSTRAP_CAPACITY_VERSION = 8;
 export const BOOTSTRAP_CAPACITY_VERSION = PUBLIC_BOOTSTRAP_CAPACITY_VERSION;
 
 // U7: closed union for `meta.capacity.bootstrapMode` when the public

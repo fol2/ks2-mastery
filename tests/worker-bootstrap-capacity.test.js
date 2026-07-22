@@ -97,6 +97,16 @@ function insertSubjectState(server, accountId, learnerId) {
     },
     now: NOW,
   });
+  runSql(server, `
+    UPDATE spelling_learner_state
+    SET public_ui_json = ?, public_ui_updated_at = ?
+    WHERE learner_id = ?
+  `, [JSON.stringify({
+    subjectId: 'spelling',
+    learnerId,
+    phase: 'session',
+    session: { id: `${learnerId}-active`, type: 'learning', mode: 'smart' },
+  }), NOW, learnerId]);
 }
 
 function insertPracticeSession(server, accountId, {
@@ -362,10 +372,13 @@ test('production bootstrap keeps high-history public payloads bounded and redact
   assert.equal(subjectStateReads.length, 1,
     'bounded public bootstrap should not re-read child_subject_state for active-session discovery');
   const activeSessionReads = queryLog
-    .filter((entry) => entry.operation === 'all' && /\bFROM practice_sessions\b/i.test(entry.sql) && /\bAND id IN\b/i.test(entry.sql));
-  assert.equal(activeSessionReads.length, 1, 'selected learner active session is fetched through the bounded session loader');
-  assert.deepEqual(activeSessionReads[0].params.filter((param) => param === 'learner-high-a-active'), ['learner-high-a-active'],
-    'active session id should be derived once from the preloaded selected learner subject state');
+    .filter((entry) => entry.operation === 'all' && /\bFROM practice_sessions\b/i.test(entry.sql) && /\bUNION ALL\b/i.test(entry.sql));
+  assert.equal(activeSessionReads.length, 1, 'selected learner sessions use one bounded authority read');
+  assert.deepEqual(
+    activeSessionReads[0].params.filter((param) => param === 'learner-high-a-active'),
+    ['learner-high-a-active', 'learner-high-a-active'],
+    'the compact projection point-reads the canonical active session and excludes it from recent history',
+  );
 
   const eventReads = queryLog
     .filter((entry) => entry.operation === 'all' && /\bFROM event_log\b/i.test(entry.sql));
@@ -401,7 +414,7 @@ test('production bootstrap keeps high-history public payloads bounded and redact
   // revisions must miss the notModified probe. CDP stress hardening
   // 2026-06-13 bumped 5 -> 6 so selected-learner subject state
   // analytics switch to compact first-paint projections.
-  assert.equal(payload.meta.capacity.bootstrapCapacity.version, 7);
+  assert.equal(payload.meta.capacity.bootstrapCapacity.version, 8);
   assert.equal(payload.meta.capacity.bootstrapCapacity.mode, 'public-bounded');
   assert.equal('bootstrapPhaseTimings' in payload.meta.capacity, false, 'phase timings stay out of child-facing meta.capacity.');
 

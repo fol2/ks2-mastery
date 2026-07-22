@@ -236,18 +236,20 @@ export function createGrammarCommandHandlers({ now, random } = {}) {
       reactionEvents: projectedEvents.reactionEvents,
       toastEvents: projectedEvents.toastEvents,
     });
+    const readModels = buildGrammarCommandReadModel({
+      command: command.command,
+      learnerId: command.learnerId,
+      state: result.state,
+      projections,
+      now: nowValue,
+      aiEnrichment: result.aiEnrichment,
+      includePublicSubjectReadModel: true,
+    });
 
     return {
       learnerId: command.learnerId,
       changed: result.changed,
-      subjectReadModel: buildGrammarCommandReadModel({
-        command: command.command,
-        learnerId: command.learnerId,
-        state: result.state,
-        projections,
-        now: nowValue,
-        aiEnrichment: result.aiEnrichment,
-      }),
+      ...readModels,
       projections,
       events: projectedEvents.events,
       domainEvents: projectedEvents.domainEvents,

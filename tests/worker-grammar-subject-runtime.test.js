@@ -202,6 +202,8 @@ test('Grammar command route persists subject state, practice session, and respon
   assert.equal(start.body.subjectReadModel.content.templateCount, GRAMMAR_TEMPLATE_METADATA.length);
   assert.equal(start.body.mutation.kind, 'subject_command.grammar.start-session');
   assert.equal(start.body.mutation.appliedRevision, 1);
+  assert.equal(start.body.publicSubjectReadModel, undefined,
+    'the persistence-only full Grammar read model must not leak into the command response');
   const startedSession = DB.db.prepare(`
     SELECT status, session_state_json, summary_json
     FROM practice_sessions
@@ -233,11 +235,19 @@ test('Grammar command route persists subject state, practice session, and respon
   assert.ok(grammarItem, 'generated item mastery must be durable outside the hot subject document');
   assert.equal(JSON.parse(grammarItem.mastery_json).attempts, 1);
   const hotState = DB.db.prepare(`
-    SELECT ui_json, data_json FROM child_subject_state
+    SELECT ui_json, data_json, public_ui_json, public_ui_updated_at, updated_at
+    FROM child_subject_state
     WHERE learner_id = 'learner-a' AND subject_id = 'grammar'
   `).get();
   assert.deepEqual(JSON.parse(hotState.ui_json).mastery.items, {});
   assert.deepEqual(JSON.parse(hotState.data_json).mastery.items, {});
+  const publicGrammar = JSON.parse(hotState.public_ui_json);
+  assert.equal(publicGrammar.readModelPatch, undefined,
+    'the persisted bootstrap projection is the full public model, not the compact command patch');
+  assert.equal(typeof publicGrammar.analytics.progressSnapshot.securedConcepts, 'number',
+    'the persisted bootstrap projection retains full Grammar analytics');
+  assert.equal(hotState.public_ui_updated_at, hotState.updated_at,
+    'the Grammar projection and source state commit with the same freshness timestamp');
   assert.ok(
     Buffer.byteLength(JSON.stringify(submit.body), 'utf8') < 15_000,
     'submit-answer should not duplicate full reward projection events inside the subject read model',
