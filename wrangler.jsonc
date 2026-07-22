@@ -2,16 +2,14 @@
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "ks2-mastery",
   "main": "./dist/worker/index.js",
-  // scripts/build-worker.mjs already emits a production-ready split module
-  // graph. Re-bundling here flattens every subject content bank into one
-  // 15 MB cold-start module and makes unrelated subjects pay its parse cost.
-  "no_bundle": true,
-  "find_additional_modules": true,
-  "base_dir": "./dist/worker",
+  // Curriculum payloads stay outside executable JavaScript. Wrangler bundles
+  // the application code normally and uploads these immutable payloads as
+  // non-JavaScript modules, so unrelated subjects do not pay their parse cost.
   "rules": [
     {
-      "type": "ESModule",
-      "globs": ["**/*.js"]
+      "type": "Data",
+      "globs": ["**/*.bin"],
+      "fallthrough": true
     }
   ],
   "compatibility_date": "2026-04-20",
