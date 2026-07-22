@@ -518,11 +518,13 @@ test('worker spelling runtime keeps the generated spelling datasets compressed',
   }
 });
 
-test('worker deploy bundle excludes the public spelling dataset modules', async () => {
+test('worker deploy bundle keeps spelling gameplay code out of the startup graph', async () => {
   const result = await build({
     entryPoints: ['worker/src/index.js'],
+    outdir: 'dist/worker-bundle-audit',
     bundle: true,
     format: 'esm',
+    splitting: true,
     platform: 'browser',
     write: false,
     metafile: true,
@@ -543,6 +545,40 @@ test('worker deploy bundle excludes the public spelling dataset modules', async 
     inputs.includes('worker/src/generated-spelling-content-seed.js'),
     'Worker bundle must include the compressed Worker spelling seed.',
   );
+
+  const entryOutput = Object.entries(result.metafile.outputs).find(([, output]) => (
+    output.entryPoint?.replace(/\\/g, '/') === 'worker/src/index.js'
+  ));
+  assert.ok(entryOutput, 'Worker metafile must identify the deployment entrypoint.');
+
+  const staticOutputs = new Set();
+  const pendingOutputs = [entryOutput[0]];
+  while (pendingOutputs.length > 0) {
+    const outputPath = pendingOutputs.pop();
+    if (staticOutputs.has(outputPath)) continue;
+    staticOutputs.add(outputPath);
+    for (const imported of result.metafile.outputs[outputPath]?.imports || []) {
+      if (imported.kind === 'import-statement') pendingOutputs.push(imported.path);
+    }
+  }
+  const startupInputs = new Set(
+    [...staticOutputs].flatMap((outputPath) => (
+      Object.keys(result.metafile.outputs[outputPath]?.inputs || {})
+        .map((inputPath) => inputPath.replace(/\\/g, '/'))
+    )),
+  );
+
+  for (const deferredInput of [
+    'worker/src/generated-spelling-content-seed.js',
+    'worker/src/subjects/spelling/engine.js',
+    'shared/spelling/service.js',
+  ]) {
+    assert.equal(
+      startupInputs.has(deferredInput),
+      false,
+      `${deferredInput} must load only when a spelling gameplay command needs it.`,
+    );
+  }
 });
 
 // Regression pin for the 2026-04-26 deploy failure: events.js is reachable

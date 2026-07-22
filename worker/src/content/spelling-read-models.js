@@ -1,5 +1,5 @@
 import { cloneSerialisable } from '../../../src/platform/core/repositories/helpers.js';
-import { normaliseServerSpellingData } from '../subjects/spelling/engine.js';
+import { normaliseServerSpellingData } from '../subjects/spelling/state-normalisation.js';
 import { buildSpellingWordBankAudioCue } from '../subjects/spelling/audio.js';
 import { BadRequestError, NotFoundError } from '../errors.js';
 import {

@@ -1,7 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { createSubjectCommandClient } from '../src/platform/runtime/subject-command-client.js';
+import {
+  createSubjectCommandClient,
+  SubjectCommandClientError,
+} from '../src/platform/runtime/subject-command-client.js';
 
 function deferred() {
   let resolve;
@@ -106,6 +109,52 @@ test('subject command client retries transient server failures with the same req
   assert.deepEqual(commandBodies.map((body) => body.requestId), ['cmd-transient-503', 'cmd-transient-503']);
   assert.deepEqual(commandBodies.map((body) => body.expectedLearnerRevision), [7, 7]);
   assert.equal(revision, 8);
+});
+
+test('subject command failures expose the browser request id for Cloudflare invocation joins', async () => {
+  const requestId = 'subject-command-observation-503';
+  const previousWindow = globalThis.window;
+  const previousConsoleError = globalThis.console.error;
+  const hadWindow = Object.prototype.hasOwnProperty.call(globalThis, 'window');
+  const events = [];
+  globalThis.window = {};
+  globalThis.console.error = (...args) => events.push(args);
+
+  let thrown = null;
+  try {
+    const commands = createSubjectCommandClient({
+      retryAttempts: 0,
+      fetch: async () => new Response(JSON.stringify({
+        ok: false,
+        code: 'backend_unavailable',
+      }), { status: 503, headers: { 'content-type': 'application/json' } }),
+    });
+    await commands.send({
+      subjectId: 'spelling',
+      learnerId: 'learner-a',
+      command: 'start-session',
+      requestId,
+    });
+  } catch (error) {
+    thrown = error;
+  } finally {
+    globalThis.console.error = previousConsoleError;
+    if (hadWindow) globalThis.window = previousWindow;
+    else delete globalThis.window;
+  }
+
+  assert.ok(thrown instanceof SubjectCommandClientError);
+  assert.equal(thrown.requestId, requestId);
+  assert.equal(thrown.correlationId, requestId);
+  assert.deepEqual(events, [[
+    '[network] request_failed',
+    {
+      endpoint: '/api/subjects/spelling/command',
+      method: 'POST',
+      status: 503,
+      requestId,
+    },
+  ]]);
 });
 
 test('subject command client refreshes repositories for compact replay responses', async () => {

@@ -1,4 +1,5 @@
 import { uid } from '../core/utils.js';
+import { reportIngressRequestFailure } from '../core/request-id.js';
 
 const DEFAULT_RETRY_JITTER_MAX_MS = 125;
 const DEFAULT_RETRY_MAX_DELAY_MS = 2_000;
@@ -92,12 +93,20 @@ function createCommandBody({
 }
 
 export class SubjectCommandClientError extends Error {
-  constructor({ status = 0, payload = null, message = '' } = {}) {
+  constructor({
+    status = 0,
+    payload = null,
+    message = '',
+    requestId = '',
+    correlationId = '',
+  } = {}) {
     super(message || payload?.message || `Subject command failed (${status}).`);
     this.name = 'SubjectCommandClientError';
     this.status = Number(status) || 0;
     this.payload = payload;
     this.code = payload?.code || null;
+    this.requestId = requestId || payload?.requestId || '';
+    this.correlationId = correlationId || payload?.correlationId || this.requestId;
     // U6: when the server stamps `retryable: false` on the payload (e.g.
     // projection_unavailable), honour it so transport-retry cannot
     // accidentally storm the backend. Otherwise fall back to the default
@@ -156,9 +165,10 @@ export function createSubjectCommandClient({
     // `requestId`, not the header. See `worker/src/logger.js` for the
     // ingress-validator shape. U6 will add `isCommandBackendExhausted()`
     // alongside this function — the audit here is U3-only.
+    const endpoint = joinUrl(baseUrl, `/api/subjects/${encodeURIComponent(cleanSubjectId)}/command`);
     let response;
     try {
-      response = await fetchFn(joinUrl(baseUrl, `/api/subjects/${encodeURIComponent(cleanSubjectId)}/command`), {
+      response = await fetchFn(endpoint, {
         method: 'POST',
         headers: {
           accept: 'application/json',
@@ -173,6 +183,8 @@ export function createSubjectCommandClient({
         status: 0,
         payload: { code: 'subject_command_network_error' },
         message: error?.message || 'Subject command could not reach the server.',
+        requestId,
+        correlationId: requestId,
       });
     }
 
@@ -181,6 +193,8 @@ export function createSubjectCommandClient({
       throw new SubjectCommandClientError({
         status: response.status,
         payload: responsePayload,
+        requestId,
+        correlationId: requestId,
       });
     }
 
@@ -260,6 +274,12 @@ export function createSubjectCommandClient({
           continue;
         }
 
+        reportIngressRequestFailure({
+          endpoint: joinUrl(baseUrl, `/api/subjects/${encodeURIComponent(cleanSubjectId)}/command`),
+          method: 'POST',
+          status: error?.status,
+          requestId,
+        });
         throw error;
       }
     }

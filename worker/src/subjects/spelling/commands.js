@@ -1,5 +1,5 @@
 import { resolveRuntimeSnapshot } from '../../../../src/subjects/spelling/content/model.js';
-import { readSeededSpellingContentBundle } from '../../generated-spelling-content-seed.js';
+import { readSeededSpellingContentBundle } from '../../spelling-content-seed-loader.js';
 import { NotFoundError, isProjectionUnavailableError } from '../../errors.js';
 import { combineCommandEvents } from '../../projections/events.js';
 import {
@@ -189,19 +189,11 @@ async function replayContextEvents(context, learnerId) {
   return [...replayRequests, ...referenceEvents];
 }
 
-async function readRuntimeContent(context, observe = null) {
+async function readRuntimeContent(context) {
   if (typeof context.repository.readSpellingRuntimeContent === 'function') {
-    const options = {
+    return context.repository.readSpellingRuntimeContent(context.session.accountId, 'spelling', {
       includeAccountContent: false,
-    };
-    if (typeof observe === 'function') {
-      Object.defineProperty(options, 'observe', { value: observe });
-    }
-    return context.repository.readSpellingRuntimeContent(
-      context.session.accountId,
-      'spelling',
-      options,
-    );
+    });
   }
   const contentResult = await context.repository.readSubjectContent(context.session.accountId, 'spelling');
   const seededBundle = await readSeededSpellingContentBundle();
@@ -384,42 +376,6 @@ export function createSpellingCommandHandlers({ now, random } = {}) {
       });
     }
 
-    const observesColdCommand = true;
-    const observationStartedAt = performance.now();
-    let observationPhaseStartedAt = observationStartedAt;
-    const observePhase = (phase) => {
-      if (!observesColdCommand) return;
-      const observedAt = performance.now();
-      // Temporary production observation. This is intentionally a small
-      // checkpoint stream so a CPU termination still leaves its last phase.
-      // eslint-disable-next-line no-console
-      console.info('[ks2-observe]', JSON.stringify({
-        event: 'spelling_command_phase',
-        command: command.command,
-        requestId: command.requestId,
-        phase,
-        phaseMs: Math.round((observedAt - observationPhaseStartedAt) * 100) / 100,
-        elapsedMs: Math.round((observedAt - observationStartedAt) * 100) / 100,
-      }));
-      observationPhaseStartedAt = observedAt;
-    };
-    const observeRepository = (phase, details = {}) => {
-      if (!observesColdCommand) return;
-      const observedAt = performance.now();
-      // Temporary production observation. Remove with the phase checkpoints
-      // once the cold-command cost has been attributed.
-      // eslint-disable-next-line no-console
-      console.info('[ks2-observe]', JSON.stringify({
-        event: 'spelling_repository_phase',
-        command: command.command,
-        requestId: command.requestId,
-        phase,
-        elapsedMs: Math.round((observedAt - observationStartedAt) * 100) / 100,
-        ...details,
-      }));
-    };
-    observePhase('handler-started');
-
     const nowValue = Number.isFinite(Number(context.now)) ? Number(context.now) : Date.now();
     let runtimeRecord = context.commandRuntime || (typeof context.repository.readSpellingCommandRuntime === 'function'
       ? await context.repository.readSpellingCommandRuntime(
@@ -435,9 +391,7 @@ export function createSpellingCommandHandlers({ now, random } = {}) {
         'spelling',
         { skipAccessCheck: true },
       ));
-    observePhase('runtime-read');
-    const contentResult = await readRuntimeContent(context, observeRepository);
-    observePhase('content-read');
+    const contentResult = await readRuntimeContent(context);
     const snapshot = contentResult.snapshot;
     if (!snapshot?.words?.length) {
       throw new NotFoundError('No published spelling content is available.', {
@@ -494,7 +448,6 @@ export function createSpellingCommandHandlers({ now, random } = {}) {
           skipAccessCheck: true,
           learnerData: runtimeRecord.subjectRecord?.data || {},
           now: nowValue,
-          observe: observeRepository,
         },
       );
       runtimeRecord = {
@@ -505,7 +458,6 @@ export function createSpellingCommandHandlers({ now, random } = {}) {
         },
       };
     }
-    observePhase('working-set-read');
 
     const usesBoundedGameplayStore = !isLegacyGameplayWorkingSet(runtimeRecord.subjectRecord?.data);
     const completeCatalogue = workingSetPlan.completeCatalogue || !usesBoundedGameplayStore;
@@ -530,7 +482,6 @@ export function createSpellingCommandHandlers({ now, random } = {}) {
       command: command.command,
       payload: command.payload,
     });
-    observePhase('engine-applied');
     const domainEvents = Array.isArray(result.events) ? result.events : [];
     // Projection is a derived reward/read-model dependency. If it is
     // temporarily unavailable, keep the primary spelling command flowing and
@@ -588,7 +539,6 @@ export function createSpellingCommandHandlers({ now, random } = {}) {
         existingEvents: projectionState.events,
         seedTokens: projectionInput.tokens || [],
       });
-    observePhase('projection-built');
     const replayAudioCue = await buildSpellingAudioCue({
       learnerId: command.learnerId,
       state: result.state,
@@ -598,7 +548,6 @@ export function createSpellingCommandHandlers({ now, random } = {}) {
       state: result.state,
       audio: result.audio,
     }) : null;
-    observePhase('audio-built');
 
     const projections = projectionInput.degraded
       ? emptyRewardProjection(projectedEvents.domainEvents)
@@ -633,7 +582,7 @@ export function createSpellingCommandHandlers({ now, random } = {}) {
       ? materialiseSpellingGameplayStats(persistedSpellingStats, nowValue)
       : result.stats;
 
-    const commandResponse = {
+    return {
       learnerId: command.learnerId,
       changed: result.changed,
       subjectReadModel: buildSpellingReadModel({
@@ -687,8 +636,6 @@ export function createSpellingCommandHandlers({ now, random } = {}) {
       // non-v1 fields from a newer writer are preserved on overwrite.
       projectionContext: projectionInput.projectionContext || (projectionInput.degraded ? null : projectionInput),
     };
-    observePhase('response-built');
-    return commandResponse;
   }
 
   return Object.fromEntries(SPELLING_COMMANDS.map((name) => [name, handleSpellingCommand]));

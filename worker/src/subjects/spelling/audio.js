@@ -2,7 +2,7 @@ import { sha256 } from '../../auth.js';
 import { BadRequestError } from '../../errors.js';
 import { resolveRuntimeSnapshot } from '../../../../src/subjects/spelling/content/model.js';
 import { resolveSentenceIndex } from '../../../../shared/spelling-audio.js';
-import { readSeededSpellingContentBundle } from '../../generated-spelling-content-seed.js';
+import { readSeededSpellingContentBundle } from '../../spelling-content-seed-loader.js';
 
 function cleanText(value) {
   return String(value || '').replace(/\s+/g, ' ').trim();
