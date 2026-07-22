@@ -50,6 +50,10 @@ import {
 import {
   buildContentOperationAssetScan,
 } from './assets.js';
+import {
+  buildContentOperationHeroExposureProjection,
+  CONTENT_OPERATION_HERO_EXPOSURE_PROOF_KEY,
+} from './release-projections.js';
 
 function parseJson(value, fallback = null) {
   if (value == null || value === '') return fallback;
@@ -344,6 +348,7 @@ const RELEASE_PROOF_RESERVED_KEYS = new Set([
   'assetWarnings',
   RELEASE_AUDIO_PROOF_KEY,
   RELEASE_ASSET_PROOF_KEY,
+  CONTENT_OPERATION_HERO_EXPOSURE_PROOF_KEY,
   RELEASE_PRODUCTION_PROOF_KEY,
 ]);
 const PRODUCTION_PROOF_SURFACES = Object.freeze([
@@ -355,6 +360,7 @@ const PRODUCTION_PROOF_SURFACES = Object.freeze([
 const PRODUCTION_PROOF_RESERVED_KEYS = new Set([
   RELEASE_AUDIO_PROOF_KEY,
   RELEASE_ASSET_PROOF_KEY,
+  CONTENT_OPERATION_HERO_EXPOSURE_PROOF_KEY,
   RELEASE_PRODUCTION_PROOF_KEY,
 ]);
 
@@ -560,8 +566,11 @@ function normaliseCallerReleaseProof(proof = null) {
   return cloneSerialisable(proof);
 }
 
-function buildReleaseProof(proof = null, approval = null, audioScan = null, assetScan = null) {
-  let releaseProof = normaliseCallerReleaseProof(proof);
+function buildReleaseProof(proof = null, approval = null, audioScan = null, assetScan = null, content = {}) {
+  let releaseProof = {
+    ...(normaliseCallerReleaseProof(proof) || {}),
+    [CONTENT_OPERATION_HERO_EXPOSURE_PROOF_KEY]: buildContentOperationHeroExposureProjection(content),
+  };
   if (approval?.audioFallback?.allowed) {
     releaseProof = {
       ...(releaseProof || {}),
@@ -1484,6 +1493,7 @@ export function createContentOperationsRepository({ db, env = {}, now }) {
       const source = legacy?.source || { type: 'bundled_fallback' };
       const releaseProof = {
         ...(proof && typeof proof === 'object' && !Array.isArray(proof) ? proof : {}),
+        [CONTENT_OPERATION_HERO_EXPOSURE_PROOF_KEY]: buildContentOperationHeroExposureProjection(validation.bundle),
         seed: {
           source,
           summary,
@@ -2772,7 +2782,13 @@ export function createContentOperationsRepository({ db, env = {}, now }) {
       const nowTs = Number(nowFactory());
       const snapshotHash = contentOperationHash(candidate.candidate, 'release');
       const encodedSnapshot = await encodeContentOperationSnapshot(candidate.candidate);
-      const releaseProof = buildReleaseProof(proof, approval, publishAudioScan, currentAssetScan);
+      const releaseProof = buildReleaseProof(
+        proof,
+        approval,
+        publishAudioScan,
+        currentAssetScan,
+        candidate.candidate,
+      );
       const releaseAudioProof = audioReleaseProofFromProof(releaseProof);
       const releaseAssetProof = releaseAssetProofFromProof(releaseProof);
       const revertSource = await readPackageRevertSource(db, packageId);
@@ -3081,6 +3097,7 @@ export function createContentOperationsRepository({ db, env = {}, now }) {
       const targetAssetProof = releaseAssetProofFromProof(target.proof);
       const rollbackProof = {
         ...(proof && typeof proof === 'object' && !Array.isArray(proof) ? proof : {}),
+        [CONTENT_OPERATION_HERO_EXPOSURE_PROOF_KEY]: buildContentOperationHeroExposureProjection(target.snapshot),
         ...(targetAssetProof.assetSummary || targetAssetProof.assetReferenceManifest ? {
           [RELEASE_ASSET_PROOF_KEY]: {
             assetSummary: cloneSerialisable(targetAssetProof.assetSummary),

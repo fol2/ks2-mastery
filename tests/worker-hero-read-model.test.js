@@ -7,6 +7,10 @@ import {
   __heroReadModelInFlightSizeForTests,
   __readHeroReadModelInFlightForTests,
 } from '../worker/src/hero/routes.js';
+import {
+  buildContentOperationHeroExposureProjection,
+  CONTENT_OPERATION_HERO_EXPOSURE_PROOF_KEY,
+} from '../worker/src/content-operations/release-projections.js';
 import { createWorkerRepositoryServer } from './helpers/worker-server.js';
 
 // ── Helpers ────────────────────────────────────────────────────────────
@@ -165,6 +169,73 @@ test('hero read-model avoids account spelling content rows', async () => {
     assert.equal(response.status, 200);
     assert.equal(payload.ok, true);
     assert.equal(payload.hero.mode, 'shadow');
+  } finally {
+    server.close();
+  }
+});
+
+test('hero read-model filters Camp from release metadata without reading the content snapshot', async () => {
+  const server = createWorkerRepositoryServer({
+    env: {
+      HERO_MODE_SHADOW_ENABLED: 'true',
+      HERO_MODE_PROGRESS_ENABLED: 'true',
+      HERO_MODE_ECONOMY_ENABLED: 'true',
+      HERO_MODE_CAMP_ENABLED: 'true',
+    },
+  });
+  try {
+    await seedLearner(server, 'adult-a', 'learner-a');
+    const projection = buildContentOperationHeroExposureProjection({
+      rewardTracks: [
+        {
+          id: 'hero-camp-glossbloom',
+          poolId: 'core',
+          monsterId: 'glossbloom',
+          active: true,
+          heroExposure: { state: 'hidden', surfaces: ['heroCamp'] },
+        },
+        {
+          id: 'hero-camp-colisk',
+          poolId: 'core',
+          monsterId: 'colisk',
+          active: true,
+          heroExposure: { state: 'visible', surfaces: ['heroCamp'] },
+        },
+      ],
+    });
+    runSql(server, `
+      INSERT INTO content_operation_releases (
+        release_id, subject_id, status, snapshot_json, snapshot_hash,
+        base_release_id, package_id, published_at, published_by_account_id,
+        rollback_of_release_id, proof_json, created_at
+      ) VALUES (?, 'spelling', 'published', ?, ?, NULL, NULL, ?, ?, NULL, ?, ?)
+    `, [
+      'corel-hero-exposure-projection',
+      'x'.repeat(1_100_000),
+      'release-hero-exposure-projection',
+      NOW,
+      'adult-a',
+      JSON.stringify({ [CONTENT_OPERATION_HERO_EXPOSURE_PROOF_KEY]: projection }),
+      NOW,
+    ]);
+
+    server.DB.clearQueryLog();
+    const response = await server.fetch(`${HERO_URL}?learnerId=learner-a`);
+    const payload = await response.json();
+    const releaseQueries = server.DB.takeQueryLog()
+      .filter((entry) => /\bcontent_operation_releases\b/i.test(entry.sql || ''));
+
+    assert.equal(response.status, 200);
+    assert.deepEqual(
+      payload.hero.camp.monsters.map((monster) => monster.monsterId),
+      ['colisk'],
+    );
+    assert.equal(releaseQueries.length, 1, 'Camp reads one compact release metadata row');
+    assert.doesNotMatch(
+      releaseQueries[0].sql,
+      /\br\.snapshot_json\b/i,
+      'Camp metadata lookup must project NULL instead of the content snapshot',
+    );
   } finally {
     server.close();
   }

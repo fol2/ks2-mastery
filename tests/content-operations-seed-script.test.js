@@ -17,6 +17,10 @@ import {
 import {
   readSeededSpellingContentBundle,
 } from '../worker/src/generated-spelling-content-seed.js';
+import {
+  buildContentOperationHeroExposureProjection,
+  CONTENT_OPERATION_HERO_EXPOSURE_PROOF_KEY,
+} from '../worker/src/content-operations/release-projections.js';
 import { createMigratedSqliteD1Database } from './helpers/sqlite-d1.js';
 
 function splitSqlStatements(sql) {
@@ -41,6 +45,10 @@ test('content operations seed script builds idempotent first-release SQL', async
     assert.equal(plan.release.subjectId, 'spelling');
     assert.equal(plan.release.publishedAt, 1_777_000_000_000);
     assert.equal(plan.proof.seed.source.type, 'bundled_fallback');
+    assert.deepEqual(
+      plan.proof[CONTENT_OPERATION_HERO_EXPOSURE_PROOF_KEY],
+      buildContentOperationHeroExposureProjection(bundledContent),
+    );
     assert.equal(plan.snapshotStorage.encoding, 'gzip-base64');
     assert.ok(plan.snapshotStorage.byteLength < 2_000_000);
     assert.ok(plan.snapshotStorage.sqlChunkCount > 1);

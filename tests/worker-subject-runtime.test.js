@@ -582,18 +582,10 @@ test('repository runtime keeps account overrides ahead of global releases withou
   }
 });
 
-test('Hero spelling read-model uses the published global content operations release', async () => {
+test('Hero subject projections never hydrate the published Spelling content snapshot', async () => {
   const DB = createMigratedSqliteD1Database();
   const repository = createWorkerRepository({ env: { DB }, now: () => 1_777_000_000_000 });
   try {
-    const seeded = await readSeededSpellingContentBundle();
-    const word = seeded.draft.words.find((entry) => entry.spellingPool !== 'extra') || seeded.draft.words[0];
-    await publishSpellingWordEdit(repository, word, {
-      title: 'Hero public read-model content release',
-      fieldPath: '',
-      action: 'retire',
-      payload: { reason: 'Hero read-model visibility regression test.' },
-    });
     DB.db.prepare(`
       INSERT INTO adult_accounts (id, email, display_name, platform_role, selected_learner_id, created_at, updated_at, repo_revision)
       VALUES ('adult-a', 'adult-a@example.test', 'Adult A', 'parent', NULL, ?, ?, 0)
@@ -602,10 +594,26 @@ test('Hero spelling read-model uses the published global content operations rele
       INSERT INTO learner_profiles (id, name, year_group, avatar_color, goal, daily_minutes, created_at, updated_at, state_revision)
       VALUES ('learner-hero', 'Hero Learner', 'Y5', '#3E6FA8', 'sats', 15, ?, ?, 0)
     `).run(1_777_000_000_000, 1_777_000_000_000);
-    const runtime = await repository.readSpellingRuntimeContent('adult-a', 'spelling', {
-      includeAccountContent: false,
-    });
-    const expectedCoreWordCount = runtime.snapshot.words.filter(isStatutoryCoreWord).length;
+    DB.db.prepare(`
+      INSERT INTO content_operation_releases (
+        release_id, subject_id, status, snapshot_json, snapshot_hash,
+        base_release_id, package_id, published_at, published_by_account_id,
+        rollback_of_release_id, proof_json, created_at
+      )
+      VALUES ('corel-hero-cold-content', 'spelling', 'published', ?, 'release-hero-cold-content',
+        NULL, NULL, ?, 'adult-a', NULL, ?, ?)
+    `).run(
+      JSON.stringify({ shouldNeverReachHero: 'x'.repeat(1_100_000) }),
+      1_777_000_000_000,
+      JSON.stringify({
+        contentOperationsHeroExposure: {
+          version: 1,
+          rewardTracks: [],
+        },
+      }),
+      1_777_000_000_000,
+    );
+    const expectedCoreWordCount = 213;
     const emptyPool = {
       total: 0,
       secure: 0,
@@ -641,12 +649,19 @@ test('Hero spelling read-model uses the published global content operations rele
       1_777_000_000_000,
     );
 
+    DB.clearQueryLog();
     const heroModels = await repository.readHeroSubjectReadModels('learner-hero', {
       accountId: 'adult-a',
       now: 1_777_000_000_000,
     });
+    const heroQueries = DB.takeQueryLog();
 
     assert.equal(heroModels.spelling.ui.stats.all.total, expectedCoreWordCount);
+    assert.equal(
+      heroQueries.some((entry) => /\bFROM\s+content_operation_releases\b/i.test(entry.sql || '')),
+      false,
+      'Hero subject projections must be independent of the size of the published content snapshot',
+    );
   } finally {
     DB.close();
   }

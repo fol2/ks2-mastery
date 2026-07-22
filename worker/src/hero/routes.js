@@ -9,7 +9,6 @@ import { NotFoundError } from '../errors.js';
 import { buildHeroShadowReadModel } from './read-model.js';
 import { resolveHeroFlagsForAccount } from '../../../shared/hero/account-override.js';
 import { heroCampMonsterIdsFromRewardTracks } from './exposure.js';
-import { logN503HeroCheckpoint } from './debug-n503.js';
 
 const HERO_READ_MODEL_IN_FLIGHT_LIMIT = 64;
 const heroReadModelInFlight = new Map();
@@ -48,11 +47,6 @@ function envFlagEnabled(value) {
   return ['1', 'true', 'yes', 'on'].includes(String(value || '').trim().toLowerCase());
 }
 
-function campMonsterIdsFromSubjectExposure(subjectReadModels, { now, env } = {}) {
-  const rewardTracks = subjectReadModels?.spelling?.content?.rewardTracks;
-  return heroCampMonsterIdsFromRewardTracks(rewardTracks, { now, env });
-}
-
 /**
  * GET /api/hero/read-model
  *
@@ -64,7 +58,6 @@ function campMonsterIdsFromSubjectExposure(subjectReadModels, { now, env } = {})
  * @param {Object}  params.repository — createWorkerRepository instance
  * @param {Object}  params.env — Worker environment bindings
  * @param {Function} params.now — epoch-ms factory
- * @param {Object}  [params.capacity] — CapacityCollector (optional)
  * @returns {Response}
  */
 export async function handleHeroReadModel({
@@ -75,10 +68,7 @@ export async function handleHeroReadModel({
   repository,
   env,
   now,
-  capacity,
 }) {
-  logN503HeroCheckpoint(capacity, 'route-enter');
-
   // 1. Apply per-account override before feature flag gate (pA2 #683 fix).
   //    Without this, internal cohort accounts with global flags OFF cannot
   //    access the read-model — the override only applied on command routes.
@@ -128,7 +118,6 @@ export async function handleHeroReadModel({
   // 3. Validate learner access — reuses the repository's authz gate so a
   //    caller without membership receives a 403 before any data read.
   await repository.requireLearnerReadAccess(session.accountId, learnerId);
-  logN503HeroCheckpoint(capacity, 'access-checked');
 
   const payload = await readHeroReadModelInFlight({
     accountId: session.accountId,
@@ -139,33 +128,30 @@ export async function handleHeroReadModel({
     // 4. Load per-subject read models for the learner.
     //    This uses the same public read-model projection as bootstrap so Hero
     //    sees provider-readable subject signals rather than raw storage slots.
-    logN503HeroCheckpoint(capacity, 'subject-read-start');
     const subjectReadModels = await repository.readHeroSubjectReadModels(learnerId, {
       accountId: session.accountId,
       now: nowTs,
-    });
-    logN503HeroCheckpoint(capacity, 'subject-read-done', {
-      subjectCount: Object.keys(subjectReadModels || {}).length,
     });
 
     // 4b. P3 U7: load progress bundle for the v4 read model when progress enabled.
     const progressFlagEnabled = envFlagEnabled(resolvedEnv.HERO_MODE_PROGRESS_ENABLED);
     const economyFlagEnabled = envFlagEnabled(resolvedEnv.HERO_MODE_ECONOMY_ENABLED);
     const campFlagEnabled = envFlagEnabled(resolvedEnv.HERO_MODE_CAMP_ENABLED);
-    const campMonsterIds = campMonsterIdsFromSubjectExposure(subjectReadModels, {
+    const campRuntimeEnabled = progressFlagEnabled && economyFlagEnabled && campFlagEnabled;
+    const campRewardTracks = campRuntimeEnabled
+      && typeof repository.readHeroCampRewardTracks === 'function'
+      ? await repository.readHeroCampRewardTracks(session.accountId)
+      : null;
+    const campMonsterIds = heroCampMonsterIdsFromRewardTracks(campRewardTracks, {
       now: nowTs,
       env: resolvedEnv,
     });
     const heroProgressData = progressFlagEnabled
       ? await repository.readHeroProgressData(learnerId)
       : { heroProgressState: null, recentCompletedSessions: [] };
-    logN503HeroCheckpoint(capacity, 'progress-read-done', {
-      recentSessionCount: heroProgressData.recentCompletedSessions?.length || 0,
-    });
 
     // 5. Assemble the shadow read model (v3, v4, v5, or v6: pass accountId and env for
     //    quest fingerprint and the HERO_MODE_CHILD_UI_ENABLED gate).
-    logN503HeroCheckpoint(capacity, 'assemble-start');
     const result = buildHeroShadowReadModel({
       learnerId,
       accountId: session.accountId || '',
@@ -176,11 +162,8 @@ export async function handleHeroReadModel({
       recentCompletedSessions: heroProgressData.recentCompletedSessions,
       progressEnabled: progressFlagEnabled,
       economyEnabled: progressFlagEnabled && economyFlagEnabled,
-      campEnabled: progressFlagEnabled && economyFlagEnabled && campFlagEnabled,
+      campEnabled: campRuntimeEnabled,
       campMonsterIds,
-    });
-    logN503HeroCheckpoint(capacity, 'assemble-done', {
-      taskCount: result.dailyQuest?.tasks?.length || 0,
     });
 
     // U10: structured observability — fire-and-forget, never blocks the response.
@@ -200,7 +183,6 @@ export async function handleHeroReadModel({
     // only available via operator scripts / event_log, never over HTTP.
     const { debug, ...safeResult } = result;
 
-    logN503HeroCheckpoint(capacity, 'payload-ready');
     return { ok: true, hero: safeResult };
   });
 

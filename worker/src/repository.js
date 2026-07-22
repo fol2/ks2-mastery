@@ -199,6 +199,9 @@ import {
 } from './projections/events.js';
 import { buildSpellingAudioCue } from './subjects/spelling/audio.js';
 import { createContentOperationsRepository } from './content-operations/repository.js';
+import {
+  contentOperationHeroExposureProjectionFromProof,
+} from './content-operations/release-projections.js';
 import { buildGrammarReadModel } from './subjects/grammar/read-models.js';
 import { ARITHMETIC_CONTENT_RELEASE_ID } from '../../shared/arithmetic/content.js';
 import { READING_CONTENT_RELEASE_ID } from '../../shared/reading/metadata.js';
@@ -207,7 +210,6 @@ import { __readingEngineInternals } from './subjects/reading/engine.js';
 import { buildArithmeticReadModel } from './subjects/arithmetic/read-models.js';
 import { __arithmeticEngineInternals } from './subjects/arithmetic/engine.js';
 import { buildReasoningReadModel } from './subjects/reasoning/read-models.js';
-import { logN503HeroCheckpoint } from './hero/debug-n503.js';
 import { listPunctuationEvents } from './subjects/punctuation/events.js';
 import {
   createInitialPunctuationState,
@@ -963,29 +965,18 @@ async function readSpellingRuntimeContentReleaseBundle(
   subjectId,
   releaseRow,
   cachePrefix = 'release',
-  debugN503Capacity = null,
 ) {
   if (!releaseRow) return readSeededSpellingRuntimeContentBundle(subjectId);
   const key = spellingRuntimeContentReleaseKey(releaseRow, subjectId, cachePrefix);
   const cached = readCachedSpellingRuntimeContent(key);
-  if (cached) {
-    logN503HeroCheckpoint(debugN503Capacity, 'release-cache-hit');
-    return cached;
-  }
-  logN503HeroCheckpoint(debugN503Capacity, 'release-cache-miss');
-  logN503HeroCheckpoint(debugN503Capacity, 'release-snapshot-query-start');
+  if (cached) return cached;
   const fullReleaseRow = await readPublishedContentOperationReleaseRow(db, subjectId, {
     includeSnapshot: true,
     releaseId: releaseRow.release_id,
   });
-  logN503HeroCheckpoint(debugN503Capacity, 'release-snapshot-query-done', {
-    byteCount: typeof fullReleaseRow?.snapshot_json === 'string'
-      ? fullReleaseRow.snapshot_json.length
-      : 0,
-  });
   return rememberSpellingRuntimeContent(
     key,
-    await buildSpellingRuntimeContentFromRelease(fullReleaseRow, subjectId, debugN503Capacity),
+    await buildSpellingRuntimeContentFromRelease(fullReleaseRow, subjectId),
   );
 }
 
@@ -1134,6 +1125,16 @@ function contentOperationReleaseRevisionToken(row) {
   ].join(':');
 }
 
+async function readHeroCampRewardTracks(db, accountId, subjectId = 'spelling') {
+  const releaseRow = await readResolvedContentOperationReleaseRow(db, accountId, subjectId, {
+    includeSnapshot: false,
+  });
+  if (!releaseRow) return null;
+  const proof = safeJsonParse(releaseRow.proof_json, null);
+  const projection = contentOperationHeroExposureProjectionFromProof(proof);
+  return projection ? cloneSerialisable(projection.rewardTracks) : null;
+}
+
 function runtimeMonsterAssetReferenceUrl(releaseId, referenceId) {
   return [
     CONTENT_OPERATION_MONSTER_ASSET_RUNTIME_ROUTE,
@@ -1216,12 +1217,9 @@ async function readSpellingRuntimeContentBundle(db, accountId, subjectId = 'spel
   includeGlobalContent = true,
   nowMs = Date.now(),
   env = {},
-  debugN503Capacity = null,
 } = {}) {
   if (includeGlobalContent) {
-    logN503HeroCheckpoint(debugN503Capacity, 'release-metadata-query-start');
     const releaseRow = await readResolvedContentOperationReleaseRow(db, accountId, subjectId);
-    logN503HeroCheckpoint(debugN503Capacity, 'release-metadata-query-done');
     if (releaseRow) {
       const cachePrefix = releaseRow.release_source === 'override' ? 'override' : 'release';
       const runtimeContent = await readSpellingRuntimeContentReleaseBundle(
@@ -1229,14 +1227,8 @@ async function readSpellingRuntimeContentBundle(db, accountId, subjectId = 'spel
         subjectId,
         releaseRow,
         cachePrefix,
-        debugN503Capacity,
       );
-      logN503HeroCheckpoint(debugN503Capacity, 'learner-visibility-start');
-      const visibleContent = resolveLearnerVisibleRuntimeContent(runtimeContent, { nowMs, env });
-      logN503HeroCheckpoint(debugN503Capacity, 'learner-visibility-done', {
-        wordCount: visibleContent?.snapshot?.words?.length || 0,
-      });
-      return visibleContent;
+      return resolveLearnerVisibleRuntimeContent(runtimeContent, { nowMs, env });
     }
   }
 
@@ -1618,36 +1610,20 @@ async function buildSpellingRuntimeContent(row, subjectId) {
   };
 }
 
-async function buildSpellingRuntimeContentFromRelease(row, subjectId, debugN503Capacity = null) {
+async function buildSpellingRuntimeContentFromRelease(row, subjectId) {
   if (!row?.snapshot_json) {
     return buildSeededSpellingRuntimeContent(subjectId);
   }
 
   try {
-    logN503HeroCheckpoint(debugN503Capacity, 'release-decode-start', {
-      byteCount: row.snapshot_json.length,
-    });
     const snapshotJson = await decodeContentOperationSnapshot(row.snapshot_json);
-    logN503HeroCheckpoint(debugN503Capacity, 'release-decode-done', {
-      byteCount: snapshotJson.length,
-    });
-    logN503HeroCheckpoint(debugN503Capacity, 'release-json-parse-start');
     const decodedSnapshot = JSON.parse(snapshotJson);
-    logN503HeroCheckpoint(debugN503Capacity, 'release-json-parse-done');
-    logN503HeroCheckpoint(debugN503Capacity, 'release-normalise-start');
     const content = normaliseSpellingContentBundle(decodedSnapshot);
-    logN503HeroCheckpoint(debugN503Capacity, 'release-normalise-done');
-    logN503HeroCheckpoint(debugN503Capacity, 'published-snapshot-start');
     const snapshot = buildPublishedSnapshotFromDraft(content.draft, {
       generatedAt: Number(row.published_at) || Date.now(),
       includeDeferredVisibility: true,
     });
-    logN503HeroCheckpoint(debugN503Capacity, 'published-snapshot-done', {
-      wordCount: snapshot?.words?.length || 0,
-    });
-    logN503HeroCheckpoint(debugN503Capacity, 'runtime-summary-start');
     const baseSummary = runtimeContentSummary(content, snapshot);
-    logN503HeroCheckpoint(debugN503Capacity, 'runtime-summary-done');
     return {
       subjectId,
       content,
@@ -12171,7 +12147,6 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
     // Returns both the normalised hero progress state AND recent completed
     // practice sessions (last 24h) for pending-completed detection.
     async readHeroProgressData(learnerId) {
-      logN503HeroCheckpoint(capacity, 'progress-query-start');
       const [progressState, sessionRows] = await Promise.all([
         readHeroProgressState(db, learnerId),
         all(db, `
@@ -12182,9 +12157,6 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
           LIMIT 20
         `, [learnerId, Date.now() - (24 * 60 * 60 * 1000)]),
       ]);
-      logN503HeroCheckpoint(capacity, 'progress-query-done', {
-        recentSessionCount: sessionRows.length,
-      });
       return { heroProgressState: progressState, recentCompletedSessions: sessionRows };
     },
     // Hero progress markers only change the daily field. Applying that field
@@ -13214,6 +13186,9 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
     async requireLearnerReadAccess(accountId, learnerId) {
       return requireLearnerReadAccess(db, accountId, learnerId);
     },
+    async readHeroCampRewardTracks(accountId, subjectId = 'spelling') {
+      return readHeroCampRewardTracks(db, accountId, subjectId);
+    },
     // Hero Mode P0/P2: read per-subject read-model data for the hero
     // providers. Spelling is intentionally sourced from its bounded gameplay
     // record; after migration 0023 the legacy child_subject_state spelling row
@@ -13223,7 +13198,6 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
     // P2 active session detection inspects `ui` for heroContext.
     async readHeroSubjectReadModels(learnerId, { accountId = '', now = Date.now() } = {}) {
       let rows;
-      logN503HeroCheckpoint(capacity, 'subject-row-query-start');
       if (!await boundedGameplayTableAvailable(db, 'spelling')) {
         rows = await all(db, `
           SELECT learner_id, subject_id, data_json, ui_json, updated_at, NULL AS spelling_stats_json
@@ -13263,41 +13237,14 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
           WHERE learner_id = ?
         `, [learnerId]);
       }
-      logN503HeroCheckpoint(capacity, 'subject-row-query-done', {
-        rowCount: rows.length,
-      });
       const result = {};
-      logN503HeroCheckpoint(capacity, 'punctuation-items-start');
       const punctuationItems = accountId
         ? await readPublicPunctuationItemRows(db, rows)
         : new Map();
-      logN503HeroCheckpoint(capacity, 'punctuation-items-done', {
-        itemCount: [...punctuationItems.values()]
-          .reduce((total, items) => total + (Array.isArray(items) ? items.length : 0), 0),
-      });
-      logN503HeroCheckpoint(capacity, 'spelling-content-start');
-      const spellingContent = accountId && rows.some((row) => row.subject_id === 'spelling')
-        ? await readSpellingRuntimeContentBundle(db, accountId, 'spelling', {
-          includeAccountContent: false,
-          includeGlobalContent: true,
-          nowMs: now,
-          env,
-          debugN503Capacity: capacity,
-        })
-        : null;
-      logN503HeroCheckpoint(capacity, 'spelling-content-done', {
-        wordCount: spellingContent?.snapshot?.words?.length || 0,
-      });
       for (const row of rows) {
-        const traceSubject = ['spelling', 'punctuation', 'grammar', 'reading', 'arithmetic', 'reasoning']
-          .includes(row.subject_id)
-          ? row.subject_id
-          : 'other';
-        logN503HeroCheckpoint(capacity, `projection-${traceSubject}-start`);
         const rawRecord = subjectStateRowToRecord(row);
         const publicRecord = accountId
           ? await publicSubjectStateRowToRecord(row, {
-            spellingContentSnapshot: spellingContent?.snapshot || null,
             punctuationItemRows: punctuationItems.get(subjectStateKey(row.learner_id, row.subject_id)) || [],
             now,
           })
@@ -13324,12 +13271,8 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
           result[row.subject_id] = {
             data,
             ui,
-            ...(row.subject_id === 'spelling' && spellingContent?.snapshot
-              ? { content: spellingContent.snapshot }
-              : {}),
           };
         }
-        logN503HeroCheckpoint(capacity, `projection-${traceSubject}-done`);
       }
       return result;
     },

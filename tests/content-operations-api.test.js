@@ -9,6 +9,9 @@ import {
   listContentOperationAudioJobs,
   reconcileContentOperationAudioJobs,
 } from '../worker/src/content-operations/audio.js';
+import {
+  CONTENT_OPERATION_HERO_EXPOSURE_PROOF_KEY,
+} from '../worker/src/content-operations/release-projections.js';
 import { createWorkerRepositoryServer } from './helpers/worker-server.js';
 
 const BASE_URL = 'https://repo.test';
@@ -1874,6 +1877,20 @@ test('content operations API requires Hero / Codex proof for hero exposure relea
           wordBank: { evidence: 'word-bank-smoke' },
         },
       },
+    });
+    const publishedProof = JSON.parse(server.DB.db.prepare(`
+      SELECT proof_json
+      FROM content_operation_releases
+      WHERE release_id = ?
+    `).get(published.release.releaseId).proof_json);
+    const publishedTrackProjection = publishedProof[CONTENT_OPERATION_HERO_EXPOSURE_PROOF_KEY]
+      .rewardTracks.find((track) => track.id === rewardTrack.id);
+    assert.deepEqual(publishedTrackProjection.heroExposure, {
+      state: 'scheduled',
+      surfaces: ['heroQuest'],
+      scheduledAt: NOW + 60_000,
+      rolloutFlag: 'content-operations-api-hero-proof',
+      previewAllowed: true,
     });
     assert.equal(published.release.history.productionProof.status, 'partial');
     assert.deepEqual(

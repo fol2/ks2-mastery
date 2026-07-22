@@ -51,7 +51,6 @@ import { consumeRateLimit, rateLimitResponse, rateLimitSubject } from './rate-li
 import { getReadModelDerivedWriteBreaker } from './circuit-breaker-server.js';
 import { isResetableBreakerName } from '../../src/platform/core/circuit-breaker.js';
 import { handleHeroReadModel } from './hero/routes.js';
-import { logN503HeroCheckpoint } from './hero/debug-n503.js';
 import { handleContentOperationsAdminRequest } from './content-operations/routes.js';
 import { readPublishedContentOperationMonsterAssetObject } from './content-operations/assets.js';
 import { resolveHeroStartTaskCommand } from './hero/launch.js';
@@ -564,13 +563,9 @@ async function visibleHeroCampMonsterIdsFromSpellingExposure(repository, account
   now = Date.now(),
   env = {},
 } = {}) {
-  if (!accountId || typeof repository?.readSpellingRuntimeContent !== 'function') return null;
+  if (!accountId || typeof repository?.readHeroCampRewardTracks !== 'function') return null;
   try {
-    const runtimeContent = await repository.readSpellingRuntimeContent(accountId, 'spelling', {
-      includeAccountContent: false,
-      includeGlobalContent: true,
-    });
-    const rewardTracks = runtimeContent?.snapshot?.rewardTracks;
+    const rewardTracks = await repository.readHeroCampRewardTracks(accountId);
     if (!Array.isArray(rewardTracks)) return null;
     return heroCampMonsterIdsFromRewardTracks(rewardTracks, {
       now,
@@ -948,9 +943,6 @@ export function createWorkerApp({
         method: request.method,
         startedAt: capacityStartedAt,
       });
-      if (url.pathname === '/api/hero/read-model') {
-        logN503HeroCheckpoint(capacity, 'fetch-enter');
-      }
 
       // U3 round 1 (P1 #03): thread the capacity collector through the
       // auth boundary so the production session-lookup query is counted.
@@ -1709,7 +1701,7 @@ export function createWorkerApp({
         }
 
         if (url.pathname === '/api/hero/read-model' && request.method === 'GET') {
-          return handleHeroReadModel({ request, url, session, account, repository, env, now, capacity });
+          return handleHeroReadModel({ request, url, session, account, repository, env, now });
         }
 
         if (url.pathname === '/api/hero/command' && request.method === 'POST') {
@@ -3780,9 +3772,6 @@ export function createWorkerApp({
 
       try {
         response = await runHandler();
-        if (url.pathname === '/api/hero/read-model') {
-          logN503HeroCheckpoint(capacity, 'handler-done');
-        }
       } catch (error) {
         errorCaught = error;
         response = errorResponse(error);
@@ -3874,9 +3863,6 @@ async function finaliseTelemetry({
   request = null,
   resolvedPlatformRole = null,
 }) {
-  if (url.pathname === '/api/hero/read-model') {
-    logN503HeroCheckpoint(capacity, 'telemetry-start');
-  }
   const wallMs = typeof performance?.now === 'function'
     ? Math.max(0, performance.now() - capacityStartedAt)
     : 0;
@@ -3955,10 +3941,6 @@ async function finaliseTelemetry({
   });
 
   capacityRequest(capacity, { env });
-
-  if (url.pathname === '/api/hero/read-model') {
-    logN503HeroCheckpoint(capacity, 'telemetry-done');
-  }
 
   return decorateResponse(outgoing, {
     capacity,

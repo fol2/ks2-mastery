@@ -9,6 +9,10 @@ import {
 import {
   isEncodedContentOperationSnapshot,
 } from '../src/subjects/spelling/content/release-snapshot-codec.js';
+import {
+  buildContentOperationHeroExposureProjection,
+  CONTENT_OPERATION_HERO_EXPOSURE_PROOF_KEY,
+} from '../worker/src/content-operations/release-projections.js';
 
 async function publishWordEdit(repository, word, {
   actorAccountId = 'admin-a',
@@ -113,6 +117,10 @@ test('content operations repository seeds the first global release idempotently 
     assert.equal(first.seeded, true);
     assert.equal(first.source.type, 'bundled_fallback');
     assert.equal(first.snapshot.publication.currentReleaseId, seeded.publication.currentReleaseId);
+    assert.deepEqual(
+      first.proof[CONTENT_OPERATION_HERO_EXPOSURE_PROOF_KEY],
+      buildContentOperationHeroExposureProjection(seeded),
+    );
     assert.equal(second.seeded, false);
     assert.equal(second.releaseId, first.releaseId);
     assert.deepEqual(second.snapshot, first.snapshot);
@@ -165,6 +173,10 @@ test('content operations repository rollback writes a new latest release pointin
     assert.equal(rollback.proof.rollback.reason, 'Restore the seeded content after a test edit.');
     assert.equal(rollback.proof.rollback.approvedByAccountId, 'admin-a');
     assert.equal(rollback.proof.rollback.publishedByAccountId, 'admin-a');
+    assert.deepEqual(
+      rollback.proof[CONTENT_OPERATION_HERO_EXPOSURE_PROOF_KEY],
+      seedRelease.proof[CONTENT_OPERATION_HERO_EXPOSURE_PROOF_KEY],
+    );
     assert.equal(rollback.snapshotHash, seedRelease.snapshotHash);
     assert.deepEqual(rollback.snapshot, seedRelease.snapshot);
     assert.equal(latest.releaseId, rollback.releaseId);

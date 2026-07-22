@@ -18,6 +18,10 @@ import {
 import {
   readSeededSpellingContentBundle,
 } from '../worker/src/generated-spelling-content-seed.js';
+import {
+  buildContentOperationHeroExposureProjection,
+  CONTENT_OPERATION_HERO_EXPOSURE_PROOF_KEY,
+} from '../worker/src/content-operations/release-projections.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -366,6 +370,7 @@ export async function buildFirstGlobalReleaseSeedPlan({
     script: scriptRelativePath,
   };
   const proof = {
+    [CONTENT_OPERATION_HERO_EXPOSURE_PROOF_KEY]: buildContentOperationHeroExposureProjection(validation.bundle),
     seed: {
       source: seedSource,
       summary,
