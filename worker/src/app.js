@@ -51,8 +51,6 @@ import { consumeRateLimit, rateLimitResponse, rateLimitSubject } from './rate-li
 import { getReadModelDerivedWriteBreaker } from './circuit-breaker-server.js';
 import { isResetableBreakerName } from '../../src/platform/core/circuit-breaker.js';
 import { handleHeroReadModel } from './hero/routes.js';
-import { handleContentOperationsAdminRequest } from './content-operations/routes.js';
-import { readPublishedContentOperationMonsterAssetObject } from './content-operations/assets.js';
 import { resolveHeroStartTaskCommand } from './hero/launch.js';
 import { resolveHeroClaimCommand } from './hero/claim.js';
 import { resolveHeroCampCommand } from './hero/camp.js';
@@ -1443,6 +1441,7 @@ export function createWorkerApp({
 
         const publicMonsterAssetMatch = /^\/api\/content-operations\/assets\/monster-image\/([^/]+)\/([^/]+)$/.exec(url.pathname);
         if (publicMonsterAssetMatch && request.method === 'GET') {
+          const { readPublishedContentOperationMonsterAssetObject } = await import('./content-operations/assets.js');
           const releaseId = decodeRouteSegment(
             publicMonsterAssetMatch[1],
             'content_operation_monster_asset_release_id_invalid',
@@ -2650,16 +2649,22 @@ export function createWorkerApp({
           return json({ ok: true, ...result });
         }
 
-        const contentOperationsResponse = await handleContentOperationsAdminRequest({
-          url,
-          request,
-          env,
-          session,
-          repository,
-          capacity,
-          now,
-        });
-        if (contentOperationsResponse) return contentOperationsResponse;
+        if (
+          url.pathname === '/api/admin/content-operations'
+          || url.pathname.startsWith('/api/admin/content-operations/')
+        ) {
+          const { handleContentOperationsAdminRequest } = await import('./content-operations/routes.js');
+          const contentOperationsResponse = await handleContentOperationsAdminRequest({
+            url,
+            request,
+            env,
+            session,
+            repository,
+            capacity,
+            now,
+          });
+          if (contentOperationsResponse) return contentOperationsResponse;
+        }
 
         // P6 U8: Generic asset CAS routes — delegate to asset-specific handlers
         // keyed by assetId. Currently supports 'monster-visual-config'; additional

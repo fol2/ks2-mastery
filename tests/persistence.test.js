@@ -510,9 +510,17 @@ test('bootstrap 503 with a usable cache degrades once and backs off immediate fu
   const storage = installMemoryStorage();
   const server = createMockRepositoryServer({ learners: learnerSnapshot() });
   let now = 1_000;
+  let failedBootstrapRequestId = null;
+  const observedFetch = async (input, init = {}) => {
+    const url = new URL(typeof input === 'string' ? input : input.url, 'https://repo.test');
+    if (url.pathname === '/api/bootstrap' && server.requests.length > 0) {
+      failedBootstrapRequestId = new Headers(init.headers).get('x-ks2-request-id');
+    }
+    return server.fetch(input, init);
+  };
   const commonOptions = {
     baseUrl: 'https://repo.test',
-    fetch: server.fetch.bind(server),
+    fetch: observedFetch,
     storage,
     now: () => now,
     random: () => 0,
@@ -544,6 +552,8 @@ test('bootstrap 503 with a usable cache degrades once and backs off immediate fu
   assert.equal(degraded.cacheState, 'stale-copy');
   assert.equal(degraded.pendingWriteCount, 0);
   assert.equal(degraded.lastError.code, 'exceeded_cpu');
+  assert.match(failedBootstrapRequestId, /^ks2_req_/);
+  assert.equal(degraded.lastError.correlationId, failedBootstrapRequestId);
   assert.equal(degraded.lastError.details.bootstrapBackoff.attempt, 1);
   assert.equal(degraded.lastError.details.bootstrapBackoff.retryAfterMs, 2_000);
   assert.equal(restoredRepositories.learners.read().selectedId, 'learner-a');

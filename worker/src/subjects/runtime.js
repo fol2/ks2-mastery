@@ -1,9 +1,4 @@
 import { NotFoundError } from '../errors.js';
-import { createArithmeticCommandHandlers } from './arithmetic/commands.js';
-import { createGrammarCommandHandlers } from './grammar/commands.js';
-import { createReadingCommandHandlers } from './reading/commands.js';
-import { createReasoningCommandHandlers } from './reasoning/commands.js';
-import { createSpellingCommandHandlers } from './spelling/commands.js';
 
 function handlerFor(handlers, subjectId, command) {
   const subjectHandlers = handlers?.[subjectId];
@@ -54,22 +49,28 @@ function createLazyCommandHandlers(loadHandlers, options = {}) {
   };
 }
 
-function createPunctuationLazyCommandHandlers(options = {}) {
-  return createLazyCommandHandlers(
-    () => import('./punctuation/commands.js').then((module) => module.createPunctuationCommandHandlers),
-    options,
-  );
+const SUBJECT_HANDLER_LOADERS = Object.freeze({
+  arithmetic: () => import('./arithmetic/commands.js').then((module) => module.createArithmeticCommandHandlers),
+  grammar: () => import('./grammar/commands.js').then((module) => module.createGrammarCommandHandlers),
+  punctuation: () => import('./punctuation/commands.js').then((module) => module.createPunctuationCommandHandlers),
+  reading: () => import('./reading/commands.js').then((module) => module.createReadingCommandHandlers),
+  reasoning: () => import('./reasoning/commands.js').then((module) => module.createReasoningCommandHandlers),
+  spelling: () => import('./spelling/commands.js').then((module) => module.createSpellingCommandHandlers),
+});
+
+function createSubjectLazyCommandHandlers(subjectId, options = {}) {
+  return createLazyCommandHandlers(SUBJECT_HANDLER_LOADERS[subjectId], options);
 }
 
 export function createWorkerSubjectRuntime(options = {}) {
   return createSubjectRuntime({
     handlers: {
-      arithmetic: createArithmeticCommandHandlers(options.arithmetic || {}),
-      grammar: createGrammarCommandHandlers(options.grammar || {}),
-      punctuation: createPunctuationLazyCommandHandlers(options.punctuation || {}),
-      reading: createReadingCommandHandlers(options.reading || {}),
-      reasoning: createReasoningCommandHandlers(options.reasoning || {}),
-      spelling: createSpellingCommandHandlers(options.spelling || {}),
+      arithmetic: createSubjectLazyCommandHandlers('arithmetic', options.arithmetic || {}),
+      grammar: createSubjectLazyCommandHandlers('grammar', options.grammar || {}),
+      punctuation: createSubjectLazyCommandHandlers('punctuation', options.punctuation || {}),
+      reading: createSubjectLazyCommandHandlers('reading', options.reading || {}),
+      reasoning: createSubjectLazyCommandHandlers('reasoning', options.reasoning || {}),
+      spelling: createSubjectLazyCommandHandlers('spelling', options.spelling || {}),
       ...(options.handlers || {}),
     },
   });

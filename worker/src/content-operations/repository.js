@@ -31,7 +31,7 @@ import {
 } from '../../../src/subjects/spelling/content/release-snapshot-codec.js';
 import {
   readSeededSpellingContentBundle,
-} from '../generated-spelling-content-seed.js';
+} from '../spelling-content-seed-loader.js';
 import {
   all,
   batch,

@@ -78,6 +78,10 @@ describe('createHeroModeClient — readModel', () => {
     assert.equal(url, '/api/hero/read-model?learnerId=abc');
     assert.equal(init.method, 'GET');
     assert.equal(init.headers.accept, 'application/json');
+    assert.match(
+      init.headers['x-ks2-request-id'],
+      /^ks2_req_[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
+    );
   });
 
   it('returns parsed JSON response on success', async () => {
@@ -115,6 +119,22 @@ describe('createHeroModeClient — readModel', () => {
     assert.ok(err instanceof HeroModeClientError);
     assert.equal(err.code, 'hero_shadow_disabled');
     assert.equal(err.status, 404);
+  });
+
+  it('retains the outgoing request id when a CPU termination response has no JSON correlation payload', async () => {
+    const fakeFetch = mockFetch(503, {});
+    const client = createHeroModeClient({
+      ...defaultOpts(),
+      fetch: fakeFetch,
+      readModelRetryAttempts: 0,
+    });
+
+    const err = await client.readModel({ learnerId: 'abc' }).catch(error => error);
+    const sentRequestId = fakeFetch.calls[0].init.headers['x-ks2-request-id'];
+
+    assert.ok(err instanceof HeroModeClientError);
+    assert.equal(err.requestId, sentRequestId);
+    assert.equal(err.correlationId, sentRequestId);
   });
 
   it('does not retry read-model errors marked non-retryable by the server', async () => {
@@ -270,6 +290,21 @@ describe('createHeroModeClient — startTask happy path', () => {
 // ---------------------------------------------------------------------------
 
 describe('createHeroModeClient — startTask error paths', () => {
+  it('retains the browser-owned request id when a command receives an empty 503', async () => {
+    const fakeFetch = mockFetch(503, {});
+    const client = createHeroModeClient({ ...defaultOpts(), fetch: fakeFetch });
+
+    const err = await client.startTask({
+      learnerId: 'l', questId: 'q', questFingerprint: 'fp', taskId: 't', requestId: 'r',
+    }).catch(error => error);
+    const sentRequestId = fakeFetch.calls[0].init.headers['x-ks2-request-id'];
+
+    assert.ok(err instanceof HeroModeClientError);
+    assert.match(sentRequestId, /^ks2_req_/);
+    assert.equal(err.requestId, sentRequestId);
+    assert.equal(err.correlationId, sentRequestId);
+  });
+
   it('hero_quest_stale → HeroModeClientError with correct code', async () => {
     const fakeFetch = mockFetch(409, { ok: false, code: 'hero_quest_stale', message: 'Quest is stale' });
     const client = createHeroModeClient({ ...defaultOpts(), fetch: fakeFetch });

@@ -8,7 +8,7 @@ import {
 } from '../../../src/subjects/spelling/content/operations-model.js';
 import {
   readSeededSpellingContentBundle,
-} from '../generated-spelling-content-seed.js';
+} from '../spelling-content-seed-loader.js';
 
 function normaliseString(value, fallback = '') {
   return typeof value === 'string' && value.trim() ? value.trim() : fallback;

@@ -7,6 +7,11 @@
  * `payload`; subject commands always send those.
  */
 
+import {
+  createIngressRequestId,
+  reportIngressRequestFailure,
+} from '../core/request-id.js';
+
 // ---------------------------------------------------------------------------
 // Error class
 // ---------------------------------------------------------------------------
@@ -20,13 +25,23 @@ export class HeroModeClientError extends Error {
    * @param {object}  [opts.payload]   — full server response body
    * @param {string}  [opts.message]   — human-readable message
    */
-  constructor({ code = '', status = undefined, retryable = undefined, payload = null, message = '' } = {}) {
+  constructor({
+    code = '',
+    status = undefined,
+    retryable = undefined,
+    payload = null,
+    message = '',
+    requestId = '',
+    correlationId = '',
+  } = {}) {
     const numericStatus = Number(status) || 0;
     super(message || payload?.message || `Hero Mode request failed (${numericStatus}).`);
     this.name = 'HeroModeClientError';
     this.code = code || payload?.code || '';
     this.status = numericStatus;
     this.payload = payload;
+    this.requestId = requestId || payload?.requestId || '';
+    this.correlationId = correlationId || payload?.correlationId || this.requestId;
 
     // Honour explicit `retryable: false` from server payload (e.g.
     // projection_unavailable).  Otherwise fall back to heuristic:
@@ -138,28 +153,55 @@ export function createHeroModeClient({
     await delay(boundedDelayMs);
   }
 
+  async function sendRequest(url, init, networkMessage) {
+    const requestId = createIngressRequestId();
+    const headers = new Headers(init?.headers || {});
+    headers.set('x-ks2-request-id', requestId);
+    try {
+      const response = await fetchFn(url, {
+        ...init,
+        headers: Object.fromEntries(headers.entries()),
+      });
+      if (!response.ok) {
+        reportIngressRequestFailure({
+          endpoint: url,
+          method: init?.method,
+          status: response.status,
+          requestId,
+        });
+      }
+      return { response, requestId };
+    } catch (error) {
+      reportIngressRequestFailure({
+        endpoint: url,
+        method: init?.method,
+        status: 0,
+        requestId,
+      });
+      throw new HeroModeClientError({
+        code: 'network_error',
+        status: 0,
+        retryable: true,
+        message: error?.message || networkMessage,
+        requestId,
+        correlationId: requestId,
+      });
+    }
+  }
+
   // -----------------------------------------------------------------------
   // readModel
   // -----------------------------------------------------------------------
 
   async function fetchReadModel(cleanLearnerId) {
-    let response;
-    try {
-      response = await fetchFn(
-        `/api/hero/read-model?learnerId=${encodeURIComponent(cleanLearnerId)}`,
-        {
-          method: 'GET',
-          headers: { accept: 'application/json' },
-        },
-      );
-    } catch (error) {
-      throw new HeroModeClientError({
-        code: 'network_error',
-        status: 0,
-        retryable: true,
-        message: error?.message || 'Hero read-model request could not reach the server.',
-      });
-    }
+    const { response, requestId } = await sendRequest(
+      `/api/hero/read-model?learnerId=${encodeURIComponent(cleanLearnerId)}`,
+      {
+        method: 'GET',
+        headers: { accept: 'application/json' },
+      },
+      'Hero read-model request could not reach the server.',
+    );
 
     const payload = await parseJson(response);
     if (!response.ok || payload?.ok === false) {
@@ -167,6 +209,8 @@ export function createHeroModeClient({
         code: extractErrorCode(payload),
         status: response.status,
         payload,
+        requestId,
+        correlationId: requestId,
       });
     }
 
@@ -232,24 +276,18 @@ export function createHeroModeClient({
       expectedLearnerRevision,
     });
 
-    let response;
-    try {
-      response = await fetchFn('/api/hero/command', {
+    const { response, requestId: ingressRequestId } = await sendRequest(
+      '/api/hero/command',
+      {
         method: 'POST',
         headers: {
           accept: 'application/json',
           'content-type': 'application/json',
         },
         body,
-      });
-    } catch (error) {
-      throw new HeroModeClientError({
-        code: 'network_error',
-        status: 0,
-        retryable: true,
-        message: error?.message || 'Hero command request could not reach the server.',
-      });
-    }
+      },
+      'Hero command request could not reach the server.',
+    );
 
     const responsePayload = await parseJson(response);
 
@@ -259,6 +297,8 @@ export function createHeroModeClient({
         code: errorCode,
         status: response.status,
         payload: responsePayload,
+        requestId: ingressRequestId,
+        correlationId: ingressRequestId,
       });
 
       // Stale-write callback (stale quest or fingerprint mismatch)
@@ -317,24 +357,18 @@ export function createHeroModeClient({
       body.practiceSessionId = practiceSessionId;
     }
 
-    let response;
-    try {
-      response = await fetchFn('/api/hero/command', {
+    const { response, requestId: ingressRequestId } = await sendRequest(
+      '/api/hero/command',
+      {
         method: 'POST',
         headers: {
           accept: 'application/json',
           'content-type': 'application/json',
         },
         body: JSON.stringify(body),
-      });
-    } catch (error) {
-      throw new HeroModeClientError({
-        code: 'network_error',
-        status: 0,
-        retryable: true,
-        message: error?.message || 'Hero claim-task request could not reach the server.',
-      });
-    }
+      },
+      'Hero claim-task request could not reach the server.',
+    );
 
     const responsePayload = await parseJson(response);
 
@@ -346,6 +380,8 @@ export function createHeroModeClient({
             code: 'stale_write',
             status: response.status,
             payload: responsePayload,
+            requestId: ingressRequestId,
+            correlationId: ingressRequestId,
           }),
           learnerId: cleanLearnerId,
         });
@@ -361,24 +397,18 @@ export function createHeroModeClient({
         requestId: `${requestId}-retry`,
       };
 
-      let retryResponse;
-      try {
-        retryResponse = await fetchFn('/api/hero/command', {
+      const { response: retryResponse, requestId: retryIngressRequestId } = await sendRequest(
+        '/api/hero/command',
+        {
           method: 'POST',
           headers: {
             accept: 'application/json',
             'content-type': 'application/json',
           },
           body: JSON.stringify(retryBody),
-        });
-      } catch (error) {
-        throw new HeroModeClientError({
-          code: 'network_error',
-          status: 0,
-          retryable: true,
-          message: error?.message || 'Hero claim-task retry could not reach the server.',
-        });
-      }
+        },
+        'Hero claim-task retry could not reach the server.',
+      );
 
       const retryPayload = await parseJson(retryResponse);
 
@@ -388,6 +418,8 @@ export function createHeroModeClient({
           status: retryResponse.status,
           retryable: false,
           payload: retryPayload,
+          requestId: retryIngressRequestId,
+          correlationId: retryIngressRequestId,
         });
       }
 
@@ -401,6 +433,8 @@ export function createHeroModeClient({
         code: errorCode,
         status: response.status,
         payload: responsePayload,
+        requestId: ingressRequestId,
+        correlationId: ingressRequestId,
       });
 
       // Stale-write callback (stale quest or fingerprint mismatch)
@@ -445,24 +479,18 @@ export function createHeroModeClient({
       expectedLearnerRevision,
     };
 
-    let response;
-    try {
-      response = await fetchFn('/api/hero/command', {
+    const { response, requestId: ingressRequestId } = await sendRequest(
+      '/api/hero/command',
+      {
         method: 'POST',
         headers: {
           accept: 'application/json',
           'content-type': 'application/json',
         },
         body: JSON.stringify(body),
-      });
-    } catch (error) {
-      throw new HeroModeClientError({
-        code: 'network_error',
-        status: 0,
-        retryable: true,
-        message: error?.message || 'Hero unlock-monster request could not reach the server.',
-      });
-    }
+      },
+      'Hero unlock-monster request could not reach the server.',
+    );
 
     const responsePayload = await parseJson(response);
 
@@ -472,6 +500,8 @@ export function createHeroModeClient({
         code: errorCode,
         status: response.status,
         payload: responsePayload,
+        requestId: ingressRequestId,
+        correlationId: ingressRequestId,
       });
 
       if (errorCode === 'stale_write' && typeof onStaleWrite === 'function') {
@@ -514,24 +544,18 @@ export function createHeroModeClient({
       expectedLearnerRevision,
     };
 
-    let response;
-    try {
-      response = await fetchFn('/api/hero/command', {
+    const { response, requestId: ingressRequestId } = await sendRequest(
+      '/api/hero/command',
+      {
         method: 'POST',
         headers: {
           accept: 'application/json',
           'content-type': 'application/json',
         },
         body: JSON.stringify(body),
-      });
-    } catch (error) {
-      throw new HeroModeClientError({
-        code: 'network_error',
-        status: 0,
-        retryable: true,
-        message: error?.message || 'Hero evolve-monster request could not reach the server.',
-      });
-    }
+      },
+      'Hero evolve-monster request could not reach the server.',
+    );
 
     const responsePayload = await parseJson(response);
 
@@ -541,6 +565,8 @@ export function createHeroModeClient({
         code: errorCode,
         status: response.status,
         payload: responsePayload,
+        requestId: ingressRequestId,
+        correlationId: ingressRequestId,
       });
 
       if (errorCode === 'stale_write' && typeof onStaleWrite === 'function') {

@@ -25,10 +25,10 @@ import {
   decodeContentOperationSnapshot,
 } from '../../src/subjects/spelling/content/release-snapshot-codec.js';
 import {
-  SEEDED_SPELLING_CONTENT_SUMMARY,
   readSeededSpellingContentBundle,
+  readSeededSpellingContentSummary,
   readSeededSpellingPublishedSnapshot,
-} from './generated-spelling-content-seed.js';
+} from './spelling-content-seed-loader.js';
 import { coverageTierCounts } from '../../src/subjects/spelling/content/taxonomy.js';
 import {
   POST_MEGA_SEED_SHAPES,
@@ -198,39 +198,19 @@ import {
   eventToken as eventTokenForDedupe,
 } from './projections/events.js';
 import { buildSpellingAudioCue } from './subjects/spelling/audio.js';
-import { createContentOperationsRepository } from './content-operations/repository.js';
 import {
   contentOperationHeroExposureProjectionFromProof,
 } from './content-operations/release-projections.js';
-import { buildGrammarReadModel } from './subjects/grammar/read-models.js';
-import { ARITHMETIC_CONTENT_RELEASE_ID } from '../../shared/arithmetic/content.js';
+import { ARITHMETIC_CONTENT_RELEASE_ID } from '../../shared/arithmetic/metadata.js';
 import { READING_CONTENT_RELEASE_ID } from '../../shared/reading/metadata.js';
-import { buildReadingReadModel } from './subjects/reading/read-models.js';
-import { __readingEngineInternals } from './subjects/reading/engine.js';
-import { buildArithmeticReadModel } from './subjects/arithmetic/read-models.js';
-import { __arithmeticEngineInternals } from './subjects/arithmetic/engine.js';
-import { buildReasoningReadModel } from './subjects/reasoning/read-models.js';
 import { listPunctuationEvents } from './subjects/punctuation/events.js';
 import {
   createInitialPunctuationState,
   // normalisePunctuationSummary → row-transforms.js
 } from '../../src/subjects/punctuation/service-contract.js';
-import {
-  BUNDLED_MONSTER_VISUAL_CONFIG,
-  buildMonsterAssetKey,
-  MONSTER_VISUAL_SCHEMA_VERSION,
-  validateMonsterVisualConfigForPublish,
-  validatePublishedConfigForPublish,
-} from '../../src/platform/game/monster-visual-config.js';
-import { MONSTER_ASSET_MANIFEST } from '../../src/platform/game/monster-asset-manifest.js';
-import { bundledEffectConfig } from '../../src/platform/game/render/effect-config-defaults.js';
-import {
-  archiveGrammarTransferEvidenceState,
-  createInitialGrammarState,
-  deleteGrammarTransferEvidenceState,
-} from './subjects/grammar/engine.js';
+import { MONSTER_ASSET_MANIFEST_HASH } from '../../src/platform/game/monster-asset-manifest-meta.js';
 import { normaliseHeroProgressState } from '../../shared/hero/progress-state.js';
-import { grammarTransferPromptById } from './subjects/grammar/transfer-prompts.js';
+import { projectHeroSubjectRecord } from './hero/subject-projection.js';
 import {
   BackendUnavailableError,
   BadRequestError,
@@ -274,18 +254,71 @@ const CAPACITY_READ_MODEL_TABLES = Object.freeze([
 ]);
 const COMMAND_PROJECTION_READ_MODEL_VERSION = 1;
 const SPELLING_RUNTIME_CONTENT_CACHE_LIMIT = 8;
+const CONTENT_OPERATION_REPOSITORY_METHODS = Object.freeze([
+  'seedFirstContentOperationRelease',
+  'createContentOperationPackage',
+  'createContentOperationPackageRevert',
+  'readContentOperationPackage',
+  'readLatestContentOperationCandidate',
+  'updateContentOperationPackage',
+  'listContentOperationPackages',
+  'appendContentOperation',
+  'deleteContentOperation',
+  'buildContentOperationCandidate',
+  'resolveContentOperationConflict',
+  'approveContentOperationCandidate',
+  'publishContentOperationPackage',
+  'rollbackContentOperationRelease',
+  'captureContentOperationReleaseProof',
+  'readLatestContentOperationRelease',
+  'readContentOperationRelease',
+  'listContentOperationReleases',
+  'listContentOperationEvents',
+  'invalidateContentOperationPackageApproval',
+  'recordContentOperationEvent',
+]);
 // Runtime read paths must not pull a multi-megabyte account content row into
 // every bootstrap/Hero request. Public read-model paths use the bundled
 // published snapshot; command, admin, export, and word-bank paths still read
 // the full editable content row from D1.
 const spellingRuntimeContentCache = new Map();
 const MONSTER_VISUAL_CONFIG_ID = 'global';
+const MONSTER_VISUAL_SCHEMA_VERSION = 1;
 const MONSTER_VISUAL_CONFIG_POINTER_CACHE_TTL_MS = 5_000;
 const monsterVisualConfigPointerCache = new WeakMap();
+let monsterVisualModulesPromise = null;
 const MONSTER_VISUAL_SCOPE_TYPE = 'platform';
 const MONSTER_VISUAL_SCOPE_ID = 'monster-visual-config';
 const CONTENT_OPERATION_ASSET_PROOF_KEY = 'contentOperationsAssets';
 const CONTENT_OPERATION_MONSTER_ASSET_RUNTIME_ROUTE = '/api/content-operations/assets/monster-image';
+
+function loadMonsterVisualModules() {
+  if (!monsterVisualModulesPromise) {
+    monsterVisualModulesPromise = Promise.all([
+      import('../../src/platform/game/monster-visual-config.js'),
+      import('../../src/platform/game/render/effect-config-defaults.js'),
+    ]).then(([visualConfig, effectDefaults]) => ({
+      ...visualConfig,
+      bundledEffectConfig: effectDefaults.bundledEffectConfig,
+    }));
+  }
+  return monsterVisualModulesPromise;
+}
+
+function createLazyContentOperationsRepository(context) {
+  let repositoryPromise = null;
+  const loadRepository = () => {
+    if (!repositoryPromise) {
+      repositoryPromise = import('./content-operations/repository.js')
+        .then(({ createContentOperationsRepository }) => createContentOperationsRepository(context));
+    }
+    return repositoryPromise;
+  };
+  return Object.fromEntries(CONTENT_OPERATION_REPOSITORY_METHODS.map((methodName) => [
+    methodName,
+    async (...args) => (await loadRepository())[methodName](...args),
+  ]));
+}
 const LEGACY_SPELLING_CONTENT_CUTOVER_COMPATIBILITY = Object.freeze({
   legacyExportRoute: '/api/content/spelling',
   legacyExportMode: 'read_only_after_global_release',
@@ -436,6 +469,10 @@ function redactSpellingUiForClient(ui, data = {}, learnerId = '', {
 }
 
 let punctuationReadModelModulesPromise = null;
+let grammarReadModelModulePromise = null;
+let readingReadModelModulesPromise = null;
+let arithmeticReadModelModulesPromise = null;
+let reasoningReadModelModulePromise = null;
 
 async function loadPunctuationReadModelModules() {
   if (!punctuationReadModelModulesPromise) {
@@ -453,6 +490,64 @@ async function loadPunctuationReadModelModules() {
       });
   }
   return punctuationReadModelModulesPromise;
+}
+
+async function loadGrammarReadModelModule() {
+  if (!grammarReadModelModulePromise) {
+    grammarReadModelModulePromise = import('./subjects/grammar/read-models.js')
+      .catch((error) => {
+        grammarReadModelModulePromise = null;
+        throw error;
+      });
+  }
+  return grammarReadModelModulePromise;
+}
+
+async function loadReadingReadModelModules() {
+  if (!readingReadModelModulesPromise) {
+    readingReadModelModulesPromise = Promise.all([
+      import('./subjects/reading/read-models.js'),
+      import('./subjects/reading/engine.js'),
+    ])
+      .then(([readModelModule, engineModule]) => ({
+        buildReadingReadModel: readModelModule.buildReadingReadModel,
+        engineInternals: engineModule.__readingEngineInternals,
+      }))
+      .catch((error) => {
+        readingReadModelModulesPromise = null;
+        throw error;
+      });
+  }
+  return readingReadModelModulesPromise;
+}
+
+async function loadArithmeticReadModelModules() {
+  if (!arithmeticReadModelModulesPromise) {
+    arithmeticReadModelModulesPromise = Promise.all([
+      import('./subjects/arithmetic/read-models.js'),
+      import('./subjects/arithmetic/engine.js'),
+    ])
+      .then(([readModelModule, engineModule]) => ({
+        buildArithmeticReadModel: readModelModule.buildArithmeticReadModel,
+        engineInternals: engineModule.__arithmeticEngineInternals,
+      }))
+      .catch((error) => {
+        arithmeticReadModelModulesPromise = null;
+        throw error;
+      });
+  }
+  return arithmeticReadModelModulesPromise;
+}
+
+async function loadReasoningReadModelModule() {
+  if (!reasoningReadModelModulePromise) {
+    reasoningReadModelModulePromise = import('./subjects/reasoning/read-models.js')
+      .catch((error) => {
+        reasoningReadModelModulePromise = null;
+        throw error;
+      });
+  }
+  return reasoningReadModelModulePromise;
 }
 
 function createPunctuationReadModelService(createPunctuationService, data, now) {
@@ -488,7 +583,8 @@ async function redactPunctuationUiForClient(ui, data = {}, learnerId = '', { now
   return readModel;
 }
 
-function redactGrammarUiForClient(ui, data = {}, learnerId = '', { now = Date.now() } = {}) {
+async function redactGrammarUiForClient(ui, data = {}, learnerId = '', { now = Date.now() } = {}) {
+  const { buildGrammarReadModel } = await loadGrammarReadModelModule();
   const state = {
     ...(data && typeof data === 'object' && !Array.isArray(data) ? data : {}),
     ...(ui && typeof ui === 'object' && !Array.isArray(ui) ? ui : {}),
@@ -501,31 +597,34 @@ function redactGrammarUiForClient(ui, data = {}, learnerId = '', { now = Date.no
   });
 }
 
-function redactReadingUiForClient(ui, data = {}, learnerId = '') {
+async function redactReadingUiForClient(ui, data = {}, learnerId = '') {
+  const { buildReadingReadModel, engineInternals } = await loadReadingReadModelModules();
   const runtimeData = data && typeof data === 'object' && !Array.isArray(data) ? data : {};
   const runtimeState = ui && typeof ui === 'object' && !Array.isArray(ui) ? ui : {};
   return buildReadingReadModel({
     learnerId,
     state: runtimeState,
     data: runtimeData,
-    stats: __readingEngineInternals.buildStats(runtimeData),
-    analytics: __readingEngineInternals.buildAnalytics(runtimeData),
+    stats: engineInternals.buildStats(runtimeData),
+    analytics: engineInternals.buildAnalytics(runtimeData),
   });
 }
 
-function redactArithmeticUiForClient(ui, data = {}, learnerId = '') {
+async function redactArithmeticUiForClient(ui, data = {}, learnerId = '') {
+  const { buildArithmeticReadModel, engineInternals } = await loadArithmeticReadModelModules();
   const runtimeData = data && typeof data === 'object' && !Array.isArray(data) ? data : {};
   const runtimeState = ui && typeof ui === 'object' && !Array.isArray(ui) ? ui : {};
   return buildArithmeticReadModel({
     learnerId,
     state: runtimeState,
     data: runtimeData,
-    stats: __arithmeticEngineInternals.buildStats(runtimeData),
-    analytics: __arithmeticEngineInternals.buildAnalytics(runtimeData),
+    stats: engineInternals.buildStats(runtimeData),
+    analytics: engineInternals.buildAnalytics(runtimeData),
   });
 }
 
-function redactReasoningUiForClient(ui, data = {}, learnerId = '', { now = Date.now() } = {}) {
+async function redactReasoningUiForClient(ui, data = {}, learnerId = '', { now = Date.now() } = {}) {
+  const { buildReasoningReadModel } = await loadReasoningReadModelModule();
   const runtimeData = data && typeof data === 'object' && !Array.isArray(data) ? data : {};
   const runtimeState = ui && typeof ui === 'object' && !Array.isArray(ui) ? ui : {};
   return buildReasoningReadModel({
@@ -1143,6 +1242,11 @@ function runtimeMonsterAssetReferenceUrl(releaseId, referenceId) {
   ].join('/');
 }
 
+function runtimeMonsterAssetKey(monsterId, branch = 'b1', stage = 0) {
+  const safeStage = Math.max(0, Math.min(4, Math.floor(Number(stage) || 0)));
+  return `${String(monsterId || '').trim()}-${String(branch || 'b1').trim()}-${safeStage}`;
+}
+
 function runtimeMonsterAssetReferencesFromReleaseRow(row) {
   const releaseId = typeof row?.release_id === 'string' ? row.release_id : '';
   if (!releaseId) return null;
@@ -1162,7 +1266,7 @@ function runtimeMonsterAssetReferencesFromReleaseRow(row) {
     const stageId = String(target.stageId ?? '').trim();
     const referenceId = typeof reference.referenceId === 'string' ? reference.referenceId.trim() : '';
     if (!monsterId || !branchId || !stageId || !referenceId) continue;
-    const assetKey = buildMonsterAssetKey(monsterId, branchId, stageId);
+    const assetKey = runtimeMonsterAssetKey(monsterId, branchId, stageId);
     const width = Math.max(0, Math.floor(Number(reference.content?.dimensions?.width) || 0));
     const height = Math.max(0, Math.floor(Number(reference.content?.dimensions?.height) || 0));
     const src = runtimeMonsterAssetReferenceUrl(releaseId, referenceId);
@@ -1497,14 +1601,10 @@ function runtimeSnapshotForBundle(bundle, referenceBundle) {
 }
 
 function spellingRuntimeContentSeedKey(subjectId) {
-  const publication = SEEDED_SPELLING_CONTENT_SUMMARY || {};
-  return [
-    'seed',
-    subjectId,
-    publication.publishedReleaseId || '',
-    publication.publishedVersion || 0,
-    publication.publishedAt || 0,
-  ].join(':');
+  // This cache is isolate-local, so a deployment already provides the
+  // publication boundary. Avoid parsing the compressed seed merely to name
+  // an entry that cannot outlive the Worker version which created it.
+  return ['seed', subjectId].join(':');
 }
 
 function spellingRuntimeContentRowKey(row, subjectId) {
@@ -1645,11 +1745,15 @@ async function buildSpellingRuntimeContentFromRelease(row, subjectId) {
 }
 
 async function buildSeededSpellingRuntimeContent(subjectId) {
+  const [snapshot, summary] = await Promise.all([
+    readSeededSpellingPublishedSnapshot(),
+    readSeededSpellingContentSummary(),
+  ]);
   return {
     subjectId,
     content: null,
-    snapshot: await readSeededSpellingPublishedSnapshot(),
-    summary: SEEDED_SPELLING_CONTENT_SUMMARY,
+    snapshot,
+    summary,
   };
 }
 
@@ -6099,6 +6203,18 @@ const GRAMMAR_ADMIN_LEARNER_ID_REGEX = /^[a-z0-9][a-z0-9-]{0,63}$/i;
 // rejected with `invalid_prompt_id` BEFORE any DB access runs.
 const GRAMMAR_ADMIN_PROMPT_ID_MAX_CHARS = 64;
 const GRAMMAR_ADMIN_PROMPT_ID_REGEX = /^[a-z0-9][a-z0-9-]{0,63}$/i;
+let grammarAdminEngineModulePromise = null;
+
+async function loadGrammarAdminEngineModule() {
+  if (!grammarAdminEngineModulePromise) {
+    grammarAdminEngineModulePromise = import('./subjects/grammar/engine.js')
+      .catch((error) => {
+        grammarAdminEngineModulePromise = null;
+        throw error;
+      });
+  }
+  return grammarAdminEngineModulePromise;
+}
 
 function assertAdminGrammarTransferInputs(learnerId, promptId) {
   if (!(typeof learnerId === 'string' && learnerId)) {
@@ -6146,6 +6262,7 @@ async function runAdminGrammarTransferMutation(db, {
   mutationKind,
   scopeType,
   scopeTypeForReceipt,
+  createInitialState,
   applyStateChange,
   nowTs,
 }) {
@@ -6251,7 +6368,7 @@ async function runAdminGrammarTransferMutation(db, {
   // The pure helper throws on "archive required" / "entry not found" /
   // "archive_slot_occupied" with a stable error code; we let the error
   // bubble up to the HTTP handler.
-  const initialState = createInitialGrammarState(record.data || {});
+  const initialState = createInitialState(record.data || {});
   const state = {
     ...initialState,
     ...(isPlainObject(record.ui) ? cloneSerialisable(record.ui) : {}),
@@ -6429,6 +6546,7 @@ async function archiveGrammarTransferEvidence(db, {
   mutation,
   nowTs,
 }) {
+  const grammarEngine = await loadGrammarAdminEngineModule();
   return runAdminGrammarTransferMutation(db, {
     actorAccountId,
     learnerId,
@@ -6437,8 +6555,9 @@ async function archiveGrammarTransferEvidence(db, {
     mutationKind: GRAMMAR_TRANSFER_ARCHIVE_MUTATION_KIND,
     scopeType: GRAMMAR_TRANSFER_ARCHIVE_SCOPE_TYPE,
     scopeTypeForReceipt: GRAMMAR_TRANSFER_ARCHIVE_SCOPE_TYPE,
+    createInitialState: grammarEngine.createInitialGrammarState,
+    applyStateChange: grammarEngine.archiveGrammarTransferEvidenceState,
     nowTs,
-    applyStateChange: (state, context) => archiveGrammarTransferEvidenceState(state, context),
   });
 }
 
@@ -6449,6 +6568,7 @@ async function deleteGrammarTransferEvidence(db, {
   mutation,
   nowTs,
 }) {
+  const grammarEngine = await loadGrammarAdminEngineModule();
   return runAdminGrammarTransferMutation(db, {
     actorAccountId,
     learnerId,
@@ -6457,15 +6577,11 @@ async function deleteGrammarTransferEvidence(db, {
     mutationKind: GRAMMAR_TRANSFER_DELETE_MUTATION_KIND,
     scopeType: GRAMMAR_TRANSFER_ARCHIVE_SCOPE_TYPE,
     scopeTypeForReceipt: GRAMMAR_TRANSFER_ARCHIVE_SCOPE_TYPE,
+    createInitialState: grammarEngine.createInitialGrammarState,
+    applyStateChange: grammarEngine.deleteGrammarTransferEvidenceState,
     nowTs,
-    applyStateChange: (state, context) => deleteGrammarTransferEvidenceState(state, context),
   });
 }
-
-// Suppress unused import until admin read-model consumes them in the
-// public repository method registration. The constants are referenced
-// inside the repository close below.
-void grammarTransferPromptById;
 
 // ---------------------------------------------------------------------------
 // U6: public client error capture ingest.
@@ -7193,18 +7309,19 @@ async function recordClientErrorEvent(db, { clientEvent, sessionAccountId = null
 // the root, the effect sub-document hangs off `effect`. Existing visual-only
 // rows continue to load — readers tolerate `effect == null` and surface the
 // bundled defaults.
-function seededMonsterVisualConfig({ source = 'published', version = 1 } = {}) {
+async function seededMonsterVisualConfig({ source = 'published', version = 1 } = {}) {
+  const { BUNDLED_MONSTER_VISUAL_CONFIG, bundledEffectConfig } = await loadMonsterVisualModules();
   return {
     ...cloneSerialisable(BUNDLED_MONSTER_VISUAL_CONFIG),
     schemaVersion: MONSTER_VISUAL_SCHEMA_VERSION,
-    manifestHash: MONSTER_ASSET_MANIFEST.manifestHash,
+    manifestHash: MONSTER_ASSET_MANIFEST_HASH,
     source,
     version,
     effect: bundledEffectConfig(),
   };
 }
 
-function normaliseMonsterVisualDraft(rawDraft) {
+async function normaliseMonsterVisualDraft(rawDraft) {
   if (!isPlainObject(rawDraft)) {
     throw new BadRequestError('Monster visual draft is required.', {
       code: 'monster_visual_draft_required',
@@ -7215,10 +7332,11 @@ function normaliseMonsterVisualDraft(rawDraft) {
   // backfill bundled defaults when the client omits effect, so first-time
   // migrations (visual-only callers in existing tests) keep functioning.
   const cloned = cloneSerialisable(rawDraft);
+  const { bundledEffectConfig } = await loadMonsterVisualModules();
   return {
     ...cloned,
     schemaVersion: Number(rawDraft.schemaVersion) || MONSTER_VISUAL_SCHEMA_VERSION,
-    manifestHash: rawDraft.manifestHash || MONSTER_ASSET_MANIFEST.manifestHash,
+    manifestHash: rawDraft.manifestHash || MONSTER_ASSET_MANIFEST_HASH,
     source: 'draft',
     effect: isPlainObject(cloned.effect) ? cloned.effect : bundledEffectConfig(),
   };
@@ -7262,7 +7380,7 @@ async function ensureMonsterVisualConfigRow(db, nowTs) {
   `, [MONSTER_VISUAL_CONFIG_ID]);
   if (existing) return existing;
 
-  const initialConfig = seededMonsterVisualConfig({ source: 'published', version: 1 });
+  const initialConfig = await seededMonsterVisualConfig({ source: 'published', version: 1 });
   const json = JSON.stringify(initialConfig);
   await run(db, `
     INSERT OR IGNORE INTO platform_monster_visual_config (
@@ -7287,7 +7405,7 @@ async function ensureMonsterVisualConfigRow(db, nowTs) {
     json,
     nowTs,
     'system',
-    MONSTER_ASSET_MANIFEST.manifestHash,
+    MONSTER_ASSET_MANIFEST_HASH,
     MONSTER_VISUAL_SCHEMA_VERSION,
   ]);
   await run(db, `
@@ -7303,7 +7421,7 @@ async function ensureMonsterVisualConfigRow(db, nowTs) {
   `, [
     1,
     json,
-    MONSTER_ASSET_MANIFEST.manifestHash,
+    MONSTER_ASSET_MANIFEST_HASH,
     MONSTER_VISUAL_SCHEMA_VERSION,
     nowTs,
     'system',
@@ -7370,9 +7488,14 @@ async function listMonsterVisualVersionRows(db) {
   `);
 }
 
-function monsterVisualConfigStateFromRow(row, versions = []) {
-  const draft = safeJsonParse(row?.draft_json, seededMonsterVisualConfig({ source: 'draft', version: Number(row?.published_version) || 1 }));
-  const published = safeJsonParse(row?.published_json, seededMonsterVisualConfig({ source: 'published', version: Number(row?.published_version) || 1 }));
+async function monsterVisualConfigStateFromRow(row, versions = []) {
+  const [draftFallback, publishedFallback, { validatePublishedConfigForPublish }] = await Promise.all([
+    seededMonsterVisualConfig({ source: 'draft', version: Number(row?.published_version) || 1 }),
+    seededMonsterVisualConfig({ source: 'published', version: Number(row?.published_version) || 1 }),
+    loadMonsterVisualModules(),
+  ]);
+  const draft = safeJsonParse(row?.draft_json, draftFallback);
+  const published = safeJsonParse(row?.published_json, publishedFallback);
   // Strict combined gate so the admin UI surfaces visual + effect blockers
   // in the same feedback list. Existing visual-only rows still validate
   // (effect bundled defaults are reviewed); the bundled draft fails as
@@ -7387,7 +7510,7 @@ function monsterVisualConfigStateFromRow(row, versions = []) {
   return {
     status: {
       schemaVersion: MONSTER_VISUAL_SCHEMA_VERSION,
-      manifestHash: MONSTER_ASSET_MANIFEST.manifestHash,
+      manifestHash: MONSTER_ASSET_MANIFEST_HASH,
       draftRevision: Number(row?.draft_revision) || 0,
       draftUpdatedAt: Number(row?.draft_updated_at) || 0,
       draftUpdatedByAccountId: row?.draft_updated_by_account_id || '',
@@ -7426,11 +7549,11 @@ async function readMonsterVisualConfigState(db, nowTs) {
   return monsterVisualConfigStateFromRow(row, versions);
 }
 
-function bundledMonsterVisualRuntimeConfig() {
-  const config = seededMonsterVisualConfig({ source: 'bundled', version: 0 });
+async function bundledMonsterVisualRuntimeConfig() {
+  const config = await seededMonsterVisualConfig({ source: 'bundled', version: 0 });
   return {
     schemaVersion: MONSTER_VISUAL_SCHEMA_VERSION,
-    manifestHash: MONSTER_ASSET_MANIFEST.manifestHash,
+    manifestHash: MONSTER_ASSET_MANIFEST_HASH,
     publishedVersion: 0,
     publishedAt: 0,
     config,
@@ -7439,13 +7562,17 @@ function bundledMonsterVisualRuntimeConfig() {
 
 async function readPublishedMonsterVisualRuntimeConfig(db, nowTs) {
   const row = await ensureMonsterVisualConfigRow(db, nowTs);
+  const fallback = await seededMonsterVisualConfig({
+    source: 'published',
+    version: Number(row?.published_version) || 1,
+  });
   const published = safeJsonParse(
     row?.published_json,
-    seededMonsterVisualConfig({ source: 'published', version: Number(row?.published_version) || 1 }),
+    fallback,
   );
   return {
     schemaVersion: MONSTER_VISUAL_SCHEMA_VERSION,
-    manifestHash: row?.manifest_hash || published.manifestHash || MONSTER_ASSET_MANIFEST.manifestHash,
+    manifestHash: row?.manifest_hash || published.manifestHash || MONSTER_ASSET_MANIFEST_HASH,
     publishedVersion: Number(row?.published_version) || Number(published.version) || 1,
     publishedAt: Number(row?.published_at) || 0,
     config: published,
@@ -7490,7 +7617,7 @@ async function readMonsterVisualConfigPointerFromStorage(db) {
     `, [MONSTER_VISUAL_CONFIG_ID]);
     return {
       schemaVersion: Number(row?.schema_version) || MONSTER_VISUAL_SCHEMA_VERSION,
-      manifestHash: row?.manifest_hash || MONSTER_ASSET_MANIFEST.manifestHash,
+      manifestHash: row?.manifest_hash || MONSTER_ASSET_MANIFEST_HASH,
       publishedVersion: Number(row?.published_version) || 0,
       publishedAt: Number(row?.published_at) || 0,
       // Marker so clients know this is the compact v2 pointer (no
@@ -7503,7 +7630,7 @@ async function readMonsterVisualConfigPointerFromStorage(db) {
     if (isMissingTableError(error, 'platform_monster_visual_config')) {
       return {
         schemaVersion: MONSTER_VISUAL_SCHEMA_VERSION,
-        manifestHash: MONSTER_ASSET_MANIFEST.manifestHash,
+        manifestHash: MONSTER_ASSET_MANIFEST_HASH,
         publishedVersion: 0,
         publishedAt: 0,
         compact: true,
@@ -7679,7 +7806,7 @@ async function withMonsterVisualConfigMutation(db, {
 }
 
 async function saveMonsterVisualConfigDraft(db, actorAccountId, rawDraft, mutation, nowTs) {
-  const draft = normaliseMonsterVisualDraft(rawDraft);
+  const draft = await normaliseMonsterVisualDraft(rawDraft);
   return withMonsterVisualConfigMutation(db, {
     actorAccountId,
     kind: 'monster_visual_config.draft.save',
@@ -7714,7 +7841,7 @@ async function saveMonsterVisualConfigDraft(db, actorAccountId, rawDraft, mutati
           appliedRevision,
           nowTs,
           actorAccountId,
-          MONSTER_ASSET_MANIFEST.manifestHash,
+          MONSTER_ASSET_MANIFEST_HASH,
           MONSTER_VISUAL_SCHEMA_VERSION,
           receipt.accountId,
           receipt.requestId,
@@ -7790,6 +7917,7 @@ async function publishMonsterVisualConfig(db, actorAccountId, mutation, nowTs) {
       const visualForPublish = isPlainObject(draft) ? { ...cloneSerialisable(draft) } : null;
       const effectForPublish = visualForPublish ? visualForPublish.effect : null;
       if (visualForPublish) delete visualForPublish.effect;
+      const { validatePublishedConfigForPublish } = await loadMonsterVisualModules();
       const validation = validatePublishedConfigForPublish({
         visual: visualForPublish,
         effect: effectForPublish,
@@ -7837,7 +7965,7 @@ async function publishMonsterVisualConfig(db, actorAccountId, mutation, nowTs) {
           nextVersion,
           nowTs,
           actorAccountId,
-          MONSTER_ASSET_MANIFEST.manifestHash,
+          MONSTER_ASSET_MANIFEST_HASH,
           MONSTER_VISUAL_SCHEMA_VERSION,
           receipt.accountId,
           receipt.requestId,
@@ -7929,8 +8057,9 @@ async function restoreMonsterVisualConfigVersion(db, actorAccountId, version, mu
           version: safeVersion,
         });
       }
+      const restoredFallback = await seededMonsterVisualConfig({ source: 'draft', version: safeVersion });
       const restored = {
-        ...safeJsonParse(versionRow.config_json, seededMonsterVisualConfig({ source: 'draft', version: safeVersion })),
+        ...safeJsonParse(versionRow.config_json, restoredFallback),
         source: 'draft',
       };
       const restoredJson = JSON.stringify(restored);
@@ -7954,7 +8083,7 @@ async function restoreMonsterVisualConfigVersion(db, actorAccountId, version, mu
           appliedRevision,
           nowTs,
           actorAccountId,
-          MONSTER_ASSET_MANIFEST.manifestHash,
+          MONSTER_ASSET_MANIFEST_HASH,
           MONSTER_VISUAL_SCHEMA_VERSION,
           receipt.accountId,
           receipt.requestId,
@@ -11855,7 +11984,7 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
       // Structured logs are best-effort.
     }
   }
-  const contentOperations = createContentOperationsRepository({ db, env, now: nowFactory });
+  const contentOperations = createLazyContentOperationsRepository({ db, env, now: nowFactory });
 
   return {
     ...contentOperations,
@@ -13196,7 +13325,7 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
     // temporary missing-table branch below exists only so code can deploy
     // before the migration gate. Other subjects use their canonical rows.
     // P2 active session detection inspects `ui` for heroContext.
-    async readHeroSubjectReadModels(learnerId, { accountId = '', now = Date.now() } = {}) {
+    async readHeroSubjectReadModels(learnerId, { now = Date.now() } = {}) {
       let rows;
       if (!await boundedGameplayTableAvailable(db, 'spelling')) {
         rows = await all(db, `
@@ -13238,40 +13367,20 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
         `, [learnerId]);
       }
       const result = {};
-      const punctuationItems = accountId
-        ? await readPublicPunctuationItemRows(db, rows)
-        : new Map();
       for (const row of rows) {
         const rawRecord = subjectStateRowToRecord(row);
-        const publicRecord = accountId
-          ? await publicSubjectStateRowToRecord(row, {
-            punctuationItemRows: punctuationItems.get(subjectStateKey(row.learner_id, row.subject_id)) || [],
-            now,
-          })
-          : rawRecord;
-        const data = rawRecord.data || null;
-        const summaryPhase = rawRecord.ui?.phase === 'summary';
-        const rawSession = summaryPhase ? null : rawRecord.ui?.session || null;
-        const session = summaryPhase
-          ? null
-          : rawSession || publicRecord.ui?.session || null;
-        const rawUi = summaryPhase && rawRecord.ui
-          ? {
-            ...rawRecord.ui,
-            session: null,
-          }
-          : rawRecord.ui || null;
-        const ui = publicRecord.ui
-          ? {
-            ...publicRecord.ui,
-            session,
-          }
-          : rawUi;
-        if (data || ui) {
-          result[row.subject_id] = {
-            data,
-            ui,
-          };
+        const spellingStats = row.subject_id === 'spelling' && row.spelling_stats_json != null
+          ? publicSpellingStats(materialiseSpellingGameplayStats(row.spelling_stats_json, now))
+          : null;
+        const projection = projectHeroSubjectRecord({
+          subjectId: row.subject_id,
+          data: rawRecord.data,
+          ui: rawRecord.ui,
+          spellingStats,
+          now,
+        });
+        if (projection.data || projection.ui) {
+          result[row.subject_id] = projection;
         }
       }
       return result;

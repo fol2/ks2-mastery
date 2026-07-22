@@ -1,5 +1,9 @@
 import { uid } from '../utils.js';
 import {
+  createIngressRequestId,
+  reportIngressRequestFailure,
+} from '../request-id.js';
+import {
   cloneSerialisable,
   currentRepositoryMeta,
   emptyLearnersSnapshot,
@@ -232,7 +236,16 @@ function bootstrapRetryAfterMs(error) {
 }
 
 class RepositoryHttpError extends Error {
-  constructor({ url, method, status = 0, payload = null, text = '', correlationId = null, retryAfterSeconds = null }) {
+  constructor({
+    url,
+    method,
+    status = 0,
+    payload = null,
+    text = '',
+    requestId = null,
+    correlationId = null,
+    retryAfterSeconds = null,
+  }) {
     const message = payload?.message
       || (typeof text === 'string' && text.trim())
       || `Repository sync failed (${status}).`;
@@ -244,9 +257,10 @@ class RepositoryHttpError extends Error {
     this.payload = payload;
     this.text = text;
     this.code = payload?.code || null;
+    this.requestId = requestId || payload?.requestId || null;
     this.retryAfterSeconds = parseRetryAfterSeconds(retryAfterSeconds);
     this.retryable = this.status === 429 || this.status >= 500 || this.status === 0;
-    this.correlationId = correlationId || payload?.correlationId || payload?.requestId || null;
+    this.correlationId = correlationId || payload?.correlationId || this.requestId || null;
   }
 }
 
@@ -265,20 +279,6 @@ async function parseResponseBody(response) {
   };
 }
 
-function generateIngressRequestId() {
-  // U3 audit: every outgoing repository request must carry an
-  // `x-ks2-request-id` that matches the Worker's ingress validator
-  // (`ks2_req_` + UUID v4). The sync operation's internal `id` is kept
-  // intact for mutation-receipt idempotency; this header is a parallel
-  // telemetry correlation id that never leaks into mutation-receipt
-  // dedup keys. Missing `crypto.randomUUID` in very old runtimes falls
-  // back to a 48-char-safe synthesised token.
-  const uuid = typeof globalThis.crypto?.randomUUID === 'function'
-    ? globalThis.crypto.randomUUID()
-    : `${Date.now().toString(16).padStart(8, '0')}-${Math.random().toString(16).slice(2, 6)}-4${Math.random().toString(16).slice(2, 5)}-8${Math.random().toString(16).slice(2, 5)}-${Math.random().toString(16).slice(2, 14).padEnd(12, '0')}`;
-  return `ks2_req_${uuid}`;
-}
-
 async function fetchJson(fetchFn, url, init, authSession) {
   const resolvedInit = await applyRepositoryAuthSession(authSession, init);
   const method = String(resolvedInit?.method || 'GET').toUpperCase();
@@ -292,8 +292,9 @@ async function fetchJson(fetchFn, url, init, authSession) {
   const existingHeaders = resolvedInit?.headers || {};
   const headersWithRequestId = new Headers(existingHeaders);
   if (!headersWithRequestId.has('x-ks2-request-id')) {
-    headersWithRequestId.set('x-ks2-request-id', generateIngressRequestId());
+    headersWithRequestId.set('x-ks2-request-id', createIngressRequestId());
   }
+  const requestId = headersWithRequestId.get('x-ks2-request-id');
   const headersInit = Object.fromEntries(headersWithRequestId.entries());
   const decoratedInit = { ...resolvedInit, headers: headersInit };
 
@@ -301,12 +302,14 @@ async function fetchJson(fetchFn, url, init, authSession) {
   try {
     response = await fetchFn(url, decoratedInit);
   } catch (error) {
+    reportIngressRequestFailure({ endpoint: url, method, status: 0, requestId });
     const wrapped = new RepositoryHttpError({
       url,
       method,
       status: 0,
       payload: null,
       text: error?.message || String(error),
+      requestId,
     });
     wrapped.cause = error;
     throw wrapped;
@@ -314,12 +317,14 @@ async function fetchJson(fetchFn, url, init, authSession) {
 
   const { payload, text } = await parseResponseBody(response);
   if (!response.ok) {
+    reportIngressRequestFailure({ endpoint: url, method, status: response.status, requestId });
     throw new RepositoryHttpError({
       url,
       method,
       status: response.status,
       payload,
       text,
+      requestId,
       correlationId: payload?.mutation?.correlationId || payload?.correlationId || payload?.requestId || null,
       retryAfterSeconds: responseRetryAfterSeconds(response, payload),
     });
@@ -1109,6 +1114,7 @@ function classifyError(error, fallbackScope = 'remote-sync') {
         payload: error.payload && typeof error.payload === 'object' ? error.payload : null,
         url: error.url,
         method: error.method,
+        requestId: error.requestId,
         retryAfterSeconds: error.retryAfterSeconds,
       },
     });

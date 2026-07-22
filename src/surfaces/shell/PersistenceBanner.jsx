@@ -65,7 +65,7 @@ function persistenceDebug(snapshot) {
     error.details?.method && error.details?.url ? `Request: ${error.details.method} ${error.details.url}` : null,
     payload.kind ? `Mutation: ${payload.kind}` : null,
     payload.scopeType && payload.scopeId ? `Mutation scope: ${payload.scopeType}:${payload.scopeId}` : null,
-    payload.requestId ? `Request id: ${payload.requestId}` : null,
+    payload.requestId || error.details?.requestId ? `Request id: ${payload.requestId || error.details.requestId}` : null,
     payload.correlationId || error.correlationId ? `Correlation id: ${payload.correlationId || error.correlationId}` : null,
     Number.isFinite(Number(payload.expectedRevision)) ? `Expected revision: ${payload.expectedRevision}` : null,
     Number.isFinite(Number(payload.currentRevision)) ? `Current revision: ${payload.currentRevision}` : null,

@@ -1,5 +1,5 @@
 import { build } from 'esbuild';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
@@ -8,7 +8,8 @@ const workerDistDir = path.join(rootDir, 'dist', 'worker');
 const workerEntry = path.join(rootDir, 'worker', 'src', 'index.js');
 const workerOutfile = path.join(workerDistDir, 'index.js');
 const workerMetafile = path.join(workerDistDir, 'index.meta.json');
-const generatedSpellingPublicRuntime = path.join(workerDistDir, 'spelling-public-runtime.js');
+const workerGeneratedDir = path.join(rootDir, 'dist', 'worker-generated');
+const generatedSpellingPublicRuntime = path.join(workerGeneratedDir, 'spelling-public-runtime.js');
 
 const spellingContentDataPath = path.join(rootDir, 'src', 'subjects', 'spelling', 'data', 'content-data.js');
 const spellingWordDataPath = path.join(rootDir, 'src', 'subjects', 'spelling', 'data', 'word-data.js');
@@ -126,15 +127,23 @@ function workerAliasPlugin() {
   };
 }
 
+if (path.dirname(workerDistDir) !== path.join(rootDir, 'dist') || path.basename(workerDistDir) !== 'worker') {
+  throw new Error(`Refusing to clean unexpected Worker output directory: ${workerDistDir}`);
+}
+await rm(workerDistDir, { recursive: true, force: true });
 await mkdir(workerDistDir, { recursive: true });
+await mkdir(workerGeneratedDir, { recursive: true });
 await writeSpellingPublicRuntime();
 
 const result = await build({
   entryPoints: [workerEntry],
-  outfile: workerOutfile,
+  outdir: workerDistDir,
+  entryNames: 'index',
+  chunkNames: 'chunks/[name]-[hash]',
   absWorkingDir: rootDir,
   bundle: true,
   format: 'esm',
+  splitting: true,
   platform: 'browser',
   target: ['es2022'],
   minify: true,

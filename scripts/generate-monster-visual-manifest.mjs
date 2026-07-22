@@ -8,6 +8,7 @@ const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, '..');
 const assetsDir = path.join(rootDir, 'assets', 'monsters');
 const outputFile = path.join(rootDir, 'src', 'platform', 'game', 'monster-asset-manifest.js');
+const metadataOutputFile = path.join(rootDir, 'src', 'platform', 'game', 'monster-asset-manifest-meta.js');
 const assetFilePattern = /^(.+)-(b[0-9]+)-([0-9]+)\.(320|640|1280)\.webp$/;
 
 async function listDirectories(dir) {
@@ -95,14 +96,25 @@ const manifest = {
 };
 
 const source = `// Generated from assets/monsters via scripts/generate-monster-visual-manifest.mjs\n// Do not edit by hand. Regenerate when monster asset folders change.\n\nexport const MONSTER_ASSET_MANIFEST = Object.freeze(${JSON.stringify(manifest, null, 2)});\n\nexport const MONSTER_ASSET_MANIFEST_HASH = ${JSON.stringify(manifestHash)};\n`;
+const metadataSource = `// Generated from assets/monsters via scripts/generate-monster-visual-manifest.mjs\n// Do not edit by hand. Regenerate when monster asset folders change.\n\nexport const MONSTER_ASSET_MANIFEST_HASH = ${JSON.stringify(manifestHash)};\n`;
 
 await mkdir(path.dirname(outputFile), { recursive: true });
 const tempOutputFile = `${outputFile}.${process.pid}.${Date.now()}.tmp`;
+const tempMetadataOutputFile = `${metadataOutputFile}.${process.pid}.${Date.now()}.tmp`;
 try {
-  await writeFile(tempOutputFile, source, 'utf8');
-  await rename(tempOutputFile, outputFile);
+  await Promise.all([
+    writeFile(tempOutputFile, source, 'utf8'),
+    writeFile(tempMetadataOutputFile, metadataSource, 'utf8'),
+  ]);
+  await Promise.all([
+    rename(tempOutputFile, outputFile),
+    rename(tempMetadataOutputFile, metadataOutputFile),
+  ]);
 } catch (err) {
-  await unlink(tempOutputFile).catch(() => {});
+  await Promise.all([
+    unlink(tempOutputFile).catch(() => {}),
+    unlink(tempMetadataOutputFile).catch(() => {}),
+  ]);
   throw err;
 }
-console.log(`Generated ${path.relative(rootDir, outputFile)} with ${assets.length} monster assets.`);
+console.log(`Generated ${path.relative(rootDir, outputFile)} and metadata with ${assets.length} monster assets.`);

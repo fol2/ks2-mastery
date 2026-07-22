@@ -285,15 +285,21 @@ test('subject runtime dispatches to subject-owned handlers', async () => {
   assert.deepEqual(result.subjectReadModel, { phase: 'setup' });
 });
 
-test('worker subject runtime keeps heavy punctuation command handlers off the startup path', async () => {
+test('worker subject runtime keeps every subject command engine off the startup path', async () => {
   const source = await readFile(new URL('../worker/src/subjects/runtime.js', import.meta.url), 'utf8');
 
-  assert.doesNotMatch(
-    source,
-    /import\s+\{[^}]*createPunctuationCommandHandlers[^}]*\}\s+from\s+['"]\.\/punctuation\/commands\.js['"]/,
-    'punctuation command handlers must stay lazy so the generated runtime manifest is not built during Worker startup',
-  );
-  assert.match(source, /import\(['"]\.\/punctuation\/commands\.js['"]\)/);
+  for (const subjectId of ['arithmetic', 'grammar', 'punctuation', 'reading', 'reasoning', 'spelling']) {
+    assert.doesNotMatch(
+      source,
+      new RegExp(`from\\s+['"]\\./${subjectId}/commands\\.js['"]`),
+      `${subjectId} command handlers must stay lazy so unrelated gameplay content is not built during Worker startup`,
+    );
+    assert.match(
+      source,
+      new RegExp(`import\\(['"]\\./${subjectId}/commands\\.js['"]\\)`),
+      `${subjectId} command handlers must load only when that subject is dispatched`,
+    );
+  }
 });
 
 test('worker repository keeps heavy punctuation read-model service off the startup path', async () => {
@@ -326,6 +332,98 @@ test('worker repository keeps heavy punctuation read-model service off the start
   );
   assert.match(source, /import\(['"]\.\/subjects\/punctuation\/read-models\.js['"]\)/);
   assert.match(source, /import\(['"]\.\.\/\.\.\/shared\/punctuation\/service\.js['"]\)/);
+});
+
+test('worker repository keeps subject content read-model engines off the startup path', async () => {
+  const source = await readFile(new URL('../worker/src/repository.js', import.meta.url), 'utf8');
+
+  for (const subjectId of ['grammar', 'reading', 'arithmetic', 'reasoning']) {
+    assert.doesNotMatch(
+      source,
+      new RegExp(`from\\s+['"]\\./subjects/${subjectId}/(?:engine|read-models)\\.js['"]`),
+      `${subjectId} content and read-model modules must not initialise for unrelated Worker requests`,
+    );
+    assert.match(
+      source,
+      new RegExp(`import\\(['"]\\./subjects/${subjectId}/read-models\\.js['"]\\)`),
+      `${subjectId} read-model assembly must be route-lazy`,
+    );
+  }
+});
+
+test('worker repository keeps the generated Spelling seed off the startup path', async () => {
+  const source = await readFile(new URL('../worker/src/repository.js', import.meta.url), 'utf8');
+  const loaderSource = await readFile(
+    new URL('../worker/src/spelling-content-seed-loader.js', import.meta.url),
+    'utf8',
+  );
+
+  assert.doesNotMatch(
+    source,
+    /from\s+['"]\.\/generated-spelling-content-seed\.js['"]/,
+    'the compressed Spelling seed must not be parsed for unrelated Worker requests',
+  );
+  assert.match(source, /from\s+['"]\.\/spelling-content-seed-loader\.js['"]/);
+  assert.doesNotMatch(
+    loaderSource,
+    /from\s+['"]\.\/generated-spelling-content-seed\.js['"]/,
+    'the seed loader must not turn the generated seed back into a static dependency',
+  );
+  assert.match(
+    loaderSource,
+    /import\(['"]\.\/generated-spelling-content-seed\.js['"]\)/,
+    'the Spelling seed must load only when a Spelling content path needs it',
+  );
+});
+
+test('Worker keeps content-operations routes and repository off gameplay startup', async () => {
+  const appSource = await readFile(new URL('../worker/src/app.js', import.meta.url), 'utf8');
+  const repositorySource = await readFile(new URL('../worker/src/repository.js', import.meta.url), 'utf8');
+
+  for (const modulePath of ['./content-operations/routes.js', './content-operations/assets.js']) {
+    assert.doesNotMatch(appSource, new RegExp(`from\\s+['"]${modulePath.replaceAll('.', '\\.')}['"]`));
+    assert.match(appSource, new RegExp(`import\\(['"]${modulePath.replaceAll('.', '\\.')}['"]\\)`));
+  }
+  assert.doesNotMatch(
+    repositorySource,
+    /from\s+['"]\.\/content-operations\/repository\.js['"]/,
+  );
+  assert.match(
+    repositorySource,
+    /import\(['"]\.\/content-operations\/repository\.js['"]\)/,
+  );
+});
+
+test('Worker keeps the full monster visual manifest and validators off gameplay startup', async () => {
+  const source = await readFile(new URL('../worker/src/repository.js', import.meta.url), 'utf8');
+
+  assert.doesNotMatch(
+    source,
+    /from\s+['"]\.\.\/\.\.\/src\/platform\/game\/monster-asset-manifest\.js['"]/,
+    'gameplay startup needs only the small generated manifest hash',
+  );
+  assert.doesNotMatch(
+    source,
+    /from\s+['"]\.\.\/\.\.\/src\/platform\/game\/monster-visual-config\.js['"]/,
+    'monster visual validators must load only on their own route',
+  );
+  assert.match(
+    source,
+    /from\s+['"]\.\.\/\.\.\/src\/platform\/game\/monster-asset-manifest-meta\.js['"]/,
+  );
+  assert.match(
+    source,
+    /import\(['"]\.\.\/\.\.\/src\/platform\/game\/monster-visual-config\.js['"]\)/,
+  );
+});
+
+test('Worker build emits route-lazy modules instead of one monolithic startup file', async () => {
+  const source = await readFile(new URL('../scripts/build-worker.mjs', import.meta.url), 'utf8');
+
+  assert.match(source, /splitting:\s*true/);
+  assert.match(source, /outdir:\s*workerDistDir/);
+  assert.match(source, /chunkNames:\s*['"]chunks\/\[name\]-\[hash\]['"]/);
+  assert.doesNotMatch(source, /outfile:\s*workerOutfile/);
 });
 
 test('repository reuses cached spelling runtime content for hot subject paths', async () => {
@@ -661,6 +759,85 @@ test('Hero subject projections never hydrate the published Spelling content snap
       heroQueries.some((entry) => /\bFROM\s+content_operation_releases\b/i.test(entry.sql || '')),
       false,
       'Hero subject projections must be independent of the size of the published content snapshot',
+    );
+  } finally {
+    DB.close();
+  }
+});
+
+test('Hero subject projections never hydrate Punctuation item history', async () => {
+  const DB = createMigratedSqliteD1Database();
+  const repository = createWorkerRepository({ env: { DB }, now: () => 1_777_000_000_000 });
+  try {
+    DB.db.prepare(`
+      INSERT INTO adult_accounts (id, email, display_name, platform_role, selected_learner_id, created_at, updated_at, repo_revision)
+      VALUES ('adult-hero-punct', 'adult-hero-punct@example.test', 'Adult', 'parent', NULL, ?, ?, 0)
+    `).run(1_777_000_000_000, 1_777_000_000_000);
+    DB.db.prepare(`
+      INSERT INTO learner_profiles (id, name, year_group, avatar_color, goal, daily_minutes, created_at, updated_at, state_revision)
+      VALUES ('learner-hero-punct', 'Hero Learner', 'Y5', '#3E6FA8', 'sats', 15, ?, ?, 0)
+    `).run(1_777_000_000_000, 1_777_000_000_000);
+    DB.db.prepare(`
+      INSERT INTO child_subject_state (
+        learner_id, subject_id, ui_json, data_json, updated_at, updated_by_account_id
+      ) VALUES ('learner-hero-punct', 'punctuation', ?, ?, ?, 'adult-hero-punct')
+    `).run(
+      JSON.stringify({ phase: 'setup', session: null }),
+      JSON.stringify({
+        progress: {
+          itemTotals: { version: 1, tracked: 10_000, new: 9_997, secure: 1, weak: 1 },
+          facets: {
+            'sentence_endings::choose': { attempts: 4, correct: 1, lapses: 2, streak: 0, dueAt: 1 },
+            'list_commas::choose': { attempts: 4, correct: 3, streak: 1, dueAt: 1 },
+            'apostrophe_contractions::choose': {
+              attempts: 5,
+              correct: 5,
+              streak: 5,
+              dueAt: 1,
+              firstCorrectAt: 1_776_000_000_000,
+              lastCorrectAt: 1_777_000_000_000,
+            },
+          },
+          attempts: [{
+            ts: 1_776_999_999_000,
+            itemId: 'retired-punctuation:999',
+            itemMode: 'choose',
+            correct: false,
+          }],
+          rewardUnits: {},
+          sessionsCompleted: 3,
+        },
+      }),
+      1_777_000_000_000,
+    );
+
+    const insertItem = DB.db.prepare(`
+      INSERT INTO punctuation_item_state (
+        learner_id, item_id, state_json, updated_at, updated_by_account_id
+      ) VALUES ('learner-hero-punct', ?, ?, ?, 'adult-hero-punct')
+    `);
+    for (let index = 0; index < 1_000; index += 1) {
+      insertItem.run(
+        `retired-punctuation:${index}`,
+        JSON.stringify({ attempts: 10, correct: 8, streak: 1, dueAt: 1 }),
+        1_777_000_000_000 - index,
+      );
+    }
+
+    DB.clearQueryLog();
+    const heroModels = await repository.readHeroSubjectReadModels('learner-hero-punct', {
+      accountId: 'adult-hero-punct',
+      now: 1_777_000_000_000,
+    });
+    const heroQueries = DB.takeQueryLog();
+
+    assert.equal(heroModels.punctuation.ui.stats.weak, 1);
+    assert.equal(heroModels.punctuation.ui.stats.due, 1);
+    assert.equal(heroModels.punctuation.ui.stats.secure, 1);
+    assert.equal(
+      heroQueries.some((entry) => /\bFROM\s+punctuation_item_state\b/i.test(entry.sql || '')),
+      false,
+      'Hero must use bounded facets instead of learner lifetime item rows',
     );
   } finally {
     DB.close();
