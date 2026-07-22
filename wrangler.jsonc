@@ -2,6 +2,18 @@
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "ks2-mastery",
   "main": "./dist/worker/index.js",
+  // scripts/build-worker.mjs already emits a production-ready split module
+  // graph. Re-bundling here flattens every subject content bank into one
+  // 15 MB cold-start module and makes unrelated subjects pay its parse cost.
+  "no_bundle": true,
+  "find_additional_modules": true,
+  "base_dir": "./dist/worker",
+  "rules": [
+    {
+      "type": "ESModule",
+      "globs": ["**/*.js"]
+    }
+  ],
   "compatibility_date": "2026-04-20",
   "preview_urls": true,
   "observability": {

@@ -581,6 +581,23 @@ test('worker deploy bundle keeps spelling gameplay code out of the startup graph
   }
 });
 
+test('Wrangler preserves the prebuilt Worker module graph', async () => {
+  const config = await readFile(path.join(REPO_ROOT, 'wrangler.jsonc'), 'utf8');
+  assert.match(
+    config,
+    /"no_bundle"\s*:\s*true/,
+    'Wrangler must not flatten the prebuilt split Worker back into one cold-start module.',
+  );
+  assert.match(
+    config,
+    /"find_additional_modules"\s*:\s*true/,
+    'Wrangler must upload every prebuilt module referenced by the entrypoint.',
+  );
+  assert.match(config, /"base_dir"\s*:\s*"\.\/dist\/worker"/);
+  assert.match(config, /"type"\s*:\s*"ESModule"/);
+  assert.match(config, /"globs"\s*:\s*\[\s*"\*\*\/\*\.js"\s*\]/);
+});
+
 // Regression pin for the 2026-04-26 deploy failure: events.js is reachable
 // from the client entry via achievements.js, so any reference to the
 // `./data/` dataset modules drags the full spelling content dataset into
