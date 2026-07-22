@@ -27,6 +27,9 @@ import {
   encodeContentOperationSnapshot,
 } from '../src/subjects/spelling/content/release-snapshot-codec.js';
 import {
+  buildSpellingRuntimeReleaseProjection,
+} from '../src/subjects/spelling/content/runtime-release-projection.js';
+import {
   isStatutoryCoreWord,
 } from '../src/subjects/spelling/content/taxonomy.js';
 import {
@@ -507,8 +510,8 @@ test('repository serves spelling runtime from the global content operations rele
     });
     const accountContentReads = accountContentQueries(DB);
 
-    assert.equal(runtime.content.draft.words[0].explanation, explanation);
-    assert.equal(runtime.content.draft.words.length, seeded.draft.words.length);
+    assert.equal(runtime.snapshot.words[0].explanation, explanation);
+    assert.equal(runtime.snapshot.words.length, seeded.releases.at(-1).snapshot.words.length);
     assert.equal(runtime.summary.runtimeWordCount, seeded.releases.at(-1).snapshot.words.length);
     assert.equal(accountContentReads.length, 0);
   } finally {
@@ -570,25 +573,31 @@ test('repository runtime activates scheduled spelling pool visibility at request
       sortIndex: content.draft.sentences.length,
     });
 
+    const runtimeProjection = buildSpellingRuntimeReleaseProjection(content, {
+      releaseId: 'corel-scheduled-runtime',
+      publishedAt: currentNow,
+    });
     DB.db.prepare(`
       INSERT INTO content_operation_releases (
         release_id, subject_id, status, snapshot_json, snapshot_hash,
         base_release_id, package_id, published_at, published_by_account_id,
-        rollback_of_release_id, proof_json, created_at
+        rollback_of_release_id, proof_json, created_at,
+        runtime_snapshot_json, runtime_summary_json
       )
-      VALUES (?, 'spelling', 'published', ?, ?, NULL, NULL, ?, 'admin-a', NULL, NULL, ?)
+      VALUES (?, 'spelling', 'published', ?, ?, NULL, NULL, ?, 'admin-a', NULL, NULL, ?, ?, ?)
     `).run(
       'corel-scheduled-runtime',
       await encodeContentOperationSnapshot(content),
       'scheduled-runtime-hash',
       currentNow,
       currentNow,
+      await encodeContentOperationSnapshot(runtimeProjection),
+      JSON.stringify(runtimeProjection.summary),
     );
 
     const beforeActivation = await repository.readSpellingRuntimeContent('adult-a', 'spelling', {
       includeAccountContent: false,
     });
-    assert.equal(beforeActivation.content.draft.words.some((word) => word.slug === 'scheduledfocus'), true);
     assert.equal(beforeActivation.snapshot.wordBySlug.scheduledfocus, undefined);
 
     currentNow += 60_000;
@@ -629,8 +638,64 @@ test('repository runtime uses global release ahead of legacy account content aft
     const runtime = await repository.readSpellingRuntimeContent('adult-a', 'spelling');
     const accountContentReads = accountContentQueries(DB);
 
-    assert.equal(runtime.content.draft.words[0].explanation, globalExplanation);
+    assert.equal(runtime.snapshot.words[0].explanation, globalExplanation);
     assert.equal(accountContentReads.length, 0);
+  } finally {
+    DB.close();
+  }
+});
+
+test('published gameplay reads the compiled runtime projection without touching the authoring snapshot', async () => {
+  const DB = createMigratedSqliteD1Database();
+  const repository = createWorkerRepository({ env: { DB }, now: () => 1_777_000_000_000 });
+  try {
+    const projectedSnapshot = structuredClone(SEEDED_SPELLING_PUBLISHED_SNAPSHOT);
+    projectedSnapshot.words[0].explanation = 'Compiled runtime projection marker.';
+    projectedSnapshot.wordBySlug[projectedSnapshot.words[0].slug] = projectedSnapshot.words[0];
+    const runtimeProjection = {
+      version: 1,
+      subjectId: 'spelling',
+      releaseId: 'corel-runtime-projection-only',
+      snapshot: projectedSnapshot,
+      summary: {
+        publishedReleaseId: 'corel-runtime-projection-only',
+        runtimeWordCount: projectedSnapshot.words.length,
+      },
+    };
+
+    DB.db.prepare(`
+      INSERT INTO content_operation_releases (
+        release_id, subject_id, status, snapshot_json, snapshot_hash,
+        base_release_id, package_id, published_at, published_by_account_id,
+        rollback_of_release_id, proof_json, created_at,
+        runtime_snapshot_json, runtime_summary_json
+      )
+      VALUES (?, 'spelling', 'published', ?, ?, NULL, NULL, ?, 'admin-a', NULL, NULL, ?, ?, ?)
+    `).run(
+      'corel-runtime-projection-only',
+      JSON.stringify({ authoringSnapshotMustNotBeRead: 'x'.repeat(2_000_000) }),
+      'runtime-projection-hash',
+      1_777_000_000_000,
+      1_777_000_000_000,
+      await encodeContentOperationSnapshot(runtimeProjection),
+      JSON.stringify(runtimeProjection.summary),
+    );
+
+    DB.clearQueryLog();
+    const runtime = await repository.readSpellingRuntimeContent('adult-a', 'spelling', {
+      includeAccountContent: false,
+    });
+    const queries = DB.takeQueryLog();
+
+    assert.equal(runtime.snapshot.words[0].explanation, 'Compiled runtime projection marker.');
+    assert.equal(runtime.summary.publishedReleaseId, 'corel-runtime-projection-only');
+    assert.equal(
+      queries.some((entry) => String(entry.sql || '')
+        .replaceAll('runtime_snapshot_json', '')
+        .includes('snapshot_json')),
+      false,
+      'gameplay queries must never select the authoring snapshot column',
+    );
   } finally {
     DB.close();
   }
@@ -672,8 +737,8 @@ test('repository runtime keeps account overrides ahead of global releases withou
     });
     const accountContentReads = accountContentQueries(DB);
 
-    assert.equal(overridden.content.draft.words[0].explanation, overrideExplanation);
-    assert.equal(latest.content.draft.words[1].explanation, globalExplanation);
+    assert.equal(overridden.snapshot.words[0].explanation, overrideExplanation);
+    assert.equal(latest.snapshot.words[1].explanation, globalExplanation);
     assert.equal(accountContentReads.length, 0);
   } finally {
     DB.close();

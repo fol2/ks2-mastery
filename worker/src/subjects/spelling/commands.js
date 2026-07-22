@@ -189,18 +189,14 @@ async function replayContextEvents(context, learnerId) {
   return [...replayRequests, ...referenceEvents];
 }
 
-async function readRuntimeContent(context, observe = null) {
+async function readRuntimeContent(context) {
   if (typeof context.repository.readSpellingRuntimeContent === 'function') {
-    const options = {
-      includeAccountContent: false,
-    };
-    if (typeof observe === 'function') {
-      Object.defineProperty(options, 'observe', { value: observe });
-    }
     return context.repository.readSpellingRuntimeContent(
       context.session.accountId,
       'spelling',
-      options,
+      {
+        includeAccountContent: false,
+      },
     );
   }
   const contentResult = await context.repository.readSubjectContent(context.session.accountId, 'spelling');
@@ -384,39 +380,6 @@ export function createSpellingCommandHandlers({ now, random } = {}) {
       });
     }
 
-    const observesColdCommand = command.command === 'start-session' || command.command === 'skip-word';
-    const observationStartedAt = performance.now();
-    let observationPhaseStartedAt = observationStartedAt;
-    const observePhase = (phase) => {
-      if (!observesColdCommand) return;
-      const observedAt = performance.now();
-      // Temporary production observation. Checkpoints are request-scoped so
-      // Cloudflare tail can retain the last completed phase before a CPU kill.
-      // eslint-disable-next-line no-console
-      console.info('[ks2-observe]', JSON.stringify({
-        event: 'spelling_command_phase',
-        command: command.command,
-        requestId: command.requestId,
-        phase,
-        phaseMs: Math.round((observedAt - observationPhaseStartedAt) * 100) / 100,
-        elapsedMs: Math.round((observedAt - observationStartedAt) * 100) / 100,
-      }));
-      observationPhaseStartedAt = observedAt;
-    };
-    const observeRepository = (phase, details = {}) => {
-      if (!observesColdCommand) return;
-      // eslint-disable-next-line no-console
-      console.info('[ks2-observe]', JSON.stringify({
-        event: 'spelling_repository_phase',
-        command: command.command,
-        requestId: command.requestId,
-        phase,
-        elapsedMs: Math.round((performance.now() - observationStartedAt) * 100) / 100,
-        ...details,
-      }));
-    };
-    observePhase('handler-started');
-
     const nowValue = Number.isFinite(Number(context.now)) ? Number(context.now) : Date.now();
     let runtimeRecord = context.commandRuntime || (typeof context.repository.readSpellingCommandRuntime === 'function'
       ? await context.repository.readSpellingCommandRuntime(
@@ -432,9 +395,7 @@ export function createSpellingCommandHandlers({ now, random } = {}) {
         'spelling',
         { skipAccessCheck: true },
       ));
-    observePhase('runtime-read');
-    const contentResult = await readRuntimeContent(context, observeRepository);
-    observePhase('content-read');
+    const contentResult = await readRuntimeContent(context);
     const snapshot = contentResult.snapshot;
     if (!snapshot?.words?.length) {
       throw new NotFoundError('No published spelling content is available.', {
@@ -501,8 +462,6 @@ export function createSpellingCommandHandlers({ now, random } = {}) {
         },
       };
     }
-    observePhase('working-set-read');
-
     const usesBoundedGameplayStore = !isLegacyGameplayWorkingSet(runtimeRecord.subjectRecord?.data);
     const completeCatalogue = workingSetPlan.completeCatalogue || !usesBoundedGameplayStore;
     const aggregateProgress = usesBoundedGameplayStore && !completeCatalogue && statsCurrent
@@ -526,7 +485,6 @@ export function createSpellingCommandHandlers({ now, random } = {}) {
       command: command.command,
       payload: command.payload,
     });
-    observePhase('engine-applied');
     const domainEvents = Array.isArray(result.events) ? result.events : [];
     // Projection is a derived reward/read-model dependency. If it is
     // temporarily unavailable, keep the primary spelling command flowing and

@@ -113,6 +113,7 @@ export function createHubApi({
   const parentHubRecentSessionsBreaker = breakers?.parentHubRecentSessions || null;
   const parentHubActivityBreaker = breakers?.parentHubActivity || null;
   const classroomSummaryBreaker = breakers?.classroomSummary || null;
+  const inFlightAdminReads = new Map();
 
   async function readParentRecentSessions({ learnerId = null, limit = 6, cursor = null } = {}) {
     const url = buildRequestUrl(baseUrl, '/api/hubs/parent/recent-sessions', {
@@ -184,24 +185,36 @@ export function createHubApi({
     },
     readParentRecentSessions,
     readParentActivity,
-    async readAdminHub({ learnerId = null, requestId = null, auditLimit = 20 } = {}) {
+    readAdminHub({ learnerId = null, requestId = null, auditLimit = 20 } = {}) {
       const url = buildRequestUrl(baseUrl, '/api/hubs/admin', {
         learnerId,
         requestId,
         auditLimit,
       });
+      const existing = inFlightAdminReads.get(url);
+      if (existing) return existing;
       // U9 round 1 fix (adv-u9-r1-002): the Admin Hub read surfaces the
       // per-learner Grammar/Punctuation/Spelling summary stats. When the
       // derived-read path goes hot the `classroomSummary` breaker opens so
       // the admin UX degrades to the "learner-list-only" banner per plan
       // line 882.
-      return fetchHubJsonWithBreaker(
+      const request = fetchHubJsonWithBreaker(
         fetch,
         url,
         { method: 'GET' },
         authSession,
         classroomSummaryBreaker,
       );
+      inFlightAdminReads.set(url, request);
+      request.then(
+        () => {
+          if (inFlightAdminReads.get(url) === request) inFlightAdminReads.delete(url);
+        },
+        () => {
+          if (inFlightAdminReads.get(url) === request) inFlightAdminReads.delete(url);
+        },
+      );
+      return request;
     },
     async saveMonsterVisualConfigDraft({ draft, mutation } = {}) {
       const url = buildRequestUrl(baseUrl, '/api/admin/monster-visual-config/draft');

@@ -30,6 +30,9 @@ import {
   encodeContentOperationSnapshot,
 } from '../../../src/subjects/spelling/content/release-snapshot-codec.js';
 import {
+  buildSpellingRuntimeReleaseProjection,
+} from '../../../src/subjects/spelling/content/runtime-release-projection.js';
+import {
   readSeededSpellingContentBundle,
 } from '../spelling-content-seed-loader.js';
 import {
@@ -1489,6 +1492,12 @@ export function createContentOperationsRepository({ db, env = {}, now }) {
       const publishedAt = nowTs;
       const snapshotHash = contentOperationHash(validation.bundle, 'release');
       const encodedSnapshot = await encodeContentOperationSnapshot(validation.bundle);
+      const runtimeProjection = buildSpellingRuntimeReleaseProjection(validation.bundle, {
+        releaseId,
+        publishedAt,
+      });
+      const encodedRuntimeSnapshot = await encodeContentOperationSnapshot(runtimeProjection);
+      const runtimeSummaryJson = JSON.stringify(runtimeProjection.summary);
       const actor = normaliseString(seededByAccountId) || legacy?.source?.updatedByAccountId || null;
       const source = legacy?.source || { type: 'bundled_fallback' };
       const releaseProof = {
@@ -1505,9 +1514,10 @@ export function createContentOperationsRepository({ db, env = {}, now }) {
           INSERT INTO content_operation_releases (
             release_id, subject_id, status, snapshot_json, snapshot_hash,
             base_release_id, package_id, published_at, published_by_account_id,
-            rollback_of_release_id, proof_json, created_at
+            rollback_of_release_id, proof_json, created_at,
+            runtime_snapshot_json, runtime_summary_json
           )
-          SELECT ?, ?, 'published', ?, ?, NULL, NULL, ?, ?, NULL, ?, ?
+          SELECT ?, ?, 'published', ?, ?, NULL, NULL, ?, ?, NULL, ?, ?, ?, ?
           WHERE NOT EXISTS (
             SELECT 1
             FROM content_operation_releases
@@ -1522,6 +1532,8 @@ export function createContentOperationsRepository({ db, env = {}, now }) {
           actor,
           JSON.stringify(releaseProof),
           nowTs,
+          encodedRuntimeSnapshot,
+          runtimeSummaryJson,
           resolvedSubjectId,
         ]),
         bindStatement(db, `
@@ -2782,6 +2794,12 @@ export function createContentOperationsRepository({ db, env = {}, now }) {
       const nowTs = Number(nowFactory());
       const snapshotHash = contentOperationHash(candidate.candidate, 'release');
       const encodedSnapshot = await encodeContentOperationSnapshot(candidate.candidate);
+      const runtimeProjection = buildSpellingRuntimeReleaseProjection(candidate.candidate, {
+        releaseId,
+        publishedAt: nowTs,
+      });
+      const encodedRuntimeSnapshot = await encodeContentOperationSnapshot(runtimeProjection);
+      const runtimeSummaryJson = JSON.stringify(runtimeProjection.summary);
       const releaseProof = buildReleaseProof(
         proof,
         approval,
@@ -2817,9 +2835,10 @@ export function createContentOperationsRepository({ db, env = {}, now }) {
             INSERT INTO content_operation_releases (
               release_id, subject_id, status, snapshot_json, snapshot_hash,
               base_release_id, package_id, published_at, published_by_account_id,
-              rollback_of_release_id, proof_json, created_at
+              rollback_of_release_id, proof_json, created_at,
+              runtime_snapshot_json, runtime_summary_json
             )
-            SELECT ?, ?, 'published', ?, ?, ?, ?, ?, ?, NULL, ?, ?
+            SELECT ?, ?, 'published', ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?
             WHERE EXISTS (
               SELECT 1
               FROM content_operation_packages
@@ -2837,6 +2856,8 @@ export function createContentOperationsRepository({ db, env = {}, now }) {
             actor,
             releaseProof == null ? null : JSON.stringify(releaseProof),
             nowTs,
+            encodedRuntimeSnapshot,
+            runtimeSummaryJson,
             packageId,
             CONTENT_OPERATION_PACKAGE_STATES.APPROVED,
             currentReleaseRow.release_id,
@@ -3094,6 +3115,12 @@ export function createContentOperationsRepository({ db, env = {}, now }) {
       const rollbackReleaseId = uid('corel');
       const snapshotHash = contentOperationHash(validation.bundle, 'release');
       const encodedSnapshot = await encodeContentOperationSnapshot(validation.bundle);
+      const runtimeProjection = buildSpellingRuntimeReleaseProjection(validation.bundle, {
+        releaseId: rollbackReleaseId,
+        publishedAt: nowTs,
+      });
+      const encodedRuntimeSnapshot = await encodeContentOperationSnapshot(runtimeProjection);
+      const runtimeSummaryJson = JSON.stringify(runtimeProjection.summary);
       const targetAssetProof = releaseAssetProofFromProof(target.proof);
       const rollbackProof = {
         ...(proof && typeof proof === 'object' && !Array.isArray(proof) ? proof : {}),
@@ -3122,9 +3149,10 @@ export function createContentOperationsRepository({ db, env = {}, now }) {
           INSERT INTO content_operation_releases (
             release_id, subject_id, status, snapshot_json, snapshot_hash,
             base_release_id, package_id, published_at, published_by_account_id,
-            rollback_of_release_id, proof_json, created_at
+            rollback_of_release_id, proof_json, created_at,
+            runtime_snapshot_json, runtime_summary_json
           )
-          SELECT ?, ?, 'published', ?, ?, ?, NULL, ?, ?, ?, ?, ?
+          SELECT ?, ?, 'published', ?, ?, ?, NULL, ?, ?, ?, ?, ?, ?, ?
           WHERE ? = (${latestPublishedReleaseIdSql()})
         `, [
           rollbackReleaseId,
@@ -3137,6 +3165,8 @@ export function createContentOperationsRepository({ db, env = {}, now }) {
           target.releaseId,
           JSON.stringify(rollbackProof),
           nowTs,
+          encodedRuntimeSnapshot,
+          runtimeSummaryJson,
           currentRow?.release_id || null,
           resolvedSubjectId,
         ]),

@@ -25,6 +25,9 @@ import {
   decodeContentOperationSnapshot,
 } from '../../src/subjects/spelling/content/release-snapshot-codec.js';
 import {
+  isSpellingRuntimeReleaseProjection,
+} from '../../src/subjects/spelling/content/runtime-release-projection.js';
+import {
   readSeededSpellingContentBundle,
   readSeededSpellingContentSummary,
   readSeededSpellingPublishedSnapshot,
@@ -1062,36 +1065,24 @@ async function readSpellingRuntimeContentReleaseBundle(
   subjectId,
   releaseRow,
   cachePrefix = 'release',
-  { observe = null } = {},
 ) {
   if (!releaseRow) return readSeededSpellingRuntimeContentBundle(subjectId);
   const key = spellingRuntimeContentReleaseKey(releaseRow, subjectId, cachePrefix);
   const cached = readCachedSpellingRuntimeContent(key);
-  if (typeof observe === 'function') {
-    observe('content-release-cache-checked', { cacheHit: Boolean(cached) });
-  }
   if (cached) return cached;
-  const rowReadStartedAt = performance.now();
-  const fullReleaseRow = await readPublishedContentOperationReleaseRow(db, subjectId, {
-    includeSnapshot: true,
+  const runtimeReleaseRow = await readPublishedContentOperationReleaseRow(db, subjectId, {
+    includeRuntimeSnapshot: true,
     releaseId: releaseRow.release_id,
   });
-  if (typeof observe === 'function') {
-    observe('content-release-row-read', {
-      durationMs: Math.round((performance.now() - rowReadStartedAt) * 100) / 100,
-      snapshotBytes: typeof fullReleaseRow?.snapshot_json === 'string'
-        ? fullReleaseRow.snapshot_json.length
-        : 0,
-    });
-  }
   return rememberSpellingRuntimeContent(
     key,
-    await buildSpellingRuntimeContentFromRelease(fullReleaseRow, subjectId, { observe }),
+    await buildSpellingRuntimeContentFromRelease(runtimeReleaseRow, subjectId),
   );
 }
 
 async function readPublishedContentOperationReleaseRow(db, subjectId = 'spelling', {
   includeSnapshot = false,
+  includeRuntimeSnapshot = false,
   releaseId = null,
 } = {}) {
   const releaseFilter = releaseId
@@ -1105,7 +1096,8 @@ async function readPublishedContentOperationReleaseRow(db, subjectId = 'spelling
         subject_id,
         status,
         snapshot_hash,
-        ${includeSnapshot ? 'snapshot_json' : 'NULL AS snapshot_json'},
+        ${includeSnapshot ? 'snapshot_json,' : ''}
+        ${includeRuntimeSnapshot ? 'runtime_snapshot_json, runtime_summary_json,' : ''}
         proof_json,
         published_at,
         created_at
@@ -1122,6 +1114,7 @@ async function readPublishedContentOperationReleaseRow(db, subjectId = 'spelling
 
 async function readActiveContentOperationOverrideReleaseRow(db, accountId, subjectId = 'spelling', {
   includeSnapshot = false,
+  includeRuntimeSnapshot = false,
 } = {}) {
   try {
     return await first(db, `
@@ -1130,7 +1123,8 @@ async function readActiveContentOperationOverrideReleaseRow(db, accountId, subje
         r.subject_id,
         r.status,
         r.snapshot_hash,
-        ${includeSnapshot ? 'r.snapshot_json' : 'NULL'} AS snapshot_json,
+        ${includeSnapshot ? 'r.snapshot_json AS snapshot_json,' : ''}
+        ${includeRuntimeSnapshot ? 'r.runtime_snapshot_json AS runtime_snapshot_json, r.runtime_summary_json AS runtime_summary_json,' : ''}
         r.proof_json,
         r.published_at,
         r.created_at
@@ -1158,6 +1152,7 @@ async function readActiveContentOperationOverrideReleaseRow(db, accountId, subje
 
 async function readResolvedContentOperationReleaseRow(db, accountId, subjectId = 'spelling', {
   includeSnapshot = false,
+  includeRuntimeSnapshot = false,
 } = {}) {
   try {
     return await first(db, `
@@ -1166,7 +1161,8 @@ async function readResolvedContentOperationReleaseRow(db, accountId, subjectId =
         subject_id,
         status,
         snapshot_hash,
-        snapshot_json,
+        ${includeSnapshot ? 'snapshot_json,' : ''}
+        ${includeRuntimeSnapshot ? 'runtime_snapshot_json, runtime_summary_json,' : ''}
         proof_json,
         published_at,
         created_at,
@@ -1177,7 +1173,8 @@ async function readResolvedContentOperationReleaseRow(db, accountId, subjectId =
           r.subject_id,
           r.status,
           r.snapshot_hash,
-          ${includeSnapshot ? 'r.snapshot_json' : 'NULL'} AS snapshot_json,
+          ${includeSnapshot ? 'r.snapshot_json AS snapshot_json,' : ''}
+          ${includeRuntimeSnapshot ? 'r.runtime_snapshot_json AS runtime_snapshot_json, r.runtime_summary_json AS runtime_summary_json,' : ''}
           r.proof_json,
           r.published_at,
           r.created_at,
@@ -1199,7 +1196,8 @@ async function readResolvedContentOperationReleaseRow(db, accountId, subjectId =
           r.subject_id,
           r.status,
           r.snapshot_hash,
-          ${includeSnapshot ? 'r.snapshot_json' : 'NULL'} AS snapshot_json,
+          ${includeSnapshot ? 'r.snapshot_json AS snapshot_json,' : ''}
+          ${includeRuntimeSnapshot ? 'r.runtime_snapshot_json AS runtime_snapshot_json, r.runtime_summary_json AS runtime_summary_json,' : ''}
           r.proof_json,
           r.published_at,
           r.created_at,
@@ -1332,18 +1330,9 @@ async function readSpellingRuntimeContentBundle(db, accountId, subjectId = 'spel
   includeGlobalContent = true,
   nowMs = Date.now(),
   env = {},
-  observe = null,
 } = {}) {
   if (includeGlobalContent) {
-    const releaseResolutionStartedAt = performance.now();
     const releaseRow = await readResolvedContentOperationReleaseRow(db, accountId, subjectId);
-    if (typeof observe === 'function') {
-      observe('content-release-resolved', {
-        durationMs: Math.round((performance.now() - releaseResolutionStartedAt) * 100) / 100,
-        releaseFound: Boolean(releaseRow),
-        releaseSource: releaseRow?.release_source || null,
-      });
-    }
     if (releaseRow) {
       const cachePrefix = releaseRow.release_source === 'override' ? 'override' : 'release';
       const runtimeContent = await readSpellingRuntimeContentReleaseBundle(
@@ -1351,19 +1340,8 @@ async function readSpellingRuntimeContentBundle(db, accountId, subjectId = 'spel
         subjectId,
         releaseRow,
         cachePrefix,
-        { observe },
       );
-      const visibilityStartedAt = performance.now();
-      const visibleRuntimeContent = resolveLearnerVisibleRuntimeContent(runtimeContent, { nowMs, env });
-      if (typeof observe === 'function') {
-        observe('content-visibility-resolved', {
-          durationMs: Math.round((performance.now() - visibilityStartedAt) * 100) / 100,
-          wordCount: Array.isArray(visibleRuntimeContent?.snapshot?.words)
-            ? visibleRuntimeContent.snapshot.words.length
-            : 0,
-        });
-      }
-      return visibleRuntimeContent;
+      return resolveLearnerVisibleRuntimeContent(runtimeContent, { nowMs, env });
     }
   }
 
@@ -1408,7 +1386,6 @@ async function readSpellingRuntimeContentBundle(db, accountId, subjectId = 'spel
         subjectId,
         releaseRow,
         'release',
-        { observe },
       );
       return resolveLearnerVisibleRuntimeContent(runtimeContent, { nowMs, env });
     }
@@ -1461,11 +1438,10 @@ async function readSpellingRuntimeContentBundle(db, accountId, subjectId = 'spel
 }
 
 async function readSpellingContentForReadModels(db, accountId, subjectId = 'spelling', options = {}) {
-  const seededBundle = await readSeededSpellingContentBundle();
   const runtimeContent = await readSpellingRuntimeContentBundle(db, accountId, subjectId, options);
-  const contentBundle = runtimeContent?.content || cloneSerialisable(seededBundle);
-  const runtimeSnapshot = runtimeContent?.snapshot || runtimeSnapshotForBundle(contentBundle, seededBundle);
-  const summary = runtimeContent?.summary || runtimeContentSummary(contentBundle, runtimeSnapshot);
+  const contentBundle = runtimeContent?.content || null;
+  const runtimeSnapshot = runtimeContent?.snapshot || null;
+  const summary = runtimeContent?.summary || null;
   return {
     contentBundle,
     runtimeSnapshot,
@@ -1747,64 +1723,52 @@ async function buildSpellingRuntimeContent(row, subjectId) {
   };
 }
 
-async function buildSpellingRuntimeContentFromRelease(row, subjectId, { observe = null } = {}) {
-  if (!row?.snapshot_json) {
+async function readSpellingAuthoringContentFromRelease(row, subjectId) {
+  const seededBundle = await readSeededSpellingContentBundle();
+  if (!row?.snapshot_json) return seededBundle;
+
+  try {
+    const snapshotJson = await decodeContentOperationSnapshot(row.snapshot_json);
+    return normaliseSpellingContentBundle(JSON.parse(snapshotJson));
+  } catch (error) {
+    logMutation('warn', 'content_operation_release.authoring_fallback', {
+      subjectId,
+      releaseId: row?.release_id || '',
+      error: error?.message || String(error),
+    });
+    return seededBundle;
+  }
+}
+
+async function buildSpellingRuntimeContentFromRelease(row, subjectId) {
+  if (!row?.runtime_snapshot_json) {
+    logMutation('warn', 'content_operation_release.runtime_projection_missing', {
+      subjectId,
+      releaseId: row?.release_id || '',
+    });
     return buildSeededSpellingRuntimeContent(subjectId);
   }
 
   try {
-    let phaseStartedAt = performance.now();
-    const snapshotJson = await decodeContentOperationSnapshot(row.snapshot_json);
-    if (typeof observe === 'function') {
-      observe('content-snapshot-decoded', {
-        durationMs: Math.round((performance.now() - phaseStartedAt) * 100) / 100,
-        decodedBytes: snapshotJson.length,
-      });
+    const snapshotJson = await decodeContentOperationSnapshot(row.runtime_snapshot_json);
+    const projection = JSON.parse(snapshotJson);
+    if (!isSpellingRuntimeReleaseProjection(projection, { releaseId: row.release_id })) {
+      throw new Error('Published Spelling runtime projection is invalid or belongs to another release.');
     }
-    phaseStartedAt = performance.now();
-    const decodedSnapshot = JSON.parse(snapshotJson);
-    if (typeof observe === 'function') {
-      observe('content-snapshot-parsed', {
-        durationMs: Math.round((performance.now() - phaseStartedAt) * 100) / 100,
-      });
-    }
-    phaseStartedAt = performance.now();
-    const content = normaliseSpellingContentBundle(decodedSnapshot);
-    if (typeof observe === 'function') {
-      observe('content-bundle-normalised', {
-        durationMs: Math.round((performance.now() - phaseStartedAt) * 100) / 100,
-      });
-    }
-    phaseStartedAt = performance.now();
-    const snapshot = buildPublishedSnapshotFromDraft(content.draft, {
-      generatedAt: Number(row.published_at) || Date.now(),
-      includeDeferredVisibility: true,
-    });
-    if (typeof observe === 'function') {
-      observe('content-snapshot-built', {
-        durationMs: Math.round((performance.now() - phaseStartedAt) * 100) / 100,
-        wordCount: Array.isArray(snapshot?.words) ? snapshot.words.length : 0,
-      });
-    }
-    phaseStartedAt = performance.now();
-    const baseSummary = runtimeContentSummary(content, snapshot);
-    if (typeof observe === 'function') {
-      observe('content-summary-built', {
-        durationMs: Math.round((performance.now() - phaseStartedAt) * 100) / 100,
-      });
-    }
+    const persistedSummary = safeJsonParse(row.runtime_summary_json, null);
     return {
       subjectId,
-      content,
-      snapshot,
+      content: null,
+      snapshot: projection.snapshot,
       summary: {
-        ...baseSummary,
-        publishedReleaseId: row.release_id || baseSummary.publishedReleaseId || '',
-        publishedAt: Number(row.published_at) || baseSummary.publishedAt || 0,
+        ...projection.summary,
+        ...(isPlainObject(persistedSummary) ? persistedSummary : {}),
+        publishedReleaseId: row.release_id || projection.summary.publishedReleaseId || '',
+        publishedAt: Number(row.published_at) || projection.summary.publishedAt || 0,
       },
     };
   } catch (error) {
-    logMutation('warn', 'content_operation_release.runtime_fallback', {
+    logMutation('warn', 'content_operation_release.runtime_projection_fallback', {
       subjectId,
       releaseId: row?.release_id || '',
       error: error?.message || String(error),
@@ -3206,22 +3170,19 @@ async function readSubjectContentOverviewData(db, { now, actorAccountId, actor =
   // global-release-aware runtime source used by learner-facing spelling reads.
   let spellingReleaseVersion = null;
   let spellingValidationErrors = 0;
-  const spellingBundle = spellingContent?.contentBundle;
-  if (spellingBundle && typeof spellingBundle === 'object') {
-    const pubVersion = Number(spellingContent?.summary?.publishedVersion || spellingBundle?.publication?.publishedVersion);
+  const spellingSummary = spellingContent?.summary;
+  if (spellingSummary && typeof spellingSummary === 'object') {
+    const pubVersion = Number(spellingSummary.publishedVersion);
     if (pubVersion > 0) {
       spellingReleaseVersion = String(pubVersion);
     } else {
       const updatedAt = Number(
-        spellingContent?.summary?.publishedAt
-        || spellingBundle?.publication?.publishedAt
-        || spellingContent?.summary?.sourceUpdatedAt,
+        spellingSummary.publishedAt
+        || spellingSummary.sourceUpdatedAt,
       );
       if (updatedAt > 0) spellingReleaseVersion = `updated:${updatedAt}`;
     }
-    if (Array.isArray(spellingBundle.errors)) {
-      spellingValidationErrors = spellingBundle.errors.length;
-    }
+    spellingValidationErrors = Math.max(0, Number(spellingSummary.errorCount) || 0);
   }
 
   // Derive support load signal: simple heuristic based on 7d error count.
@@ -12700,8 +12661,9 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
       requireSubjectContentExportAccess(account);
       const globalRelease = await readPublishedContentOperationReleaseRow(db, subjectId, { includeSnapshot: true });
       if (globalRelease) {
-        const releaseBundle = await buildSpellingRuntimeContentFromRelease(globalRelease, subjectId);
-        const content = releaseBundle.content || await readSeededSpellingContentBundle();
+        // This operator-only compatibility export is the sole read path that
+        // intentionally hydrates the immutable authoring snapshot.
+        const content = await readSpellingAuthoringContentFromRelease(globalRelease, subjectId);
         return {
           subjectId,
           content,
@@ -12752,7 +12714,6 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
     async readSpellingRuntimeContent(accountId, subjectId = 'spelling', options = {}) {
       return readSpellingRuntimeContentBundle(db, accountId, subjectId, {
         ...options,
-        observe: options.observe,
         nowMs: nowFactory(),
         env,
       });
@@ -12929,45 +12890,36 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
       learnerId = null,
       requestId = null,
       auditLimit = 20,
-      observe = null,
     } = {}) {
-      const observePhase = (phase, details = {}) => {
-        if (typeof observe === 'function') observe(phase, details);
-      };
       // P3 U1 (R22): single assertAdminHubActor call — the resolved actor
       // row is threaded to every downstream helper so the admin-role DB
       // lookup fires exactly once per readAdminHub invocation.
       const actor = await assertAdminHubActor(db, accountId);
       const account = actor;
-      observePhase('actor-read');
 
       // Sequential: memberships depend on account lookup, learner bundles
-      // depend on membership list, spelling content is an independent read
-      // but must complete before buildAdminHubReadModel.
+      // depend on membership list, and only the selected learner's detailed
+      // bundle belongs on this request path.
       const memberships = await listMembershipRows(db, accountId, { writableOnly: false });
-      observePhase('memberships-read', { membershipCount: memberships.length });
-      const spellingContent = await readSpellingContentForReadModels(db, accountId, 'spelling', {
-        nowMs: nowFactory(),
-        env,
-        observe: (phase, details) => observePhase(`spelling-${phase}`, details),
-      });
-      observePhase('spelling-content-read');
-      const hubNow = nowFactory();
-      const learnerBundles = {};
-      for (let index = 0; index < memberships.length; index += 1) {
-        const row = memberships[index];
-        learnerBundles[row.id] = await loadLearnerReadBundle(db, row.id, { now: hubNow });
-        observePhase('learner-bundle-read', { index: index + 1, total: memberships.length });
-      }
       const defaultLearnerId = account?.selected_learner_id && memberships.some((membership) => membership.id === account.selected_learner_id)
         ? account.selected_learner_id
         : (memberships[0]?.id || null);
-      const selectedLearnerId = learnerId || defaultLearnerId;
+      const selectedLearnerId = learnerId && memberships.some((membership) => membership.id === learnerId)
+        ? learnerId
+        : defaultLearnerId;
+      const spellingContent = await readSpellingContentForReadModels(db, accountId, 'spelling', {
+        nowMs: nowFactory(),
+        env,
+      });
+      const hubNow = nowFactory();
+      const learnerBundles = {};
+      if (selectedLearnerId) {
+        learnerBundles[selectedLearnerId] = await loadLearnerReadBundle(db, selectedLearnerId, { now: hubNow });
+      }
       const auditEntries = await listMutationReceiptRows(db, accountId, {
         requestId,
         limit: auditLimit,
       });
-      observePhase('audit-read');
       const nowTs = hubNow;
 
       // P3 U1 (R22): parallelise independent queries. These share no
@@ -13004,7 +12956,6 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
           limit: OPS_ERROR_EVENTS_DEFAULT_LIMIT,
         }),
       ]);
-      observePhase('operations-read');
       // Phase E UX-1: surface the build's current release hash on the
       // admin hub payload so `ErrorLogCentrePanel` can pre-fill the
       // "New in release" filter and the drawer helper text. The value
@@ -13028,7 +12979,7 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
           platformRole: accountPlatformRole(account),
         },
         platformRole: accountPlatformRole(account),
-        spellingContentBundle: spellingContent.contentBundle,
+        spellingContentSummary: spellingContent.summary,
         memberships: memberships.map(membershipRowToModel),
         learnerBundles,
         runtimeSnapshots: { spelling: spellingContent.runtimeSnapshot },
@@ -13047,7 +12998,6 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
         selectedLearnerId,
         now: nowFactory,
       });
-      observePhase('model-built');
       return {
         adminHub: {
           ...model,

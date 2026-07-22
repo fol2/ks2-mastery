@@ -39,6 +39,7 @@
     "content:export": "node scripts/export-spelling-content.mjs",
     "content:import": "node scripts/import-spelling-content.mjs",
     "content:operations:seed": "node scripts/migrate-spelling-content-to-global-release.mjs",
+    "content:operations:backfill-runtime": "node scripts/backfill-spelling-runtime-projections.mjs",
     "db:migration:create": "node ./scripts/wrangler-oauth.mjs d1 migrations create ks2-mastery-db",
     "db:migrate:local": "node ./scripts/wrangler-oauth.mjs d1 migrations apply ks2-mastery-db --local",
     "db:migrate:remote": "node ./scripts/wrangler-ci.mjs d1 migrations apply ks2-mastery-db --remote",

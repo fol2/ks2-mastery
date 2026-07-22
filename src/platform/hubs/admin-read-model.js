@@ -471,6 +471,7 @@ export function buildAdminHubReadModel({
   account = null,
   platformRole = 'parent',
   spellingContentBundle = null,
+  spellingContentSummary = null,
   memberships = [],
   learnerBundles = {},
   runtimeSnapshots = {},
@@ -486,25 +487,27 @@ export function buildAdminHubReadModel({
   now = Date.now,
 } = {}) {
   const resolvedPlatformRole = normalisePlatformRole(platformRole || account?.platformRole);
-  const validation = validateSpellingContentBundle(spellingContentBundle);
-  const contentSummary = buildSpellingContentSummary(validation.bundle);
+  const suppliedContentSummary = isPlainObject(spellingContentSummary) ? spellingContentSummary : null;
+  const validation = suppliedContentSummary ? null : validateSpellingContentBundle(spellingContentBundle);
+  const contentSummary = suppliedContentSummary || buildSpellingContentSummary(validation.bundle);
   const generatedAt = typeof now === 'function' ? asTs(now(), Date.now()) : asTs(now, Date.now());
   const diagnosticsEntries = (Array.isArray(memberships) ? memberships : []).map((membership) => {
     const resolvedMembershipRole = normaliseLearnerMembershipRole(membership?.role);
     const learner = membership?.learner || null;
     const learnerId = learner?.id || membership?.learnerId || '';
     const writable = canMutateLearnerData({ membershipRole: resolvedMembershipRole });
-    const parentHub = buildParentHubReadModel({
+    const learnerBundle = learnerBundles[learnerId] || null;
+    const parentHub = learnerBundle ? buildParentHubReadModel({
       learner,
       platformRole: 'parent',
       membershipRole: resolvedMembershipRole,
-      subjectStates: learnerBundles[learnerId]?.subjectStates || {},
-      practiceSessions: learnerBundles[learnerId]?.practiceSessions || [],
-      eventLog: learnerBundles[learnerId]?.eventLog || [],
-      gameState: learnerBundles[learnerId]?.gameState || {},
+      subjectStates: learnerBundle.subjectStates || {},
+      practiceSessions: learnerBundle.practiceSessions || [],
+      eventLog: learnerBundle.eventLog || [],
+      gameState: learnerBundle.gameState || {},
       runtimeSnapshots,
       now,
-    });
+    }) : null;
     return {
       learnerId,
       learnerName: learner?.name || 'Learner',
@@ -515,17 +518,18 @@ export function buildAdminHubReadModel({
       canViewDiagnostics: canViewLearnerDiagnostics({ platformRole: resolvedPlatformRole, membershipRole: resolvedMembershipRole }),
       writable,
       accessModeLabel: writable ? 'Writable learner' : 'Read-only learner',
-      overview: parentHub.learnerOverview,
-      currentFocus: parentHub.dueWork[0] || null,
-      grammarEvidence: parentHub.grammarEvidence || null,
-      punctuationEvidence: parentHub.punctuationEvidence || null,
+      diagnosticsLoaded: Boolean(parentHub),
+      overview: parentHub?.learnerOverview || null,
+      currentFocus: parentHub?.dueWork?.[0] || null,
+      grammarEvidence: parentHub?.grammarEvidence || null,
+      punctuationEvidence: parentHub?.punctuationEvidence || null,
       // U10: Grammar Writing Try admin surface. Exposes live + archived
       // evidence keyed per prompt so the Admin Hub can render archive +
       // delete controls. Only populated when the admin can view the hub
       // (the role gate is re-checked at the route; this projection is
       // emitted regardless so the shape stays stable, but the React panel
       // is hidden unless `canViewAdminHub === true`).
-      grammarTransferAdmin: grammarTransferAdminFromLearnerBundle(learnerBundles[learnerId] || null),
+      grammarTransferAdmin: grammarTransferAdminFromLearnerBundle(learnerBundle),
     };
   });
 
@@ -592,19 +596,19 @@ export function buildAdminHubReadModel({
       statutoryCoreCount: Number(contentSummary.statutoryCoreCount) || 0,
       secureExtensionCount: Number(contentSummary.secureExtensionCount) || 0,
       enrichmentExtraCount: Number(contentSummary.enrichmentExtraCount) || 0,
-      currentDraftId: validation.bundle.draft.id,
-      currentDraftVersion: validation.bundle.draft.version,
-      currentDraftState: validation.bundle.draft.state,
-      draftUpdatedAt: validation.bundle.draft.updatedAt,
+      currentDraftId: contentSummary.currentDraftId || validation?.bundle?.draft?.id || '',
+      currentDraftVersion: Number(contentSummary.currentDraftVersion ?? validation?.bundle?.draft?.version) || 0,
+      currentDraftState: contentSummary.currentDraftState || validation?.bundle?.draft?.state || '',
+      draftUpdatedAt: Number(contentSummary.draftUpdatedAt ?? validation?.bundle?.draft?.updatedAt) || 0,
     },
     importValidationStatus: {
-      ok: validation.ok,
-      errorCount: validation.errors.length,
-      warningCount: validation.warnings.length,
-      importedAt: validation.bundle.draft.provenance?.importedAt || 0,
-      source: validation.bundle.draft.provenance?.source || '',
-      errors: validation.errors.slice(0, 5),
-      warnings: validation.warnings.slice(0, 5),
+      ok: suppliedContentSummary ? contentSummary.ok !== false : validation.ok,
+      errorCount: Number(contentSummary.errorCount ?? validation?.errors?.length) || 0,
+      warningCount: Number(contentSummary.warningCount ?? validation?.warnings?.length) || 0,
+      importedAt: Number(contentSummary.importedAt ?? validation?.bundle?.draft?.provenance?.importedAt) || 0,
+      source: contentSummary.source || validation?.bundle?.draft?.provenance?.source || '',
+      errors: Array.isArray(contentSummary.errors) ? contentSummary.errors.slice(0, 5) : (validation?.errors || []).slice(0, 5),
+      warnings: Array.isArray(contentSummary.warnings) ? contentSummary.warnings.slice(0, 5) : (validation?.warnings || []).slice(0, 5),
     },
     auditLogLookup: {
       available: Boolean(auditAvailable),

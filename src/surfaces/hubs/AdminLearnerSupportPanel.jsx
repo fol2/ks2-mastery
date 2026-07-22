@@ -35,7 +35,7 @@ export function LearnerSupportPanel({ model, appState, accessContext, actions })
             <strong>{entry.learnerName}</strong>
             <div className="small muted">{entry.yearGroup} · {entry.membershipRoleLabel} · {entry.accessModeLabel || (entry.writable ? 'Writable learner' : 'Read-only learner')}</div>
           </div>
-          {classroomSummaryDegraded ? null : (
+          {classroomSummaryDegraded ? null : entry.diagnosticsLoaded !== false ? (
             <>
               <div className="small muted">Focus: {entry.currentFocus?.label || '—'}</div>
               <div>{String(entry.overview?.dueWords ?? 0)} due</div>
@@ -46,6 +46,8 @@ export function LearnerSupportPanel({ model, appState, accessContext, actions })
                 Punctuation: {String(entry.punctuationEvidence?.progressSnapshot?.dueItems ?? entry.overview?.duePunctuationItems ?? 0)} due / {String(entry.punctuationEvidence?.progressSnapshot?.weakItems ?? entry.overview?.weakPunctuationItems ?? 0)} weak
               </div>
             </>
+          ) : (
+            <div className="small muted">Select to load diagnostics</div>
           )}
           <div><button className="btn ghost" type="button" onClick={() => actions.dispatch('adult-surface-learner-select', { value: entry.learnerId })}>Select</button></div>
         </div>

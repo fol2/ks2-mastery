@@ -91,6 +91,28 @@ test('hub api client calls admin hub with learner, request id, audit limit, and 
   );
 });
 
+test('hub api client coalesces identical concurrent admin reads', async () => {
+  const calls = [];
+  let releaseFetch;
+  const api = createHubApi({
+    baseUrl: '',
+    fetch: (url, init = {}) => {
+      calls.push({ url: String(url), init });
+      return new Promise((resolve) => {
+        releaseFetch = () => resolve(jsonResponse({ ok: true, adminHub: { permissions: {} } }));
+      });
+    },
+  });
+
+  const first = api.readAdminHub({ learnerId: 'learner-a' });
+  const second = api.readAdminHub({ learnerId: 'learner-a' });
+  await new Promise((resolve) => setTimeout(resolve, 0));
+
+  assert.equal(calls.length, 1);
+  releaseFetch();
+  assert.deepEqual(await first, await second);
+});
+
 test('hub api failures retain the browser ingress id for CPU termination joins', async () => {
   const hadWindow = Object.prototype.hasOwnProperty.call(globalThis, 'window');
   const previousWindow = globalThis.window;

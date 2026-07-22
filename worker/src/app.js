@@ -2608,29 +2608,12 @@ export function createWorkerApp({
         }
 
         if (url.pathname === '/api/hubs/admin' && request.method === 'GET') {
-          const observationStartedAt = performance.now();
-          const observeAdminHub = (phase, details = {}) => {
-            // Temporary production observation. Remove after the Admin Hub
-            // CPU termination has been attributed to an exact phase.
-            // eslint-disable-next-line no-console
-            console.info('[ks2-observe]', JSON.stringify({
-              event: 'admin_hub_phase',
-              requestId: validatedRequestId,
-              phase,
-              elapsedMs: Math.round((performance.now() - observationStartedAt) * 100) / 100,
-              ...details,
-            }));
-          };
-          observeAdminHub('route-started');
           const result = await repository.readAdminHub(session.accountId, {
             learnerId: url.searchParams.get('learnerId') || null,
             requestId: url.searchParams.get('requestId') || null,
             auditLimit: url.searchParams.get('auditLimit') || 20,
-            observe: observeAdminHub,
           });
-          observeAdminHub('repository-completed');
           const productionEvidence = await readBundledProductionEvidenceSummary();
-          observeAdminHub('production-evidence-read');
           return json({
             ok: true,
             ...result,

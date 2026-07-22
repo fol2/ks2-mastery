@@ -565,6 +565,30 @@ NOT duplicated as signal tokens.
   production data shows quota headroom. Production first, tuning
   second.
 
+### CPU termination correlation
+
+`capacity.request` is a completion record. If Cloudflare terminates an
+invocation for CPU exhaustion, JavaScript cannot emit that final line. It must
+therefore never be the sole failure record.
+
+Every browser API request carries a browser-owned `x-ks2-request-id` in the
+`ks2_req_<uuid-v4>` form. The same identifier is retained on client errors and
+shown in Admin/Persistence diagnostics. Cloudflare's invocation record remains
+authoritative for requests that do not complete: join the browser request ID
+and HTTP status to the invocation `outcome` in Workers Logs or a JSON tail.
+An `exceededCpu` invocation with no `capacity.request` line is a complete and
+expected evidence row, not a logging gap.
+
+Use this order when investigating a production 5xx:
+
+1. Capture the request ID and status from the browser network record or UI.
+2. Find that ID in the Cloudflare invocation record and read its `outcome`.
+3. Use `capacity.request` only when it exists, for completed-request D1 and
+   phase attribution.
+
+Client error wording identifies the request the browser observed; it does not
+identify which concurrent request or server phase consumed the CPU budget.
+
 ### D1 row metrics
 
 `requireDatabaseWithCapacity(env, capacity)` returns a

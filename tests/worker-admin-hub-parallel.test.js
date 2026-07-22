@@ -358,6 +358,48 @@ test('readAdminHub with learner data returns all four ops panels alongside learn
   }
 });
 
+test('readAdminHub hydrates only the selected learner bundle', async () => {
+  const server = createWorkerRepositoryServer();
+  try {
+    const now = Date.now();
+    seedAdminAndOps(server, now);
+    seedLearnerWithMembership(server, {
+      learnerId: 'learner-alice',
+      accountId: 'adult-admin',
+      displayName: 'Alice',
+      now,
+    });
+    seedLearnerWithMembership(server, {
+      learnerId: 'learner-bob',
+      accountId: 'adult-admin',
+      displayName: 'Bob',
+      now,
+    });
+
+    server.DB.clearQueryLog();
+    const response = await server.fetchAs(
+      'adult-admin',
+      'https://repo.test/api/hubs/admin?learnerId=learner-alice',
+      {},
+      { 'x-ks2-dev-platform-role': 'admin' },
+    );
+    const payload = await response.json();
+    const queries = server.DB.takeQueryLog();
+
+    assert.equal(response.status, 200);
+    const learners = payload.adminHub.learnerSupport.accessibleLearners;
+    assert.equal(learners.find((entry) => entry.learnerId === 'learner-alice')?.diagnosticsLoaded, true);
+    assert.equal(learners.find((entry) => entry.learnerId === 'learner-bob')?.diagnosticsLoaded, false);
+    assert.equal(
+      queries.some((entry) => entry.params.includes('learner-bob')),
+      false,
+      'unselected learner ids must not enter full learner-bundle queries',
+    );
+  } finally {
+    server.close();
+  }
+});
+
 // ---------------------------------------------------------------------------
 // P3 U1: ops-role readAdminHub works with dedup (actor threaded correctly).
 // ---------------------------------------------------------------------------

@@ -16,6 +16,9 @@ import {
   encodeContentOperationSnapshot,
 } from '../src/subjects/spelling/content/release-snapshot-codec.js';
 import {
+  buildSpellingRuntimeReleaseProjection,
+} from '../src/subjects/spelling/content/runtime-release-projection.js';
+import {
   readSeededSpellingContentBundle,
 } from '../worker/src/generated-spelling-content-seed.js';
 import {
@@ -103,7 +106,7 @@ function chunkString(value, chunkSize = 80_000) {
   return chunks.length ? chunks : [''];
 }
 
-function snapshotSqlExpression(snapshotValue, releaseId) {
+function snapshotSqlExpression(snapshotValue, releaseId, columnName = 'snapshot_json') {
   const chunks = chunkString(snapshotValue);
   if (chunks.length === 1 && chunks[0].length < 80_000) {
     return {
@@ -119,11 +122,11 @@ function snapshotSqlExpression(snapshotValue, releaseId) {
   const appendSql = chunks.map((chunk) => {
     const sql = [
       'UPDATE content_operation_releases',
-      `SET snapshot_json = snapshot_json || ${sqlString(chunk)}`,
+      `SET ${columnName} = ${columnName} || ${sqlString(chunk)}`,
       `WHERE release_id = ${sqlString(releaseId)}`,
       "  AND subject_id = 'spelling'",
       "  AND status = 'seeding'",
-      `  AND length(snapshot_json) = ${sqlInteger(prefixLength)};`,
+      `  AND length(${columnName}) = ${sqlInteger(prefixLength)};`,
     ].join('\n');
     prefixLength += chunk.length;
     return sql;
@@ -378,6 +381,12 @@ export async function buildFirstGlobalReleaseSeedPlan({
     },
   };
   const snapshotJson = await encodeContentOperationSnapshot(validation.bundle);
+  const runtimeProjection = buildSpellingRuntimeReleaseProjection(validation.bundle, {
+    releaseId: resolvedReleaseId,
+    publishedAt: nowTs,
+  });
+  const runtimeSnapshotJson = await encodeContentOperationSnapshot(runtimeProjection);
+  const runtimeSummaryJson = JSON.stringify(runtimeProjection.summary);
   const proofJson = JSON.stringify(proof);
   const eventJson = JSON.stringify({
     releaseId: resolvedReleaseId,
@@ -387,19 +396,27 @@ export async function buildFirstGlobalReleaseSeedPlan({
     compatibilityPolicy,
   });
   const snapshotSql = snapshotSqlExpression(snapshotJson, resolvedReleaseId);
+  const runtimeSnapshotSql = snapshotSqlExpression(
+    runtimeSnapshotJson,
+    resolvedReleaseId,
+    'runtime_snapshot_json',
+  );
 
   const sql = [
     ...snapshotSql.setupSql,
+    ...runtimeSnapshotSql.setupSql,
     ...(snapshotSql.setupSql.length ? [''] : []),
     'INSERT INTO content_operation_releases (',
     '  release_id, subject_id, status, snapshot_json, snapshot_hash,',
     '  base_release_id, package_id, published_at, published_by_account_id,',
-    '  rollback_of_release_id, proof_json, created_at',
+    '  rollback_of_release_id, proof_json, created_at,',
+    '  runtime_snapshot_json, runtime_summary_json',
     ')',
     'SELECT',
     `  ${sqlString(resolvedReleaseId)}, 'spelling', 'seeding', ${snapshotSql.valueExpression}, ${sqlString(snapshotHash)},`,
     `  NULL, NULL, NULL, NULL,`,
-    `  NULL, ${sqlString(proofJson)}, ${sqlInteger(nowTs)}`,
+    `  NULL, ${sqlString(proofJson)}, ${sqlInteger(nowTs)},`,
+    `  ${runtimeSnapshotSql.valueExpression}, ${sqlString(runtimeSummaryJson)}`,
     'WHERE NOT EXISTS (',
     "  SELECT 1 FROM content_operation_releases WHERE subject_id = 'spelling' AND status = 'published'",
     ')',
@@ -409,6 +426,8 @@ export async function buildFirstGlobalReleaseSeedPlan({
     '',
     ...snapshotSql.appendSql,
     ...(snapshotSql.appendSql.length ? [''] : []),
+    ...runtimeSnapshotSql.appendSql,
+    ...(runtimeSnapshotSql.appendSql.length ? [''] : []),
     'UPDATE content_operation_releases',
     "SET status = 'published',",
     `    published_at = ${sqlInteger(nowTs)},`,
@@ -417,6 +436,7 @@ export async function buildFirstGlobalReleaseSeedPlan({
     "  AND subject_id = 'spelling'",
     "  AND status = 'seeding'",
     `  AND length(snapshot_json) = ${sqlInteger(snapshotSql.charLength)}`,
+    `  AND length(runtime_snapshot_json) = ${sqlInteger(runtimeSnapshotSql.charLength)}`,
     '  AND NOT EXISTS (',
     "    SELECT 1 FROM content_operation_releases WHERE subject_id = 'spelling' AND status = 'published'",
     '  );',
@@ -439,6 +459,7 @@ export async function buildFirstGlobalReleaseSeedPlan({
     ');',
     '',
     ...snapshotSql.teardownSql,
+    ...runtimeSnapshotSql.teardownSql,
     ...(snapshotSql.teardownSql.length ? [''] : []),
     '',
   ].join('\n');
