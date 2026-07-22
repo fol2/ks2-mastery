@@ -419,6 +419,8 @@ export function createServerSpellingEngine({
   now = Date.now,
   random = Math.random,
   contentSnapshot,
+  aggregateProgress = null,
+  completeCatalogue = true,
 } = {}) {
   const clock = () => timestamp(now);
 
@@ -449,6 +451,7 @@ export function createServerSpellingEngine({
         random,
         contentSnapshot,
         cloneContentSnapshot: false,
+        aggregateProgress,
         tts: {
           speak() {},
           stop() {},
@@ -520,17 +523,20 @@ export function createServerSpellingEngine({
       // surface the underlying error.
       const finalSnapshot = persistence.snapshot();
       let postMastery;
-      try {
-        postMastery = getSpellingPostMasteryState({
-          subjectStateRecord: { data: finalSnapshot },
-          runtimeSnapshot: contentSnapshot,
-          now: clock,
-          sourceHint: 'worker',
-        });
-      } catch (error) {
-        globalThis.console?.warn?.('[spelling.apply] postMastery derivation failed, omitting from response', error);
-        postMastery = undefined;
+      if (completeCatalogue) {
+        try {
+          postMastery = getSpellingPostMasteryState({
+            subjectStateRecord: { data: finalSnapshot },
+            runtimeSnapshot: contentSnapshot,
+            now: clock,
+            sourceHint: 'worker',
+          });
+        } catch (error) {
+          globalThis.console?.warn?.('[spelling.apply] postMastery derivation failed, omitting from response', error);
+          postMastery = undefined;
+        }
       }
+      const analytics = service.getAnalyticsSnapshot(learnerId, { includeWordGroups: false });
       return {
         ok: transition.ok !== false,
         changed: transition.changed !== false,
@@ -539,15 +545,16 @@ export function createServerSpellingEngine({
         practiceSession: persistence.practiceSession(),
         events: transition.events || [],
         audio: transition.audio || null,
-        prefs: transition.prefs || service.getPrefs(learnerId),
+        prefs: transition.prefs || finalSnapshot.prefs,
         stats: {
-          all: service.getStats(learnerId, 'core'),
-          core: service.getStats(learnerId, 'core'),
-          y34: service.getStats(learnerId, 'y3-4'),
-          y56: service.getStats(learnerId, 'y5-6'),
-          extra: service.getStats(learnerId, 'extra'),
+          all: analytics.pools.all,
+          core: analytics.pools.core,
+          y34: analytics.pools.y34,
+          y56: analytics.pools.y56,
+          secureExtension: analytics.pools.secureExtension,
+          extra: analytics.pools.extra,
         },
-        analytics: service.getAnalyticsSnapshot(learnerId, { includeWordGroups: false }),
+        analytics,
         postMastery,
       };
     },

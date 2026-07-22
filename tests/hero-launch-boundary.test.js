@@ -15,6 +15,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { createApiPlatformRepositories } from '../src/platform/core/repositories/index.js';
+import { upsertBoundedSpellingState } from './helpers/bounded-spelling-state.js';
 import { createWorkerRepositoryServer } from './helpers/worker-server.js';
 
 // ── Helpers ──────────────────────────────────────────────────────────
@@ -236,10 +237,12 @@ async function seedLearner(server, accountId, learnerId) {
     },
   };
   const now = Date.now();
-  server.DB.db.prepare(`
-    INSERT INTO child_subject_state (learner_id, subject_id, ui_json, data_json, updated_at, updated_by_account_id)
-    VALUES (?, 'spelling', '{}', ?, ?, ?)
-  `).run(learnerId, JSON.stringify(spellingData), now, accountId);
+  upsertBoundedSpellingState(server.DB.db, {
+    learnerId,
+    accountId,
+    data: spellingData,
+    now,
+  });
 
   return repos;
 }

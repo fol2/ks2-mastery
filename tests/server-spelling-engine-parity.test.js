@@ -8,6 +8,12 @@ import { SEEDED_SPELLING_CONTENT_BUNDLE } from '../src/subjects/spelling/data/co
 import { resolveRuntimeSnapshot } from '../src/subjects/spelling/content/model.js';
 import { isStatutoryCoreWord } from '../src/subjects/spelling/content/taxonomy.js';
 import { createServerSpellingEngine, SPELLING_SERVER_AUTHORITY } from '../worker/src/subjects/spelling/engine.js';
+import {
+  materialiseSpellingGameplayStats,
+  spellingGameplayStatsAreCurrent,
+  spellingGameplayStatsWithDueSchedule,
+  updateSpellingGameplayStats,
+} from '../worker/src/subjects/spelling/gameplay-state.js';
 import { createWorkerRepositoryServer } from './helpers/worker-server.js';
 import { installMemoryStorage } from './helpers/memory-storage.js';
 import { FORBIDDEN_SPELLING_READ_MODEL_KEYS } from './helpers/forbidden-keys.mjs';
@@ -53,6 +59,18 @@ function seedAccountLearner(DB, { accountId = 'adult-a', learnerId = 'learner-a'
     INSERT INTO account_learner_memberships (account_id, learner_id, role, sort_index, created_at, updated_at)
     VALUES (?, ?, 'owner', 0, ?, ?)
   `).run(accountId, learnerId, now, now);
+  DB.db.prepare(`
+    INSERT INTO spelling_learner_state (
+      learner_id, ui_json, data_json, stats_json, updated_at, updated_by_account_id
+    )
+    VALUES (?, 'null', '{}', '{}', ?, ?)
+    ON CONFLICT(learner_id) DO UPDATE SET
+      ui_json = excluded.ui_json,
+      data_json = excluded.data_json,
+      stats_json = excluded.stats_json,
+      updated_at = excluded.updated_at,
+      updated_by_account_id = excluded.updated_by_account_id
+  `).run(learnerId, now, accountId);
 }
 
 function assertNoForbiddenObjectKeys(value, forbiddenKeys, label, path = label) {
@@ -262,6 +280,210 @@ test('server spelling engine returns compact analytics on the command path', () 
   assert.equal(result.state.session.serverAuthority, SPELLING_SERVER_AUTHORITY);
   assert.equal(result.analytics.wordGroups, undefined);
   assert.equal(result.analytics.pools.core.total > 0, true);
+  assert.deepEqual(result.stats.secureExtension, result.analytics.pools.secureExtension);
+});
+
+test('bounded spelling stats materialise due counts against the request day', () => {
+  const day = 24 * 60 * 60 * 1000;
+  const now = Date.UTC(2026, 0, 1);
+  const snapshot = contentSnapshot();
+  const coreWord = snapshot.words.find(isStatutoryCoreWord);
+  assert.ok(coreWord);
+  const publicStats = {
+    all: { due: 0 },
+    core: { due: 0 },
+    y34: { due: 0 },
+    y56: { due: 0 },
+    secureExtension: { due: 0 },
+    extra: { due: 0 },
+  };
+  const persisted = spellingGameplayStatsWithDueSchedule(publicStats, snapshot.words, {
+    progress: {
+      [coreWord.slug]: {
+        attempts: 1,
+        correct: 1,
+        wrong: 1,
+        dueDay: Math.floor(now / day) + 1,
+      },
+    },
+  }, { now });
+
+  assert.equal(materialiseSpellingGameplayStats(persisted, now).all.due, 0);
+  assert.equal(materialiseSpellingGameplayStats(persisted, now + day).all.due, 1);
+  assert.equal(materialiseSpellingGameplayStats(persisted, now + day).core.due, 1);
+  assert.equal(materialiseSpellingGameplayStats(persisted, now).core.trouble, 1,
+    'wrong >= correct is permanently trouble regardless of due day');
+  assert.equal(
+    Object.hasOwn(materialiseSpellingGameplayStats(persisted, now + day), 'reviewScheduleV1'),
+    false,
+    'the internal schedule must not leak into public stats',
+  );
+});
+
+test('bounded aggregate overlay preserves milestone and stats semantics on a one-row submit', () => {
+  const nowValue = Date.UTC(2026, 0, 1);
+  const now = () => nowValue;
+  const learnerId = 'learner-a';
+  const snapshot = contentSnapshot();
+  const coreWords = snapshot.words.filter(isStatutoryCoreWord);
+  const submittedWord = coreWords[9];
+  assert.ok(submittedWord);
+
+  const fullProgress = {};
+  for (const word of coreWords.slice(0, 9)) {
+    fullProgress[word.slug] = {
+      stage: 4,
+      attempts: 4,
+      correct: 4,
+      wrong: 0,
+      dueDay: Math.floor(nowValue / (24 * 60 * 60 * 1000)) + 30,
+    };
+  }
+  fullProgress[submittedWord.slug] = {
+    stage: 3,
+    attempts: 3,
+    correct: 3,
+    wrong: 0,
+    dueDay: Math.floor(nowValue / (24 * 60 * 60 * 1000)),
+  };
+
+  const starter = createServerSpellingEngine({
+    now,
+    random: makeSeededRandom(7),
+    contentSnapshot: snapshot,
+  });
+  const started = starter.apply({
+    learnerId,
+    subjectRecord: { ui: null, data: { progress: fullProgress } },
+    command: 'start-session',
+    payload: { mode: 'single', slug: submittedWord.slug, length: 1 },
+  });
+  const fullEngine = createServerSpellingEngine({
+    now,
+    random: makeSeededRandom(11),
+    contentSnapshot: snapshot,
+  });
+  const fullResult = fullEngine.apply({
+    learnerId,
+    subjectRecord: { ui: started.state, data: { progress: fullProgress } },
+    latestSession: started.practiceSession,
+    command: 'submit-answer',
+    payload: { answer: submittedWord.word },
+  });
+
+  const baselineProgress = { [submittedWord.slug]: fullProgress[submittedWord.slug] };
+  const boundedEngine = createServerSpellingEngine({
+    now,
+    random: makeSeededRandom(11),
+    contentSnapshot: snapshot,
+    aggregateProgress: {
+      stats: started.stats,
+      baselineProgress,
+    },
+    completeCatalogue: false,
+  });
+  const boundedResult = boundedEngine.apply({
+    learnerId,
+    subjectRecord: { ui: started.state, data: { progress: baselineProgress } },
+    latestSession: started.practiceSession,
+    command: 'submit-answer',
+    payload: { answer: submittedWord.word },
+  });
+
+  assert.deepEqual(boundedResult.stats, fullResult.stats);
+  assert.deepEqual(boundedResult.events, fullResult.events);
+  assert.ok(boundedResult.events.some((event) => (
+    event.type === 'spelling.mastery-milestone' && event.secureCount === 10
+  )), 'the aggregate overlay must retain the 10-word mastery milestone');
+  assert.equal(boundedResult.postMastery, undefined,
+    'partial commands must not manufacture a post-mastery projection from a session slice');
+
+  const options = { now: nowValue, releaseId: 'test-release', publishedVersion: 1 };
+  const persistedBefore = spellingGameplayStatsWithDueSchedule(
+    started.stats,
+    snapshot.words,
+    { progress: fullProgress },
+    options,
+  );
+  assert.equal(spellingGameplayStatsAreCurrent(persistedBefore, snapshot.words, options), true);
+  const incremented = updateSpellingGameplayStats(
+    persistedBefore,
+    snapshot.words,
+    { progress: baselineProgress },
+    boundedResult.data,
+    nowValue,
+    options,
+  );
+  const rebuilt = spellingGameplayStatsWithDueSchedule(
+    fullResult.stats,
+    snapshot.words,
+    fullResult.data,
+    options,
+  );
+  assert.deepEqual(materialiseSpellingGameplayStats(incremented, nowValue), fullResult.stats);
+  assert.deepEqual(incremented.reviewScheduleV1, rebuilt.reviewScheduleV1,
+    'row-level schedule deltas must equal a full catalogue rebuild');
+});
+
+test('bounded aggregate overlay preserves the first Post-Mega transition on a one-row submit', () => {
+  const nowValue = Date.UTC(2026, 0, 1);
+  const now = () => nowValue;
+  const learnerId = 'learner-a';
+  const snapshot = contentSnapshot();
+  const coreWords = snapshot.words.filter(isStatutoryCoreWord);
+  const submittedWord = coreWords.at(-1);
+  assert.ok(submittedWord);
+
+  const fullProgress = Object.fromEntries(coreWords.map((word) => [word.slug, {
+    stage: word.slug === submittedWord.slug ? 3 : 4,
+    attempts: 4,
+    correct: 4,
+    wrong: 0,
+    dueDay: Math.floor(nowValue / (24 * 60 * 60 * 1000)) + 30,
+  }]));
+  const started = createServerSpellingEngine({
+    now,
+    random: makeSeededRandom(17),
+    contentSnapshot: snapshot,
+  }).apply({
+    learnerId,
+    subjectRecord: { ui: null, data: { progress: fullProgress } },
+    command: 'start-session',
+    payload: { mode: 'single', slug: submittedWord.slug, length: 1 },
+  });
+  const fullResult = createServerSpellingEngine({
+    now,
+    random: makeSeededRandom(19),
+    contentSnapshot: snapshot,
+  }).apply({
+    learnerId,
+    subjectRecord: { ui: started.state, data: { progress: fullProgress } },
+    latestSession: started.practiceSession,
+    command: 'submit-answer',
+    payload: { answer: submittedWord.word },
+  });
+
+  const baselineProgress = { [submittedWord.slug]: fullProgress[submittedWord.slug] };
+  const boundedResult = createServerSpellingEngine({
+    now,
+    random: makeSeededRandom(19),
+    contentSnapshot: snapshot,
+    aggregateProgress: {
+      stats: started.stats,
+      baselineProgress,
+    },
+    completeCatalogue: false,
+  }).apply({
+    learnerId,
+    subjectRecord: { ui: started.state, data: { progress: baselineProgress } },
+    latestSession: started.practiceSession,
+    command: 'submit-answer',
+    payload: { answer: submittedWord.word },
+  });
+
+  assert.deepEqual(boundedResult.data.postMega, fullResult.data.postMega);
+  assert.deepEqual(boundedResult.events, fullResult.events);
+  assert.ok(boundedResult.events.some((event) => event.type === 'spelling.post-mega.unlocked'));
 });
 
 test('worker spelling command route starts, submits, continues, and completes server-side', async () => {
@@ -358,15 +580,17 @@ test('worker spelling command route starts, submits, continues, and completes se
     assert.ok(step.body.events.some((event) => event.type === 'spelling.session-completed'));
 
     const subject = server.DB.db.prepare(`
-      SELECT ui_json, data_json
-      FROM child_subject_state
-      WHERE learner_id = 'learner-a' AND subject_id = 'spelling'
+      SELECT learner.ui_json, item.progress_json
+      FROM spelling_learner_state learner
+      INNER JOIN spelling_item_state item
+        ON item.learner_id = learner.learner_id AND item.slug = 'possess'
+      WHERE learner.learner_id = 'learner-a'
     `).get();
     const ui = JSON.parse(subject.ui_json);
-    const data = JSON.parse(subject.data_json);
+    const progress = JSON.parse(subject.progress_json);
     assert.equal(ui.phase, 'summary');
-    assert.equal(data.progress.possess.attempts, 1);
-    assert.equal(data.progress.possess.correct, 1);
+    assert.equal(progress.attempts, 1);
+    assert.equal(progress.correct, 1);
 
     const latest = server.DB.db.prepare(`
       SELECT status, summary_json
@@ -399,8 +623,8 @@ test('worker spelling command route starts, submits, continues, and completes se
 
     const subjectAfterPrefs = server.DB.db.prepare(`
       SELECT ui_json, data_json
-      FROM child_subject_state
-      WHERE learner_id = 'learner-a' AND subject_id = 'spelling'
+      FROM spelling_learner_state
+      WHERE learner_id = 'learner-a'
     `).get();
     const uiAfterPrefs = JSON.parse(subjectAfterPrefs.ui_json);
     const dataAfterPrefs = JSON.parse(subjectAfterPrefs.data_json);
@@ -541,14 +765,16 @@ test('worker spelling command route keeps core practice available while capacity
     assert.ok(step.body.events.some((event) => event.type === 'spelling.session-completed'));
 
     const subject = server.DB.db.prepare(`
-      SELECT ui_json, data_json
-      FROM child_subject_state
-      WHERE learner_id = 'learner-a' AND subject_id = 'spelling'
+      SELECT learner.ui_json, item.progress_json
+      FROM spelling_learner_state learner
+      INNER JOIN spelling_item_state item
+        ON item.learner_id = learner.learner_id AND item.slug = 'possess'
+      WHERE learner.learner_id = 'learner-a'
     `).get();
     const ui = JSON.parse(subject.ui_json);
-    const data = JSON.parse(subject.data_json);
+    const progress = JSON.parse(subject.progress_json);
     assert.equal(ui.phase, 'summary');
-    assert.equal(data.progress.possess.correct, 1);
+    assert.equal(progress.correct, 1);
 
     const eventCount = server.DB.db.prepare(`
       SELECT COUNT(*) AS count

@@ -298,6 +298,10 @@ test('worker subject runtime keeps heavy punctuation command handlers off the st
 
 test('worker repository keeps heavy punctuation read-model service off the startup path', async () => {
   const source = await readFile(new URL('../worker/src/repository.js', import.meta.url), 'utf8');
+  const persistenceSource = await readFile(
+    new URL('../worker/src/subjects/punctuation/gameplay-persistence.js', import.meta.url),
+    'utf8',
+  );
 
   assert.doesNotMatch(
     source,
@@ -308,6 +312,17 @@ test('worker repository keeps heavy punctuation read-model service off the start
     source,
     /import\s+\{[^}]*createPunctuationService[^}]*\}\s+from\s+['"]\.\.\/\.\.\/shared\/punctuation\/service\.js['"]/,
     'punctuation service must stay lazy because its default runtime manifest is expensive to build',
+  );
+  assert.doesNotMatch(
+    source,
+    /from\s+['"]\.\/subjects\/punctuation\/gameplay-state\.js['"]/,
+    'the repository must not reach the heavy Punctuation planner through a transitive import',
+  );
+  assert.match(source, /from\s+['"]\.\/subjects\/punctuation\/gameplay-persistence\.js['"]/);
+  assert.doesNotMatch(
+    persistenceSource,
+    /from\s+['"][^'"]*punctuation\/(?:content|generators|scheduler|service)\.js['"]/,
+    'Punctuation persistence helpers must remain independent of the generated catalogue graph',
   );
   assert.match(source, /import\(['"]\.\/subjects\/punctuation\/read-models\.js['"]\)/);
   assert.match(source, /import\(['"]\.\.\/\.\.\/shared\/punctuation\/service\.js['"]\)/);
@@ -587,19 +602,45 @@ test('Hero spelling read-model uses the published global content operations rele
       INSERT INTO learner_profiles (id, name, year_group, avatar_color, goal, daily_minutes, created_at, updated_at, state_revision)
       VALUES ('learner-hero', 'Hero Learner', 'Y5', '#3E6FA8', 'sats', 15, ?, ?, 0)
     `).run(1_777_000_000_000, 1_777_000_000_000);
-    DB.db.prepare(`
-      INSERT INTO child_subject_state (learner_id, subject_id, ui_json, data_json, updated_at, updated_by_account_id)
-      VALUES ('learner-hero', 'spelling', ?, ?, ?, 'adult-a')
-    `).run(
-      JSON.stringify({ phase: 'dashboard' }),
-      JSON.stringify({ prefs: { mode: 'smart' } }),
-      1_777_000_000_000,
-    );
-
     const runtime = await repository.readSpellingRuntimeContent('adult-a', 'spelling', {
       includeAccountContent: false,
     });
     const expectedCoreWordCount = runtime.snapshot.words.filter(isStatutoryCoreWord).length;
+    const emptyPool = {
+      total: 0,
+      secure: 0,
+      due: 0,
+      fresh: 0,
+      trouble: 0,
+      attempts: 0,
+      correct: 0,
+      accuracy: null,
+    };
+    DB.db.prepare(`
+      INSERT INTO spelling_learner_state (
+        learner_id, ui_json, data_json, stats_json, updated_at, updated_by_account_id
+      )
+      VALUES ('learner-hero', ?, ?, ?, ?, 'adult-a')
+      ON CONFLICT(learner_id) DO UPDATE SET
+        ui_json = excluded.ui_json,
+        data_json = excluded.data_json,
+        stats_json = excluded.stats_json,
+        updated_at = excluded.updated_at,
+        updated_by_account_id = excluded.updated_by_account_id
+    `).run(
+      JSON.stringify({ phase: 'dashboard' }),
+      JSON.stringify({ prefs: { mode: 'smart' } }),
+      JSON.stringify({
+        all: { ...emptyPool, total: expectedCoreWordCount, fresh: expectedCoreWordCount },
+        core: { ...emptyPool, total: expectedCoreWordCount, fresh: expectedCoreWordCount },
+        y34: emptyPool,
+        y56: emptyPool,
+        secureExtension: emptyPool,
+        extra: emptyPool,
+      }),
+      1_777_000_000_000,
+    );
+
     const heroModels = await repository.readHeroSubjectReadModels('learner-hero', {
       accountId: 'adult-a',
       now: 1_777_000_000_000,

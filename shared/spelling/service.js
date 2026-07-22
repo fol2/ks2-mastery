@@ -1288,6 +1288,200 @@ function sessionCompletedEvents({ learnerId, session, summary, createdAt }) {
   return [createSpellingSessionCompletedEvent({ learnerId, session, summary, createdAt })];
 }
 
+function isPlainObject(value) {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+}
+
+function parseStorageObject(storage, key) {
+  try {
+    const raw = storage?.getItem?.(key);
+    if (isPlainObject(raw)) return raw;
+    if (typeof raw !== 'string' || !raw) return {};
+    const parsed = JSON.parse(raw);
+    return isPlainObject(parsed) ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function aggregatePoolKey(yearFilter) {
+  const filter = normaliseYearFilter(yearFilter, 'core');
+  if (filter === 'y3-4') return 'y34';
+  if (filter === 'y5-6') return 'y56';
+  if (filter === 'secure-extension') return 'secureExtension';
+  if (filter === 'extra') return 'extra';
+  return 'core';
+}
+
+function wordMatchesPool(word, poolKey) {
+  if (poolKey === 'secureExtension') return isSecureExtensionWord(word);
+  if (poolKey === 'extra') return isEnrichmentExtraWord(word);
+  if (!isStatutoryCoreWord(word)) return false;
+  if (poolKey === 'y34') return word?.year === '3-4';
+  if (poolKey === 'y56') return word?.year === '5-6';
+  return poolKey === 'core' || poolKey === 'all';
+}
+
+function progressContribution(rawValue, todayDay) {
+  const raw = isPlainObject(rawValue) ? rawValue : {};
+  const stage = Math.max(0, Number(raw.stage) || 0);
+  const attempts = Math.max(0, Number(raw.attempts) || 0);
+  const correct = Math.max(0, Number(raw.correct) || 0);
+  const wrong = Math.max(0, Number(raw.wrong) || 0);
+  const dueDay = typeof raw.dueDay === 'number' && Number.isFinite(raw.dueDay)
+    ? Math.floor(raw.dueDay)
+    : todayDay;
+  return {
+    secure: Number(stage >= GUARDIAN_SECURE_STAGE),
+    due: Number(attempts > 0 && dueDay <= todayDay),
+    fresh: Number(attempts === 0),
+    trouble: Number(wrong > 0 && (wrong >= correct || dueDay <= todayDay)),
+    attempts,
+    correct,
+  };
+}
+
+/**
+ * Add the Worker aggregate overlay around the existing web service. Normal
+ * commands hydrate only bounded item rows, while exact counters and milestone
+ * events come from the compact aggregate plus the current command's deltas.
+ */
+function withAggregateProgress(service, {
+  aggregateProgress,
+  contentSnapshot,
+  storage,
+  clock,
+} = {}) {
+  const aggregateStats = isPlainObject(aggregateProgress?.stats)
+    ? aggregateProgress.stats
+    : null;
+  if (!aggregateStats) return service;
+
+  const baselineProgress = isPlainObject(aggregateProgress?.baselineProgress)
+    ? aggregateProgress.baselineProgress
+    : {};
+  const words = Array.isArray(contentSnapshot?.words) ? contentSnapshot.words : [];
+  const wordBySlug = isPlainObject(contentSnapshot?.wordBySlug)
+    ? contentSnapshot.wordBySlug
+    : Object.fromEntries(words
+      .filter((word) => typeof word?.slug === 'string' && word.slug)
+      .map((word) => [word.slug, word]));
+
+  function progressSnapshot(learnerId) {
+    return parseStorageObject(storage, progressMapKey(learnerId));
+  }
+
+  function adjustedStats(learnerId, yearFilter = 'core', progressStore = null) {
+    const poolKey = aggregatePoolKey(yearFilter);
+    const output = normaliseStats(aggregateStats[poolKey]);
+    const current = isPlainObject(progressStore) ? progressStore : progressSnapshot(learnerId);
+    const todayDay = Math.floor(clock() / DAY_MS);
+    const slugs = new Set([...Object.keys(baselineProgress), ...Object.keys(current)]);
+    for (const slug of slugs) {
+      const word = wordBySlug[slug];
+      if (!word || !wordMatchesPool(word, poolKey)) continue;
+      const before = progressContribution(baselineProgress[slug], todayDay);
+      const after = progressContribution(current[slug], todayDay);
+      for (const key of ['secure', 'due', 'fresh', 'trouble', 'attempts', 'correct']) {
+        output[key] = Math.max(0, output[key] + after[key] - before[key]);
+      }
+    }
+    output.accuracy = output.attempts
+      ? Math.round((output.correct / output.attempts) * 100)
+      : null;
+    return normaliseStats(output);
+  }
+
+  function persistPostMega(learnerId, record) {
+    const key = postMegaKey(learnerId);
+    if (Object.keys(parseStorageObject(storage, key)).length > 0) return null;
+    try {
+      storage?.setItem?.(key, JSON.stringify(record));
+    } catch {
+      return null;
+    }
+    const persisted = parseStorageObject(storage, key);
+    return Number(persisted.unlockedAt) === Number(record.unlockedAt)
+      && persisted.unlockedBy === record.unlockedBy
+      ? persisted
+      : null;
+  }
+
+  const coreSubmitAnswer = service.submitAnswer.bind(service);
+  const coreGetAnalyticsSnapshot = service.getAnalyticsSnapshot.bind(service);
+  return {
+    ...service,
+    getStats: adjustedStats,
+    getAnalyticsSnapshot(learnerId, { includeWordGroups = true } = {}) {
+      const pools = {
+        all: adjustedStats(learnerId, 'core'),
+        core: adjustedStats(learnerId, 'core'),
+        y34: adjustedStats(learnerId, 'y3-4'),
+        y56: adjustedStats(learnerId, 'y5-6'),
+        secureExtension: adjustedStats(learnerId, 'secure-extension'),
+        extra: adjustedStats(learnerId, 'extra'),
+      };
+      if (!includeWordGroups) {
+        return {
+          version: SPELLING_SERVICE_STATE_VERSION,
+          generatedAt: clock(),
+          pools,
+        };
+      }
+      return { ...coreGetAnalyticsSnapshot(learnerId, { includeWordGroups }), pools };
+    },
+    submitAnswer(learnerId, rawState, typed) {
+      const beforeCore = adjustedStats(learnerId, 'core');
+      const transition = coreSubmitAnswer(learnerId, rawState, typed);
+      const afterCore = adjustedStats(learnerId, 'core');
+      // The service sees only the hydrated command rows, so replace a
+      // milestone derived from that partial map with the exact aggregate one.
+      const events = (Array.isArray(transition?.events) ? transition.events : [])
+        .filter((event) => event?.type !== 'spelling.mastery-milestone');
+      const wordSecured = events.find((event) => event?.type === 'spelling.word-secured');
+
+      if (wordSecured
+        && SPELLING_MASTERY_MILESTONES.includes(afterCore.secure)
+        && !events.some((event) => (
+          event?.type === 'spelling.mastery-milestone'
+          && Number(event.secureCount) === afterCore.secure
+        ))) {
+        const milestone = createSpellingMasteryMilestoneEvent({
+          learnerId,
+          session: rawState?.session || transition?.state?.session,
+          milestone: afterCore.secure,
+          secureCount: afterCore.secure,
+          createdAt: wordSecured.createdAt,
+        });
+        if (milestone) events.push(milestone);
+      }
+
+      const reachedMega = afterCore.total > 0 && afterCore.secure === afterCore.total;
+      const freshGraduation = beforeCore.secure < beforeCore.total && Boolean(wordSecured);
+      const backfillGraduation = beforeCore.total > 0 && beforeCore.secure === beforeCore.total;
+      if (reachedMega && (freshGraduation || backfillGraduation)) {
+        const unlockedAt = clock();
+        const record = persistPostMega(learnerId, {
+          unlockedAt,
+          unlockedContentReleaseId: SPELLING_CONTENT_RELEASE_ID,
+          unlockedPublishedCoreCount: afterCore.total,
+          unlockedBy: backfillGraduation ? 'pre-v3-backfill' : 'all-core-stage-4',
+        });
+        if (record) {
+          events.push(createSpellingPostMegaUnlockedEvent({
+            learnerId,
+            unlockedAt: record.unlockedAt,
+            contentReleaseId: record.unlockedContentReleaseId,
+            publishedCoreCount: record.unlockedPublishedCoreCount,
+          }));
+        }
+      }
+
+      return { ...transition, events: events.filter(Boolean) };
+    },
+  };
+}
+
 export function defaultSpellingPrefs() {
   return normalisePrefs();
 }
@@ -1300,6 +1494,7 @@ export function createSpellingService({
   random,
   contentSnapshot,
   cloneContentSnapshot = true,
+  aggregateProgress,
 } = {}) {
   const clock = clockFrom(now);
   const persistence = repository || {
@@ -4151,7 +4346,7 @@ export function createSpellingService({
     }
   }
 
-  return {
+  const service = {
     initState,
     getRuntimeContentSnapshot() {
       return cloneSerialisable(runtimeContentSnapshot);
@@ -4189,4 +4384,11 @@ export function createSpellingService({
     acknowledgePersistenceWarning,
     writePersistenceWarning,
   };
+
+  return withAggregateProgress(service, {
+    aggregateProgress,
+    contentSnapshot: runtimeContentSnapshot,
+    storage: resolvedStorage,
+    clock,
+  });
 }

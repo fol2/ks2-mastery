@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { createSession } from '../worker/src/auth.js';
+import { upsertBoundedSpellingState } from './helpers/bounded-spelling-state.js';
 import { createWorkerRepositoryServer } from './helpers/worker-server.js';
 
 function productionServer(env = {}) {
@@ -454,12 +455,10 @@ test('production public bootstrap redacts spelling sentinels from subject state,
   server.DB.db.prepare('UPDATE adult_accounts SET selected_learner_id = ?, updated_at = ? WHERE id = ?')
     .run(learnerId, now, accountId);
 
-  server.DB.db.prepare(`
-    INSERT INTO child_subject_state (learner_id, subject_id, ui_json, data_json, updated_at, updated_by_account_id)
-    VALUES (?, 'spelling', ?, ?, ?, ?)
-  `).run(
+  upsertBoundedSpellingState(server.DB.db, {
     learnerId,
-    JSON.stringify({
+    accountId,
+    ui: {
       phase: 'session',
       feedback: { answer: sentinel, attemptedAnswer: sentinel, body: sentinel },
       summary: { mistakes: [{ word: sentinel, family: sentinel }] },
@@ -480,17 +479,16 @@ test('production public bootstrap redacts spelling sentinels from subject state,
           prompt: { cloze: 'Spell the hidden word', sentence: sentinel },
         },
       },
-    }),
-    JSON.stringify({
+    },
+    data: {
       prefs: { mode: 'smart' },
       progress: {
         [sentinel.toLowerCase()]: { stage: 2, attempts: 3, correct: 2, wrong: 1 },
       },
       audio: { sentence: sentinel },
-    }),
+    },
     now,
-    accountId,
-  );
+  });
   server.DB.db.prepare(`
     INSERT INTO practice_sessions (
       id, learner_id, subject_id, session_kind, status, session_state_json,
@@ -658,17 +656,20 @@ test('production public bootstrap keeps spelling progress compact without heavyw
   `).run(accountId, now, now);
   server.DB.db.prepare('UPDATE adult_accounts SET selected_learner_id = ? WHERE id = ?')
     .run('learner-codex', accountId);
-  server.DB.db.prepare(`
-    INSERT INTO child_subject_state (learner_id, subject_id, ui_json, data_json, updated_at, updated_by_account_id)
-    VALUES ('learner-codex', 'spelling', ?, ?, ?, ?)
-  `).run(JSON.stringify({ phase: 'dashboard' }), JSON.stringify({
-    progress: {
-      possess: { stage: 4 },
-      accommodate: { stage: 4 },
-      necessary: { stage: 4 },
-      mollusc: { stage: 4 },
+  upsertBoundedSpellingState(server.DB.db, {
+    learnerId: 'learner-codex',
+    accountId,
+    ui: { phase: 'dashboard' },
+    data: {
+      progress: {
+        possess: { stage: 4 },
+        accommodate: { stage: 4 },
+        necessary: { stage: 4 },
+        mollusc: { stage: 4 },
+      },
     },
-  }), now, accountId);
+    now,
+  });
 
   const response = await server.fetchRaw('https://repo.test/api/bootstrap', {
     headers: { cookie },

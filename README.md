@@ -89,6 +89,11 @@ npm run db:migrate:remote
 npm run deploy
 ```
 
+Migration 0023 changes learner-state authority and is the exception to the
+generic ordering above. Follow the code-first, write-drained procedure in
+[`docs/operations/bounded-gameplay-state-rollout.md`](docs/operations/bounded-gameplay-state-rollout.md);
+do not apply it with the generic migrate-then-deploy sequence.
+
 The Cloudflare scripts run Wrangler through `scripts/wrangler-oauth.mjs`, which deliberately removes `CLOUDFLARE_API_TOKEN` for local child processes. This keeps deploys and remote D1 commands on the logged-in OAuth session even when the parent shell still has an old API token exported. Cloudflare Workers Builds sets `WORKERS_CI=1`, so the wrapper preserves the build-provided token in hosted CI. The legacy `*:oauth` aliases remain for muscle memory, but the default scripts are already OAuth-safe.
 
 The production-client lockdown gate is included in `npm run check`. For explicit evidence, run:

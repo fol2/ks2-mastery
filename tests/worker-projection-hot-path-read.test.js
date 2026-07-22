@@ -709,13 +709,14 @@ test('U6 scenario 18: recentEventTokens ring size (250) strictly exceeds lag win
 });
 
 // ---------------------------------------------------------------------------
-// Scenario 19 — 2000-event learner → meta.capacity.queryCount ≤ 7 on hot path.
+// Scenario 19 — 2000-event learner → meta.capacity.queryCount ≤ 8 on hot path.
 // P95 follow-up folded writable membership into the learner revision/receipt
 // read, reused the auth account snapshot, and preloaded subject_state +
 // latest_session + projection in the mutation preflight, so the hot path
-// measures 6 queries with +1 headroom.
+// measures 7 queries with +1 headroom. The seventh is one indexed item-state
+// point read: it replaces parsing the learner's complete lifetime word map.
 // ---------------------------------------------------------------------------
-test('U6 scenario 19: 2000-event learner hot-path queryCount ≤ 7', async () => {
+test('U6 scenario 19: 2000-event learner hot-path queryCount ≤ 8', async () => {
   const harness = createHarness();
   try {
     insertProjectionWindowFillerEvents(harness.DB, {
@@ -736,8 +737,8 @@ test('U6 scenario 19: 2000-event learner hot-path queryCount ≤ 7', async () =>
     const capacity = hot.body.meta?.capacity;
     assert.ok(capacity, 'hot-path command must expose meta.capacity');
     assert.ok(
-      capacity.queryCount <= 7,
-      `hot-path queryCount must be ≤ 7 for 2000-event learner; got ${capacity.queryCount}`,
+      capacity.queryCount <= 8,
+      `hot-path queryCount must be ≤ 8 for 2000-event learner; got ${capacity.queryCount}`,
     );
   } finally {
     harness.close();

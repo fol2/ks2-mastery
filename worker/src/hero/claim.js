@@ -9,7 +9,7 @@ import { HERO_CLAIM_GRACE_HOURS } from '../../../shared/hero/constants.js';
  * Pure claim resolver — receives pre-loaded data, returns a result object.
  * Does NOT perform DB reads or writes.
  */
-export function resolveHeroClaimCommand({ body, heroProgressState, practiceSessionRows, subjectUiStates, nowTs, economyEnabled }) {
+export function resolveHeroClaimCommand({ body, heroProgressState, practiceSessionRows, nowTs, economyEnabled }) {
   // 1. Validate request body
   const validation = validateClaimRequest(body);
   if (!validation.valid) {
@@ -81,7 +81,6 @@ export function resolveHeroClaimCommand({ body, heroProgressState, practiceSessi
     subjectId: progressTask.subjectId,
     practiceSessionId,
     practiceSessionRows,
-    subjectUiStates,
     economyEnabled,
   });
 
@@ -128,8 +127,11 @@ export function resolveHeroClaimCommand({ body, heroProgressState, practiceSessi
   };
 }
 
-export function findCompletionEvidence({ taskId, questId, questFingerprint, learnerId, subjectId, practiceSessionId, practiceSessionRows, subjectUiStates, economyEnabled }) {
-  // Strategy 1: Check practice_sessions with heroContext in summary
+export function findCompletionEvidence({ taskId, questId, questFingerprint, learnerId, subjectId, practiceSessionId, practiceSessionRows, economyEnabled }) {
+  // The bounded practice_sessions table is the sole completion authority.
+  // Active rows carry heroContext in session_state_json; completed rows carry
+  // it in summary_json. Production queries project just those fragments, while
+  // the full JSON fallback below keeps this pure resolver easy to unit-test.
   if (practiceSessionRows && practiceSessionRows.length > 0) {
     // If a specific practiceSessionId was provided, check it first
     if (practiceSessionId) {
@@ -140,19 +142,30 @@ export function findCompletionEvidence({ taskId, questId, questFingerprint, lear
       }
     }
 
-    // Search all recent completed sessions for matching heroContext
+    // Search the bounded candidates for matching heroContext. A newer active
+    // session must not mask an older completed session for the same task.
+    let activeMatch = null;
     for (const row of practiceSessionRows) {
-      if (row.status !== 'completed') continue;
       if (row.subject_id !== subjectId) continue;
       if (row.learner_id !== learnerId) {
         return { found: true, completed: false, learnerMismatch: true, reason: 'Session belongs to different learner' };
       }
-      const summary = safeParseJson(row.summary_json);
-      if (!summary?.heroContext) continue;
-      if (summary.heroContext.source !== 'hero-mode') continue;
-      if (summary.heroContext.questId !== questId) continue;
-      if (summary.heroContext.taskId !== taskId) continue;
-      if (summary.heroContext.questFingerprint !== questFingerprint) continue;
+      const heroContext = practiceSessionHeroContext(row);
+      if (!heroContextMatches(heroContext, { taskId, questId, questFingerprint })) continue;
+
+      if (row.status === 'active') {
+        activeMatch ||= {
+          found: true,
+          completed: false,
+          source: 'practice-session',
+          practiceSessionId: row.id,
+          sessionStatus: 'active',
+          summaryStatus: null,
+          reason: 'Session still active',
+        };
+        continue;
+      }
+      if (row.status !== 'completed') continue;
 
       return {
         found: true,
@@ -164,26 +177,7 @@ export function findCompletionEvidence({ taskId, questId, questFingerprint, lear
         reason: null,
       };
     }
-  }
-
-  // Strategy 2: Check subject ui_json for still-present completed session
-  if (subjectUiStates && subjectUiStates[subjectId]) {
-    const ui = subjectUiStates[subjectId];
-    if (ui?.session?.heroContext?.source === 'hero-mode' &&
-        ui.session.heroContext.questId === questId &&
-        ui.session.heroContext.taskId === taskId) {
-      // Session still present in ui_json — check if it looks completed
-      // This is a fallback for the race window before subject clears session
-      return {
-        found: true,
-        completed: false, // still active — not yet completed
-        source: 'subject-ui-json',
-        practiceSessionId: null,
-        sessionStatus: 'active',
-        summaryStatus: null,
-        reason: 'Session still active in subject state',
-      };
-    }
+    if (activeMatch) return activeMatch;
   }
 
   return {
@@ -205,19 +199,23 @@ function validatePracticeSession(row, { taskId, questId, questFingerprint, learn
     return { found: false, completed: false, reason: 'Subject mismatch' };
   }
   if (row.status !== 'completed') {
-    return { found: true, completed: false, source: 'practice-session', sessionStatus: row.status, reason: 'Session not completed' };
+    const heroContext = practiceSessionHeroContext(row);
+    if (row.status !== 'active' || !heroContextMatches(heroContext, { taskId, questId, questFingerprint })) {
+      return { found: false, completed: false, reason: 'Session identity mismatch' };
+    }
+    return { found: true, completed: false, source: 'practice-session', practiceSessionId: row.id, sessionStatus: row.status, reason: 'Session not completed' };
   }
-  const summary = safeParseJson(row.summary_json);
-  if (!summary?.heroContext) {
+  const heroContext = practiceSessionHeroContext(row);
+  if (!heroContext) {
     if (economyEnabled) {
       return { found: true, completed: false, code: 'hero_claim_missing_hero_context', reason: 'Economy requires heroContext evidence' };
     }
     return { found: true, completed: true, source: 'practice-session', practiceSessionId: row.id, sessionStatus: 'completed', summaryStatus: 'completed', reason: 'Completed but no heroContext in summary (pre-P3 session)' };
   }
-  if (summary.heroContext.questId !== questId || summary.heroContext.taskId !== taskId) {
+  if (heroContext.questId !== questId || heroContext.taskId !== taskId) {
     return { found: true, completed: false, reason: 'heroContext identity mismatch' };
   }
-  if (summary.heroContext.questFingerprint !== questFingerprint) {
+  if (heroContext.questFingerprint !== questFingerprint) {
     return { found: true, completed: false, reason: 'heroContext fingerprint mismatch' };
   }
   return {
@@ -229,6 +227,33 @@ function validatePracticeSession(row, { taskId, questId, questFingerprint, learn
     summaryStatus: 'completed',
     reason: null,
   };
+}
+
+function practiceSessionHeroContext(row) {
+  const projectedCandidates = row?.status === 'active'
+    ? [row?.active_hero_context_json, row?.summary_hero_context_json]
+    : [row?.summary_hero_context_json];
+  for (const candidate of projectedCandidates) {
+    const projected = safeParseJson(candidate);
+    if (projected && typeof projected === 'object' && !Array.isArray(projected)) return projected;
+  }
+  const documentCandidates = row?.status === 'active'
+    ? [row?.session_state_json, row?.summary_json]
+    : [row?.summary_json];
+  for (const candidate of documentCandidates) {
+    const document = safeParseJson(candidate);
+    if (document?.heroContext && typeof document.heroContext === 'object') {
+      return document.heroContext;
+    }
+  }
+  return null;
+}
+
+function heroContextMatches(heroContext, { taskId, questId, questFingerprint }) {
+  return heroContext?.source === 'hero-mode'
+    && heroContext.questId === questId
+    && heroContext.taskId === taskId
+    && heroContext.questFingerprint === questFingerprint;
 }
 
 export function isWithinGraceWindow(dateKey, nowTs) {

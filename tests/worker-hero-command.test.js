@@ -50,11 +50,13 @@ async function seedLearner(server, accountId, learnerId) {
   });
   await repos.flush();
 
-  // Seed spelling subject state so the Hero scheduler generates tasks.
+  // Migration 0023 makes the split learner row authoritative. Hero reads its
+  // materialised counters and never reconstructs the lifetime word map.
   server.DB.db.prepare(`
-    INSERT OR REPLACE INTO child_subject_state (learner_id, subject_id, ui_json, data_json, updated_at)
-    VALUES (?, 'spelling', '{}', ?, ?)
-  `).run(learnerId, JSON.stringify(HERO_SPELLING_DATA), Date.now());
+    INSERT OR REPLACE INTO spelling_learner_state (
+      learner_id, ui_json, data_json, stats_json, updated_at, updated_by_account_id
+    ) VALUES (?, '{}', '{}', ?, ?, ?)
+  `).run(learnerId, JSON.stringify(HERO_SPELLING_DATA.stats), Date.now(), accountId);
 
   return repos;
 }

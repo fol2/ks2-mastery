@@ -153,6 +153,34 @@ import { buildSpellingProgressPools, buildSpellingWordBankReadModel } from './co
 import { getSpellingPostMasteryState } from '../../src/subjects/spelling/read-model.js';
 import { normaliseServerSpellingData } from './subjects/spelling/engine.js';
 import {
+  changedSpellingAchievementRows,
+  changedSpellingGameplayItems,
+  composeSpellingGameplayData,
+  materialiseSpellingGameplayStats,
+  parseSpellingGameplayStats,
+  SPELLING_BOSS_ACHIEVEMENT_PROJECTION_LIMIT,
+  spellingAchievementProjectionIds,
+  spellingBossAchievementPrefix,
+  spellingLearnerData,
+} from './subjects/spelling/gameplay-state.js';
+import {
+  changedGrammarGameplayItems,
+  composeGrammarGameplaySubjectRecord,
+  grammarStateWithoutItemMastery,
+} from './subjects/grammar/gameplay-state.js';
+import {
+  changedReadingGameplayQuestions,
+  composeReadingGameplaySubjectRecord,
+  readingStateWithoutQuestionMastery,
+} from './subjects/reading/gameplay-state.js';
+import {
+  changedPunctuationGameplayItems,
+  composePunctuationGameplaySubjectRecord,
+  punctuationStarItemIds,
+  punctuationStateWithoutItemMastery,
+} from './subjects/punctuation/gameplay-persistence.js';
+import { markGameplayWorkingSet } from './subjects/gameplay-store.js';
+import {
   activityFeedRowFromEventRow,
   appendRecentEventTokens,
   COMMAND_PROJECTION_MODEL_KEY,
@@ -201,6 +229,7 @@ import {
 import { normaliseHeroProgressState } from '../../shared/hero/progress-state.js';
 import { grammarTransferPromptById } from './subjects/grammar/transfer-prompts.js';
 import {
+  BackendUnavailableError,
   BadRequestError,
   ConflictError,
   ForbiddenError,
@@ -338,15 +367,18 @@ function compactSpellingStatsFromData(data = {}, now = Date.now()) {
 function redactSpellingUiForClient(ui, data = {}, learnerId = '', {
   audio = null,
   contentSnapshot = null,
+  stats = null,
   now = Date.now(),
 } = {}) {
   const raw = ui && typeof ui === 'object' && !Array.isArray(ui) ? ui : {};
   const session = raw.session && typeof raw.session === 'object' && !Array.isArray(raw.session)
     ? raw.session
     : null;
-  const progressPools = contentSnapshot
-    ? buildSpellingProgressPools({ contentSnapshot, data, now })
-    : compactSpellingStatsFromData(data, now);
+  const progressPools = stats && typeof stats === 'object' && !Array.isArray(stats)
+    ? materialiseSpellingGameplayStats(stats, now)
+    : contentSnapshot
+      ? buildSpellingProgressPools({ contentSnapshot, data, now })
+      : compactSpellingStatsFromData(data, now);
   // Non-bounded legacy bootstrap paths may still derive `postMastery` from a
   // supplied runtime snapshot. The selected-learner-bounded public bootstrap
   // deliberately passes no snapshot so the signed-in shell cannot trip Worker
@@ -799,6 +831,9 @@ const PUBLIC_SUBJECT_READ_MODEL_BUILDERS = Object.freeze({
     return redactSpellingUiForClient(record.ui, record.data, row.learner_id, {
       audio,
       contentSnapshot: spellingContentSnapshot,
+      stats: row.spelling_stats_json
+        ? parseSpellingGameplayStats(row.spelling_stats_json)
+        : null,
       now,
     });
   },
@@ -821,10 +856,14 @@ const PUBLIC_SUBJECT_READ_MODEL_BUILDERS = Object.freeze({
 
 async function publicSubjectStateRowToRecord(row, {
   spellingContentSnapshot = null,
+  punctuationItemRows = [],
   now = Date.now(),
   compact = false,
 } = {}) {
-  const record = subjectStateRowToRecord(row);
+  const storedRecord = subjectStateRowToRecord(row);
+  const record = row?.subject_id === 'punctuation'
+    ? composePunctuationGameplaySubjectRecord(storedRecord, punctuationItemRows, now)
+    : storedRecord;
   const buildPublicUi = PUBLIC_SUBJECT_READ_MODEL_BUILDERS[row.subject_id];
   if (!buildPublicUi) return record;
   const ui = await buildPublicUi({
@@ -1655,16 +1694,87 @@ async function listAccountDirectory(db, actorAccountId) {
   return accountDirectoryPayload(db, actorAccountId);
 }
 
-async function loadLearnerReadBundle(db, learnerId) {
-  const subjectRows = await all(db, `
-    SELECT learner_id, subject_id, ui_json, data_json, updated_at
-    FROM child_subject_state
-    WHERE learner_id = ?
-  `, [learnerId]);
+async function listLearnerHubSubjectStateRows(db, learnerId) {
+  try {
+    const rows = await all(db, `
+      SELECT learner_id, subject_id, ui_json, data_json, updated_at, NULL AS spelling_stats_json
+      FROM child_subject_state
+      WHERE learner_id = ?
+        AND subject_id IN ('grammar', 'punctuation')
+      UNION ALL
+      SELECT learner_id, subject_id, ui_json, data_json, updated_at, NULL AS spelling_stats_json
+      FROM child_subject_state
+      WHERE learner_id = ?
+        AND subject_id = 'spelling'
+        AND NOT EXISTS (
+          SELECT 1
+          FROM bounded_gameplay_state_migrations
+          WHERE migration_id = '0023' AND state = 'ready'
+        )
+      UNION ALL
+      SELECT learner_id, 'spelling' AS subject_id, ui_json, data_json, updated_at,
+             stats_json AS spelling_stats_json
+      FROM spelling_learner_state
+      WHERE learner_id = ?
+        AND EXISTS (
+          SELECT 1
+          FROM bounded_gameplay_state_migrations
+          WHERE migration_id = '0023' AND state = 'ready'
+        )
+    `, [learnerId, learnerId, learnerId]);
+    const spellingRowPresent = rows.some((row) => row?.subject_id === 'spelling');
+    if (rows.some((row) => row?.spelling_stats_json != null)) {
+      markBoundedGameplayTableAvailable(db, 'spelling');
+    }
+    await requireBoundedSpellingLearnerState(db, learnerId, spellingRowPresent);
+    return rows;
+  } catch (error) {
+    if (
+      !isMissingTableError(error, 'spelling_learner_state')
+      && !isMissingTableError(error, 'bounded_gameplay_state_migrations')
+    ) throw error;
+    if (isMissingTableError(error, 'spelling_learner_state')) {
+      await requireLegacyGameplayFallbackAllowed(
+        db,
+        'spelling',
+        'spelling_learner_state',
+        error,
+      );
+    }
+    return all(db, `
+      SELECT learner_id, subject_id, ui_json, data_json, updated_at, NULL AS spelling_stats_json
+      FROM child_subject_state
+      WHERE learner_id = ?
+        AND subject_id IN ('spelling', 'grammar', 'punctuation')
+    `, [learnerId]);
+  }
+}
+
+async function loadLearnerReadBundle(db, learnerId, { now = Date.now() } = {}) {
+  const subjectRows = await listLearnerHubSubjectStateRows(db, learnerId);
   const sessionRows = await all(db, `
+    WITH ranked AS (
+      SELECT
+        id,
+        learner_id,
+        subject_id,
+        session_kind,
+        status,
+        session_state_json,
+        summary_json,
+        created_at,
+        updated_at,
+        ROW_NUMBER() OVER (
+          PARTITION BY subject_id
+          ORDER BY updated_at DESC, id DESC
+        ) AS subject_rank
+      FROM practice_sessions
+      WHERE learner_id = ?
+        AND subject_id IN ('spelling', 'grammar', 'punctuation')
+    )
     SELECT id, learner_id, subject_id, session_kind, status, session_state_json, summary_json, created_at, updated_at
-    FROM practice_sessions
-    WHERE learner_id = ?
+    FROM ranked
+    WHERE subject_rank <= 6
     ORDER BY updated_at DESC, id DESC
   `, [learnerId]);
   const gameRows = await all(db, `
@@ -1674,14 +1784,30 @@ async function loadLearnerReadBundle(db, learnerId) {
   `, [learnerId]);
   const eventRows = await all(db, `
     SELECT id, learner_id, subject_id, system_id, event_type, event_json, created_at
-    FROM event_log
-    WHERE learner_id = ?
+    FROM (
+      SELECT id, learner_id, subject_id, system_id, event_type, event_json, created_at
+      FROM event_log
+      WHERE learner_id = ?
+        AND (
+          (subject_id = 'spelling' AND event_type = 'spelling.retry-cleared')
+          OR (subject_id = 'grammar' AND event_type = 'grammar.misconception-seen')
+        )
+      ORDER BY created_at DESC, id DESC
+      LIMIT 50
+    )
     ORDER BY created_at ASC, id ASC
   `, [learnerId]);
 
   const subjectStates = {};
   subjectRows.forEach((row) => {
-    subjectStates[row.subject_id] = subjectStateRowToRecord(row);
+    const record = subjectStateRowToRecord(row);
+    if (row.subject_id === 'spelling' && row.spelling_stats_json != null) {
+      record.ui = {
+        ...record.ui,
+        stats: publicSpellingStats(materialiseSpellingGameplayStats(row.spelling_stats_json, now)),
+      };
+    }
+    subjectStates[row.subject_id] = record;
   });
 
   const gameState = {};
@@ -4426,6 +4552,7 @@ const OPS_ERROR_EVENT_STATUS_MUTATION_KIND = 'admin.ops_error_event.status-set';
 // scopeId is deliberately `post-mega-seed:<learnerId>` so each seed lands
 // in its own receipt row for audit.
 const POST_MEGA_SEED_MUTATION_KIND = 'admin.spelling.post-mega-seed';
+const POST_MEGA_SEED_RESTORE_MUTATION_KIND = 'admin.spelling.post-mega-seed.restore';
 const POST_MEGA_SEED_LEARNER_NAME_MAX_CHARS = 64;
 // U3 reviewer follow-up (MEDIUM adversarial): the seed harness accepts a
 // free-form learnerId string for the "new learner" flow. Without a charset
@@ -5245,22 +5372,343 @@ async function updateOpsErrorEventStatus(db, {
   return response;
 }
 
+async function restorePostMegaSeedPreimage(db, {
+  actorAccountId,
+  learnerId,
+  preimageId,
+  confirmOverwrite = false,
+  mutation = {},
+  nowTs,
+}) {
+  if (!(typeof learnerId === 'string' && learnerId)) {
+    throw new BadRequestError('Learner id is required for post-Mega restore.', {
+      code: 'learner_id_required',
+    });
+  }
+  if (!(typeof preimageId === 'string' && preimageId)) {
+    throw new BadRequestError('Post-Mega preimage id is required.', {
+      code: 'post_mega_preimage_id_required',
+    });
+  }
+
+  const actor = await assertAdminHubActor(db, actorAccountId);
+  if (accountPlatformRole(actor) !== 'admin') {
+    throw new ForbiddenError('Post-Mega restore is admin-only.', {
+      code: 'post_mega_seed_restore_forbidden',
+      required: 'platform-role-admin',
+    });
+  }
+
+  const scopeId = `post-mega-seed-restore:${learnerId}`;
+  const { requestId, correlationId } = normaliseMutationEnvelope(mutation, {
+    scopeType: 'platform',
+    scopeId,
+  });
+  const ts = Number.isFinite(Number(nowTs)) ? Number(nowTs) : Date.now();
+  const requestHash = mutationPayloadHash(POST_MEGA_SEED_RESTORE_MUTATION_KIND, {
+    learnerId,
+    preimageId,
+  });
+  const existingReceipt = await loadMutationReceipt(db, actorAccountId, requestId);
+  if (existingReceipt) {
+    if (existingReceipt.request_hash !== requestHash) {
+      throw idempotencyReuseError({
+        kind: POST_MEGA_SEED_RESTORE_MUTATION_KIND,
+        scopeType: 'platform',
+        scopeId,
+        requestId,
+        correlationId,
+      });
+    }
+    const storedReplay = safeJsonParse(existingReceipt.response_json, {});
+    return {
+      ...storedReplay,
+      postMegaSeedRestoreMutation: {
+        ...(storedReplay.postMegaSeedRestoreMutation || {}),
+        requestId,
+        correlationId,
+        replayed: true,
+      },
+    };
+  }
+
+  const learner = await first(
+    db,
+    'SELECT id, state_revision FROM learner_profiles WHERE id = ?',
+    [learnerId],
+  );
+  if (!learner) {
+    throw new NotFoundError('Learner was not found.', {
+      code: 'learner_not_found',
+      learnerId,
+    });
+  }
+  const membership = await getMembership(db, actorAccountId, learnerId);
+  if (!membership && !confirmOverwrite) {
+    throw new ConflictError(
+      'Restore target is owned by a different account. Re-submit with confirmOverwrite=true to proceed.',
+      {
+        code: 'seed_restore_requires_membership',
+        learnerId,
+      },
+    );
+  }
+  const preimage = await first(db, `
+    SELECT preimage_id, learner_id, item_count, achievement_count, created_at
+    FROM spelling_seed_preimages
+    WHERE preimage_id = ? AND learner_id = ?
+  `, [preimageId, learnerId]);
+  if (!preimage) {
+    throw new NotFoundError('Post-Mega seed preimage was not found for this learner.', {
+      code: 'post_mega_seed_preimage_not_found',
+      learnerId,
+      preimageId,
+    });
+  }
+  if (!await boundedGameplayTableAvailable(db, 'spelling')) {
+    throw new ConflictError('Bounded Spelling state is not ready for preimage restore.', {
+      code: 'bounded_spelling_state_not_ready',
+      retryable: true,
+    });
+  }
+
+  const expectedRevision = Math.max(0, Number(learner.state_revision) || 0);
+  const guard = { learnerId, expectedRevision };
+  const mutationMeta = {
+    policyVersion: MUTATION_POLICY_VERSION,
+    kind: POST_MEGA_SEED_RESTORE_MUTATION_KIND,
+    scopeType: 'platform',
+    scopeId,
+    requestId,
+    correlationId,
+    appliedAt: ts,
+    expectedRevision,
+    appliedRevision: expectedRevision + 1,
+    replayed: false,
+  };
+  const response = {
+    postMegaSeedRestore: {
+      learnerId,
+      preimageId,
+      itemCount: Math.max(0, Number(preimage.item_count) || 0),
+      achievementCount: Math.max(0, Number(preimage.achievement_count) || 0),
+      preimageCreatedAt: Number(preimage.created_at) || 0,
+      confirmedOverwrite: Boolean(!membership && confirmOverwrite),
+    },
+    postMegaSeedRestoreMutation: mutationMeta,
+  };
+
+  const restoreLearnerParams = [learnerId, preimageId, learnerId];
+  const restoreItemParams = [learnerId, preimageId];
+  const statements = [
+    bindStatement(db, `
+      INSERT INTO spelling_learner_state (
+        learner_id, ui_json, data_json, stats_json, updated_at, updated_by_account_id
+      )
+      SELECT ?, archive.ui_json, archive.data_json, archive.stats_json,
+             archive.source_updated_at, archive.source_updated_by_account_id
+      FROM spelling_seed_preimages archive
+      WHERE archive.preimage_id = ? AND archive.learner_id = ?
+        ${guardedWhere(guard)}
+      ON CONFLICT(learner_id) DO UPDATE SET
+        ui_json = excluded.ui_json,
+        data_json = excluded.data_json,
+        stats_json = excluded.stats_json,
+        updated_at = excluded.updated_at,
+        updated_by_account_id = excluded.updated_by_account_id
+    `, guardedParams(restoreLearnerParams, guard)),
+    bindStatement(db, `
+      DELETE FROM spelling_item_state
+      WHERE learner_id = ?
+        ${guardedWhere(guard)}
+    `, guardedParams([learnerId], guard)),
+    bindStatement(db, `
+      DELETE FROM spelling_achievement_state
+      WHERE learner_id = ?
+        ${guardedWhere(guard)}
+    `, guardedParams([learnerId], guard)),
+    bindStatement(db, `
+      INSERT INTO spelling_item_state (
+        learner_id, slug, progress_json, guardian_json, pattern_json,
+        updated_at, updated_by_account_id
+      )
+      SELECT ?, item.slug, item.progress_json, item.guardian_json,
+             item.pattern_json, item.source_updated_at,
+             item.source_updated_by_account_id
+      FROM spelling_seed_preimage_items item
+      WHERE item.preimage_id = ?
+        ${guardedWhere(guard)}
+    `, guardedParams(restoreItemParams, guard)),
+    bindStatement(db, `
+      INSERT INTO spelling_achievement_state (
+        learner_id, achievement_id, record_json,
+        updated_at, updated_by_account_id
+      )
+      SELECT ?, achievement.achievement_id, achievement.record_json,
+             achievement.source_updated_at,
+             achievement.source_updated_by_account_id
+      FROM spelling_seed_preimage_achievements achievement
+      WHERE achievement.preimage_id = ?
+        ${guardedWhere(guard)}
+    `, guardedParams(restoreItemParams, guard)),
+    bindStatement(db, `
+      UPDATE spelling_seed_preimages
+      SET last_restored_at = ?, last_restored_by_account_id = ?
+      WHERE preimage_id = ? AND learner_id = ?
+        ${guardedWhere(guard)}
+    `, guardedParams([ts, actorAccountId, preimageId, learnerId], guard)),
+    storeMutationReceiptStatement(db, {
+      accountId: actorAccountId,
+      requestId,
+      scopeType: 'platform',
+      scopeId,
+      mutationKind: POST_MEGA_SEED_RESTORE_MUTATION_KIND,
+      requestHash,
+      response,
+      correlationId,
+      appliedAt: ts,
+    }, { guard }),
+    bindStatement(db, `
+      UPDATE learner_profiles
+      SET state_revision = state_revision + 1,
+          updated_at = ?
+      WHERE id = ? AND state_revision = ?
+    `, [ts, learnerId, expectedRevision]),
+  ];
+
+  const results = await batch(db, statements);
+  const casResult = results[results.length - 1] || null;
+  const casChanges = Number(casResult?.meta?.changes) || 0;
+  if (casChanges !== 1) {
+    const currentRevision = Number(await scalar(
+      db,
+      'SELECT state_revision FROM learner_profiles WHERE id = ?',
+      [learnerId],
+      'state_revision',
+    )) || 0;
+    throw staleWriteError({
+      kind: POST_MEGA_SEED_RESTORE_MUTATION_KIND,
+      scopeType: 'learner',
+      scopeId: learnerId,
+      requestId,
+      correlationId,
+      expectedRevision,
+      currentRevision,
+    });
+  }
+  return response;
+}
+
 // ---------------------------------------------------------------------------
 // P2 U3: admin-gated QA seed harness for post-Mega learner states.
 //
-// Writes one of the 8 canonical seed shapes into `child_subject_state` for a
-// target learner. Routes through the Admin Ops P1 mutation-receipt path with
+// Writes one of the 8 canonical seed shapes into the active Spelling store for
+// a target learner. Routes through the Admin Ops P1 mutation-receipt path with
 // `scopeType='platform'` so cross-origin CSRF attempts fail at the receipt
 // header check. Atomic via `batch()` (R21) so the child_subject_state upsert
 // and the receipt row either both land or neither does — a partial land
 // would leave a seed without a receipt (or vice versa) and obscure the
-// audit trail.
+// audit trail. After 0023, rollback history stays row-addressed in D1 and the
+// cold legacy JSON is not read or rewritten.
 //
 // Edge case — target learner does not yet exist: a learner_profiles row is
 // inserted (Name: "Seed learner", Year Group: "Y5", Avatar: "#8A4FFF",
 // Goal: empty) and the acting admin is granted owner membership so they
 // can later see the seeded learner in the admin hub's learner picker.
 // ---------------------------------------------------------------------------
+function postMegaSeedPreimageId(actorAccountId, requestId) {
+  return `post-mega-seed:${actorAccountId}:${requestId}`;
+}
+
+function buildPostMegaSeedPreimageStatements(db, {
+  actorAccountId,
+  learnerId,
+  preimageId,
+  requestId,
+  nowTs,
+  guard,
+}) {
+  const metadataParams = [
+    preimageId,
+    actorAccountId,
+    requestId,
+    nowTs,
+    learnerId,
+  ];
+  const itemParams = [preimageId, learnerId, preimageId];
+  return [
+    bindStatement(db, `
+      INSERT INTO spelling_seed_preimages (
+        preimage_id,
+        learner_id,
+        actor_account_id,
+        seed_request_id,
+        ui_json,
+        data_json,
+        stats_json,
+        source_updated_at,
+        source_updated_by_account_id,
+        item_count,
+        achievement_count,
+        created_at
+      )
+      SELECT
+        ?, state.learner_id, ?, ?, state.ui_json, state.data_json,
+        state.stats_json, state.updated_at, state.updated_by_account_id,
+        (SELECT COUNT(*) FROM spelling_item_state item WHERE item.learner_id = state.learner_id),
+        (SELECT COUNT(*) FROM spelling_achievement_state achievement
+          WHERE achievement.learner_id = state.learner_id),
+        ?
+      FROM spelling_learner_state state
+      WHERE state.learner_id = ?
+        ${guardedWhere(guard)}
+      ON CONFLICT(preimage_id) DO NOTHING
+    `, guardedParams(metadataParams, guard)),
+    bindStatement(db, `
+      INSERT INTO spelling_seed_preimage_items (
+        preimage_id,
+        slug,
+        progress_json,
+        guardian_json,
+        pattern_json,
+        source_updated_at,
+        source_updated_by_account_id
+      )
+      SELECT
+        ?, item.slug, item.progress_json, item.guardian_json,
+        item.pattern_json, item.updated_at, item.updated_by_account_id
+      FROM spelling_item_state item
+      WHERE item.learner_id = ?
+        AND EXISTS (
+          SELECT 1 FROM spelling_seed_preimages archive
+          WHERE archive.preimage_id = ?
+        )
+        ${guardedWhere(guard)}
+      ON CONFLICT(preimage_id, slug) DO NOTHING
+    `, guardedParams(itemParams, guard)),
+    bindStatement(db, `
+      INSERT INTO spelling_seed_preimage_achievements (
+        preimage_id,
+        achievement_id,
+        record_json,
+        source_updated_at,
+        source_updated_by_account_id
+      )
+      SELECT
+        ?, achievement.achievement_id, achievement.record_json,
+        achievement.updated_at, achievement.updated_by_account_id
+      FROM spelling_achievement_state achievement
+      WHERE achievement.learner_id = ?
+        AND EXISTS (
+          SELECT 1 FROM spelling_seed_preimages archive
+          WHERE archive.preimage_id = ?
+        )
+        ${guardedWhere(guard)}
+      ON CONFLICT(preimage_id, achievement_id) DO NOTHING
+    `, guardedParams(itemParams, guard)),
+  ];
+}
+
 async function seedPostMegaLearnerState(db, {
   actorAccountId,
   learnerId,
@@ -5377,10 +5825,16 @@ async function seedPostMegaLearnerState(db, {
   // Auto-create the learner if missing (plan edge case).
   const existingLearner = await first(
     db,
-    'SELECT id FROM learner_profiles WHERE id = ?',
+    'SELECT id, state_revision FROM learner_profiles WHERE id = ?',
     [learnerId],
   );
   const createdLearner = !existingLearner;
+  const expectedLearnerRevision = createdLearner
+    ? null
+    : Math.max(0, Number(existingLearner.state_revision) || 0);
+  const guard = createdLearner
+    ? null
+    : { learnerId, expectedRevision: expectedLearnerRevision };
 
   // U3 reviewer follow-up (HIGH adversarial): cross-tenant learner data wipe.
   // Before P2, an admin could type any learnerId and the seed would overwrite
@@ -5391,23 +5845,41 @@ async function seedPostMegaLearnerState(db, {
   //      UNLESS the client explicitly passes `confirmOverwrite: true`. The
   //      confirm-flag lets a genuine ops response (debugging another
   //      account's data) proceed — but only with explicit intent.
-  //   2. On every overwrite path (own-learner or with confirmOverwrite),
-  //      capture the pre-image `data_json` and include it in the mutation
-  //      receipt's `response_json.postMegaSeed.previousDataJson` so a future
-  //      rollback tool can restore the state without trawling backups.
+  //   2. On every bounded-state overwrite, archive the current learner row
+  //      and item rows inside D1. The receipt carries only a small preimage id;
+  //      lifetime word history never crosses the Worker/HTTP boundary.
+  let existingMembership = null;
   let previousDataJson = null;
   if (!createdLearner) {
-    const existingMembership = await getMembership(db, actorAccountId, learnerId);
+    existingMembership = await getMembership(db, actorAccountId, learnerId);
     if (!existingMembership && !confirmOverwrite) {
       throw new ConflictError(
         'Seed target is owned by a different account. Re-submit with confirmOverwrite=true to proceed.',
         {
           code: 'seed_requires_membership',
           learnerId,
-          remedy: 'Resubmit the request with `confirmOverwrite: true` in the body to acknowledge the cross-tenant overwrite. The pre-image is captured in the mutation receipt for rollback.',
+          remedy: 'Resubmit with `confirmOverwrite: true` to acknowledge the cross-tenant overwrite. Bounded state is archived in D1 before the seed is applied.',
         },
       );
     }
+  }
+
+  const boundedSpellingReady = await boundedGameplayTableAvailable(db, 'spelling');
+  let hasBoundedPreimage = false;
+  if (!createdLearner && boundedSpellingReady) {
+    const currentBoundedState = await first(
+      db,
+      'SELECT 1 AS present FROM spelling_learner_state WHERE learner_id = ?',
+      [learnerId],
+    );
+    hasBoundedPreimage = Number(currentBoundedState?.present) === 1;
+    await requireBoundedSpellingLearnerState(
+      db,
+      learnerId,
+      hasBoundedPreimage,
+      true,
+    );
+  } else if (!createdLearner) {
     const previousRow = await first(
       db,
       `SELECT data_json FROM child_subject_state
@@ -5416,6 +5888,9 @@ async function seedPostMegaLearnerState(db, {
     );
     previousDataJson = typeof previousRow?.data_json === 'string' ? previousRow.data_json : null;
   }
+  const preimageId = hasBoundedPreimage
+    ? postMegaSeedPreimageId(actorAccountId, requestId)
+    : null;
 
   const statements = [];
   if (createdLearner) {
@@ -5444,20 +5919,43 @@ async function seedPostMegaLearnerState(db, {
     `, [actorAccountId, learnerId, ts, ts]));
   }
 
-  // Upsert child_subject_state for (learner, 'spelling') with the seed
-  // shape's data JSON. ui_json is reset to 'null' so a stale local UI
-  // snapshot does not contaminate the seeded state's read-side projection.
-  statements.push(bindStatement(db, `
-    INSERT INTO child_subject_state (
-      learner_id, subject_id, ui_json, data_json, updated_at, updated_by_account_id
-    )
-    VALUES (?, 'spelling', 'null', ?, ?, ?)
-    ON CONFLICT(learner_id, subject_id) DO UPDATE SET
-      ui_json = 'null',
-      data_json = excluded.data_json,
-      updated_at = excluded.updated_at,
-      updated_by_account_id = excluded.updated_by_account_id
-  `, [learnerId, dataJson, ts, actorAccountId]));
+  if (boundedSpellingReady) {
+    if (preimageId) {
+      statements.push(...buildPostMegaSeedPreimageStatements(db, {
+        actorAccountId,
+        learnerId,
+        preimageId,
+        requestId,
+        nowTs: ts,
+        guard,
+      }));
+    }
+    statements.push(...buildSpellingFullReplacementStatements(
+      db,
+      actorAccountId,
+      learnerId,
+      { ui: null, data, updatedAt: ts },
+      ts,
+      guard,
+    ));
+  } else {
+    // Code is deployed before migration 0023. Until its readiness marker
+    // exists, the legacy row remains authoritative and split tables may not
+    // exist. Keep only this compatibility branch; after cutover the cold
+    // legacy row is deliberately untouched.
+    const legacyParams = [learnerId, 'spelling', 'null', dataJson, ts, actorAccountId];
+    statements.push(bindStatement(db, `
+      INSERT INTO child_subject_state (
+        learner_id, subject_id, ui_json, data_json, updated_at, updated_by_account_id
+      )
+      ${guardedValueSource(legacyParams.length, guard)}
+      ON CONFLICT(learner_id, subject_id) DO UPDATE SET
+        ui_json = excluded.ui_json,
+        data_json = excluded.data_json,
+        updated_at = excluded.updated_at,
+        updated_by_account_id = excluded.updated_by_account_id
+    `, guardedParams(legacyParams, guard)));
+  }
 
   const mutationMeta = {
     policyVersion: MUTATION_POLICY_VERSION,
@@ -5467,6 +5965,8 @@ async function seedPostMegaLearnerState(db, {
     requestId,
     correlationId,
     appliedAt: ts,
+    expectedRevision: expectedLearnerRevision,
+    appliedRevision: createdLearner ? 0 : expectedLearnerRevision + 1,
     replayed: false,
   };
   const response = {
@@ -5476,18 +5976,18 @@ async function seedPostMegaLearnerState(db, {
       today: todayDay,
       createdLearner,
       dataKeys: Object.keys(data).sort(),
-      // U3 reviewer follow-up (HIGH adversarial): capture pre-image so a
-      // future rollback tool can restore the prior child_subject_state.
-      // `previousDataJson` is the RAW JSON string (possibly null for first-
-      // write) — rollback consumers parse with `JSON.parse` only when
-      // non-null. The field lives inside `postMegaSeed` so the mutation
-      // receipt's `response_json` is self-contained for audit.
-      previousDataJson,
+      preimageId,
+      rollbackAuthority: preimageId
+        ? 'spelling_seed_preimages'
+        : (previousDataJson !== null ? 'legacy_receipt' : null),
+      // Kept only for code-before-schema compatibility. Once 0023 is ready,
+      // this is always null and the receipt stays independent of profile size.
+      previousDataJson: boundedSpellingReady ? null : previousDataJson,
       // `confirmedOverwrite` is true when the overwrite was cross-tenant
       // (no membership) and the caller passed `confirmOverwrite: true`. The
       // audit reviewer can filter on this to surface the small set of
       // cross-account seeds that deserve a second look.
-      confirmedOverwrite: Boolean(!createdLearner && confirmOverwrite && previousDataJson !== null),
+      confirmedOverwrite: Boolean(!createdLearner && !existingMembership && confirmOverwrite),
     },
     postMegaSeedMutation: mutationMeta,
   };
@@ -5501,9 +6001,38 @@ async function seedPostMegaLearnerState(db, {
     response,
     correlationId,
     appliedAt: ts,
-  }));
+  }, { guard }));
+  if (!createdLearner) {
+    statements.push(bindStatement(db, `
+      UPDATE learner_profiles
+      SET state_revision = state_revision + 1,
+          updated_at = ?
+      WHERE id = ? AND state_revision = ?
+    `, [ts, learnerId, expectedLearnerRevision]));
+  }
 
-  await batch(db, statements);
+  const results = await batch(db, statements);
+  if (!createdLearner) {
+    const casResult = results[results.length - 1] || null;
+    const casChanges = Number(casResult?.meta?.changes) || 0;
+    if (casChanges !== 1) {
+      const currentRevision = Number(await scalar(
+        db,
+        'SELECT state_revision FROM learner_profiles WHERE id = ?',
+        [learnerId],
+        'state_revision',
+      )) || 0;
+      throw staleWriteError({
+        kind: POST_MEGA_SEED_MUTATION_KIND,
+        scopeType: 'learner',
+        scopeId: learnerId,
+        requestId,
+        correlationId,
+        expectedRevision: expectedLearnerRevision,
+        currentRevision,
+      });
+    }
+  }
   return response;
 }
 
@@ -7862,6 +8391,138 @@ async function listPublicBootstrapEventRows(db, learnerIds) {
   return sortEventRowsAscending(rows);
 }
 
+async function listBootstrapSubjectStateRows(db, learnerIds, { publicReadModels = false } = {}) {
+  if (!learnerIds.length) return [];
+  const placeholders = sqlPlaceholders(learnerIds.length);
+  try {
+    const rows = await all(db, `
+      SELECT learner_id, subject_id, ui_json, data_json, updated_at, NULL AS spelling_stats_json
+      FROM child_subject_state
+      WHERE learner_id IN (${placeholders})
+        AND (
+          subject_id <> 'spelling'
+          OR NOT EXISTS (
+            SELECT 1
+            FROM bounded_gameplay_state_migrations
+            WHERE migration_id = '0023' AND state = 'ready'
+          )
+        )
+      UNION ALL
+      SELECT learner_id, 'spelling' AS subject_id, ui_json, data_json, updated_at, stats_json AS spelling_stats_json
+      FROM spelling_learner_state
+      WHERE learner_id IN (${placeholders})
+        AND EXISTS (
+          SELECT 1
+          FROM bounded_gameplay_state_migrations
+          WHERE migration_id = '0023' AND state = 'ready'
+        )
+    `, [...learnerIds, ...learnerIds]);
+    // The readiness predicate is evaluated inside the existing subject-state
+    // read. This keeps bootstrap at one D1 round trip while preserving the
+    // code-first rule that table existence alone never changes authority.
+    const boundedSpellingLearnerIds = new Set(rows
+      .filter((row) => row?.subject_id === 'spelling' && row?.spelling_stats_json != null)
+      .map((row) => String(row.learner_id || ''))
+      .filter(Boolean));
+    if (boundedSpellingLearnerIds.size > 0) {
+      markBoundedGameplayTableAvailable(db, 'spelling');
+    }
+    const boundedReady = boundedSpellingLearnerIds.size > 0
+      || await boundedGameplayTableAvailable(db, 'spelling');
+    for (const learnerId of learnerIds) {
+      await requireBoundedSpellingLearnerState(
+        db,
+        learnerId,
+        boundedSpellingLearnerIds.has(String(learnerId)),
+        boundedReady,
+      );
+    }
+    return rows;
+  } catch (error) {
+    // Migration 0023 deliberately uses a code-first rollout. Until the schema
+    // gate runs, the new Worker stays functional on the legacy row; after the
+    // table exists this branch is unreachable and production gameplay remains
+    // profile-size independent.
+    if (
+      !isMissingTableError(error, 'spelling_learner_state')
+      && !isMissingTableError(error, 'bounded_gameplay_state_migrations')
+    ) throw error;
+    if (isMissingTableError(error, 'spelling_learner_state')) {
+      await requireLegacyGameplayFallbackAllowed(
+        db,
+        'spelling',
+        'spelling_learner_state',
+        error,
+      );
+    }
+    return all(db, `
+      SELECT learner_id, subject_id, ui_json, data_json, updated_at, NULL AS spelling_stats_json
+      FROM child_subject_state
+      WHERE learner_id IN (${placeholders})
+    `, learnerIds);
+  }
+}
+
+async function hydrateGenericBootstrapSpellingRows(db, subjectRows, runtimeSnapshot, nowTs) {
+  const boundedSpellingRows = (Array.isArray(subjectRows) ? subjectRows : [])
+    .filter((row) => row?.subject_id === 'spelling' && row?.spelling_stats_json != null);
+  if (!boundedSpellingRows.length) return subjectRows;
+
+  const learnerIds = [...new Set(boundedSpellingRows.map((row) => String(row.learner_id || '')))]
+    .filter(Boolean);
+  const slugs = [...new Set((runtimeSnapshot?.words || [])
+    .map((word) => (typeof word?.slug === 'string' ? word.slug : '')))]
+    .filter(Boolean);
+  if (!learnerIds.length || !slugs.length) return subjectRows;
+
+  // Generic repository hydration exists for local/internal parity only. Keep
+  // it bounded by the current content catalogue: the query never returns a
+  // retired or lifetime-only row, regardless of how long the learner has
+  // played. Production browser bootstrap uses publicReadModels and never
+  // enters this path.
+  const itemRows = await all(db, `
+    SELECT learner_id, slug, progress_json, guardian_json, pattern_json
+    FROM spelling_item_state
+    WHERE learner_id IN (SELECT value FROM json_each(?))
+      AND slug IN (SELECT value FROM json_each(?))
+  `, [JSON.stringify(learnerIds), JSON.stringify(slugs)]);
+  const itemsByLearner = new Map();
+  for (const item of itemRows) {
+    const key = String(item.learner_id || '');
+    const items = itemsByLearner.get(key) || [];
+    items.push(item);
+    itemsByLearner.set(key, items);
+  }
+
+  return subjectRows.map((row) => {
+    if (row?.subject_id !== 'spelling' || row?.spelling_stats_json == null) return row;
+    const record = subjectStateRowToRecord(row);
+    const data = composeSpellingGameplayData(
+      record.data,
+      itemsByLearner.get(String(row.learner_id || '')) || [],
+      nowTs,
+    );
+    if (!Object.keys(data.progress || {}).length) delete data.progress;
+    if (!Object.keys(data.guardian || {}).length) delete data.guardian;
+    return { ...row, data_json: JSON.stringify(data) };
+  });
+}
+
+async function readPublicPunctuationItemRows(db, subjectRows) {
+  const punctuationRows = (Array.isArray(subjectRows) ? subjectRows : [])
+    .filter((row) => row?.subject_id === 'punctuation');
+  const entries = await Promise.all(punctuationRows.map(async (row) => {
+    const record = subjectStateRowToRecord(row);
+    const itemRows = await listPunctuationGameplayItemRows(
+      db,
+      row.learner_id,
+      punctuationStarItemIds(record.data),
+    );
+    return [subjectStateKey(row.learner_id, row.subject_id), itemRows];
+  }));
+  return new Map(entries);
+}
+
 // U7: SHA-256 revision hash over the stable signature. Truncated to 16
 // bytes hex (32 chars). NOT a password hash — purely a cache-tag
 // identifier; `crypto.subtle.digest('SHA-256', ...)` is fine for this use
@@ -8206,14 +8867,10 @@ async function bootstrapBundle(db, accountId, {
   ));
   void eventRowsPromise.catch(() => {});
   try {
-    const subjectStatePlaceholders = sqlPlaceholders(subjectStateLearnerIds.length);
     const subjectRowsPromise = measureBootstrapPhase(capacity, BOOTSTRAP_PHASE_TIMING.subjectState, () => (
-      all(db, `
-        SELECT learner_id, subject_id, ui_json, data_json, updated_at
-        FROM child_subject_state
-        WHERE learner_id IN (${subjectStatePlaceholders})
-      `, subjectStateLearnerIds)
+      listBootstrapSubjectStateRows(db, subjectStateLearnerIds, { publicReadModels })
     ));
+    const subjectStatePlaceholders = sqlPlaceholders(subjectStateLearnerIds.length);
     const gameRowsPromise = measureBootstrapPhase(capacity, BOOTSTRAP_PHASE_TIMING.gameState, () => (
       all(db, `
         SELECT learner_id, system_id, state_json, updated_at
@@ -8239,14 +8896,10 @@ async function bootstrapBundle(db, accountId, {
     });
     subjectStateIdsUsed = [selectedId];
     subjectStatesFallbackMode = 'degraded-to-selected';
-    const fallbackPlaceholders = sqlPlaceholders(subjectStateIdsUsed.length);
     subjectRows = await measureBootstrapPhase(capacity, BOOTSTRAP_PHASE_TIMING.subjectState, () => (
-      all(db, `
-        SELECT learner_id, subject_id, ui_json, data_json, updated_at
-        FROM child_subject_state
-        WHERE learner_id IN (${fallbackPlaceholders})
-      `, subjectStateIdsUsed)
+      listBootstrapSubjectStateRows(db, subjectStateIdsUsed, { publicReadModels })
     ));
+    const fallbackPlaceholders = sqlPlaceholders(subjectStateIdsUsed.length);
     gameRows = await measureBootstrapPhase(capacity, BOOTSTRAP_PHASE_TIMING.gameState, () => (
       all(db, `
         SELECT learner_id, system_id, state_json, updated_at
@@ -8262,6 +8915,28 @@ async function bootstrapBundle(db, accountId, {
     eventRowsPromise,
   ]);
   const publicReadModelNow = Date.now();
+  if (!publicReadModels && subjectRows.some((row) => (
+    row?.subject_id === 'spelling' && row?.spelling_stats_json != null
+  ))) {
+    const genericSpellingContent = await measureBootstrapPhase(
+      capacity,
+      BOOTSTRAP_PHASE_TIMING.readModel,
+      () => readSpellingRuntimeContentBundle(db, accountId, 'spelling', {
+        nowMs: publicReadModelNow,
+        env,
+      }),
+    );
+    subjectRows = await measureBootstrapPhase(
+      capacity,
+      BOOTSTRAP_PHASE_TIMING.readModel,
+      () => hydrateGenericBootstrapSpellingRows(
+        db,
+        subjectRows,
+        genericSpellingContent?.snapshot || null,
+        publicReadModelNow,
+      ),
+    );
+  }
   // Full spelling read-model derivation walks the published runtime snapshot.
   // In the selected-learner-bounded bootstrap shape, avoid that work entirely:
   // the bootstrap carries compact progress aggregates, while heavyweight
@@ -8287,6 +8962,13 @@ async function bootstrapBundle(db, accountId, {
         : readSeededSpellingRuntimeContentBundle('spelling'))
       : null
   ));
+  const publicPunctuationItems = publicReadModels
+    ? await measureBootstrapPhase(
+        capacity,
+        BOOTSTRAP_PHASE_TIMING.readModel,
+        () => readPublicPunctuationItemRows(db, subjectRows),
+      )
+    : new Map();
   const subjectStates = {};
   await measureBootstrapPhase(capacity, BOOTSTRAP_PHASE_TIMING.readModel, async () => {
     for (const row of subjectRows) {
@@ -8295,6 +8977,7 @@ async function bootstrapBundle(db, accountId, {
           spellingContentSnapshot: shouldHydratePublicSpellingReadModel(row)
             ? publicSpellingContent?.snapshot || null
             : null,
+          punctuationItemRows: publicPunctuationItems.get(subjectStateKey(row.learner_id, row.subject_id)) || [],
           now: publicReadModelNow,
           compact: Boolean(boundedToSelected),
         })
@@ -8546,6 +9229,8 @@ async function readSubjectRuntimeBundle(db, accountId, learnerId, subjectId = 's
 
 function spellingCommandRuntimeFromRow(row, modelKey, { prefix = '' } = {}) {
   const value = (name) => row?.[`${prefix}${name}`];
+  const legacyFallbackRequired = !value('state_learner_id')
+    && Number(value('legacy_state_exists')) === 1;
   const subjectRow = value('state_learner_id')
     ? {
       learner_id: value('state_learner_id'),
@@ -8581,11 +9266,13 @@ function spellingCommandRuntimeFromRow(row, modelKey, { prefix = '' } = {}) {
 
   return {
     subjectRecord: subjectRow ? subjectStateRowToRecord(subjectRow) : normaliseSubjectStateRecord({}),
+    spellingStats: parseSpellingGameplayStats(value('state_stats_json')),
     latestSession: latestSessionRow ? practiceSessionRowToRecord(latestSessionRow) : null,
     activeSessionId: value('active_session_id') || null,
     commandProjectionReadModel: readModelRow
       ? normaliseLearnerReadModelRow(readModelRow, modelKey)
       : emptyLearnerReadModel(modelKey),
+    legacyFallbackRequired,
   };
 }
 
@@ -8593,72 +9280,346 @@ async function readSpellingCommandRuntimeBundle(db, accountId, learnerId, {
   skipAccessCheck = false,
   projectionModelKey = COMMAND_PROJECTION_MODEL_KEY,
 } = {}) {
-  if (!skipAccessCheck) {
-    await requireLearnerWriteAccess(db, accountId, learnerId);
-  }
   const modelKey = normaliseReadModelKey(projectionModelKey, COMMAND_PROJECTION_MODEL_KEY);
-  let row;
-  try {
-    row = await first(db, `
-      SELECT
-        state.learner_id AS state_learner_id,
-        state.subject_id AS state_subject_id,
-        state.ui_json AS state_ui_json,
-        state.data_json AS state_data_json,
-        state.updated_at AS state_updated_at,
-        session.id AS session_id,
-        session.learner_id AS session_learner_id,
-        session.subject_id AS session_subject_id,
-        session.session_kind AS session_kind,
-        session.status AS session_status,
-        session.session_state_json AS session_state_json,
-        session.summary_json AS session_summary_json,
-        session.created_at AS session_created_at,
-        session.updated_at AS session_updated_at,
-        active_session.id AS active_session_id,
+  const readRuntimeRow = (includeReadModel) => first(db, `
+    SELECT
+      membership.role AS membership_role,
+      state.learner_id AS state_learner_id,
+      'spelling' AS state_subject_id,
+      state.ui_json AS state_ui_json,
+      state.data_json AS state_data_json,
+      state.stats_json AS state_stats_json,
+      state.updated_at AS state_updated_at,
+      session.id AS session_id,
+      session.learner_id AS session_learner_id,
+      session.subject_id AS session_subject_id,
+      session.session_kind AS session_kind,
+      session.status AS session_status,
+      session.session_state_json AS session_state_json,
+      session.summary_json AS session_summary_json,
+      session.created_at AS session_created_at,
+      session.updated_at AS session_updated_at,
+      active_session.id AS active_session_id,
+      ${includeReadModel ? `
         read_model.learner_id AS read_model_learner_id,
         read_model.model_key AS read_model_key,
         read_model.model_json AS read_model_json,
         read_model.source_revision AS read_model_source_revision,
         read_model.generated_at AS read_model_generated_at,
-        read_model.updated_at AS read_model_updated_at
-      FROM (SELECT 1) anchor
-      LEFT JOIN (
-        SELECT learner_id, subject_id, ui_json, data_json, updated_at
-        FROM child_subject_state
-        WHERE learner_id = ? AND subject_id = 'spelling'
-        LIMIT 1
-      ) state ON 1 = 1
-      LEFT JOIN (
-        SELECT id, learner_id, subject_id, session_kind, status, session_state_json, summary_json, created_at, updated_at
-        FROM practice_sessions
-        WHERE learner_id = ? AND subject_id = 'spelling'
-        ORDER BY updated_at DESC, id DESC
-        LIMIT 1
-      ) session ON 1 = 1
-      LEFT JOIN (
-        SELECT id
-        FROM practice_sessions
-        WHERE learner_id = ? AND subject_id = 'spelling' AND status = 'active'
-        ORDER BY updated_at DESC, id DESC
-        LIMIT 1
-      ) active_session ON 1 = 1
+        read_model.updated_at AS read_model_updated_at,
+      ` : `
+        NULL AS read_model_learner_id,
+        NULL AS read_model_key,
+        NULL AS read_model_json,
+        NULL AS read_model_source_revision,
+        NULL AS read_model_generated_at,
+        NULL AS read_model_updated_at,
+      `}
+      EXISTS (
+        SELECT 1
+        FROM child_subject_state legacy_state
+        WHERE legacy_state.learner_id = ? AND legacy_state.subject_id = 'spelling'
+      ) AS legacy_state_exists,
+      EXISTS (
+        SELECT 1
+        FROM bounded_gameplay_state_migrations
+        WHERE migration_id = '0023' AND state = 'ready'
+      ) AS bounded_gameplay_ready
+    FROM (SELECT 1) anchor
+    LEFT JOIN account_learner_memberships membership
+      ON membership.account_id = ? AND membership.learner_id = ?
+    LEFT JOIN (
+      SELECT learner_id, ui_json, data_json, stats_json, updated_at
+      FROM spelling_learner_state
+      WHERE learner_id = ?
+        AND EXISTS (
+          SELECT 1
+          FROM bounded_gameplay_state_migrations
+          WHERE migration_id = '0023' AND state = 'ready'
+        )
+      LIMIT 1
+    ) state ON 1 = 1
+    LEFT JOIN (
+      SELECT id, learner_id, subject_id, session_kind, status, session_state_json, summary_json, created_at, updated_at
+      FROM practice_sessions
+      WHERE learner_id = ? AND subject_id = 'spelling'
+      ORDER BY updated_at DESC, id DESC
+      LIMIT 1
+    ) session ON 1 = 1
+    LEFT JOIN (
+      SELECT id
+      FROM practice_sessions
+      WHERE learner_id = ? AND subject_id = 'spelling' AND status = 'active'
+      ORDER BY updated_at DESC, id DESC
+      LIMIT 1
+    ) active_session ON 1 = 1
+    ${includeReadModel ? `
       LEFT JOIN learner_read_models read_model
         ON read_model.learner_id = ? AND read_model.model_key = ?
-    `, [learnerId, learnerId, learnerId, learnerId, modelKey]);
+    ` : ''}
+  `, [
+    learnerId,
+    accountId,
+    learnerId,
+    learnerId,
+    learnerId,
+    learnerId,
+    ...(includeReadModel ? [learnerId, modelKey] : []),
+  ]);
+  let row;
+  try {
+    row = await readRuntimeRow(true);
     markLearnerReadModelsTableAvailable(db);
   } catch (error) {
+    if (
+      isMissingTableError(error, 'spelling_learner_state')
+      || isMissingTableError(error, 'bounded_gameplay_state_migrations')
+    ) {
+      if (isMissingTableError(error, 'spelling_learner_state')) {
+        await requireLegacyGameplayFallbackAllowed(db, 'spelling', 'spelling_learner_state', error);
+      }
+      return readSubjectRuntimeBundle(db, accountId, learnerId, 'spelling', { skipAccessCheck });
+    }
     if (!isMissingTableError(error, 'learner_read_models')) throw error;
-    const runtimeRecord = await readSubjectRuntimeBundle(db, accountId, learnerId, 'spelling', {
-      skipAccessCheck: true,
-    });
-    return {
-      ...runtimeRecord,
-      commandProjectionReadModel: emptyLearnerReadModel(modelKey),
-    };
+    try {
+      row = await readRuntimeRow(false);
+    } catch (boundedError) {
+      if (
+        isMissingTableError(boundedError, 'spelling_learner_state')
+        || isMissingTableError(boundedError, 'bounded_gameplay_state_migrations')
+      ) {
+        if (isMissingTableError(boundedError, 'spelling_learner_state')) {
+          await requireLegacyGameplayFallbackAllowed(
+            db,
+            'spelling',
+            'spelling_learner_state',
+            boundedError,
+          );
+        }
+        return readSubjectRuntimeBundle(db, accountId, learnerId, 'spelling', { skipAccessCheck });
+      }
+      throw boundedError;
+    }
   }
 
-  return spellingCommandRuntimeFromRow(row, modelKey);
+  if (!skipAccessCheck && !writableRole(row?.membership_role)) {
+    throw new ForbiddenError('Learner access denied.', {
+      learnerId,
+      required: 'owner-or-member',
+    });
+  }
+
+  if (Number(row?.bounded_gameplay_ready) === 1) {
+    markBoundedGameplayTableAvailable(db, 'spelling');
+  }
+  await requireBoundedSpellingLearnerState(
+    db,
+    learnerId,
+    Boolean(row?.state_learner_id),
+    Number(row?.bounded_gameplay_ready) === 1,
+  );
+  const runtime = spellingCommandRuntimeFromRow(row, modelKey);
+  if (runtime.legacyFallbackRequired) {
+    return readSubjectRuntimeBundle(db, accountId, learnerId, 'spelling', { skipAccessCheck: true });
+  }
+  delete runtime.legacyFallbackRequired;
+  return runtime;
+}
+
+async function readSpellingGameplayWorkingSet(db, accountId, learnerId, slugs, {
+  skipAccessCheck = false,
+  learnerData = {},
+  now = Date.now(),
+} = {}) {
+  if (!skipAccessCheck) {
+    await requireLearnerWriteAccess(db, accountId, learnerId);
+  }
+  if (!await boundedGameplayTableAvailable(db, 'spelling')) {
+    return markGameplayWorkingSet(cloneSerialisable(learnerData) || {}, 'legacy');
+  }
+  const workingSlugs = [...new Set((Array.isArray(slugs) ? slugs : [])
+    .filter((slug) => typeof slug === 'string' && slug))];
+  const achievementIds = spellingAchievementProjectionIds(learnerId);
+  const bossPrefix = spellingBossAchievementPrefix(learnerId);
+  // One JSON parameter avoids SQLite/D1 variable limits for a large published
+  // catalogue. The composite primary key turns each value into a point lookup;
+  // lifetime/orphan rows are neither returned nor parsed by the Worker.
+  try {
+    const rows = await all(db, `
+      SELECT
+        'item' AS row_kind,
+        slug,
+        progress_json,
+        guardian_json,
+        pattern_json,
+        NULL AS achievement_id,
+        NULL AS record_json
+      FROM spelling_item_state
+      WHERE learner_id = ?
+        AND slug IN (SELECT value FROM json_each(?))
+      UNION ALL
+      SELECT
+        'achievement' AS row_kind,
+        NULL AS slug,
+        NULL AS progress_json,
+        NULL AS guardian_json,
+        NULL AS pattern_json,
+        achievement_id,
+        record_json
+      FROM spelling_achievement_state
+      WHERE learner_id = ?
+        AND achievement_id IN (SELECT value FROM json_each(?))
+      UNION ALL
+      SELECT
+        'achievement' AS row_kind,
+        NULL AS slug,
+        NULL AS progress_json,
+        NULL AS guardian_json,
+        NULL AS pattern_json,
+        achievement_id,
+        record_json
+      FROM (
+        SELECT achievement_id, record_json
+        FROM spelling_achievement_state
+        WHERE learner_id = ?
+          AND substr(achievement_id, 1, length(?)) = ?
+        ORDER BY updated_at DESC, achievement_id DESC
+        LIMIT ?
+      ) recent_boss
+    `, [
+      learnerId,
+      JSON.stringify(workingSlugs),
+      learnerId,
+      JSON.stringify(achievementIds),
+      learnerId,
+      bossPrefix,
+      bossPrefix,
+      SPELLING_BOSS_ACHIEVEMENT_PROJECTION_LIMIT,
+    ]);
+    markBoundedGameplayTableAvailable(db, 'spelling');
+    const itemRows = rows.filter((row) => row?.row_kind === 'item');
+    const achievementRows = rows.filter((row) => row?.row_kind === 'achievement');
+    return markGameplayWorkingSet(
+      composeSpellingGameplayData(learnerData, itemRows, now, achievementRows),
+      'bounded',
+    );
+  } catch (error) {
+    if (
+      isMissingTableError(error, 'spelling_item_state')
+      || isMissingTableError(error, 'spelling_achievement_state')
+    ) {
+      const tableName = isMissingTableError(error, 'spelling_achievement_state')
+        ? 'spelling_achievement_state'
+        : 'spelling_item_state';
+      await requireLegacyGameplayFallbackAllowed(db, 'spelling', tableName, error);
+      return markGameplayWorkingSet(cloneSerialisable(learnerData) || {}, 'legacy');
+    }
+    throw error;
+  }
+}
+
+async function readGrammarGameplayWorkingSet(db, accountId, learnerId, itemIds, {
+  skipAccessCheck = false,
+  subjectRecord = {},
+} = {}) {
+  if (!skipAccessCheck) {
+    await requireLearnerWriteAccess(db, accountId, learnerId);
+  }
+  if (!await boundedGameplayTableAvailable(db, 'grammar')) {
+    return markGameplayWorkingSet(cloneSerialisable(subjectRecord) || {}, 'legacy');
+  }
+  const workingItemIds = [...new Set((Array.isArray(itemIds) ? itemIds : [])
+    .filter((itemId) => typeof itemId === 'string' && itemId))];
+  if (!workingItemIds.length) {
+    return markGameplayWorkingSet(composeGrammarGameplaySubjectRecord(subjectRecord, []), 'bounded');
+  }
+  try {
+    const rows = await all(db, `
+      SELECT item_id, mastery_json
+      FROM grammar_item_state
+      WHERE learner_id = ?
+        AND item_id IN (SELECT value FROM json_each(?))
+    `, [learnerId, JSON.stringify(workingItemIds)]);
+    markBoundedGameplayTableAvailable(db, 'grammar');
+    return markGameplayWorkingSet(composeGrammarGameplaySubjectRecord(subjectRecord, rows), 'bounded');
+  } catch (error) {
+    if (isMissingTableError(error, 'grammar_item_state')) {
+      await requireLegacyGameplayFallbackAllowed(db, 'grammar', 'grammar_item_state', error);
+      return markGameplayWorkingSet(cloneSerialisable(subjectRecord) || {}, 'legacy');
+    }
+    throw error;
+  }
+}
+
+async function readReadingGameplayWorkingSet(db, accountId, learnerId, questionIds, {
+  skipAccessCheck = false,
+  subjectRecord = {},
+} = {}) {
+  if (!skipAccessCheck) {
+    await requireLearnerWriteAccess(db, accountId, learnerId);
+  }
+  if (!await boundedGameplayTableAvailable(db, 'reading')) {
+    return markGameplayWorkingSet(cloneSerialisable(subjectRecord) || {}, 'legacy');
+  }
+  const workingQuestionIds = [...new Set((Array.isArray(questionIds) ? questionIds : [])
+    .filter((questionId) => typeof questionId === 'string' && questionId))];
+  if (!workingQuestionIds.length) {
+    return markGameplayWorkingSet(composeReadingGameplaySubjectRecord(subjectRecord, []), 'bounded');
+  }
+  try {
+    const rows = await all(db, `
+      SELECT question_id, mastery_json
+      FROM reading_question_state
+      WHERE learner_id = ?
+        AND question_id IN (SELECT value FROM json_each(?))
+    `, [learnerId, JSON.stringify(workingQuestionIds)]);
+    markBoundedGameplayTableAvailable(db, 'reading');
+    return markGameplayWorkingSet(composeReadingGameplaySubjectRecord(subjectRecord, rows), 'bounded');
+  } catch (error) {
+    if (isMissingTableError(error, 'reading_question_state')) {
+      await requireLegacyGameplayFallbackAllowed(db, 'reading', 'reading_question_state', error);
+      return markGameplayWorkingSet(cloneSerialisable(subjectRecord) || {}, 'legacy');
+    }
+    throw error;
+  }
+}
+
+async function listPunctuationGameplayItemRows(db, learnerId, itemIds) {
+  if (!await boundedGameplayTableAvailable(db, 'punctuation')) return null;
+  const workingItemIds = [...new Set((Array.isArray(itemIds) ? itemIds : [])
+    .filter((itemId) => typeof itemId === 'string' && itemId))];
+  if (!workingItemIds.length) return [];
+  try {
+    const rows = await all(db, `
+      SELECT item_id, state_json
+      FROM punctuation_item_state
+      WHERE learner_id = ?
+        AND item_id IN (SELECT value FROM json_each(?))
+    `, [learnerId, JSON.stringify(workingItemIds)]);
+    markBoundedGameplayTableAvailable(db, 'punctuation');
+    return rows;
+  } catch (error) {
+    // Deploy-order tolerance: before migration 0023 the complete item map is
+    // still embedded in child_subject_state, so the composer can safely use it.
+    if (isMissingTableError(error, 'punctuation_item_state')) {
+      await requireLegacyGameplayFallbackAllowed(db, 'punctuation', 'punctuation_item_state', error);
+      return null;
+    }
+    throw error;
+  }
+}
+
+async function readPunctuationGameplayWorkingSet(db, accountId, learnerId, itemIds, {
+  skipAccessCheck = false,
+  subjectRecord = {},
+  now = Date.now(),
+} = {}) {
+  if (!skipAccessCheck) {
+    await requireLearnerWriteAccess(db, accountId, learnerId);
+  }
+  const rows = await listPunctuationGameplayItemRows(db, learnerId, itemIds);
+  if (rows == null) return markGameplayWorkingSet(cloneSerialisable(subjectRecord) || {}, 'legacy');
+  return markGameplayWorkingSet(composePunctuationGameplaySubjectRecord(subjectRecord, rows, now), 'bounded');
 }
 
 function subjectRuntimeRowToRecord(row) {
@@ -8678,16 +9639,27 @@ async function readSpellingWordBankBundle(db, accountId, learnerId, filters, now
       code: 'learner_id_required',
     });
   }
-  const runtimeRecord = await readSubjectRuntimeBundle(db, accountId, learnerId, 'spelling');
   const { snapshot } = await readSpellingRuntimeContentBundle(db, accountId, 'spelling', {
     includeAccountContent: false,
     nowMs: nowTs,
     env,
   });
+  const runtimeRecord = await readSpellingCommandRuntimeBundle(db, accountId, learnerId);
+  const workingData = await readSpellingGameplayWorkingSet(
+    db,
+    accountId,
+    learnerId,
+    (snapshot?.words || []).map((word) => word?.slug).filter(Boolean),
+    {
+      skipAccessCheck: true,
+      learnerData: runtimeRecord.subjectRecord?.data || {},
+      now: nowTs,
+    },
+  );
   return buildSpellingWordBankReadModel({
     learnerId,
     contentSnapshot: snapshot,
-    data: runtimeRecord.subjectRecord?.data || {},
+    data: workingData,
     filters,
     now: nowTs,
   });
@@ -8950,6 +9922,651 @@ function guardedWhere(guard) {
           )`;
 }
 
+function buildSpellingGameplayStateStatements(db, accountId, learnerId, runtime, nowTs, guard) {
+  const statements = [];
+  const nextLearnerData = spellingLearnerData(runtime?.data || {});
+  const nextStats = parseSpellingGameplayStats(runtime?.spellingGameplay?.stats || {});
+  const learnerParams = [
+    learnerId,
+    JSON.stringify(runtime?.state || null),
+    JSON.stringify(nextLearnerData),
+    JSON.stringify(nextStats),
+    nowTs,
+    accountId,
+  ];
+  statements.push(bindStatement(db, `
+    INSERT INTO spelling_learner_state (
+      learner_id,
+      ui_json,
+      data_json,
+      stats_json,
+      updated_at,
+      updated_by_account_id
+    )
+    ${guardedValueSource(learnerParams.length, guard)}
+    ON CONFLICT(learner_id) DO UPDATE SET
+      ui_json = excluded.ui_json,
+      data_json = excluded.data_json,
+      stats_json = excluded.stats_json,
+      updated_at = excluded.updated_at,
+      updated_by_account_id = excluded.updated_by_account_id
+  `, guardedParams(learnerParams, guard)));
+
+  if (runtime?.spellingGameplay?.resetAllItems === true) {
+    statements.push(bindStatement(db, `
+      DELETE FROM spelling_item_state
+      WHERE learner_id = ?
+      ${guardedWhere(guard)}
+    `, guardedParams([learnerId], guard)));
+    statements.push(bindStatement(db, `
+      DELETE FROM spelling_achievement_state
+      WHERE learner_id = ?
+      ${guardedWhere(guard)}
+    `, guardedParams([learnerId], guard)));
+  }
+
+  const changedItems = changedSpellingGameplayItems(
+    runtime?.spellingGameplay?.resetAllItems === true
+      ? {}
+      : runtime?.spellingGameplay?.previousData || {},
+    runtime?.data || {},
+  );
+  for (const item of changedItems) {
+    if (!item.progress && !item.guardian && !item.pattern) {
+      statements.push(bindStatement(db, `
+        DELETE FROM spelling_item_state
+        WHERE learner_id = ? AND slug = ?
+        ${guardedWhere(guard)}
+      `, guardedParams([learnerId, item.slug], guard)));
+      continue;
+    }
+    const itemParams = [
+      learnerId,
+      item.slug,
+      item.progress ? JSON.stringify(item.progress) : null,
+      item.guardian ? JSON.stringify(item.guardian) : null,
+      item.pattern ? JSON.stringify(item.pattern) : null,
+      nowTs,
+      accountId,
+    ];
+    statements.push(bindStatement(db, `
+      INSERT INTO spelling_item_state (
+        learner_id,
+        slug,
+        progress_json,
+        guardian_json,
+        pattern_json,
+        updated_at,
+        updated_by_account_id
+      )
+      ${guardedValueSource(itemParams.length, guard)}
+      ON CONFLICT(learner_id, slug) DO UPDATE SET
+        progress_json = excluded.progress_json,
+        guardian_json = excluded.guardian_json,
+        pattern_json = excluded.pattern_json,
+        updated_at = excluded.updated_at,
+        updated_by_account_id = excluded.updated_by_account_id
+    `, guardedParams(itemParams, guard)));
+  }
+  const changedAchievements = changedSpellingAchievementRows(
+    runtime?.spellingGameplay?.resetAllItems === true
+      ? {}
+      : runtime?.spellingGameplay?.previousData || {},
+    runtime?.data || {},
+  );
+  for (const achievement of changedAchievements) {
+    const achievementParams = [
+      learnerId,
+      achievement.achievementId,
+      JSON.stringify(achievement.record),
+      nowTs,
+      accountId,
+    ];
+    statements.push(bindStatement(db, `
+      INSERT INTO spelling_achievement_state (
+        learner_id, achievement_id, record_json, updated_at, updated_by_account_id
+      )
+      ${guardedValueSource(achievementParams.length, guard)}
+      ON CONFLICT(learner_id, achievement_id) DO UPDATE SET
+        record_json = excluded.record_json,
+        updated_at = excluded.updated_at,
+        updated_by_account_id = excluded.updated_by_account_id
+    `, guardedParams(achievementParams, guard)));
+  }
+  return statements;
+}
+
+function buildGrammarGameplayItemStatements(db, accountId, learnerId, runtime, nowTs, guard) {
+  const statements = [];
+  if (runtime?.grammarGameplay?.resetAllItems === true) {
+    statements.push(bindStatement(db, `
+      DELETE FROM grammar_item_state
+      WHERE learner_id = ?
+      ${guardedWhere(guard)}
+    `, guardedParams([learnerId], guard)));
+  }
+
+  const changedItems = changedGrammarGameplayItems(
+    runtime?.grammarGameplay?.resetAllItems === true
+      ? {}
+      : runtime?.grammarGameplay?.previousData || {},
+    runtime?.data || {},
+  );
+  for (const item of changedItems) {
+    if (!item.mastery) {
+      statements.push(bindStatement(db, `
+        DELETE FROM grammar_item_state
+        WHERE learner_id = ? AND item_id = ?
+        ${guardedWhere(guard)}
+      `, guardedParams([learnerId, item.itemId], guard)));
+      continue;
+    }
+    const params = [
+      learnerId,
+      item.itemId,
+      JSON.stringify(item.mastery),
+      nowTs,
+      accountId,
+    ];
+    statements.push(bindStatement(db, `
+      INSERT INTO grammar_item_state (
+        learner_id,
+        item_id,
+        mastery_json,
+        updated_at,
+        updated_by_account_id
+      )
+      ${guardedValueSource(params.length, guard)}
+      ON CONFLICT(learner_id, item_id) DO UPDATE SET
+        mastery_json = excluded.mastery_json,
+        updated_at = excluded.updated_at,
+        updated_by_account_id = excluded.updated_by_account_id
+    `, guardedParams(params, guard)));
+  }
+  return statements;
+}
+
+function buildReadingGameplayQuestionStatements(db, accountId, learnerId, runtime, nowTs, guard) {
+  const statements = [];
+  if (runtime?.readingGameplay?.resetAllQuestions === true) {
+    statements.push(bindStatement(db, `
+      DELETE FROM reading_question_state
+      WHERE learner_id = ?
+      ${guardedWhere(guard)}
+    `, guardedParams([learnerId], guard)));
+  }
+
+  const changedQuestions = changedReadingGameplayQuestions(
+    runtime?.readingGameplay?.resetAllQuestions === true
+      ? {}
+      : runtime?.readingGameplay?.previousData || {},
+    runtime?.data || {},
+  );
+  for (const question of changedQuestions) {
+    if (!question.mastery) {
+      statements.push(bindStatement(db, `
+        DELETE FROM reading_question_state
+        WHERE learner_id = ? AND question_id = ?
+        ${guardedWhere(guard)}
+      `, guardedParams([learnerId, question.questionId], guard)));
+      continue;
+    }
+    const params = [
+      learnerId,
+      question.questionId,
+      JSON.stringify(question.mastery),
+      nowTs,
+      accountId,
+    ];
+    statements.push(bindStatement(db, `
+      INSERT INTO reading_question_state (
+        learner_id, question_id, mastery_json, updated_at, updated_by_account_id
+      )
+      ${guardedValueSource(params.length, guard)}
+      ON CONFLICT(learner_id, question_id) DO UPDATE SET
+        mastery_json = excluded.mastery_json,
+        updated_at = excluded.updated_at,
+        updated_by_account_id = excluded.updated_by_account_id
+    `, guardedParams(params, guard)));
+  }
+  return statements;
+}
+
+function buildPunctuationGameplayItemStatements(db, accountId, learnerId, runtime, nowTs, guard) {
+  const statements = [];
+  if (runtime?.punctuationGameplay?.resetAllItems === true) {
+    statements.push(bindStatement(db, `
+      DELETE FROM punctuation_item_state
+      WHERE learner_id = ?
+      ${guardedWhere(guard)}
+    `, guardedParams([learnerId], guard)));
+  }
+
+  const changedItems = changedPunctuationGameplayItems(
+    runtime?.punctuationGameplay?.resetAllItems === true
+      ? {}
+      : runtime?.punctuationGameplay?.previousData || {},
+    runtime?.data || {},
+  );
+  for (const item of changedItems) {
+    if (!item.state) {
+      statements.push(bindStatement(db, `
+        DELETE FROM punctuation_item_state
+        WHERE learner_id = ? AND item_id = ?
+        ${guardedWhere(guard)}
+      `, guardedParams([learnerId, item.itemId], guard)));
+      continue;
+    }
+    const params = [
+      learnerId,
+      item.itemId,
+      JSON.stringify(item.state),
+      nowTs,
+      accountId,
+    ];
+    statements.push(bindStatement(db, `
+      INSERT INTO punctuation_item_state (
+        learner_id, item_id, state_json, updated_at, updated_by_account_id
+      )
+      ${guardedValueSource(params.length, guard)}
+      ON CONFLICT(learner_id, item_id) DO UPDATE SET
+        state_json = excluded.state_json,
+        updated_at = excluded.updated_at,
+        updated_by_account_id = excluded.updated_by_account_id
+    `, guardedParams(params, guard)));
+  }
+  return statements;
+}
+
+/**
+ * Replace a complete spelling snapshot without producing one D1 statement per
+ * word. This path is reserved for legacy import/admin tools; ordinary gameplay
+ * writes only the changed item rows above. SQLite expands the JSON once inside
+ * the atomic batch, so even a very old profile has constant Worker-side work.
+ */
+function buildSpellingFullReplacementStatements(db, accountId, learnerId, record, nowTs, guard = null) {
+  const next = normaliseSubjectStateRecord(record);
+  const dataJson = JSON.stringify(next.data || {});
+  const learnerData = spellingLearnerData(next.data || {});
+  const stats = compactSpellingStatsFromData(next.data || {}, nowTs);
+  const learnerParams = [
+    learnerId,
+    JSON.stringify(next.ui),
+    JSON.stringify(learnerData),
+    JSON.stringify(stats),
+    nowTs,
+    accountId,
+  ];
+  return [
+    bindStatement(db, `
+      INSERT INTO spelling_learner_state (
+        learner_id, ui_json, data_json, stats_json, updated_at, updated_by_account_id
+      )
+      ${guardedValueSource(learnerParams.length, guard)}
+      ON CONFLICT(learner_id) DO UPDATE SET
+        ui_json = excluded.ui_json,
+        data_json = excluded.data_json,
+        stats_json = excluded.stats_json,
+        updated_at = excluded.updated_at,
+        updated_by_account_id = excluded.updated_by_account_id
+    `, guardedParams(learnerParams, guard)),
+    bindStatement(db, `
+      DELETE FROM spelling_item_state
+      WHERE learner_id = ?
+      ${guardedWhere(guard)}
+    `, guardedParams([learnerId], guard)),
+    bindStatement(db, `
+      DELETE FROM spelling_achievement_state
+      WHERE learner_id = ?
+      ${guardedWhere(guard)}
+    `, guardedParams([learnerId], guard)),
+    bindStatement(db, `
+      WITH
+        source(data_json) AS (SELECT ?),
+        progress AS (
+          SELECT item.key AS slug, item.value AS value
+          FROM source, json_each(source.data_json, '$.progress') AS item
+          WHERE item.key <> '' AND json_type(item.value) = 'object'
+        ),
+        guardian AS (
+          SELECT item.key AS slug, item.value AS value
+          FROM source, json_each(source.data_json, '$.guardian') AS item
+          WHERE item.key <> '' AND json_type(item.value) = 'object'
+        ),
+        pattern AS (
+          SELECT item.key AS slug, item.value AS value
+          FROM source, json_each(source.data_json, '$.pattern.wobbling') AS item
+          WHERE item.key <> '' AND json_type(item.value) = 'object'
+        ),
+        item_keys AS (
+          SELECT slug FROM progress
+          UNION SELECT slug FROM guardian
+          UNION SELECT slug FROM pattern
+        )
+      INSERT INTO spelling_item_state (
+        learner_id, slug, progress_json, guardian_json, pattern_json,
+        updated_at, updated_by_account_id
+      )
+      SELECT
+        ?, item_keys.slug,
+        CASE WHEN progress.value IS NOT NULL THEN json(progress.value) ELSE NULL END,
+        CASE WHEN guardian.value IS NOT NULL THEN json(guardian.value) ELSE NULL END,
+        CASE WHEN pattern.value IS NOT NULL THEN json(pattern.value) ELSE NULL END,
+        ?, ?
+      FROM item_keys
+      LEFT JOIN progress ON progress.slug = item_keys.slug
+      LEFT JOIN guardian ON guardian.slug = item_keys.slug
+      LEFT JOIN pattern ON pattern.slug = item_keys.slug
+      ${guard ? `
+        WHERE EXISTS (
+          SELECT 1
+          FROM learner_profiles
+          WHERE id = ? AND state_revision = ?
+        )
+      ` : ''}
+    `, [
+      dataJson,
+      learnerId,
+      nowTs,
+      accountId,
+      ...(guard ? [guard.learnerId, guard.expectedRevision] : []),
+    ]),
+    bindStatement(db, `
+      WITH source(data_json) AS (SELECT ?)
+      INSERT INTO spelling_achievement_state (
+        learner_id, achievement_id, record_json, updated_at, updated_by_account_id
+      )
+      SELECT ?, item.key, json(item.value), ?, ?
+      FROM source, json_each(source.data_json, '$.achievements') AS item
+      WHERE item.key <> ''
+        AND json_type(item.value) = 'object'
+        ${guard ? `
+          AND EXISTS (
+            SELECT 1
+            FROM learner_profiles
+            WHERE id = ? AND state_revision = ?
+          )
+        ` : ''}
+    `, [
+      dataJson,
+      learnerId,
+      nowTs,
+      accountId,
+      ...(guard ? [guard.learnerId, guard.expectedRevision] : []),
+    ]),
+  ];
+}
+
+/** Full-snapshot equivalent for Grammar's generated item mastery. */
+function buildGrammarFullReplacementStatements(db, accountId, learnerId, record, nowTs) {
+  const next = normaliseSubjectStateRecord(record);
+  const boundedUi = grammarStateWithoutItemMastery(next.ui);
+  const boundedData = grammarStateWithoutItemMastery(next.data);
+  return [
+    bindStatement(db, `
+      INSERT INTO child_subject_state (
+        learner_id, subject_id, ui_json, data_json, updated_at, updated_by_account_id
+      )
+      VALUES (?, 'grammar', ?, ?, ?, ?)
+      ON CONFLICT(learner_id, subject_id) DO UPDATE SET
+        ui_json = excluded.ui_json,
+        data_json = excluded.data_json,
+        updated_at = excluded.updated_at,
+        updated_by_account_id = excluded.updated_by_account_id
+    `, [learnerId, JSON.stringify(boundedUi), JSON.stringify(boundedData), nowTs, accountId]),
+    bindStatement(db, 'DELETE FROM grammar_item_state WHERE learner_id = ?', [learnerId]),
+    bindStatement(db, `
+      WITH
+        source(data_json, ui_json) AS (SELECT ?, ?),
+        data_items AS (
+          SELECT item.key AS item_id, item.value AS mastery
+          FROM source, json_each(source.data_json, '$.mastery.items') AS item
+          WHERE item.key <> '' AND json_type(item.value) = 'object'
+        ),
+        ui_items AS (
+          SELECT item.key AS item_id, item.value AS mastery
+          FROM source, json_each(source.ui_json, '$.mastery.items') AS item
+          WHERE item.key <> '' AND json_type(item.value) = 'object'
+        ),
+        items AS (
+          SELECT item_id, mastery FROM data_items
+          UNION ALL
+          SELECT ui_items.item_id, ui_items.mastery
+          FROM ui_items
+          WHERE NOT EXISTS (
+            SELECT 1 FROM data_items WHERE data_items.item_id = ui_items.item_id
+          )
+        )
+      INSERT INTO grammar_item_state (
+        learner_id, item_id, mastery_json, updated_at, updated_by_account_id
+      )
+      SELECT ?, item_id, json(mastery), ?, ? FROM items
+    `, [JSON.stringify(next.data || {}), JSON.stringify(next.ui || {}), learnerId, nowTs, accountId]),
+  ];
+}
+
+/** Full-snapshot equivalent for Reading's per-question mastery. */
+function buildReadingFullReplacementStatements(db, accountId, learnerId, record, nowTs) {
+  const next = normaliseSubjectStateRecord(record);
+  const boundedData = readingStateWithoutQuestionMastery(next.data);
+  return [
+    bindStatement(db, `
+      INSERT INTO child_subject_state (
+        learner_id, subject_id, ui_json, data_json, updated_at, updated_by_account_id
+      )
+      VALUES (?, 'reading', ?, ?, ?, ?)
+      ON CONFLICT(learner_id, subject_id) DO UPDATE SET
+        ui_json = excluded.ui_json,
+        data_json = excluded.data_json,
+        updated_at = excluded.updated_at,
+        updated_by_account_id = excluded.updated_by_account_id
+    `, [learnerId, JSON.stringify(next.ui), JSON.stringify(boundedData), nowTs, accountId]),
+    bindStatement(db, 'DELETE FROM reading_question_state WHERE learner_id = ?', [learnerId]),
+    bindStatement(db, `
+      WITH source(data_json) AS (SELECT ?)
+      INSERT INTO reading_question_state (
+        learner_id, question_id, mastery_json, updated_at, updated_by_account_id
+      )
+      SELECT ?, item.key, json(item.value), ?, ?
+      FROM source, json_each(source.data_json, '$.questions') AS item
+      WHERE item.key <> '' AND json_type(item.value) = 'object'
+    `, [JSON.stringify(next.data || {}), learnerId, nowTs, accountId]),
+  ];
+}
+
+/** Full-snapshot equivalent for Punctuation's per-item memory map. */
+function buildPunctuationFullReplacementStatements(db, accountId, learnerId, record, nowTs) {
+  const next = normaliseSubjectStateRecord(record);
+  const boundedData = punctuationStateWithoutItemMastery(next.data, nowTs);
+  return [
+    bindStatement(db, `
+      INSERT INTO child_subject_state (
+        learner_id, subject_id, ui_json, data_json, updated_at, updated_by_account_id
+      )
+      VALUES (?, 'punctuation', ?, ?, ?, ?)
+      ON CONFLICT(learner_id, subject_id) DO UPDATE SET
+        ui_json = excluded.ui_json,
+        data_json = excluded.data_json,
+        updated_at = excluded.updated_at,
+        updated_by_account_id = excluded.updated_by_account_id
+    `, [learnerId, JSON.stringify(next.ui), JSON.stringify(boundedData), nowTs, accountId]),
+    bindStatement(db, 'DELETE FROM punctuation_item_state WHERE learner_id = ?', [learnerId]),
+    bindStatement(db, `
+      WITH source(data_json) AS (SELECT ?)
+      INSERT INTO punctuation_item_state (
+        learner_id, item_id, state_json, updated_at, updated_by_account_id
+      )
+      SELECT ?, item.key, json(item.value), ?, ?
+      FROM source, json_each(source.data_json, '$.progress.items') AS item
+      WHERE item.key <> '' AND json_type(item.value) = 'object'
+    `, [JSON.stringify(next.data || {}), learnerId, nowTs, accountId]),
+  ];
+}
+
+const SUBJECT_GAMEPLAY_STORES = Object.freeze({
+  grammar: Object.freeze({ runtimeSlot: 'grammarGameplay', kind: 'generated-items', table: 'grammar_item_state', tables: ['grammar_item_state'] }),
+  punctuation: Object.freeze({ runtimeSlot: 'punctuationGameplay', kind: 'punctuation-items', table: 'punctuation_item_state', tables: ['punctuation_item_state'] }),
+  reading: Object.freeze({ runtimeSlot: 'readingGameplay', kind: 'reading-questions', table: 'reading_question_state', tables: ['reading_question_state'] }),
+  spelling: Object.freeze({
+    runtimeSlot: 'spellingGameplay',
+    kind: 'word-items',
+    table: 'spelling_item_state',
+    tables: ['spelling_learner_state', 'spelling_item_state', 'spelling_achievement_state'],
+  }),
+});
+
+const boundedGameplayTableCache = new WeakMap();
+
+function markBoundedGameplayTableAvailable(db, subjectId) {
+  const cacheKey = underlyingDbHandle(db);
+  if (!cacheKey) return;
+  const subjects = boundedGameplayTableCache.get(cacheKey) || new Set();
+  subjects.add(subjectId);
+  boundedGameplayTableCache.set(cacheKey, subjects);
+}
+
+function boundedGameplayTableKnownAvailable(db, subjectId) {
+  return boundedGameplayTableCache.get(underlyingDbHandle(db))?.has(subjectId) === true;
+}
+
+function boundedGameplayStoreUnavailable(subjectId, tableName, cause) {
+  return new BackendUnavailableError(
+    `Bounded ${subjectId} gameplay state is unavailable.`,
+    {
+      code: 'bounded_gameplay_state_unavailable',
+      subjectId,
+      tableName,
+      retryable: true,
+      retryAfterSeconds: 5,
+      cause: cause?.message || String(cause || 'missing gameplay table'),
+    },
+  );
+}
+
+async function requireBoundedSpellingLearnerState(db, learnerId, rowPresent, ready = null) {
+  if (rowPresent) return;
+  const boundedReady = ready === null
+    ? await boundedGameplayTableAvailable(db, 'spelling')
+    : Boolean(ready);
+  if (!boundedReady) return;
+  throw boundedGameplayStoreUnavailable(
+    'spelling',
+    'spelling_learner_state',
+    new Error(`ready marker exists but learner row is missing for ${learnerId}`),
+  );
+}
+
+async function requireExistingBoundedSpellingLearnerState(db, learnerId) {
+  const row = await first(
+    db,
+    'SELECT 1 AS present FROM spelling_learner_state WHERE learner_id = ?',
+    [learnerId],
+  );
+  await requireBoundedSpellingLearnerState(db, learnerId, Number(row?.present) === 1, true);
+}
+
+function bindResetBoundedSpellingLearnerState(db, accountId, learnerId, nowTs) {
+  return bindStatement(db, `
+    UPDATE spelling_learner_state
+    SET ui_json = ?,
+        data_json = ?,
+        stats_json = ?,
+        updated_at = ?,
+        updated_by_account_id = ?
+    WHERE learner_id = ?
+  `, [
+    'null',
+    JSON.stringify(spellingLearnerData({})),
+    JSON.stringify(compactSpellingStatsFromData({}, nowTs)),
+    nowTs,
+    accountId,
+    learnerId,
+  ]);
+}
+
+/**
+ * A missing split table is deploy-order compatible only before the readiness
+ * marker exists. Once 0023 says ready, falling back to the compact legacy row
+ * would silently create two authorities and lose writes.
+ */
+async function requireLegacyGameplayFallbackAllowed(db, subjectId, tableName, cause) {
+  if (boundedGameplayTableKnownAvailable(db, subjectId)) {
+    throw boundedGameplayStoreUnavailable(subjectId, tableName, cause);
+  }
+  try {
+    const readiness = await first(db, `
+      SELECT state
+      FROM bounded_gameplay_state_migrations
+      WHERE migration_id = '0023'
+      LIMIT 1
+    `);
+    if (readiness?.state === 'ready') {
+      markBoundedGameplayTableAvailable(db, subjectId);
+      throw boundedGameplayStoreUnavailable(subjectId, tableName, cause);
+    }
+  } catch (readinessError) {
+    if (readinessError instanceof BackendUnavailableError) throw readinessError;
+    if (isMissingTableError(readinessError, 'bounded_gameplay_state_migrations')) return;
+    throw readinessError;
+  }
+}
+
+async function boundedGameplayTableAvailable(db, subjectId) {
+  const store = SUBJECT_GAMEPLAY_STORES[subjectId];
+  if (!store) return false;
+  if (boundedGameplayTableKnownAvailable(db, subjectId)) return true;
+  try {
+    const expectedTables = Array.isArray(store.tables) ? store.tables : [store.table];
+    const tablePlaceholders = expectedTables.map(() => '?').join(', ');
+    const readiness = await first(db, `
+      SELECT
+        state,
+        (
+          SELECT COUNT(*)
+          FROM sqlite_schema
+          WHERE type = 'table' AND name IN (${tablePlaceholders})
+        ) AS gameplay_table_count
+      FROM bounded_gameplay_state_migrations
+      WHERE migration_id = '0023'
+      LIMIT 1
+    `, expectedTables);
+    if (readiness?.state !== 'ready') return false;
+    if (Number(readiness.gameplay_table_count) !== expectedTables.length) {
+      throw boundedGameplayStoreUnavailable(
+        subjectId,
+        expectedTables.join(', '),
+        new Error('readiness marker exists but a bounded gameplay table is missing'),
+      );
+    }
+    markBoundedGameplayTableAvailable(db, subjectId);
+    return true;
+  } catch (error) {
+    if (isMissingTableError(error, 'bounded_gameplay_state_migrations')) return false;
+    throw error;
+  }
+}
+
+async function boundedGameplayStoresAvailable(db, subjectIds) {
+  for (const subjectId of subjectIds) {
+    if (!await boundedGameplayTableAvailable(db, subjectId)) return false;
+  }
+  return true;
+}
+
+async function runtimeForAvailableGameplayStore(db, subjectId, runtime) {
+  const store = SUBJECT_GAMEPLAY_STORES[subjectId];
+  if (!store || !isPlainObject(runtime?.[store.runtimeSlot])) return runtime;
+  if (await boundedGameplayTableAvailable(db, subjectId)) return runtime;
+  const fallback = { ...(runtime || {}) };
+  delete fallback[store.runtimeSlot];
+  return fallback;
+}
+
+function activeSubjectGameplayStore(subjectId, runtime) {
+  const store = SUBJECT_GAMEPLAY_STORES[subjectId] || null;
+  return store && isPlainObject(runtime?.[store.runtimeSlot]) ? store : null;
+}
+
 function buildSubjectRuntimePersistencePlan(db, accountId, learnerId, subjectId, runtime, nowTs, {
   guard = null,
   includeCapacityReadModels = true,
@@ -8975,30 +10592,82 @@ function buildSubjectRuntimePersistencePlan(db, accountId, learnerId, subjectId,
   skipActivePracticeSessionWrite = false,
   activePracticeSessionKnownAbsent = false,
 } = {}) {
+  const gameplayStore = activeSubjectGameplayStore(subjectId, runtime);
   const nextState = normaliseSubjectStateRecord({
-    ui: runtime?.state || null,
-    data: runtime?.data || {},
+    ui: gameplayStore?.kind === 'generated-items'
+      ? grammarStateWithoutItemMastery(runtime?.state)
+      : runtime?.state || null,
+    data: gameplayStore?.kind === 'word-items'
+      ? spellingLearnerData(runtime?.data || {})
+      : gameplayStore?.kind === 'generated-items'
+        ? grammarStateWithoutItemMastery(runtime?.data)
+        : gameplayStore?.kind === 'reading-questions'
+          ? readingStateWithoutQuestionMastery(runtime?.data)
+          : gameplayStore?.kind === 'punctuation-items'
+            ? punctuationStateWithoutItemMastery(runtime?.data, nowTs)
+          : runtime?.data || {},
     updatedAt: nowTs,
   });
   const statements = [];
 
-  const subjectParams = [
-    learnerId,
-    subjectId,
-    JSON.stringify(nextState.ui),
-    JSON.stringify(nextState.data),
-    nowTs,
-    accountId,
-  ];
-  statements.push(bindStatement(db, `
-    INSERT INTO child_subject_state (learner_id, subject_id, ui_json, data_json, updated_at, updated_by_account_id)
-    ${guardedValueSource(subjectParams.length, guard)}
-    ON CONFLICT(learner_id, subject_id) DO UPDATE SET
-      ui_json = excluded.ui_json,
-      data_json = excluded.data_json,
-      updated_at = excluded.updated_at,
-      updated_by_account_id = excluded.updated_by_account_id
-  `, guardedParams(subjectParams, guard)));
+  if (gameplayStore?.kind === 'word-items') {
+    statements.push(...buildSpellingGameplayStateStatements(
+      db,
+      accountId,
+      learnerId,
+      runtime,
+      nowTs,
+      guard,
+    ));
+  } else {
+    const subjectParams = [
+      learnerId,
+      subjectId,
+      JSON.stringify(nextState.ui),
+      JSON.stringify(nextState.data),
+      nowTs,
+      accountId,
+    ];
+    statements.push(bindStatement(db, `
+      INSERT INTO child_subject_state (learner_id, subject_id, ui_json, data_json, updated_at, updated_by_account_id)
+      ${guardedValueSource(subjectParams.length, guard)}
+      ON CONFLICT(learner_id, subject_id) DO UPDATE SET
+        ui_json = excluded.ui_json,
+        data_json = excluded.data_json,
+        updated_at = excluded.updated_at,
+        updated_by_account_id = excluded.updated_by_account_id
+    `, guardedParams(subjectParams, guard)));
+  }
+  if (gameplayStore?.kind === 'generated-items') {
+    statements.push(...buildGrammarGameplayItemStatements(
+      db,
+      accountId,
+      learnerId,
+      runtime,
+      nowTs,
+      guard,
+    ));
+  }
+  if (gameplayStore?.kind === 'reading-questions') {
+    statements.push(...buildReadingGameplayQuestionStatements(
+      db,
+      accountId,
+      learnerId,
+      runtime,
+      nowTs,
+      guard,
+    ));
+  }
+  if (gameplayStore?.kind === 'punctuation-items') {
+    statements.push(...buildPunctuationGameplayItemStatements(
+      db,
+      accountId,
+      learnerId,
+      runtime,
+      nowTs,
+      guard,
+    ));
+  }
 
   const session = runtime?.practiceSession
     ? normalisePracticeSessionRecord(runtime.practiceSession)
@@ -9195,7 +10864,8 @@ function buildSubjectRuntimePersistencePlan(db, accountId, learnerId, subjectId,
 
 async function persistSubjectRuntimeBundle(db, accountId, learnerId, subjectId, runtime, nowTs) {
   const includeCapacityReadModels = await capacityReadModelTablesAvailable(db);
-  const plan = buildSubjectRuntimePersistencePlan(db, accountId, learnerId, subjectId, runtime, nowTs, {
+  const compatibleRuntime = await runtimeForAvailableGameplayStore(db, subjectId, runtime);
+  const plan = buildSubjectRuntimePersistencePlan(db, accountId, learnerId, subjectId, compatibleRuntime, nowTs, {
     includeCapacityReadModels,
   });
   await batch(db, plan.statements);
@@ -9329,9 +10999,10 @@ async function readSpellingSubjectCommandPreflightRow(db, {
       r.correlation_id AS receipt_correlation_id,
       r.applied_at AS receipt_applied_at,
       state.learner_id AS spelling_state_learner_id,
-      state.subject_id AS spelling_state_subject_id,
+      'spelling' AS spelling_state_subject_id,
       state.ui_json AS spelling_state_ui_json,
       state.data_json AS spelling_state_data_json,
+      state.stats_json AS spelling_state_stats_json,
       state.updated_at AS spelling_state_updated_at,
       session.id AS spelling_session_id,
       session.learner_id AS spelling_session_learner_id,
@@ -9348,16 +11019,31 @@ async function readSpellingSubjectCommandPreflightRow(db, {
       read_model.model_json AS spelling_read_model_json,
       read_model.source_revision AS spelling_read_model_source_revision,
       read_model.generated_at AS spelling_read_model_generated_at,
-      read_model.updated_at AS spelling_read_model_updated_at
+      read_model.updated_at AS spelling_read_model_updated_at,
+      EXISTS (
+        SELECT 1
+        FROM child_subject_state legacy_state
+        WHERE legacy_state.learner_id = ? AND legacy_state.subject_id = 'spelling'
+      ) AS spelling_legacy_state_exists,
+      EXISTS (
+        SELECT 1
+        FROM bounded_gameplay_state_migrations
+        WHERE migration_id = '0023' AND state = 'ready'
+      ) AS spelling_bounded_gameplay_ready
     FROM learner_profiles l
     LEFT JOIN account_learner_memberships m
       ON m.account_id = ? AND m.learner_id = l.id
     LEFT JOIN mutation_receipts r
       ON r.account_id = ? AND r.request_id = ?
     LEFT JOIN (
-      SELECT learner_id, subject_id, ui_json, data_json, updated_at
-      FROM child_subject_state
-      WHERE learner_id = ? AND subject_id = 'spelling'
+      SELECT learner_id, ui_json, data_json, stats_json, updated_at
+      FROM spelling_learner_state
+      WHERE learner_id = ?
+        AND EXISTS (
+          SELECT 1
+          FROM bounded_gameplay_state_migrations
+          WHERE migration_id = '0023' AND state = 'ready'
+        )
       LIMIT 1
     ) state ON 1 = 1
     LEFT JOIN (
@@ -9378,6 +11064,7 @@ async function readSpellingSubjectCommandPreflightRow(db, {
       ON read_model.learner_id = l.id AND read_model.model_key = ?
     WHERE l.id = ?
   `, [
+    learnerId,
     accountId,
     accountId,
     requestId,
@@ -9433,6 +11120,9 @@ async function runSubjectCommandMutation(db, {
   // check into the same query so subject commands do not spend a
   // separate D1 round trip proving access immediately before reading
   // the learner revision.
+  // Spelling folds the 0023 readiness check into its normal preflight read.
+  // On a ready database this removes an otherwise redundant D1 round trip;
+  // before schema, the guarded query falls back to the generic preflight.
   const canPreloadSpellingRuntime = command.subjectId === 'spelling';
   const spellingRuntimeModelKey = COMMAND_PROJECTION_MODEL_KEY;
   let combinedRow;
@@ -9446,16 +11136,47 @@ async function runSubjectCommandMutation(db, {
         modelKey: spellingRuntimeModelKey,
       });
       markLearnerReadModelsTableAvailable(db);
+      if (Number(combinedRow?.spelling_bounded_gameplay_ready) === 1) {
+        markBoundedGameplayTableAvailable(db, 'spelling');
+      }
       preloadedCommandRuntime = spellingCommandRuntimeFromRow(combinedRow, spellingRuntimeModelKey, {
         prefix: 'spelling_',
       });
+      if (preloadedCommandRuntime.legacyFallbackRequired) preloadedCommandRuntime = null;
     } catch (error) {
-      if (!isMissingTableError(error, 'learner_read_models')) throw error;
+      if (
+        !isMissingTableError(error, 'learner_read_models')
+        && !isMissingTableError(error, 'spelling_learner_state')
+        && !isMissingTableError(error, 'bounded_gameplay_state_migrations')
+      ) throw error;
       combinedRow = await readSubjectCommandPreflightRow(db, {
         accountId,
         learnerId: command.learnerId,
         requestId: nextMutation.requestId,
       });
+      if (isMissingTableError(error, 'learner_read_models')) {
+        // Capacity projections are optional during their own rollout, but
+        // the 0023 authority check is not. Recover only the two presence
+        // bits needed by the fail-closed guard; never read legacy data_json.
+        const spellingPresence = await first(db, `
+          SELECT
+            EXISTS (
+              SELECT 1 FROM spelling_learner_state WHERE learner_id = ?
+            ) AS spelling_state_present,
+            EXISTS (
+              SELECT 1
+              FROM bounded_gameplay_state_migrations
+              WHERE migration_id = '0023' AND state = 'ready'
+            ) AS spelling_bounded_gameplay_ready
+        `, [command.learnerId]);
+        combinedRow = {
+          ...combinedRow,
+          spelling_state_learner_id: Number(spellingPresence?.spelling_state_present) === 1
+            ? command.learnerId
+            : null,
+          spelling_bounded_gameplay_ready: spellingPresence?.spelling_bounded_gameplay_ready,
+        };
+      }
     }
   } else {
     combinedRow = await readSubjectCommandPreflightRow(db, {
@@ -9473,6 +11194,16 @@ async function runSubjectCommandMutation(db, {
       learnerId: command.learnerId,
       required: 'owner-or-member',
     });
+  }
+  if (canPreloadSpellingRuntime) {
+    await requireBoundedSpellingLearnerState(
+      db,
+      command.learnerId,
+      Boolean(combinedRow.spelling_state_learner_id),
+      combinedRow.spelling_bounded_gameplay_ready == null
+        ? null
+        : Number(combinedRow.spelling_bounded_gameplay_ready) === 1,
+    );
   }
 
   const existingReceipt = combinedRow.receipt_request_id
@@ -9586,12 +11317,17 @@ async function runSubjectCommandMutation(db, {
       const includeCapacityReadModels = await capacityReadModelTablesAvailable(db, {
         requireActivityFeed: false,
       });
+      const compatibleRuntimeWrite = await runtimeForAvailableGameplayStore(
+        db,
+        command.subjectId,
+        freshRuntimeWrite,
+      );
       const plan = buildSubjectRuntimePersistencePlan(
         db,
         accountId,
         command.learnerId,
         command.subjectId,
-        freshRuntimeWrite,
+        compatibleRuntimeWrite,
         nowTs,
         {
           guard: attemptGuard,
@@ -9843,6 +11579,25 @@ function buildHeroProgressUpsertStatement(db, learnerId, accountId, state, nowTs
   `, guardedParams(params, guard));
 }
 
+function buildHeroProgressDailyPatchStatement(db, learnerId, accountId, state, nowTs) {
+  const stateJson = JSON.stringify(state);
+  return bindStatement(db, `
+    INSERT INTO child_game_state (learner_id, system_id, state_json, updated_at, updated_by_account_id)
+    VALUES (?, 'hero-mode', ?, ?, ?)
+    ON CONFLICT(learner_id, system_id) DO UPDATE SET
+      state_json = CASE
+        WHEN json_valid(child_game_state.state_json) THEN json_set(
+          child_game_state.state_json,
+          '$.version', json_extract(excluded.state_json, '$.version'),
+          '$.daily', json_extract(excluded.state_json, '$.daily')
+        )
+        ELSE excluded.state_json
+      END,
+      updated_at = excluded.updated_at,
+      updated_by_account_id = excluded.updated_by_account_id
+  `, [learnerId, stateJson, nowTs, accountId]);
+}
+
 async function runHeroCommandMutation(db, {
   accountId,
   learnerId,
@@ -10001,7 +11756,26 @@ async function runHeroCommandMutation(db, {
     `, [nowTs, learnerId, expectedRevision]),
   ];
 
-  await batch(db, statements);
+  const results = await batch(db, statements);
+  const casResult = results[results.length - 1] || null;
+  const casChanges = Number(casResult?.meta?.changes) || 0;
+  if (casChanges !== 1) {
+    const currentRevision = Number(await scalar(
+      db,
+      'SELECT state_revision FROM learner_profiles WHERE id = ?',
+      [learnerId],
+      'state_revision',
+    )) || 0;
+    throw staleWriteError({
+      kind,
+      scopeType: 'learner',
+      scopeId: learnerId,
+      requestId: nextMutation.requestId,
+      correlationId: nextMutation.correlationId,
+      expectedRevision,
+      currentRevision,
+    });
+  }
 
   logMutation('info', 'mutation.applied', {
     kind,
@@ -10175,10 +11949,25 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
       return readClassroomLearnersSummary(db, accountId, options);
     },
     async readSubjectRuntime(accountId, learnerId, subjectId = 'spelling', options = {}) {
+      if (subjectId === 'spelling') {
+        return readSpellingCommandRuntimeBundle(db, accountId, learnerId, options);
+      }
       return readSubjectRuntimeBundle(db, accountId, learnerId, subjectId, options);
     },
     async readSpellingCommandRuntime(accountId, learnerId, options = {}) {
       return readSpellingCommandRuntimeBundle(db, accountId, learnerId, options);
+    },
+    async readSpellingGameplayWorkingSet(accountId, learnerId, slugs, options = {}) {
+      return readSpellingGameplayWorkingSet(db, accountId, learnerId, slugs, options);
+    },
+    async readGrammarGameplayWorkingSet(accountId, learnerId, itemIds, options = {}) {
+      return readGrammarGameplayWorkingSet(db, accountId, learnerId, itemIds, options);
+    },
+    async readReadingGameplayWorkingSet(accountId, learnerId, questionIds, options = {}) {
+      return readReadingGameplayWorkingSet(db, accountId, learnerId, questionIds, options);
+    },
+    async readPunctuationGameplayWorkingSet(accountId, learnerId, itemIds, options = {}) {
+      return readPunctuationGameplayWorkingSet(db, accountId, learnerId, itemIds, options);
     },
     async readLearnerProjectionState(accountId, learnerId) {
       return readLearnerProjectionBundle(db, accountId, learnerId);
@@ -10233,6 +12022,59 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
         apply: async () => {
           const next = normaliseSubjectStateRecord(record);
           const updatedAt = asTs(next.updatedAt, nowTs);
+          const boundedStoreReady = await boundedGameplayTableAvailable(db, subjectId);
+          if (subjectId === 'spelling' && boundedStoreReady) {
+            await batch(db, buildSpellingFullReplacementStatements(
+              db,
+              accountId,
+              learnerId,
+              next,
+              updatedAt,
+            ));
+            return {
+              key: `${learnerId || 'default'}::${subjectId || 'unknown'}`,
+              record: next,
+            };
+          }
+          if (subjectId === 'grammar' && boundedStoreReady) {
+            await batch(db, buildGrammarFullReplacementStatements(
+              db,
+              accountId,
+              learnerId,
+              next,
+              updatedAt,
+            ));
+            return {
+              key: `${learnerId || 'default'}::${subjectId || 'unknown'}`,
+              record: next,
+            };
+          }
+          if (subjectId === 'reading' && boundedStoreReady) {
+            await batch(db, buildReadingFullReplacementStatements(
+              db,
+              accountId,
+              learnerId,
+              next,
+              updatedAt,
+            ));
+            return {
+              key: `${learnerId || 'default'}::${subjectId || 'unknown'}`,
+              record: next,
+            };
+          }
+          if (subjectId === 'punctuation' && boundedStoreReady) {
+            await batch(db, buildPunctuationFullReplacementStatements(
+              db,
+              accountId,
+              learnerId,
+              next,
+              updatedAt,
+            ));
+            return {
+              key: `${learnerId || 'default'}::${subjectId || 'unknown'}`,
+              record: next,
+            };
+          }
           await run(db, `
             INSERT INTO child_subject_state (learner_id, subject_id, ui_json, data_json, updated_at, updated_by_account_id)
             VALUES (?, ?, ?, ?, ?, ?)
@@ -10290,10 +12132,14 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
       ]);
       return { heroProgressState: progressState, recentCompletedSessions: sessionRows };
     },
-    // Hero Mode P3 U4: standalone hero progress write (no CAS / no revision bump).
-    async writeHeroProgress(learnerId, accountId, state) {
+    // Hero progress markers only change the daily field. Applying that field
+    // as an atomic JSON patch preserves a concurrently committed Camp pool or
+    // economy update instead of replacing the whole hero-mode row from a
+    // stale read-modify-write snapshot.
+    async writeHeroProgressDaily(learnerId, accountId, state) {
       const nowTs = nowFactory();
-      const stmt = buildHeroProgressUpsertStatement(db, learnerId, accountId, state, nowTs, null);
+      await requireLearnerWriteAccess(db, accountId, learnerId);
+      const stmt = buildHeroProgressDailyPatchStatement(db, learnerId, accountId, state, nowTs);
       await batch(db, [stmt]);
     },
     async runHeroCommand(accountId, learnerId, command, applyCommand) {
@@ -10308,6 +12154,7 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
     },
     async clearSubjectState(accountId, learnerId, subjectId = null, mutation = {}) {
       const nowTs = nowFactory();
+      let boundedStoreReady = false;
       return withLearnerMutation(db, {
         accountId,
         learnerId,
@@ -10318,12 +12165,55 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
         },
         mutation,
         nowTs,
+        preflight: async () => {
+          boundedStoreReady = await boundedGameplayStoresAvailable(
+            db,
+            subjectId
+              ? [subjectId]
+              : ['spelling', 'grammar', 'reading', 'punctuation'],
+          );
+          if (boundedStoreReady && (!subjectId || subjectId === 'spelling')) {
+            await requireExistingBoundedSpellingLearnerState(db, learnerId);
+          }
+        },
         apply: async () => {
           if (subjectId) {
-            await run(db, 'DELETE FROM child_subject_state WHERE learner_id = ? AND subject_id = ?', [learnerId, subjectId]);
+            const statements = [
+              bindStatement(db, 'DELETE FROM child_subject_state WHERE learner_id = ? AND subject_id = ?', [learnerId, subjectId]),
+            ];
+            if (subjectId === 'spelling' && boundedStoreReady) {
+              statements.push(
+                bindResetBoundedSpellingLearnerState(db, accountId, learnerId, nowTs),
+                bindStatement(db, 'DELETE FROM spelling_item_state WHERE learner_id = ?', [learnerId]),
+                bindStatement(db, 'DELETE FROM spelling_achievement_state WHERE learner_id = ?', [learnerId]),
+              );
+            }
+            if (subjectId === 'grammar' && boundedStoreReady) {
+              statements.push(bindStatement(db, 'DELETE FROM grammar_item_state WHERE learner_id = ?', [learnerId]));
+            }
+            if (subjectId === 'reading' && boundedStoreReady) {
+              statements.push(bindStatement(db, 'DELETE FROM reading_question_state WHERE learner_id = ?', [learnerId]));
+            }
+            if (subjectId === 'punctuation' && boundedStoreReady) {
+              statements.push(bindStatement(db, 'DELETE FROM punctuation_item_state WHERE learner_id = ?', [learnerId]));
+            }
+            await batch(db, statements);
             return { key: `${learnerId || 'default'}::${subjectId || 'unknown'}`, cleared: true };
           }
-          await run(db, 'DELETE FROM child_subject_state WHERE learner_id = ?', [learnerId]);
+          const statements = [
+            bindStatement(db, 'DELETE FROM child_subject_state WHERE learner_id = ?', [learnerId]),
+          ];
+          if (boundedStoreReady) {
+            statements.push(
+              bindResetBoundedSpellingLearnerState(db, accountId, learnerId, nowTs),
+              bindStatement(db, 'DELETE FROM spelling_item_state WHERE learner_id = ?', [learnerId]),
+              bindStatement(db, 'DELETE FROM spelling_achievement_state WHERE learner_id = ?', [learnerId]),
+              bindStatement(db, 'DELETE FROM grammar_item_state WHERE learner_id = ?', [learnerId]),
+              bindStatement(db, 'DELETE FROM reading_question_state WHERE learner_id = ?', [learnerId]),
+              bindStatement(db, 'DELETE FROM punctuation_item_state WHERE learner_id = ?', [learnerId]),
+            );
+          }
+          await batch(db, statements);
           return { learnerId, cleared: true };
         },
       });
@@ -10536,6 +12426,7 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
     },
     async resetLearnerRuntime(accountId, learnerId, mutation = {}) {
       const nowTs = nowFactory();
+      let boundedStoreReady = false;
       return withLearnerMutation(db, {
         accountId,
         learnerId,
@@ -10543,15 +12434,35 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
         payload: { learnerId },
         mutation,
         nowTs,
+        preflight: async () => {
+          boundedStoreReady = await boundedGameplayStoresAvailable(
+            db,
+            ['spelling', 'grammar', 'reading', 'punctuation'],
+          );
+          if (boundedStoreReady) {
+            await requireExistingBoundedSpellingLearnerState(db, learnerId);
+          }
+        },
         apply: async () => {
-          await batch(db, [
+          const statements = [
             bindStatement(db, 'DELETE FROM child_subject_state WHERE learner_id = ?', [learnerId]),
             bindStatement(db, 'DELETE FROM practice_sessions WHERE learner_id = ?', [learnerId]),
             bindStatement(db, 'DELETE FROM child_game_state WHERE learner_id = ?', [learnerId]),
             bindStatement(db, 'DELETE FROM event_log WHERE learner_id = ?', [learnerId]),
             bindStatement(db, 'DELETE FROM learner_activity_feed WHERE learner_id = ?', [learnerId]),
             bindStatement(db, 'DELETE FROM learner_read_models WHERE learner_id = ?', [learnerId]),
-          ]);
+          ];
+          if (boundedStoreReady) {
+            statements.splice(1, 0,
+              bindResetBoundedSpellingLearnerState(db, accountId, learnerId, nowTs),
+              bindStatement(db, 'DELETE FROM spelling_item_state WHERE learner_id = ?', [learnerId]),
+              bindStatement(db, 'DELETE FROM spelling_achievement_state WHERE learner_id = ?', [learnerId]),
+              bindStatement(db, 'DELETE FROM grammar_item_state WHERE learner_id = ?', [learnerId]),
+              bindStatement(db, 'DELETE FROM reading_question_state WHERE learner_id = ?', [learnerId]),
+              bindStatement(db, 'DELETE FROM punctuation_item_state WHERE learner_id = ?', [learnerId]),
+            );
+          }
+          await batch(db, statements);
           return {
             learnerId,
             reset: true,
@@ -10768,7 +12679,7 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
         nowMs: nowFactory(),
         env,
       });
-      const learnerBundle = await loadLearnerReadBundle(db, resolvedLearnerId);
+      const learnerBundle = await loadLearnerReadBundle(db, resolvedLearnerId, { now: nowFactory() });
       const model = buildParentHubReadModel({
         learner: learnerRowToRecord(learnerRow),
         platformRole: accountPlatformRole(account),
@@ -10802,9 +12713,10 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
         nowMs: nowFactory(),
         env,
       });
+      const hubNow = nowFactory();
       const learnerBundles = {};
       for (const row of memberships) {
-        learnerBundles[row.id] = await loadLearnerReadBundle(db, row.id);
+        learnerBundles[row.id] = await loadLearnerReadBundle(db, row.id, { now: hubNow });
       }
       const defaultLearnerId = account?.selected_learner_id && memberships.some((membership) => membership.id === account.selected_learner_id)
         ? account.selected_learner_id
@@ -10814,7 +12726,7 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
         requestId,
         limit: auditLimit,
       });
-      const nowTs = nowFactory();
+      const nowTs = hubNow;
 
       // P3 U1 (R22): parallelise independent queries. These share no
       // read-dependency after the learner bundles are loaded. The pre-
@@ -11112,6 +13024,21 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
         nowTs: nowFactory(),
       });
     },
+    async restorePostMegaSeedPreimage(accountId, {
+      learnerId,
+      preimageId,
+      confirmOverwrite = false,
+      mutation = {},
+    } = {}) {
+      return restorePostMegaSeedPreimage(db, {
+        actorAccountId: accountId,
+        learnerId,
+        preimageId,
+        confirmOverwrite,
+        mutation,
+        nowTs: nowFactory(),
+      });
+    },
     async reconcileAdminKpiMetrics(accountId, {
       requestId,
       correlationId = null,
@@ -11233,18 +13160,57 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
       return requireLearnerReadAccess(db, accountId, learnerId);
     },
     // Hero Mode P0/P2: read per-subject read-model data for the hero
-    // providers. Reads `child_subject_state` rows and returns raw storage
-    // data plus the public subject read model keyed by subject_id. Production
-    // Hero providers need derived read-model signals (stats, analytics,
-    // availability), not the subject engine's storage shape.
+    // providers. Spelling is intentionally sourced from its bounded gameplay
+    // record; after migration 0023 the legacy child_subject_state spelling row
+    // is cold rollback/history data and is never hydrated by Hero launch. The
+    // temporary missing-table branch below exists only so code can deploy
+    // before the migration gate. Other subjects use their canonical rows.
     // P2 active session detection inspects `ui` for heroContext.
     async readHeroSubjectReadModels(learnerId, { accountId = '', now = Date.now() } = {}) {
-      const rows = await all(db, `
-        SELECT subject_id, data_json, ui_json
-        FROM child_subject_state
-        WHERE learner_id = ?
-      `, [learnerId]);
+      let rows;
+      if (!await boundedGameplayTableAvailable(db, 'spelling')) {
+        rows = await all(db, `
+          SELECT learner_id, subject_id, data_json, ui_json, updated_at, NULL AS spelling_stats_json
+          FROM child_subject_state
+          WHERE learner_id = ?
+        `, [learnerId]);
+      } else try {
+        rows = await all(db, `
+          SELECT learner_id, subject_id, data_json, ui_json, updated_at, NULL AS spelling_stats_json
+          FROM child_subject_state
+          WHERE learner_id = ?
+            AND subject_id <> 'spelling'
+          UNION ALL
+          SELECT learner_id, 'spelling' AS subject_id, data_json, ui_json, updated_at,
+                 stats_json AS spelling_stats_json
+          FROM spelling_learner_state
+          WHERE learner_id = ?
+        `, [learnerId, learnerId]);
+        markBoundedGameplayTableAvailable(db, 'spelling');
+        await requireBoundedSpellingLearnerState(
+          db,
+          learnerId,
+          rows.some((row) => row?.subject_id === 'spelling'),
+          true,
+        );
+      } catch (error) {
+        if (!isMissingTableError(error, 'spelling_learner_state')) throw error;
+        await requireLegacyGameplayFallbackAllowed(
+          db,
+          'spelling',
+          'spelling_learner_state',
+          error,
+        );
+        rows = await all(db, `
+          SELECT learner_id, subject_id, data_json, ui_json, updated_at, NULL AS spelling_stats_json
+          FROM child_subject_state
+          WHERE learner_id = ?
+        `, [learnerId]);
+      }
       const result = {};
+      const punctuationItems = accountId
+        ? await readPublicPunctuationItemRows(db, rows)
+        : new Map();
       const spellingContent = accountId && rows.some((row) => row.subject_id === 'spelling')
         ? await readSpellingRuntimeContentBundle(db, accountId, 'spelling', {
           includeAccountContent: false,
@@ -11258,6 +13224,7 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
         const publicRecord = accountId
           ? await publicSubjectStateRowToRecord(row, {
             spellingContentSnapshot: spellingContent?.snapshot || null,
+            punctuationItemRows: punctuationItems.get(subjectStateKey(row.learner_id, row.subject_id)) || [],
             now,
           })
           : rawRecord;

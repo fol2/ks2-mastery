@@ -304,7 +304,7 @@ test('reusing a mutation request id for different payloads is rejected explicitl
   assert.equal(payloadB.code, 'idempotency_reuse');
   assert.match(payloadB.message, /request id/i);
 
-  const row = server.DB.db.prepare(`SELECT data_json FROM child_subject_state WHERE learner_id = 'learner-a' AND subject_id = 'spelling'`).get();
+  const row = server.DB.db.prepare(`SELECT data_json FROM spelling_learner_state WHERE learner_id = 'learner-a'`).get();
   assert.equal(JSON.parse(row.data_json).prefs.mode, 'smart');
   const revisionRow = server.DB.db.prepare(`SELECT state_revision FROM learner_profiles WHERE id = 'learner-a'`).get();
   assert.equal(revisionRow.state_revision, 1);
@@ -777,6 +777,13 @@ test('local and real worker repositories stay in parity on the core generic coll
   await restoredRemote.hydrate();
 
   assert.deepEqual(coreSnapshot(restoredRemote), coreSnapshot(restoredLocal));
+  const spellingItem = server.DB.db.prepare(`
+    SELECT progress_json
+    FROM spelling_item_state
+    WHERE learner_id = 'learner-a' AND slug = 'possess'
+  `).get();
+  assert.equal(JSON.parse(spellingItem.progress_json).stage, 2,
+    'remote parity keeps item-addressed progress durable outside bootstrap');
 
   server.close();
 });

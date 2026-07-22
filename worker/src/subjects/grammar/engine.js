@@ -19,6 +19,8 @@ import {
   GRAMMAR_CONCEPTS,
   GRAMMAR_CONTENT_RELEASE_ID,
   GRAMMAR_FIXED_DIAGNOSTIC_TEMPLATE_IDS,
+  GRAMMAR_MISCONCEPTIONS,
+  GRAMMAR_QUESTION_TYPES,
   GRAMMAR_TEMPLATE_METADATA,
   grammarQuestionVariantSignature,
   grammarTemplateById,
@@ -59,6 +61,9 @@ const LOCKED_MODES = Object.freeze([]);
 const NO_STORED_FOCUS_MODES = new Set(['trouble', 'surgery', 'builder']);
 const NO_SESSION_FOCUS_MODES = new Set(['surgery', 'builder']);
 const GRAMMAR_CONCEPT_IDS = new Set(GRAMMAR_CONCEPTS.map((concept) => concept.id));
+const GRAMMAR_TEMPLATE_IDS = new Set(GRAMMAR_TEMPLATE_METADATA.map((template) => template.id));
+const GRAMMAR_QUESTION_TYPE_IDS = new Set(Object.keys(GRAMMAR_QUESTION_TYPES));
+const GRAMMAR_MISCONCEPTION_IDS = new Set(Object.keys(GRAMMAR_MISCONCEPTIONS));
 const GRAMMAR_FIXED_DIAGNOSTIC_IDS = new Set(GRAMMAR_FIXED_DIAGNOSTIC_TEMPLATE_IDS);
 const GOAL_TYPES = new Set(['questions', 'timed', 'due']);
 
@@ -447,9 +452,18 @@ function normaliseNode(value) {
   return node;
 }
 
-function normaliseNodeMap(value) {
+function normaliseNodeMap(value, allowedKeys = null) {
   const raw = isPlainObject(value) ? value : {};
-  return Object.fromEntries(Object.entries(raw).map(([key, node]) => [key, normaliseNode(node)]));
+  return Object.fromEntries(Object.entries(raw)
+    .filter(([key]) => !allowedKeys || allowedKeys.has(key))
+    .map(([key, node]) => [key, normaliseNode(node)]));
+}
+
+function normaliseMisconceptions(value) {
+  const raw = isPlainObject(value) ? value : {};
+  return Object.fromEntries(Object.entries(raw)
+    .filter(([key]) => GRAMMAR_MISCONCEPTION_IDS.has(key))
+    .map(([key, entry]) => [key, cloneSerialisable(entry)]));
 }
 
 export function normaliseServerGrammarData(rawValue) {
@@ -464,9 +478,9 @@ export function normaliseServerGrammarData(rawValue) {
       focusConceptId: normaliseStoredFocusConceptId(prefs.focusConceptId),
     },
     mastery: {
-      concepts: normaliseNodeMap(raw.mastery?.concepts),
-      templates: normaliseNodeMap(raw.mastery?.templates),
-      questionTypes: normaliseNodeMap(raw.mastery?.questionTypes),
+      concepts: normaliseNodeMap(raw.mastery?.concepts, GRAMMAR_CONCEPT_IDS),
+      templates: normaliseNodeMap(raw.mastery?.templates, GRAMMAR_TEMPLATE_IDS),
+      questionTypes: normaliseNodeMap(raw.mastery?.questionTypes, GRAMMAR_QUESTION_TYPE_IDS),
       items: normaliseNodeMap(raw.mastery?.items),
     },
     retryQueue: Array.isArray(raw.retryQueue)
@@ -476,9 +490,9 @@ export function normaliseServerGrammarData(rawValue) {
         dueAt: Number(entry.dueAt) || 0,
         conceptIds: Array.from(new Set((entry.conceptIds || entry.skillIds || []).map(String).filter(Boolean))),
         reason: typeof entry.reason === 'string' ? entry.reason : 'recent-miss',
-      }))
+      })).sort((left, right) => left.dueAt - right.dueAt).slice(0, 120)
       : [],
-    misconceptions: isPlainObject(raw.misconceptions) ? cloneSerialisable(raw.misconceptions) : {},
+    misconceptions: normaliseMisconceptions(raw.misconceptions),
     // Normalise older attempts on load so the U3 item-level fields
     // (firstAttemptIndependent / supportUsed / supportLevelAtScoring) are
     // always present downstream, even for pre-U3 stored state.

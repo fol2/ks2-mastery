@@ -112,6 +112,31 @@ test('Secure Stars ignore epoch-zero firstCorrectAt sentinels', () => {
   assert.equal(view.perMonster.pealark.secureStars, 0);
 });
 
+test('bounded secure-item evidence is exactly equivalent to hydrated item rows', () => {
+  const hydrated = freshProgress();
+  hydrated.items['secure-endmark'] = secureItemState();
+  hydrated.items['learning-endmark'] = secureItemState({ streak: 1, firstCorrectAt: null });
+  hydrated.attempts.push(
+    makeAttempt({ itemId: 'secure-endmark', variantSignature: 'puncsig_secure_a' }),
+    makeAttempt({ itemId: 'learning-endmark', variantSignature: 'puncsig_learning_a' }),
+  );
+
+  const bounded = {
+    ...hydrated,
+    items: {},
+    starEvidence: {
+      version: 1,
+      releaseId: CURRENT_RELEASE_ID,
+      secureItemIds: ['secure-endmark'],
+    },
+  };
+
+  assert.deepEqual(
+    projectPunctuationStars(bounded, CURRENT_RELEASE_ID),
+    projectPunctuationStars(hydrated, CURRENT_RELEASE_ID),
+  );
+});
+
 function richCurrentReleaseProgress() {
   const progress = freshProgress();
   const units = [

@@ -299,6 +299,7 @@ The Worker now exposes:
 - `POST /api/admin/ops/reconcile-kpis`
 - `GET /api/admin/debug-bundle`
 - `POST /api/admin/spelling/seed-post-mega`
+- `POST /api/admin/spelling/restore-post-mega`
 - `GET /api/admin/marketing/messages`
 - `POST /api/admin/marketing/messages`
 - `POST /api/ops/error-event` (public, unauthenticated)
@@ -309,6 +310,8 @@ What is real there:
 - platform-role enforcement
 - learner membership checks
 - admin-only account role management
+- bounded D1 pre-images and exact admin restore for destructive Post-Mega
+  Spelling seed operations
 - admin-only monster visual draft/publish/restore mutations
 - content release / validation summary from durable content
 - audit lookup from durable mutation receipts

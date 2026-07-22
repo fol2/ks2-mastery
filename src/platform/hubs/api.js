@@ -687,6 +687,19 @@ export function createHubApi({
         body: JSON.stringify(body),
       }, authSession);
     },
+    async restorePostMegaSeedPreimage({
+      learnerId,
+      preimageId,
+      confirmOverwrite = false,
+      mutation,
+    } = {}) {
+      const url = buildRequestUrl(baseUrl, '/api/admin/spelling/restore-post-mega');
+      return fetchHubJson(fetch, url, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ learnerId, preimageId, confirmOverwrite, mutation }),
+      }, authSession);
+    },
     async postClientErrorEvent(event) {
       const url = buildRequestUrl(baseUrl, '/api/ops/error-event');
       // R11/R15: public endpoint — must NOT reuse the admin auth session.

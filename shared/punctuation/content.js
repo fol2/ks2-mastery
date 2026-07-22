@@ -2887,11 +2887,18 @@ export function createPunctuationContentIndexes(manifest = PUNCTUATION_CONTENT_M
   const rewardUnitsByCluster = new Map();
   const rewardUnitsBySkill = new Map();
   const generatorFamiliesBySkill = new Map();
+  const variantSignatureCounts = new Map();
+  let maxVariantSignatureFanout = 1;
 
   for (const item of items) {
     pushIndexed(itemsByMode, item.mode, item);
     pushIndexed(itemsByRewardUnit, item.rewardUnitId, item);
     for (const skillId of asArray(item.skillIds)) pushIndexed(itemsBySkill, skillId, item);
+    if (typeof item.variantSignature === 'string' && item.variantSignature) {
+      const count = (variantSignatureCounts.get(item.variantSignature) || 0) + 1;
+      variantSignatureCounts.set(item.variantSignature, count);
+      maxVariantSignatureFanout = Math.max(maxVariantSignatureFanout, count);
+    }
   }
 
   for (const unit of rewardUnits) {
@@ -2906,7 +2913,13 @@ export function createPunctuationContentIndexes(manifest = PUNCTUATION_CONTENT_M
   const publishedSkillIds = skills.filter((skill) => skill.published).map((skill) => skill.id);
   const publishedClusterIds = clusters.filter((cluster) => cluster.published).map((cluster) => cluster.id);
   const publishedRewardUnits = rewardUnits.filter((unit) => unit.published);
-
+  const publishedItems = items.filter(
+    (item) => skillById.get(item.skillIds?.[0])?.published,
+  );
+  const itemModesBySkill = new Map([...itemsBySkill.entries()].map(([skillId, skillItems]) => [
+    skillId,
+    [...new Set(skillItems.map((item) => item.mode))],
+  ]));
   return Object.freeze({
     skills,
     clusters,
@@ -2928,6 +2941,9 @@ export function createPunctuationContentIndexes(manifest = PUNCTUATION_CONTENT_M
     publishedSkillIds,
     publishedClusterIds,
     publishedRewardUnits,
+    publishedItems,
+    itemModesBySkill,
+    maxVariantSignatureFanout,
   });
 }
 

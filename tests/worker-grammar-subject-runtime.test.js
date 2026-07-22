@@ -223,9 +223,21 @@ test('Grammar command route persists subject state, practice session, and respon
   assert.equal(submit.body.mutation.appliedRevision, 2);
   assert.equal(submit.body.domainEvents.some((event) => event.type === 'grammar.answer-submitted'), true);
   assert.ok(
-    submit.body.meta.capacity.d1RowsWritten <= 5,
-    `submit-answer should avoid rewriting active practice_sessions; wrote ${submit.body.meta.capacity.d1RowsWritten} rows`,
+    submit.body.meta.capacity.d1RowsWritten <= 6,
+    `submit-answer should write one generated-item delta without rewriting active practice_sessions; wrote ${submit.body.meta.capacity.d1RowsWritten} rows`,
   );
+  const grammarItem = DB.db.prepare(`
+    SELECT mastery_json FROM grammar_item_state
+    WHERE learner_id = 'learner-a' AND item_id = ?
+  `).get(start.body.subjectReadModel.session.currentItem.itemId);
+  assert.ok(grammarItem, 'generated item mastery must be durable outside the hot subject document');
+  assert.equal(JSON.parse(grammarItem.mastery_json).attempts, 1);
+  const hotState = DB.db.prepare(`
+    SELECT ui_json, data_json FROM child_subject_state
+    WHERE learner_id = 'learner-a' AND subject_id = 'grammar'
+  `).get();
+  assert.deepEqual(JSON.parse(hotState.ui_json).mastery.items, {});
+  assert.deepEqual(JSON.parse(hotState.data_json).mastery.items, {});
   assert.ok(
     Buffer.byteLength(JSON.stringify(submit.body), 'utf8') < 15_000,
     'submit-answer should not duplicate full reward projection events inside the subject read model',

@@ -24,7 +24,7 @@ const HERO_READ_MODEL_URL = 'https://repo.test/api/hero/read-model';
 
 // ── Server factories ───────────────────────────────────────────────────
 
-function createP3ClaimServer() {
+function createP3ClaimServer(now = null) {
   return createWorkerRepositoryServer({
     env: {
       HERO_MODE_SHADOW_ENABLED: 'true',
@@ -33,6 +33,7 @@ function createP3ClaimServer() {
       HERO_MODE_PROGRESS_ENABLED: 'true',
       PUNCTUATION_SUBJECT_ENABLED: 'true',
     },
+    ...(typeof now === 'function' ? { now } : {}),
   });
 }
 
@@ -294,6 +295,92 @@ test('P3 U6: full claim-task flow — completed practice session → claim → h
   const taskEvent = events.find(e => e.event_type === 'hero.task.completed');
   assert.ok(taskEvent, 'hero.task.completed event must exist in event_log');
 
+  server.close();
+});
+
+test('claim-task point-reads an explicit completed session beyond the 20-row recent window', async () => {
+  const server = createP3ClaimServer();
+  await seedLearnerWithSubjectState(server, 'adult-a', 'learner-a');
+  const claimable = await seedClaimableState(server, 'learner-a', 'adult-a');
+  const evidenceUpdatedAt = Date.now() - 60 * 60 * 1000;
+  server.DB.db.prepare(`
+    UPDATE practice_sessions SET created_at = ?, updated_at = ? WHERE id = ?
+  `).run(evidenceUpdatedAt, evidenceUpdatedAt, claimable.practiceSessionId);
+  const distractor = server.DB.db.prepare(`
+    INSERT INTO practice_sessions (
+      id, learner_id, subject_id, session_kind, status,
+      session_state_json, summary_json, created_at, updated_at
+    ) VALUES (?, 'learner-a', ?, 'smart-practice', 'completed', '{}', ?, ?, ?)
+  `);
+  for (let index = 0; index < 25; index += 1) {
+    distractor.run(
+      `newer-distractor-${index}`,
+      claimable.subjectId,
+      JSON.stringify({
+        heroContext: {
+          source: 'hero-mode',
+          questId: 'other-quest',
+          questFingerprint: 'other-fingerprint',
+          taskId: `other-task-${index}`,
+        },
+      }),
+      evidenceUpdatedAt + index + 1,
+      evidenceUpdatedAt + index + 1,
+    );
+  }
+
+  const response = await postHeroCommand(server, {
+    command: 'claim-task',
+    learnerId: 'learner-a',
+    questId: claimable.questId,
+    questFingerprint: claimable.questFingerprint,
+    taskId: claimable.taskId,
+    practiceSessionId: claimable.practiceSessionId,
+    requestId: 'hero-claim-explicit-old-session',
+    expectedLearnerRevision: getLearnerRevision(server),
+  });
+  const payload = await response.json();
+  assert.equal(response.status, 200, JSON.stringify(payload));
+  assert.equal(
+    getHeroProgressRow(server, 'learner-a').daily.tasks[claimable.taskId].subjectPracticeSessionId,
+    claimable.practiceSessionId,
+  );
+  server.close();
+});
+
+test('claim-task accepts completion evidence from the start of the prior task day', async () => {
+  const nowTs = Date.UTC(2026, 6, 22, 1, 30, 0);
+  const server = createP3ClaimServer(() => nowTs);
+  await seedLearnerWithSubjectState(server, 'adult-a', 'learner-a');
+  const claimable = await seedClaimableState(server, 'learner-a', 'adult-a');
+  const taskDateKey = '2026-07-21';
+  const progress = getHeroProgressRow(server, 'learner-a');
+  progress.daily.dateKey = taskDateKey;
+  progress.daily.tasks[claimable.taskId].dateKey = taskDateKey;
+  server.DB.db.prepare(`
+    UPDATE child_game_state SET state_json = ?
+    WHERE learner_id = 'learner-a' AND system_id = 'hero-mode'
+  `).run(JSON.stringify(progress));
+  const completionTs = Date.UTC(2026, 6, 21, 0, 5, 0);
+  server.DB.db.prepare(`
+    UPDATE practice_sessions SET created_at = ?, updated_at = ? WHERE id = ?
+  `).run(completionTs, completionTs, claimable.practiceSessionId);
+
+  const response = await postHeroCommand(server, {
+    command: 'claim-task',
+    learnerId: 'learner-a',
+    questId: claimable.questId,
+    questFingerprint: claimable.questFingerprint,
+    taskId: claimable.taskId,
+    requestId: 'hero-claim-prior-day-start',
+    expectedLearnerRevision: getLearnerRevision(server),
+  });
+  const payload = await response.json();
+  assert.equal(response.status, 200, JSON.stringify(payload));
+  assert.equal(
+    getHeroProgressRow(server, 'learner-a').daily.tasks[claimable.taskId].subjectPracticeSessionId,
+    claimable.practiceSessionId,
+  );
   server.close();
 });
 
@@ -644,4 +731,51 @@ test('P3 U6: claim-task does NOT write to child_subject_state', async () => {
   assert.equal(subjectStateAfter, subjectStateBefore, 'child_subject_state must not change from Hero claim');
 
   server.close();
+});
+
+test('claim-task work is independent of 10,000-entry legacy subject history', async () => {
+  const server = createP3ClaimServer();
+  try {
+    await seedLearnerWithSubjectState(server, 'adult-a', 'learner-a');
+    const claimable = await seedClaimableState(server, 'learner-a', 'adult-a');
+    const fatHistory = Object.fromEntries(Array.from({ length: 10_000 }, (_, index) => [
+      `legacy-${index}`,
+      { attempts: index + 1, correct: index % 3, payload: 'x'.repeat(32) },
+    ]));
+    server.DB.db.prepare(`
+      UPDATE child_subject_state
+      SET ui_json = ?, data_json = ?
+      WHERE learner_id = ?
+    `).run(
+      JSON.stringify({ lifetimeHistory: fatHistory }),
+      JSON.stringify({ lifetimeHistory: fatHistory }),
+      'learner-a',
+    );
+
+    server.DB.clearQueryLog();
+    const response = await postHeroCommand(server, {
+      command: 'claim-task',
+      learnerId: 'learner-a',
+      questId: claimable.questId,
+      questFingerprint: claimable.questFingerprint,
+      taskId: claimable.taskId,
+      requestId: 'hero-claim-fat-history-1',
+      expectedLearnerRevision: getLearnerRevision(server),
+    });
+    const payload = await response.json();
+    assert.equal(response.status, 200, JSON.stringify(payload));
+
+    const queries = server.DB.takeQueryLog();
+    assert.equal(
+      queries.some((entry) => /\bFROM\s+child_subject_state\b/i.test(entry.sql)),
+      false,
+      'Hero claim must not read a learner-wide legacy subject document',
+    );
+    const evidenceQuery = queries.find((entry) => /\bFROM\s+practice_sessions\b/i.test(entry.sql));
+    assert.ok(evidenceQuery, 'Hero claim must use bounded practice-session evidence');
+    assert.match(evidenceQuery.sql, /summary_hero_context_json/);
+    assert.match(evidenceQuery.sql, /active_hero_context_json/);
+  } finally {
+    server.close();
+  }
 });

@@ -104,15 +104,15 @@ export function punctuationProvider(readModel) {
 
   const envelopes = [];
 
-  // 1. Due-review: smart-practice for due items
+  // 1. Due-review: smart-practice for due skill/mode lanes
   if (dueCount > 0) {
     envelopes.push(buildTaskEnvelope({
       subjectId,
       intent: 'due-review',
       launcher: 'smart-practice',
       effortTarget: Math.min(dueCount * 2, 10),
-      reasonTags: ['due-items'],
-      debugReason: `Punctuation has ${dueCount} due item(s) for review.`,
+      reasonTags: ['due-review-lanes'],
+      debugReason: `Punctuation has ${dueCount} due review lane(s).`,
     }));
   }
 

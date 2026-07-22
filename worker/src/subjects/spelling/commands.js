@@ -17,9 +17,16 @@ import {
 } from '../../read-models/learner-read-models.js';
 import { buildSpellingAudioCue } from './audio.js';
 import { createServerSpellingEngine } from './engine.js';
+import {
+  materialiseSpellingGameplayStats,
+  spellingGameplayStatsAreCurrent,
+  spellingGameplayStatsWithDueSchedule,
+  updateSpellingGameplayStats,
+} from './gameplay-state.js';
 import { buildSpellingReadModel } from './read-models.js';
 import { checkSpellingWordBankAnswer } from '../../content/spelling-read-models.js';
 import { resolveProjectionInput } from '../projection-input.js';
+import { isLegacyGameplayWorkingSet } from '../gameplay-store.js';
 
 const SPELLING_COMMANDS = Object.freeze([
   'start-session',
@@ -40,6 +47,106 @@ function contentMeta(contentResult, snapshot) {
     publishedAt: Number(summary.publishedAt) || 0,
     runtimeWordCount: Array.isArray(snapshot?.words) ? snapshot.words.length : 0,
   };
+}
+
+function spellingStatsOptions(contentResult, now) {
+  const summary = contentResult?.summary || {};
+  return {
+    releaseId: summary.publishedReleaseId || '',
+    publishedVersion: Number(summary.publishedVersion) || 0,
+    now,
+  };
+}
+
+function addSessionSlug(output, value) {
+  if (typeof value === 'string' && value) output.add(value);
+  else if (value && typeof value === 'object' && !Array.isArray(value)) {
+    if (typeof value.slug === 'string' && value.slug) output.add(value.slug);
+  }
+}
+
+function activeSpellingSession(runtimeRecord) {
+  const uiSession = runtimeRecord?.subjectRecord?.ui?.session;
+  if (uiSession && typeof uiSession === 'object' && !Array.isArray(uiSession)) return uiSession;
+  const persisted = runtimeRecord?.latestSession?.sessionState;
+  return persisted && typeof persisted === 'object' && !Array.isArray(persisted) ? persisted : null;
+}
+
+function activeSessionSlugs(runtimeRecord) {
+  const session = activeSpellingSession(runtimeRecord);
+  if (!session) return [];
+  const output = new Set();
+  for (const value of [
+    session.currentSlug,
+    session.currentPrompt,
+    session.currentCard,
+    session.patternQuestCard,
+  ]) addSessionSlug(output, value);
+  for (const key of [
+    'uniqueWords',
+    'queue',
+    'results',
+    'patternQuestCards',
+    'patternQuestResults',
+    'patternQuestWobbledSlugs',
+    'patternQuestSeedSlugs',
+  ]) {
+    for (const value of Array.isArray(session[key]) ? session[key] : []) addSessionSlug(output, value);
+  }
+  for (const key of ['status', 'guardianResults', 'sentenceHistory']) {
+    const map = session[key];
+    if (!map || typeof map !== 'object' || Array.isArray(map)) continue;
+    for (const slug of Object.keys(map)) addSessionSlug(output, slug);
+  }
+  return [...output];
+}
+
+function continueWillFinish(runtimeRecord) {
+  if (runtimeRecord?.subjectRecord?.ui?.awaitingAdvance !== true) return false;
+  const session = activeSpellingSession(runtimeRecord);
+  if (!session) return false;
+  if (session.mode === 'pattern-quest') {
+    const cards = Array.isArray(session.patternQuestCards) ? session.patternQuestCards : [];
+    return (Number(session.patternQuestCardIndex) || 0) >= cards.length;
+  }
+  const queue = Array.isArray(session.queue) ? session.queue : [];
+  if (session.type === 'test' || session.mode === 'boss') return queue.length === 0;
+  const status = session.status && typeof session.status === 'object' && !Array.isArray(session.status)
+    ? session.status
+    : {};
+  return queue.every((slug) => status[slug]?.done === true);
+}
+
+function commandWorkingSlugs(command, runtimeRecord, allCurrentSlugs, statsCurrent) {
+  if (command.command === 'reset-learner') {
+    return { slugs: [], completeCatalogue: true };
+  }
+  if (command.command === 'save-prefs') {
+    return { slugs: [], completeCatalogue: false };
+  }
+  if (!statsCurrent) {
+    return { slugs: allCurrentSlugs, completeCatalogue: true };
+  }
+  if (command.command === 'start-session') {
+    const payloadWords = Array.isArray(command.payload?.words)
+      ? command.payload.words.filter((slug) => typeof slug === 'string' && slug)
+      : [];
+    const explicit = payloadWords.length
+      ? payloadWords
+      : typeof command.payload?.slug === 'string' && command.payload.slug
+        ? [command.payload.slug]
+        : [];
+    if (explicit.length) return { slugs: explicit, completeCatalogue: false };
+    if (command.payload?.mode === 'test') return { slugs: [], completeCatalogue: false };
+    // Smart, Trouble, Guardian, Boss and Pattern Quest selection all inspect
+    // current published progress. This cost is tied to catalogue size once at
+    // round creation, never to lifetime history or to each answer.
+    return { slugs: allCurrentSlugs, completeCatalogue: true };
+  }
+  if (command.command === 'continue-session' && continueWillFinish(runtimeRecord)) {
+    return { slugs: allCurrentSlugs, completeCatalogue: true };
+  }
+  return { slugs: activeSessionSlugs(runtimeRecord), completeCatalogue: false };
 }
 
 function clientAnalytics(analytics) {
@@ -270,7 +377,7 @@ export function createSpellingCommandHandlers({ now, random } = {}) {
     }
 
     const nowValue = Number.isFinite(Number(context.now)) ? Number(context.now) : Date.now();
-    const runtimeRecord = context.commandRuntime || (typeof context.repository.readSpellingCommandRuntime === 'function'
+    let runtimeRecord = context.commandRuntime || (typeof context.repository.readSpellingCommandRuntime === 'function'
       ? await context.repository.readSpellingCommandRuntime(
         context.session.accountId,
         command.learnerId,
@@ -319,10 +426,54 @@ export function createSpellingCommandHandlers({ now, random } = {}) {
       };
     }
 
+    const allCurrentSlugs = snapshot.words.map((word) => word?.slug).filter(Boolean);
+    const statsOptions = spellingStatsOptions(contentResult, nowValue);
+    const statsCurrent = spellingGameplayStatsAreCurrent(
+      runtimeRecord.spellingStats,
+      snapshot.words,
+      statsOptions,
+    );
+    const workingSetPlan = commandWorkingSlugs(
+      command,
+      runtimeRecord,
+      allCurrentSlugs,
+      statsCurrent,
+    );
+    if (typeof context.repository.readSpellingGameplayWorkingSet === 'function') {
+      const workingData = await context.repository.readSpellingGameplayWorkingSet(
+        context.session.accountId,
+        command.learnerId,
+        workingSetPlan.slugs,
+        {
+          skipAccessCheck: true,
+          learnerData: runtimeRecord.subjectRecord?.data || {},
+          now: nowValue,
+        },
+      );
+      runtimeRecord = {
+        ...runtimeRecord,
+        subjectRecord: {
+          ...runtimeRecord.subjectRecord,
+          data: workingData,
+        },
+      };
+    }
+
+    const usesBoundedGameplayStore = !isLegacyGameplayWorkingSet(runtimeRecord.subjectRecord?.data);
+    const completeCatalogue = workingSetPlan.completeCatalogue || !usesBoundedGameplayStore;
+    const aggregateProgress = usesBoundedGameplayStore && !completeCatalogue && statsCurrent
+      ? {
+        stats: materialiseSpellingGameplayStats(runtimeRecord.spellingStats, nowValue),
+        baselineProgress: runtimeRecord.subjectRecord?.data?.progress || {},
+      }
+      : null;
+
     const engine = createServerSpellingEngine({
       now: typeof now === 'function' ? now : () => nowValue,
       random,
       contentSnapshot: snapshot,
+      aggregateProgress,
+      completeCatalogue,
     });
     const result = engine.apply({
       learnerId: command.learnerId,
@@ -407,6 +558,30 @@ export function createSpellingCommandHandlers({ now, random } = {}) {
         toastEvents: projectedEvents.toastEvents,
       });
 
+    let persistedSpellingStats = runtimeRecord.spellingStats || {};
+    if (usesBoundedGameplayStore) {
+      if (completeCatalogue) {
+        persistedSpellingStats = spellingGameplayStatsWithDueSchedule(
+          result.stats,
+          snapshot.words,
+          result.data,
+          statsOptions,
+        );
+      } else if (statsCurrent) {
+        persistedSpellingStats = updateSpellingGameplayStats(
+          runtimeRecord.spellingStats,
+          snapshot.words,
+          runtimeRecord.subjectRecord?.data || {},
+          result.data,
+          nowValue,
+          statsOptions,
+        );
+      }
+    }
+    const responseStats = usesBoundedGameplayStore
+      ? materialiseSpellingGameplayStats(persistedSpellingStats, nowValue)
+      : result.stats;
+
     return {
       learnerId: command.learnerId,
       changed: result.changed,
@@ -414,8 +589,11 @@ export function createSpellingCommandHandlers({ now, random } = {}) {
         learnerId: command.learnerId,
         state: result.state,
         prefs: result.prefs,
-        stats: result.stats,
-        analytics: clientAnalytics(result.analytics),
+        stats: responseStats,
+        analytics: clientAnalytics({
+          ...result.analytics,
+          pools: responseStats,
+        }),
         audio: replayAudioCue,
         content: contentMeta(contentResult, snapshot),
       }),
@@ -433,6 +611,13 @@ export function createSpellingCommandHandlers({ now, random } = {}) {
       runtimeWrite: {
         state: result.state,
         data: result.data,
+        ...(usesBoundedGameplayStore ? {
+          spellingGameplay: {
+            previousData: runtimeRecord.subjectRecord?.data || {},
+            stats: persistedSpellingStats,
+            resetAllItems: command.command === 'reset-learner',
+          },
+        } : {}),
         practiceSession: result.practiceSession,
         gameState: projectionInput.degraded ? {} : projectedRewards.changedGameState,
         events: projectedEvents.events,

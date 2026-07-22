@@ -8,6 +8,7 @@ import { createSpellingService } from '../src/subjects/spelling/service.js';
 import { createSpellingPersistence } from '../src/subjects/spelling/repository.js';
 import { createEventRuntime, createPracticeStreakSubscriber } from '../src/platform/events/index.js';
 import { createSpellingRewardSubscriber } from '../src/subjects/spelling/event-hooks.js';
+import { upsertBoundedSpellingState } from './helpers/bounded-spelling-state.js';
 import { createWorkerRepositoryServer } from './helpers/worker-server.js';
 
 function makeTts() {
@@ -329,22 +330,25 @@ test('production bootstrap redacts spelling runtime state by default', async () 
   `).run(accountId, now, now);
   server.DB.db.prepare('UPDATE adult_accounts SET selected_learner_id = ? WHERE id = ?')
     .run('learner-prod', accountId);
-  server.DB.db.prepare(`
-    INSERT INTO child_subject_state (learner_id, subject_id, ui_json, data_json, updated_at, updated_by_account_id)
-    VALUES ('learner-prod', 'spelling', ?, ?, ?, ?)
-  `).run(JSON.stringify({
-    phase: 'session',
-    session: {
-      id: 'active-session',
-      type: 'learning',
-      mode: 'smart',
-      phase: 'question',
-      currentCard: {
-        word: { word: 'possess', slug: 'possess' },
-        prompt: { sentence: 'Do not expose possess.', cloze: 'Do not expose ________.' },
+  upsertBoundedSpellingState(server.DB.db, {
+    learnerId: 'learner-prod',
+    accountId,
+    ui: {
+      phase: 'session',
+      session: {
+        id: 'active-session',
+        type: 'learning',
+        mode: 'smart',
+        phase: 'question',
+        currentCard: {
+          word: { word: 'possess', slug: 'possess' },
+          prompt: { sentence: 'Do not expose possess.', cloze: 'Do not expose ________.' },
+        },
       },
     },
-  }), JSON.stringify({ progress: { possess: { stage: 2 } } }), now, accountId);
+    data: { progress: { possess: { stage: 2 } } },
+    now,
+  });
   server.DB.db.prepare(`
     INSERT INTO practice_sessions (id, learner_id, subject_id, session_kind, status, session_state_json, summary_json, created_at, updated_at, updated_by_account_id)
     VALUES ('active-session', 'learner-prod', 'spelling', 'learning', 'active', ?, NULL, ?, ?, ?)

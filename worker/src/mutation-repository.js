@@ -291,6 +291,7 @@ export async function withLearnerMutation(db, {
   payload,
   mutation,
   nowTs,
+  preflight = null,
   apply,
 }) {
   if (!(typeof learnerId === 'string' && learnerId)) {
@@ -340,6 +341,11 @@ export async function withLearnerMutation(db, {
 
     const learner = await first(db, 'SELECT id FROM learner_profiles WHERE id = ?', [learnerId]);
     if (!learner) throw new NotFoundError('Learner was not found.', { learnerId });
+
+    // Integrity and dependency checks which can reject the mutation must run
+    // before the CAS write. A failed preflight is therefore genuinely
+    // zero-write: it cannot consume a learner revision or create a receipt.
+    if (typeof preflight === 'function') await preflight();
 
     const casMeta = await run(db, `
       UPDATE learner_profiles

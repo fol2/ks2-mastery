@@ -15,6 +15,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { createApiPlatformRepositories } from '../src/platform/core/repositories/index.js';
+import { readBoundedSpellingUi, upsertBoundedSpellingState } from './helpers/bounded-spelling-state.js';
 import { createWorkerRepositoryServer } from './helpers/worker-server.js';
 
 const HERO_COMMAND_URL = 'https://repo.test/api/hero/command';
@@ -83,10 +84,12 @@ async function seedLearnerWithSubjectState(server, accountId, learnerId) {
   await repos.flush();
 
   const now = Date.now();
-  server.DB.db.prepare(`
-    INSERT INTO child_subject_state (learner_id, subject_id, ui_json, data_json, updated_at, updated_by_account_id)
-    VALUES (?, 'spelling', '{}', ?, ?, ?)
-  `).run(learnerId, JSON.stringify(HERO_SPELLING_DATA), now, accountId);
+  upsertBoundedSpellingState(server.DB.db, {
+    learnerId,
+    accountId,
+    data: HERO_SPELLING_DATA,
+    now,
+  });
 
   // Seed punctuation data so that punctuation tasks may appear
   server.DB.db.prepare(`
@@ -153,6 +156,9 @@ async function postHeroCommand(server, body, accountId = 'adult-a') {
 }
 
 function getSubjectSessionState(server, learnerId, subjectId) {
+  if (subjectId === 'spelling') {
+    return readBoundedSpellingUi(server.DB.db, learnerId)?.session || null;
+  }
   const row = server.DB.db.prepare(
     `SELECT ui_json FROM child_subject_state
      WHERE learner_id = ? AND subject_id = ?`,

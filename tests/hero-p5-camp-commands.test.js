@@ -154,6 +154,64 @@ function getHeroEvents(server) {
   ).all();
 }
 
+function installOneShotBatchRace(server, predicate, compete) {
+  const originalBatch = server.DB.batch.bind(server.DB);
+  let fired = false;
+  server.DB.batch = async (statements) => {
+    if (!fired && predicate(statements)) {
+      fired = true;
+      compete();
+    }
+    return originalBatch(statements);
+  };
+  return () => fired;
+}
+
+function commitCompetingCampState(server, learnerId, monsterId, balanceAfter) {
+  const progress = getHeroProgressRow(server, learnerId);
+  const nowTs = Date.now();
+  progress.heroPool = {
+    ...progress.heroPool,
+    monsters: {
+      ...progress.heroPool.monsters,
+      [monsterId]: {
+        monsterId,
+        owned: true,
+        stage: 0,
+        branch: 'b1',
+        investedCoins: HERO_MONSTER_INVITE_COST,
+        invitedAt: nowTs,
+        lastGrownAt: null,
+        lastLedgerEntryId: `competing-${monsterId}`,
+      },
+    },
+    lastUpdatedAt: nowTs,
+  };
+  progress.economy = {
+    ...progress.economy,
+    balance: balanceAfter,
+    lifetimeSpent: (progress.economy.lifetimeSpent || 0) + HERO_MONSTER_INVITE_COST,
+    lastUpdatedAt: nowTs,
+  };
+  server.DB.db.exec('BEGIN IMMEDIATE;');
+  try {
+    server.DB.db.prepare(`
+      UPDATE child_game_state
+      SET state_json = ?, updated_at = ?
+      WHERE learner_id = ? AND system_id = 'hero-mode'
+    `).run(JSON.stringify(progress), nowTs, learnerId);
+    server.DB.db.prepare(`
+      UPDATE learner_profiles
+      SET state_revision = state_revision + 1, updated_at = ?
+      WHERE id = ?
+    `).run(nowTs, learnerId);
+    server.DB.db.exec('COMMIT;');
+  } catch (error) {
+    server.DB.db.exec('ROLLBACK;');
+    throw error;
+  }
+}
+
 /**
  * Seeds hero progress state with a high coin balance by:
  * 1. Running start-task to initialise daily progress
@@ -259,6 +317,94 @@ test('P5-U6: unlock-monster happy path — debits coins, creates owned monster a
   const events = getHeroEvents(server);
   const campEvent = events.find(e => e.event_type === 'hero.camp.monster.invited');
   assert.ok(campEvent, 'hero.camp.monster.invited event must exist in event_log');
+
+  server.close();
+});
+
+test('Hero Camp CAS loser returns stale_write and preserves the competing committed state', async () => {
+  const server = createCampServer();
+  const learnerId = 'learner-a';
+  const accountId = 'adult-a';
+  await seedLearner(server, accountId, learnerId);
+
+  const balance = await seedCoins(server, learnerId, accountId);
+  const revision = getLearnerRevision(server, accountId);
+  const competingBalance = balance - HERO_MONSTER_INVITE_COST;
+  const raceFired = installOneShotBatchRace(
+    server,
+    (statements) => statements.some((statement) => /INSERT INTO child_game_state/i.test(statement.sql || ''))
+      && statements.some((statement) => /INSERT INTO mutation_receipts/i.test(statement.sql || '')),
+    () => commitCompetingCampState(server, learnerId, 'loomrill', competingBalance),
+  );
+
+  const requestId = 'camp-injected-cas-loser';
+  const response = await postHeroCommand(server, {
+    command: 'unlock-monster',
+    learnerId,
+    monsterId: 'glossbloom',
+    branch: 'b1',
+    requestId,
+    expectedLearnerRevision: revision,
+  }, accountId);
+  const payload = await response.json();
+
+  assert.equal(raceFired(), true, 'The competing revision must be injected at the guarded Hero batch');
+  assert.equal(response.status, 409);
+  assert.equal(payload.code, 'stale_write');
+  assert.equal(getLearnerRevision(server, accountId), revision + 1);
+  const progress = getHeroProgressRow(server, learnerId);
+  assert.equal(progress.heroPool.monsters.loomrill.owned, true);
+  assert.equal(progress.heroPool.monsters.glossbloom, undefined);
+  assert.equal(progress.economy.balance, competingBalance);
+  assert.equal(
+    server.DB.db.prepare('SELECT COUNT(*) AS count FROM mutation_receipts WHERE account_id = ? AND request_id = ?')
+      .get(accountId, requestId).count,
+    0,
+    'A losing Hero command must not retain a success receipt',
+  );
+
+  server.close();
+});
+
+test('Hero progress marker preserves a Camp commit that lands after its state read', async () => {
+  const server = createCampServer();
+  const learnerId = 'learner-a';
+  const accountId = 'adult-a';
+  await seedLearner(server, accountId, learnerId);
+
+  const balance = await seedCoins(server, learnerId, accountId);
+  const before = getHeroProgressRow(server, learnerId);
+  const taskId = before.daily.taskOrder.find((id) => before.daily.tasks[id]?.status === 'started');
+  assert.ok(taskId, 'Fixture must retain the task started by the seed launch');
+  const revision = getLearnerRevision(server, accountId);
+  const competingBalance = balance - HERO_MONSTER_INVITE_COST;
+  const raceFired = installOneShotBatchRace(
+    server,
+    (statements) => statements.length === 1
+      && /json_set\(/i.test(statements[0]?.sql || '')
+      && /child_game_state/i.test(statements[0]?.sql || ''),
+    () => commitCompetingCampState(server, learnerId, 'glossbloom', competingBalance),
+  );
+
+  const task = before.daily.tasks[taskId];
+  const response = await postHeroCommand(server, {
+    command: 'start-task',
+    learnerId,
+    questId: before.daily.questId,
+    questFingerprint: before.daily.questFingerprint,
+    taskId,
+    requestId: 'marker-camp-race-start',
+    expectedLearnerRevision: revision,
+  }, accountId);
+  const payload = await response.json();
+
+  assert.equal(response.status, 200, `Repeated start task must succeed: ${JSON.stringify(payload)}`);
+  assert.equal(task.subjectId, payload.heroLaunch.subjectId);
+  assert.equal(raceFired(), true, 'The Camp commit must land immediately before the marker patch');
+  const progress = getHeroProgressRow(server, learnerId);
+  assert.equal(progress.daily.tasks[taskId].status, 'started');
+  assert.equal(progress.heroPool.monsters.glossbloom.owned, true);
+  assert.equal(progress.economy.balance, competingBalance);
 
   server.close();
 });

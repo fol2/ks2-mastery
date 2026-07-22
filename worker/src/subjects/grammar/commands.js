@@ -3,9 +3,11 @@ import { combineCommandEvents } from '../../projections/events.js';
 import { buildCommandProjectionReadModel } from '../../projections/read-models.js';
 import { projectGrammarRewards } from '../../projections/rewards.js';
 import { createServerGrammarEngine } from './engine.js';
+import { grammarGameplayItemIds } from './gameplay-state.js';
 import { buildGrammarCommandReadModel } from './read-models.js';
 import { GRAMMAR_CONTENT_RELEASE_ID } from './content.js';
 import { resolveProjectionInput } from '../projection-input.js';
+import { isLegacyGameplayWorkingSet } from '../gameplay-store.js';
 import {
   deriveGrammarConceptStarEvidence,
   computeGrammarMonsterStars,
@@ -160,12 +162,24 @@ export function createGrammarCommandHandlers({ now, random } = {}) {
       // requireLearnerWriteAccess; skip the duplicate membership read.
       { skipAccessCheck: true },
     );
+    const gameplayItemIds = grammarGameplayItemIds(runtimeRecord.subjectRecord);
+    const subjectRecord = typeof context.repository.readGrammarGameplayWorkingSet === 'function'
+      ? await context.repository.readGrammarGameplayWorkingSet(
+          context.session.accountId,
+          command.learnerId,
+          gameplayItemIds,
+          {
+            skipAccessCheck: true,
+            subjectRecord: runtimeRecord.subjectRecord,
+          },
+        )
+      : runtimeRecord.subjectRecord;
     const engine = createServerGrammarEngine({
       now: typeof now === 'function' ? now : () => nowValue,
     });
     const result = engine.apply({
       learnerId: command.learnerId,
-      subjectRecord: runtimeRecord.subjectRecord,
+      subjectRecord,
       latestSession: runtimeRecord.latestSession,
       command: command.command,
       payload: command.payload,
@@ -247,6 +261,12 @@ export function createGrammarCommandHandlers({ now, random } = {}) {
           practiceSession: result.practiceSession,
           gameState: projectedRewards.changedGameState,
           events: projectedEvents.events,
+          ...(!isLegacyGameplayWorkingSet(subjectRecord) ? {
+            grammarGameplay: {
+              previousData: subjectRecord.data,
+              resetAllItems: command.command === 'reset-learner',
+            },
+          } : {}),
           // U6 queryCount budget: when the engine re-uses the same
           // practice session id, tell the persistence plan so the
           // no-op abandon UPDATE can be elided.

@@ -20,6 +20,12 @@ import { buildPunctuationReadModel } from './read-models.js';
 import { applyRecordEventCommand } from './events.js';
 import { buildPunctuationDiagnostic } from './diagnostic.js';
 import { resolveProjectionInput } from '../projection-input.js';
+import { isLegacyGameplayWorkingSet } from '../gameplay-store.js';
+import {
+  composePunctuationGameplaySubjectRecord,
+  punctuationGameplayCandidateItemIds,
+  punctuationStarItemIds,
+} from './gameplay-state.js';
 
 // U9: `record-event` is a new telemetry-only command. It routes through
 // the same `repository.runSubjectCommand` path as the 8 existing
@@ -298,6 +304,18 @@ export function createPunctuationCommandHandlers({ now, random } = {}) {
         'punctuation',
         { skipAccessCheck: true },
       );
+      const diagnosticSubjectRecord = typeof context.repository.readPunctuationGameplayWorkingSet === 'function'
+        ? await context.repository.readPunctuationGameplayWorkingSet(
+            context.session.accountId,
+            command.learnerId,
+            punctuationStarItemIds(runtimeRecord.subjectRecord?.data),
+            {
+              skipAccessCheck: true,
+              subjectRecord: runtimeRecord.subjectRecord,
+              now: context.now,
+            },
+          )
+        : runtimeRecord.subjectRecord;
       // readSubjectRuntimeBundle returns { subjectRecord, latestSession } —
       // it does NOT include gameState. Load the learner's projection state
       // separately to get the monster-codex entries (starHighWater, maxStageEver).
@@ -311,7 +329,7 @@ export function createPunctuationCommandHandlers({ now, random } = {}) {
         ? rawStats
         : {};
       const diagnostic = buildPunctuationDiagnostic(
-        runtimeRecord.subjectRecord,
+        diagnosticSubjectRecord,
         codexEntries,
         telemetryStats,
       );
@@ -339,15 +357,34 @@ export function createPunctuationCommandHandlers({ now, random } = {}) {
       // requireLearnerWriteAccess; skip the duplicate membership read.
       { skipAccessCheck: true },
     );
+    const gameplayItemIds = punctuationGameplayCandidateItemIds(
+      runtimeRecord.subjectRecord,
+      command.command,
+      command.payload,
+      nowValue,
+    );
+    let subjectRecord = composePunctuationGameplaySubjectRecord(runtimeRecord.subjectRecord, [], nowValue);
+    if (typeof context.repository.readPunctuationGameplayWorkingSet === 'function') {
+      subjectRecord = await context.repository.readPunctuationGameplayWorkingSet(
+        context.session.accountId,
+        command.learnerId,
+        gameplayItemIds,
+        {
+          skipAccessCheck: true,
+          subjectRecord: runtimeRecord.subjectRecord,
+          now: nowValue,
+        },
+      );
+    }
     // U11: capture pre-command state for telemetry derivation (scheduler reason tracking).
-    const previousState = runtimeRecord.subjectRecord?.ui || null;
+    const previousState = subjectRecord?.ui || null;
     const engine = createServerPunctuationEngine({
       now: typeof now === 'function' ? now : () => nowValue,
       random,
     });
     const result = engine.apply({
       learnerId: command.learnerId,
-      subjectRecord: runtimeRecord.subjectRecord,
+      subjectRecord,
       latestSession: runtimeRecord.latestSession,
       command: command.command,
       payload: command.payload,
@@ -448,6 +485,12 @@ export function createPunctuationCommandHandlers({ now, random } = {}) {
         practiceSession: result.practiceSession,
         gameState: projectedRewards.changedGameState,
         events: projectedEvents.events,
+        ...(!isLegacyGameplayWorkingSet(subjectRecord) ? {
+          punctuationGameplay: {
+            previousData: subjectRecord?.data || {},
+            resetAllItems: command.command === 'reset-learner',
+          },
+        } : {}),
         // U6 queryCount budget: when the engine re-uses the same
         // practice session id, tell the persistence plan so the
         // no-op abandon UPDATE can be elided.

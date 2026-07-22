@@ -11,6 +11,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
+import { upsertBoundedSpellingState } from './helpers/bounded-spelling-state.js';
 import { createWorkerRepositoryServer } from './helpers/worker-server.js';
 
 const BASE_URL = 'https://repo.test';
@@ -121,6 +122,16 @@ function insertSubjectState(server, learnerId, subjectId, {
 } = {}) {
   const marker = FIXTURE[learnerId]?.[subjectId] || {};
   const stateData = data || { prefs: { mode: 'smart', marker }, progress: { possess: { stage: marker.progress || 0 } } };
+  if (subjectId === 'spelling') {
+    upsertBoundedSpellingState(server.DB.db, {
+      learnerId,
+      accountId: ACCOUNT_ID,
+      ui,
+      data: stateData,
+      now: updatedAt,
+    });
+    return;
+  }
   runSql(server, `
     INSERT INTO child_subject_state (learner_id, subject_id, ui_json, data_json, updated_at, updated_by_account_id)
     VALUES (?, ?, ?, ?, ?, ?)

@@ -25,6 +25,9 @@
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import { createWorkerRepositoryServer } from './helpers/worker-server.js';
 import { installMemoryStorage } from './helpers/memory-storage.js';
@@ -44,10 +47,23 @@ import {
 } from './helpers/post-mastery-seeds.js';
 import { buildSeedSql } from '../scripts/seed-post-mega.mjs';
 import { renderHubSurfaceFixture } from './helpers/react-render.js';
+import { SqliteD1Database } from './helpers/sqlite-d1.js';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const TODAY_MS = Date.UTC(2026, 0, 10);
 const TODAY_DAY = Math.floor(TODAY_MS / DAY_MS);
+const ROOT_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+
+function createDatabaseThrough(lastMigrationFilename) {
+  const database = new SqliteD1Database();
+  const migrationsDir = path.join(ROOT_DIR, 'worker', 'migrations');
+  for (const filename of fs.readdirSync(migrationsDir)
+    .filter((name) => name.endsWith('.sql') && name <= lastMigrationFilename)
+    .sort()) {
+    database.db.exec(fs.readFileSync(path.join(migrationsDir, filename), 'utf8'));
+  }
+  return database;
+}
 
 function seedAdultAccount(server, { id, email, platformRole = 'admin', now = 1 }) {
   server.DB.db.prepare(`
@@ -71,6 +87,18 @@ async function seedViaApi(server, as, body, { role = 'admin' } = {}) {
   });
 }
 
+async function restoreViaApi(server, as, body, { role = 'admin' } = {}) {
+  return server.fetchAs(as, 'https://repo.test/api/admin/spelling/restore-post-mega', {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      origin: 'https://repo.test',
+      'x-ks2-dev-platform-role': role,
+    },
+    body: JSON.stringify(body),
+  });
+}
+
 function readChildSubjectState(server, learnerId) {
   const row = server.DB.db.prepare(`
     SELECT data_json FROM child_subject_state
@@ -78,6 +106,75 @@ function readChildSubjectState(server, learnerId) {
   `).get(learnerId);
   if (!row) return null;
   try { return JSON.parse(row.data_json); } catch { return null; }
+}
+
+function readAuthoritativeSpellingState(server, learnerId) {
+  const learnerState = server.DB.db.prepare(`
+    SELECT data_json FROM spelling_learner_state WHERE learner_id = ?
+  `).get(learnerId);
+  if (!learnerState) return readChildSubjectState(server, learnerId);
+  const data = JSON.parse(learnerState.data_json);
+  data.progress = {};
+  data.guardian = {};
+  const wobbling = {};
+  const rows = server.DB.db.prepare(`
+    SELECT slug, progress_json, guardian_json, pattern_json
+    FROM spelling_item_state
+    WHERE learner_id = ?
+    ORDER BY slug
+  `).all(learnerId);
+  for (const row of rows) {
+    if (row.progress_json) data.progress[row.slug] = JSON.parse(row.progress_json);
+    if (row.guardian_json) data.guardian[row.slug] = JSON.parse(row.guardian_json);
+    if (row.pattern_json) wobbling[row.slug] = JSON.parse(row.pattern_json);
+  }
+  if (Object.keys(wobbling).length) data.pattern = { wobbling };
+  return data;
+}
+
+function readExactAuthoritativeSpellingState(server, learnerId) {
+  const learner = server.DB.db.prepare(`
+    SELECT ui_json, data_json, stats_json, updated_at, updated_by_account_id
+    FROM spelling_learner_state
+    WHERE learner_id = ?
+  `).get(learnerId);
+  if (!learner) return null;
+  const items = server.DB.db.prepare(`
+    SELECT slug, progress_json, guardian_json, pattern_json,
+           updated_at, updated_by_account_id
+    FROM spelling_item_state
+    WHERE learner_id = ?
+    ORDER BY slug
+  `).all(learnerId);
+  const achievements = server.DB.db.prepare(`
+    SELECT achievement_id, record_json, updated_at, updated_by_account_id
+    FROM spelling_achievement_state
+    WHERE learner_id = ?
+    ORDER BY achievement_id
+  `).all(learnerId);
+  const parseNullable = (value) => (value == null ? null : JSON.parse(value));
+  return {
+    ui: JSON.parse(learner.ui_json),
+    data: JSON.parse(learner.data_json),
+    stats: JSON.parse(learner.stats_json),
+    updatedAt: learner.updated_at,
+    updatedByAccountId: learner.updated_by_account_id,
+    items: items.map((item) => ({
+      slug: item.slug,
+      progress: parseNullable(item.progress_json),
+      guardian: parseNullable(item.guardian_json),
+      pattern: parseNullable(item.pattern_json),
+      updatedAt: item.updated_at,
+      updatedByAccountId: item.updated_by_account_id,
+    })),
+    achievements: achievements.map((achievement) => ({
+      achievementId: achievement.achievement_id,
+      recordJson: achievement.record_json,
+      record: JSON.parse(achievement.record_json),
+      updatedAt: achievement.updated_at,
+      updatedByAccountId: achievement.updated_by_account_id,
+    })),
+  };
 }
 
 function learnerRow(server, learnerId) {
@@ -235,7 +332,7 @@ test('seedFullCoreMega from shared helper still produces a uniform mega baseline
 // Worker API tests — the POST /api/admin/spelling/seed-post-mega endpoint.
 // -----------------------------------------------------------------------------
 
-test('Worker POST seed-post-mega: fresh-graduate writes child_subject_state, auto-creates learner, mutation receipt scopeType=platform', async () => {
+test('Worker POST seed-post-mega: fresh-graduate writes bounded Spelling state, auto-creates learner, mutation receipt scopeType=platform', async () => {
   const server = createWorkerRepositoryServer();
   try {
     seedAdultAccount(server, { id: 'adult-admin', email: 'admin@example.com', platformRole: 'admin' });
@@ -262,9 +359,9 @@ test('Worker POST seed-post-mega: fresh-graduate writes child_subject_state, aut
     assert.equal(learner.year_group, 'Y5');
     assert.equal(learner.name, 'Seed learner');
 
-    // child_subject_state has the shape's data.
-    const state = readChildSubjectState(server, 'learner-seed-1');
-    assert.ok(state, 'child_subject_state row persisted');
+    // The authoritative split store has the shape's data.
+    const state = readAuthoritativeSpellingState(server, 'learner-seed-1');
+    assert.ok(state, 'bounded Spelling state persisted');
     assert.ok(state.progress, 'progress map on persisted data');
     assert.deepEqual(state.guardian, {});
     assert.equal(Object.prototype.hasOwnProperty.call(state, 'postMega'), false);
@@ -305,7 +402,7 @@ test('Worker POST seed-post-mega: guardian-first-patrol persists 8 guardian entr
     const payload = await response.json();
     assert.equal(response.status, 200);
     assert.equal(payload.ok, true);
-    const state = readChildSubjectState(server, 'learner-first-patrol');
+    const state = readAuthoritativeSpellingState(server, 'learner-first-patrol');
     assert.ok(state);
     const guardianEntries = Object.values(state.guardian);
     assert.equal(guardianEntries.length, 8);
@@ -330,7 +427,7 @@ test('Worker POST seed-post-mega: content-added-after-graduation stamps spelling
       mutation: { requestId: 'req-seed-ca', correlationId: 'corr-seed-ca' },
     });
     assert.equal(response.status, 200);
-    const state = readChildSubjectState(server, 'learner-content-add');
+    const state = readAuthoritativeSpellingState(server, 'learner-content-add');
     assert.equal(state.postMega.unlockedContentReleaseId, 'spelling-p1.5-legacy');
     assert.ok(
       state.postMega.unlockedPublishedCoreCount
@@ -424,23 +521,110 @@ test('Worker POST seed-post-mega: idempotent on repeat with identical payload', 
 // SQL is structurally valid and contains the exact seed shape's JSON.
 // -----------------------------------------------------------------------------
 
-test('CLI buildSeedSql emits PRAGMA-bracketed transaction with learner upsert + child_subject_state upsert', () => {
+test('CLI buildSeedSql emits one schema authority at a time and executes before or after migration 0023', () => {
   const nowTs = TODAY_MS;
-  const sql = buildSeedSql({
+  const legacySql = buildSeedSql({
     learnerId: 'learner-cli-1',
     shapeName: 'fresh-graduate',
     today: TODAY_DAY,
     nowTs,
+    authority: 'legacy',
   });
-  assert.ok(sql.includes('PRAGMA foreign_keys = OFF'), 'script disables FKs');
-  assert.ok(sql.includes('BEGIN'), 'script wraps statements in a transaction');
-  assert.ok(sql.includes('COMMIT'), 'script commits before re-enabling FKs');
-  assert.ok(sql.includes('PRAGMA foreign_keys = ON'), 'script re-enables FKs');
-  assert.ok(sql.includes("INSERT INTO learner_profiles"), 'upserts learner profile');
-  assert.ok(sql.includes("ON CONFLICT(id) DO NOTHING"), 'learner upsert is conflict-safe');
-  assert.ok(sql.includes("INSERT INTO child_subject_state"), 'upserts child subject state');
-  assert.ok(sql.includes("'learner-cli-1'"), 'embeds learner id literal');
-  assert.ok(sql.includes('"progress"'), 'embeds the progress key of the seed data JSON');
+  assert.ok(legacySql.includes('PRAGMA foreign_keys = OFF'), 'script disables FKs');
+  assert.ok(legacySql.includes('BEGIN'), 'script wraps statements in a transaction');
+  assert.ok(legacySql.includes('COMMIT'), 'script commits before re-enabling FKs');
+  assert.ok(legacySql.includes('PRAGMA foreign_keys = ON'), 'script re-enables FKs');
+  assert.ok(legacySql.includes('INSERT INTO child_subject_state'), 'legacy SQL writes only the legacy authority');
+  assert.ok(!legacySql.includes('spelling_learner_state'), 'legacy SQL never parses a bounded table name');
+  assert.ok(!legacySql.includes('bounded_gameplay_state_migrations'), 'legacy SQL does not depend on a missing marker table');
+
+  const legacyDb = createDatabaseThrough('0022_practice_sessions_active_hot_path_index.sql');
+  try {
+    legacyDb.db.exec(legacySql);
+    const legacy = legacyDb.db.prepare(`
+      SELECT data_json FROM child_subject_state
+      WHERE learner_id = 'learner-cli-1' AND subject_id = 'spelling'
+    `).get();
+    assert.ok(JSON.parse(legacy.data_json).progress, 'legacy authority receives the seed shape');
+  } finally {
+    legacyDb.close();
+  }
+
+  const boundedSql = buildSeedSql({
+    learnerId: 'learner-cli-2',
+    shapeName: 'fresh-graduate',
+    today: TODAY_DAY,
+    nowTs,
+    authority: 'bounded',
+  });
+  assert.ok(boundedSql.includes('INSERT INTO spelling_learner_state'), 'bounded SQL writes learner state');
+  assert.ok(boundedSql.includes('INSERT INTO spelling_item_state'), 'bounded SQL expands item rows in SQLite');
+  assert.ok(boundedSql.includes('INSERT INTO spelling_seed_preimages'), 'bounded SQL archives before overwrite');
+  assert.ok(!boundedSql.includes('INSERT INTO child_subject_state'), 'bounded SQL never rewrites the cold legacy blob');
+
+  const boundedDb = createDatabaseThrough('0024_post_mega_seed_preimages.sql');
+  try {
+    boundedDb.db.exec(boundedSql);
+    const learner = boundedDb.db.prepare(`
+      SELECT data_json FROM spelling_learner_state WHERE learner_id = 'learner-cli-2'
+    `).get();
+    const itemCount = boundedDb.db.prepare(`
+      SELECT COUNT(*) AS count FROM spelling_item_state WHERE learner_id = 'learner-cli-2'
+    `).get().count;
+    assert.ok(JSON.parse(learner.data_json), 'bounded learner envelope is valid JSON');
+    assert.ok(itemCount > 0, 'bounded authority receives row-addressed item state');
+  } finally {
+    boundedDb.close();
+  }
+});
+
+test('CLI bounded seed aborts without writes when an existing learner has lost its parent state row', () => {
+  const db = createDatabaseThrough('0024_post_mega_seed_preimages.sql');
+  try {
+    db.db.prepare(`
+      INSERT INTO learner_profiles (
+        id, name, year_group, avatar_color, goal, daily_minutes,
+        created_at, updated_at, state_revision
+      ) VALUES ('learner-cli-row-hole', 'Learner', 'Y5', '#8A4FFF', '', 15, ?, ?, 0)
+    `).run(TODAY_MS, TODAY_MS);
+    db.db.prepare(`
+      DELETE FROM spelling_learner_state
+      WHERE learner_id = 'learner-cli-row-hole'
+    `).run();
+    db.db.prepare(`
+      INSERT INTO spelling_item_state (
+        learner_id, slug, progress_json, guardian_json, pattern_json,
+        updated_at, updated_by_account_id
+      ) VALUES ('learner-cli-row-hole', 'cold-history', ?, NULL, NULL, ?, NULL)
+    `).run(JSON.stringify({ stage: 3, attempts: 4, correct: 3, wrong: 1 }), TODAY_MS);
+
+    const sql = buildSeedSql({
+      learnerId: 'learner-cli-row-hole',
+      shapeName: 'guardian-first-patrol',
+      today: TODAY_DAY,
+      nowTs: TODAY_MS + 1,
+      authority: 'bounded',
+    });
+    assert.throws(
+      () => db.db.exec(sql),
+      /existing learner is missing bounded Spelling state/,
+    );
+    assert.equal(db.db.isTransaction, false, 'the guard rolls back the complete CLI transaction');
+    assert.equal(db.db.prepare(`
+      SELECT COUNT(*) AS count FROM spelling_learner_state
+      WHERE learner_id = 'learner-cli-row-hole'
+    `).get().count, 0, 'the missing parent row is not silently recreated');
+    assert.equal(db.db.prepare(`
+      SELECT COUNT(*) AS count FROM spelling_item_state
+      WHERE learner_id = 'learner-cli-row-hole'
+    `).get().count, 1, 'cold item history is untouched');
+    assert.equal(db.db.prepare(`
+      SELECT COUNT(*) AS count FROM spelling_seed_preimages
+      WHERE learner_id = 'learner-cli-row-hole'
+    `).get().count, 0, 'a failed seed cannot claim to have captured a preimage');
+  } finally {
+    db.close();
+  }
 });
 
 test('CLI buildSeedSql throws unknown_shape on bogus shape', () => {
@@ -492,7 +676,59 @@ test('[U3 HIGH correctness] missing `today` in the request body falls back to ts
   }
 });
 
-test('[U3 HIGH adversarial] pre-image captured on overwrite — receipt carries previousDataJson', async () => {
+test('[0023 integrity] seed fails closed when an existing learner loses the bounded Spelling row', async () => {
+  const server = createWorkerRepositoryServer();
+  try {
+    seedAdultAccount(server, { id: 'adult-admin', email: 'admin@example.com', platformRole: 'admin' });
+    const first = await seedViaApi(server, 'adult-admin', {
+      learnerId: 'learner-missing-bounded-row',
+      shapeName: 'fresh-graduate',
+      today: TODAY_DAY,
+      mutation: { requestId: 'req-seed-hole-1', correlationId: 'corr-seed-hole-1' },
+    });
+    assert.equal(first.status, 200, await first.text());
+
+    const itemCountBefore = server.DB.db.prepare(`
+      SELECT COUNT(*) AS count
+      FROM spelling_item_state
+      WHERE learner_id = 'learner-missing-bounded-row'
+    `).get().count;
+    assert.ok(itemCountBefore > 0);
+    server.DB.db.prepare(`
+      DELETE FROM spelling_learner_state
+      WHERE learner_id = 'learner-missing-bounded-row'
+    `).run();
+
+    const blocked = await seedViaApi(server, 'adult-admin', {
+      learnerId: 'learner-missing-bounded-row',
+      shapeName: 'guardian-first-patrol',
+      today: TODAY_DAY,
+      mutation: { requestId: 'req-seed-hole-2', correlationId: 'corr-seed-hole-2' },
+    });
+    const payload = await blocked.json();
+    assert.equal(blocked.status, 503, JSON.stringify(payload));
+    assert.equal(payload.code, 'bounded_gameplay_state_unavailable');
+    assert.equal(server.DB.db.prepare(`
+      SELECT COUNT(*) AS count
+      FROM spelling_item_state
+      WHERE learner_id = 'learner-missing-bounded-row'
+    `).get().count, itemCountBefore, 'cold item history must not be replaced');
+    assert.equal(server.DB.db.prepare(`
+      SELECT state_revision
+      FROM learner_profiles
+      WHERE id = 'learner-missing-bounded-row'
+    `).get().state_revision, 0, 'blocked seed must not advance learner revision');
+    assert.equal(server.DB.db.prepare(`
+      SELECT COUNT(*) AS count
+      FROM mutation_receipts
+      WHERE request_id = 'req-seed-hole-2'
+    `).get().count, 0, 'blocked seed must not write a receipt');
+  } finally {
+    server.close();
+  }
+});
+
+test('[U3 HIGH adversarial] bounded pre-image restores exact current state without fat receipts', async () => {
   const server = createWorkerRepositoryServer();
   try {
     seedAdultAccount(server, { id: 'adult-admin', email: 'admin@example.com', platformRole: 'admin' });
@@ -506,9 +742,67 @@ test('[U3 HIGH adversarial] pre-image captured on overwrite — receipt carries 
     const firstPayload = await first.json();
     assert.equal(first.status, 200, JSON.stringify(firstPayload));
     // On fresh learner creation there is no pre-image.
+    assert.equal(firstPayload.postMegaSeed.preimageId, null);
     assert.equal(firstPayload.postMegaSeed.previousDataJson, null);
+    const probeItem = server.DB.db.prepare(`
+      SELECT slug, progress_json
+      FROM spelling_item_state
+      WHERE learner_id = 'learner-preimage'
+      ORDER BY slug
+      LIMIT 1
+    `).get();
+    const probeProgress = JSON.parse(probeItem.progress_json);
+    probeProgress.restoreProbe = 'exact-source-row';
+    server.DB.db.prepare(`
+      UPDATE spelling_learner_state
+      SET ui_json = ?, stats_json = ?, updated_at = ?, updated_by_account_id = ?
+      WHERE learner_id = 'learner-preimage'
+    `).run(
+      JSON.stringify({ phase: 'restore-probe' }),
+      JSON.stringify({ restoreProbe: 'exact-source-row' }),
+      TODAY_MS - 12_345,
+      'adult-admin',
+    );
+    server.DB.db.prepare(`
+      UPDATE spelling_item_state
+      SET progress_json = ?, updated_at = ?, updated_by_account_id = ?
+      WHERE learner_id = 'learner-preimage' AND slug = ?
+    `).run(
+      JSON.stringify(probeProgress),
+      TODAY_MS - 54_321,
+      'adult-admin',
+      probeItem.slug,
+    );
+    const achievementRows = [
+      {
+        achievementId: 'achievement:spelling:guardian:7-day:restore-probe',
+        record: { unlockedAt: TODAY_MS - 90_000, source: 'guardian' },
+        updatedAt: TODAY_MS - 80_000,
+      },
+      {
+        achievementId: 'achievement:spelling:boss:clean-sweep:restore-probe',
+        record: { unlockedAt: TODAY_MS - 70_000, source: 'boss', score: 8 },
+        updatedAt: TODAY_MS - 60_000,
+      },
+    ];
+    const insertAchievement = server.DB.db.prepare(`
+      INSERT INTO spelling_achievement_state (
+        learner_id, achievement_id, record_json, updated_at, updated_by_account_id
+      ) VALUES (?, ?, ?, ?, ?)
+    `);
+    for (const achievement of achievementRows) {
+      insertAchievement.run(
+        'learner-preimage',
+        achievement.achievementId,
+        JSON.stringify(achievement.record),
+        achievement.updatedAt,
+        'adult-admin',
+      );
+    }
+    const baseline = readAuthoritativeSpellingState(server, 'learner-preimage');
+    const exactBaseline = readExactAuthoritativeSpellingState(server, 'learner-preimage');
 
-    // Second seed OVERWRITES — must capture the baseline as pre-image.
+    // Second seed OVERWRITES — D1 captures the authoritative split rows.
     const second = await seedViaApi(server, 'adult-admin', {
       learnerId: 'learner-preimage',
       shapeName: 'guardian-first-patrol',
@@ -518,24 +812,71 @@ test('[U3 HIGH adversarial] pre-image captured on overwrite — receipt carries 
     const secondPayload = await second.json();
     assert.equal(second.status, 200, JSON.stringify(secondPayload));
     assert.ok(
-      typeof secondPayload.postMegaSeed.previousDataJson === 'string'
-        && secondPayload.postMegaSeed.previousDataJson.length > 0,
-      'overwrite must capture previousDataJson',
+      typeof secondPayload.postMegaSeed.preimageId === 'string'
+        && secondPayload.postMegaSeed.preimageId.length > 0,
+      'overwrite must return a bounded preimage id',
     );
-    // The pre-image must be the baseline's progress map (fresh-graduate).
-    const preImage = JSON.parse(secondPayload.postMegaSeed.previousDataJson);
-    assert.ok(preImage?.progress, 'pre-image includes the fresh-graduate progress map');
-    assert.deepEqual(preImage.guardian, {}, 'pre-image guardian is empty (fresh-graduate shape)');
+    assert.equal(secondPayload.postMegaSeed.previousDataJson, null);
+    assert.equal(secondPayload.postMegaSeed.rollbackAuthority, 'spelling_seed_preimages');
 
-    // The receipt row's response_json also carries the pre-image.
+    // The receipt carries only the id, never the learner's item history.
     const receipt = server.DB.db.prepare(`
       SELECT response_json FROM mutation_receipts WHERE request_id = ?
     `).get('req-seed-preimage-2');
     const storedResponse = JSON.parse(receipt.response_json);
     assert.equal(
-      storedResponse.postMegaSeed.previousDataJson,
-      secondPayload.postMegaSeed.previousDataJson,
-      'receipt.response_json.postMegaSeed.previousDataJson must match the API response',
+      storedResponse.postMegaSeed.preimageId,
+      secondPayload.postMegaSeed.preimageId,
+      'receipt must point to the D1 preimage',
+    );
+    assert.ok(receipt.response_json.length < 2_000, 'receipt size is independent of word history');
+
+    const archive = server.DB.db.prepare(`
+      SELECT item_count, achievement_count
+      FROM spelling_seed_preimages WHERE preimage_id = ?
+    `).get(secondPayload.postMegaSeed.preimageId);
+    const archivedItems = server.DB.db.prepare(`
+      SELECT COUNT(*) AS count FROM spelling_seed_preimage_items WHERE preimage_id = ?
+    `).get(secondPayload.postMegaSeed.preimageId);
+    assert.equal(archivedItems.count, archive.item_count);
+    const archivedAchievements = server.DB.db.prepare(`
+      SELECT achievement_id, record_json, source_updated_at,
+             source_updated_by_account_id
+      FROM spelling_seed_preimage_achievements
+      WHERE preimage_id = ?
+      ORDER BY achievement_id
+    `).all(secondPayload.postMegaSeed.preimageId).map((row) => ({ ...row }));
+    assert.equal(archive.achievement_count, achievementRows.length);
+    assert.deepEqual(
+      archivedAchievements,
+      exactBaseline.achievements.map((achievement) => ({
+        achievement_id: achievement.achievementId,
+        record_json: achievement.recordJson,
+        source_updated_at: achievement.updatedAt,
+        source_updated_by_account_id: achievement.updatedByAccountId,
+      })),
+      'overwrite archives every achievement value and source field exactly',
+    );
+    assert.deepEqual(
+      readExactAuthoritativeSpellingState(server, 'learner-preimage').achievements,
+      [],
+      'replacement seed clears achievements which are absent from the selected shape',
+    );
+
+    const restore = await restoreViaApi(server, 'adult-admin', {
+      learnerId: 'learner-preimage',
+      preimageId: secondPayload.postMegaSeed.preimageId,
+      mutation: { requestId: 'req-seed-restore-1', correlationId: 'corr-seed-restore-1' },
+    });
+    const restorePayload = await restore.json();
+    assert.equal(restore.status, 200, JSON.stringify(restorePayload));
+    assert.equal(restorePayload.postMegaSeedRestore.preimageId, secondPayload.postMegaSeed.preimageId);
+    assert.equal(restorePayload.postMegaSeedRestore.achievementCount, achievementRows.length);
+    assert.deepEqual(readAuthoritativeSpellingState(server, 'learner-preimage'), baseline);
+    assert.deepEqual(
+      readExactAuthoritativeSpellingState(server, 'learner-preimage'),
+      exactBaseline,
+      'rollback restores learner, item, and achievement values and source fields exactly',
     );
   } finally {
     server.close();
@@ -581,9 +922,9 @@ test('[U3 HIGH adversarial] cross-tenant overwrite rejected with 409 seed_requir
     assert.equal(confirmed.status, 200, JSON.stringify(confirmedPayload));
     assert.equal(confirmedPayload.postMegaSeed.confirmedOverwrite, true);
     assert.ok(
-      typeof confirmedPayload.postMegaSeed.previousDataJson === 'string'
-        && confirmedPayload.postMegaSeed.previousDataJson.length > 0,
-      'confirmed cross-tenant overwrite must capture pre-image',
+      typeof confirmedPayload.postMegaSeed.preimageId === 'string'
+        && confirmedPayload.postMegaSeed.preimageId.length > 0,
+      'confirmed cross-tenant overwrite must archive a bounded pre-image',
     );
   } finally {
     server.close();
@@ -616,8 +957,8 @@ test('[U3 HIGH adversarial] admin with membership can overwrite their own learne
     // Not confirmedOverwrite because the admin has owner membership.
     assert.equal(secondPayload.postMegaSeed.confirmedOverwrite, false);
     assert.ok(
-      typeof secondPayload.postMegaSeed.previousDataJson === 'string',
-      'own-learner overwrite still captures pre-image for audit',
+      typeof secondPayload.postMegaSeed.preimageId === 'string',
+      'own-learner overwrite still archives a bounded pre-image for audit',
     );
   } finally {
     server.close();

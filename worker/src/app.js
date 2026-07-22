@@ -604,8 +604,8 @@ function requireSubjectCommandAvailable(command, env = {}) {
   });
 }
 
-// P3 U4: standalone hero progress marker write (non-fatal, no CAS).
-// Reads current progress, initialises daily if stale, marks task started.
+// P3 U4: standalone hero progress marker write. The repository applies only
+// the daily field atomically so a concurrent Camp/economy commit is preserved.
 async function writeHeroProgressMarker({ repository, learnerId, accountId, questContext, taskId, requestId }) {
   const nowTs = Date.now();
   let state = await repository.readHeroProgress(learnerId);
@@ -617,7 +617,7 @@ async function writeHeroProgressMarker({ repository, learnerId, accountId, quest
     };
   }
   state = markTaskStarted(state, taskId, requestId, nowTs);
-  await repository.writeHeroProgress(learnerId, accountId, state);
+  await repository.writeHeroProgressDaily(learnerId, accountId, state);
 }
 
 function requireDemoWriteAllowed(session) {
@@ -634,6 +634,49 @@ function requireLegacyRuntimeWriteAllowed(session, env = {}) {
       code: 'subject_command_required',
     });
   }
+}
+
+const GAMEPLAY_MUTATION_PATHS = Object.freeze(new Set([
+  '/api/demo/session',
+  '/api/demo/reset',
+  '/api/learners',
+  '/api/learners/reset-progress',
+  '/api/child-subject-state',
+  '/api/practice-sessions',
+  '/api/child-game-state',
+  '/api/event-log',
+  '/api/debug/reset',
+  '/api/admin/spelling/seed-post-mega',
+  '/api/admin/spelling/restore-post-mega',
+]));
+
+/**
+ * A bounded release-only write fence for schema authority handovers.
+ *
+ * Reads remain available while operators drain admitted mutations, reconcile
+ * legacy state into the item tables, and flip the 0023 readiness marker. The
+ * fence is an environment flag rather than a per-request D1 lookup, so normal
+ * gameplay pays no database or network cost after the rollout.
+ */
+function isGameplayMutationRequest(pathname, method) {
+  if (!['POST', 'PUT', 'DELETE'].includes(String(method || '').toUpperCase())) return false;
+  if (GAMEPLAY_MUTATION_PATHS.has(pathname)) return true;
+  if (/^\/api\/subjects\/[^/]+\/command$/.test(pathname || '')) return true;
+  if (pathname === '/api/hero/command') return true;
+  return /^\/api\/admin\/learners\/[^/]+\/grammar\/transfer-evidence\//.test(pathname || '');
+}
+
+function gameplayMutationPauseResponse(env = {}) {
+  if (!envFlagEnabled(env.GAMEPLAY_MUTATIONS_PAUSED)) return null;
+  return json({
+    ok: false,
+    error: 'gameplay_mutations_paused',
+    code: 'gameplay_mutations_paused',
+    retryable: true,
+    message: 'Progress writes are briefly paused for a storage upgrade. Retry shortly; saved progress is safe.',
+  }, 503, {
+    'retry-after': '30',
+  });
 }
 
 async function publicSourceAssetResponse(request, env = {}) {
@@ -915,6 +958,11 @@ export function createWorkerApp({
       const runHandler = async () => {
         if (isPublicSourceLockdownPath(url.pathname)) {
           return publicSourceAssetResponse(request, env);
+        }
+
+        if (isGameplayMutationRequest(url.pathname, request.method)) {
+          const paused = gameplayMutationPauseResponse(env);
+          if (paused) return paused;
         }
 
         if (url.pathname === '/api/health') {
@@ -1727,40 +1775,89 @@ export function createWorkerApp({
             const progressTask = heroProgressState?.daily?.tasks?.[body.taskId];
             const expectedSubjectId = progressTask?.subjectId || null;
 
-            // Read recent completed practice sessions (last 24h, matching subject)
-            const db = requireDatabase(env);
-            const oneDayAgo = nowTs - (24 * 60 * 60 * 1000);
+            // Read only bounded practice evidence for the task's subject. The
+            // session table is the authoritative lifecycle record and is
+            // written atomically with subject state, so Hero never needs to
+            // load a learner-wide subject document as fallback evidence.
+            // Extract only the tiny heroContext fragments in D1; neither the
+            // active session body nor completed summary crosses into Worker
+            // memory on this latency-critical command.
+            const db = requireDatabaseWithCapacity(env, capacity);
+            // A task can be completed at the start of its UTC task day and
+            // claimed until two hours after that day ends. Keep a one-hour
+            // safety margin around that 26-hour contract. The result count is
+            // still fixed, and an explicitly supplied session id is included
+            // by primary-key lookup even when newer sessions fill the window.
+            const evidenceLookbackStart = nowTs - (27 * 60 * 60 * 1000);
+            const requestedPracticeSessionId = typeof body?.practiceSessionId === 'string'
+              ? body.practiceSessionId
+              : '';
             const practiceSessionRows = expectedSubjectId
               ? await all(db, `
-                  SELECT id, learner_id, subject_id, session_kind, status, summary_json, updated_at
-                  FROM practice_sessions
-                  WHERE learner_id = ? AND status = 'completed' AND updated_at > ? AND subject_id = ?
-                  ORDER BY updated_at DESC
-                  LIMIT 20
-                `, [heroLearnerId, oneDayAgo, expectedSubjectId])
-              : await all(db, `
-                  SELECT id, learner_id, subject_id, session_kind, status, summary_json, updated_at
-                  FROM practice_sessions
-                  WHERE learner_id = ? AND status = 'completed' AND updated_at > ?
-                  ORDER BY updated_at DESC
-                  LIMIT 20
-                `, [heroLearnerId, oneDayAgo]);
-
-            // Read subject ui states (for fallback evidence)
-            const subjectUiRows = await all(db, `
-              SELECT subject_id, ui_json FROM child_subject_state WHERE learner_id = ?
-            `, [heroLearnerId]);
-            const subjectUiStates = {};
-            for (const row of subjectUiRows) {
-              try { subjectUiStates[row.subject_id] = JSON.parse(row.ui_json || 'null'); } catch { subjectUiStates[row.subject_id] = null; }
-            }
+                  WITH candidate_ids AS (
+                    SELECT id, 0 AS source_rank, updated_at
+                    FROM practice_sessions
+                    WHERE ? <> '' AND id = ?
+                    UNION ALL
+                    SELECT id, 1 AS source_rank, updated_at
+                    FROM (
+                      SELECT id, updated_at
+                      FROM practice_sessions
+                      WHERE learner_id = ?
+                        AND status IN ('active', 'completed')
+                        AND updated_at >= ?
+                        AND subject_id = ?
+                        AND (? = '' OR id <> ?)
+                      ORDER BY updated_at DESC, id DESC
+                      LIMIT 20
+                    ) recent
+                  )
+                  SELECT
+                    session.id,
+                    session.learner_id,
+                    session.subject_id,
+                    session.session_kind,
+                    session.status,
+                    CASE
+                      WHEN json_valid(session.summary_json)
+                        THEN json_extract(session.summary_json, '$.heroContext')
+                      ELSE NULL
+                    END AS summary_hero_context_json,
+                    CASE
+                      WHEN session.status = 'active' AND json_valid(session.session_state_json)
+                        THEN json_extract(session.session_state_json, '$.heroContext')
+                      ELSE NULL
+                    END AS active_hero_context_json,
+                    session.updated_at
+                  FROM candidate_ids candidate
+                  JOIN practice_sessions session ON session.id = candidate.id
+                  WHERE session.learner_id = ?
+                    AND session.subject_id = ?
+                    AND session.status IN ('active', 'completed')
+                  ORDER BY
+                    candidate.source_rank,
+                    CASE WHEN session.status = 'completed' THEN 0 ELSE 1 END,
+                    session.updated_at DESC,
+                    session.id DESC
+                  LIMIT 21
+                `, [
+                  requestedPracticeSessionId,
+                  requestedPracticeSessionId,
+                  heroLearnerId,
+                  evidenceLookbackStart,
+                  expectedSubjectId,
+                  requestedPracticeSessionId,
+                  requestedPracticeSessionId,
+                  heroLearnerId,
+                  expectedSubjectId,
+                ])
+              : [];
 
             // Run the pure claim resolver
             const claimResult = resolveHeroClaimCommand({
               body,
               heroProgressState,
               practiceSessionRows,
-              subjectUiStates,
               nowTs,
               economyEnabled: envFlagEnabled(heroCommandEnv.HERO_MODE_ECONOMY_ENABLED),
             });
@@ -3176,6 +3273,40 @@ export function createWorkerApp({
             today: body?.today == null
               ? undefined
               : (Number.isFinite(Number(body.today)) ? Number(body.today) : null),
+            confirmOverwrite: body?.confirmOverwrite === true,
+            mutation: mutationFromRequest(body, request),
+          });
+          return json({ ok: true, ...result });
+        }
+
+        // Restore an authoritative bounded-state pre-image created by the
+        // Post-Mega seed tool. Item history moves D1-to-D1; it is never
+        // serialised through the Worker response or mutation receipt.
+        if (url.pathname === '/api/admin/spelling/restore-post-mega' && request.method === 'POST') {
+          requireSameOrigin(request, env);
+          requireMutationCapability(session);
+          const restoreDb = requireDatabase(env);
+          const restoreSubject = rateLimitSubject(request, env);
+          const restoreLimit = await consumeRateLimit(restoreDb, {
+            bucket: 'admin-post-mega-restore-ip',
+            identifier: restoreSubject.bucketKey,
+            limit: 10,
+            windowMs: 60_000,
+            now: Date.now(),
+          });
+          if (!restoreLimit.allowed) {
+            return rateLimitResponse({
+              code: 'post_mega_seed_restore_rate_limited',
+              retryAfterSeconds: restoreLimit.retryAfterSeconds,
+              extra: {
+                message: 'Too many post-Mega restore requests from this connection. Slow down and retry.',
+              },
+            });
+          }
+          const body = await readJson(request);
+          const result = await repository.restorePostMegaSeedPreimage(session.accountId, {
+            learnerId: typeof body?.learnerId === 'string' ? body.learnerId : '',
+            preimageId: typeof body?.preimageId === 'string' ? body.preimageId : '',
             confirmOverwrite: body?.confirmOverwrite === true,
             mutation: mutationFromRequest(body, request),
           });

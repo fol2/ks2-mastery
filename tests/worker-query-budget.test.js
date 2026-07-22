@@ -13,6 +13,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { createWorkerApp } from '../worker/src/app.js';
+import { createWorkerSubjectRuntime } from '../worker/src/subjects/runtime.js';
 import { createSession } from '../worker/src/auth.js';
 import { COMMAND_PROJECTION_MODEL_KEY } from '../worker/src/read-models/learner-read-models.js';
 import { __setRequestLimitsCleanupRngForTests } from '../worker/src/rate-limit.js';
@@ -174,6 +175,25 @@ function insertSubjectState(server, accountId, learnerId, subjectId = 'spelling'
     NOW,
     accountId,
   ]);
+  if (subjectId === 'spelling') {
+    runSql(server, `
+      INSERT INTO spelling_learner_state (
+        learner_id, ui_json, data_json, stats_json, updated_at, updated_by_account_id
+      ) VALUES (?, ?, ?, '{}', ?, ?)
+      ON CONFLICT(learner_id) DO UPDATE SET
+        ui_json = excluded.ui_json,
+        data_json = excluded.data_json,
+        stats_json = excluded.stats_json,
+        updated_at = excluded.updated_at,
+        updated_by_account_id = excluded.updated_by_account_id
+    `, [
+      learnerId,
+      JSON.stringify({ phase: 'idle' }),
+      JSON.stringify({ prefs: { mode: 'smart' } }),
+      NOW,
+      accountId,
+    ]);
+  }
 }
 
 function insertPracticeSession(server, accountId, learnerId, { id, status = 'completed', createdAt = NOW }) {
@@ -336,11 +356,17 @@ function eventLogReads(DB) {
 function createCommandHarness({ subjectId = 'spelling', accountId = 'adult-cmd' } = {}) {
   const DB = createMigratedSqliteD1Database();
   seedAccountLearner(DB, { accountId });
-  const app = createWorkerApp({ now: () => NOW });
+  const app = createWorkerApp({
+    now: () => NOW,
+    ...(subjectId === 'punctuation'
+      ? { subjectRuntime: createWorkerSubjectRuntime({ punctuation: { random: () => 0 } }) }
+      : {}),
+  });
   const env = {
     DB,
     AUTH_MODE: 'development-stub',
     ENVIRONMENT: 'test',
+    ...(subjectId === 'punctuation' ? { PUNCTUATION_SUBJECT_ENABLED: 'true' } : {}),
   };
   let revision = 0;
   let sequence = 0;
@@ -565,6 +591,308 @@ test('U3 query budget: subject command hot-path 2000-event learner ≤ BUDGET_CO
       0,
       `hot path must not read from event_log; saw ${reads.length} scans`,
     );
+  } finally {
+    harness.close();
+  }
+});
+
+test('spelling gameplay cost is independent of lifetime profile size', async () => {
+  const harness = createCommandHarness();
+  try {
+    const start = await harness.command('start-session', {
+      mode: 'single',
+      slug: 'possess',
+      length: 1,
+    });
+    assert.equal(start.response.status, 200, JSON.stringify(start.body));
+
+    const coldProgress = {};
+    const insertColdItem = harness.DB.db.prepare(`
+      INSERT INTO spelling_item_state (
+        learner_id, slug, progress_json, guardian_json, pattern_json, updated_at, updated_by_account_id
+      ) VALUES ('learner-cmd', ?, ?, NULL, NULL, ?, 'adult-cmd')
+    `);
+    for (let index = 0; index < 10_000; index += 1) {
+      const slug = `retired-history-${index}`;
+      const progress = { stage: index % 5, attempts: 10, correct: 8, wrong: 2, dueDay: 1 };
+      coldProgress[slug] = progress;
+      insertColdItem.run(slug, JSON.stringify(progress), NOW - index);
+    }
+    const insertColdAchievement = harness.DB.db.prepare(`
+      INSERT INTO spelling_achievement_state (
+        learner_id, achievement_id, record_json, updated_at, updated_by_account_id
+      ) VALUES ('learner-cmd', ?, ?, ?, 'adult-cmd')
+    `);
+    for (let index = 0; index < 10_000; index += 1) {
+      insertColdAchievement.run(
+        `achievement:spelling:boss:clean-sweep:learner-cmd:history-${index}`,
+        JSON.stringify({ unlockedAt: NOW - index }),
+        NOW - index,
+      );
+    }
+    const coldBlob = JSON.stringify({ prefs: { mode: 'smart' }, progress: coldProgress });
+    harness.DB.db.prepare(`
+      INSERT INTO child_subject_state (
+        learner_id, subject_id, ui_json, data_json, updated_at, updated_by_account_id
+      ) VALUES ('learner-cmd', 'spelling', '{}', ?, ?, 'adult-cmd')
+    `).run(coldBlob, NOW);
+
+    harness.DB.clearQueryLog();
+    const hot = await harness.command('submit-answer', { answer: 'possess' });
+    assert.equal(hot.response.status, 200, JSON.stringify(hot.body));
+
+    const queries = harness.DB.takeQueryLog();
+    const itemReads = queries.filter((entry) => /FROM spelling_item_state/i.test(entry.sql || ''));
+    assert.equal(itemReads.length, 1, 'gameplay should issue one item working-set read');
+    assert.deepEqual(JSON.parse(itemReads[0].params[1]), ['possess'],
+      'an answer must point-read only the active round roster, not the published catalogue');
+    assert.ok(itemReads[0].rowCount <= 29,
+      `one item plus the fixed achievement projection is the hard row cap; read ${itemReads[0].rowCount}`);
+    assert.match(itemReads[0].sql, /LIMIT \?/i,
+      'Boss achievement history must be selected through a fixed recent window');
+    assert.equal(
+      queries.some((entry) => /legacy_state\.data_json/i.test(entry.sql || '')),
+      false,
+      'gameplay must never select the legacy lifetime JSON blob',
+    );
+    assert.equal(
+      queries.some((entry) => /INSERT INTO child_subject_state/i.test(entry.sql || '')),
+      false,
+      'gameplay must never rewrite the legacy lifetime JSON blob',
+    );
+    const preservedBlob = harness.DB.db.prepare(`
+      SELECT data_json FROM child_subject_state
+      WHERE learner_id = 'learner-cmd' AND subject_id = 'spelling'
+    `).get()?.data_json;
+    assert.equal(preservedBlob, coldBlob, 'cold lifetime history must remain complete and untouched');
+    assert.equal(
+      harness.DB.db.prepare(`
+        SELECT COUNT(*) AS total FROM spelling_achievement_state
+        WHERE learner_id = 'learner-cmd'
+          AND achievement_id LIKE 'achievement:spelling:boss:clean-sweep:%'
+      `).get().total,
+      10_000,
+      'achievement history remains complete even though gameplay hydrates only eight recent unlocks',
+    );
+  } finally {
+    harness.close();
+  }
+});
+
+test('Grammar gameplay reads only active generated items, not lifetime item mastery', async () => {
+  const harness = createCommandHarness({ subjectId: 'grammar' });
+  try {
+    const start = await harness.command('start-session', {
+      mode: 'smart',
+      roundLength: 1,
+      seed: 17,
+    });
+    assert.equal(start.response.status, 200, JSON.stringify(start.body));
+
+    const insertItem = harness.DB.db.prepare(`
+      INSERT INTO grammar_item_state (
+        learner_id, item_id, mastery_json, updated_at, updated_by_account_id
+      ) VALUES ('learner-cmd', ?, ?, ?, 'adult-cmd')
+    `);
+    for (let index = 0; index < 10_000; index += 1) {
+      insertItem.run(
+        `retired-template:${index}`,
+        JSON.stringify({ attempts: 10, correct: 8, wrong: 2, strength: 0.8 }),
+        NOW - index,
+      );
+    }
+
+    harness.DB.clearQueryLog();
+    const hot = await harness.command('save-prefs', { mode: 'smart', roundLength: 1 });
+    assert.equal(hot.response.status, 200, JSON.stringify(hot.body));
+
+    const queries = harness.DB.takeQueryLog();
+    const itemReads = queries.filter((entry) => /FROM grammar_item_state/i.test(entry.sql || ''));
+    assert.equal(itemReads.length, 1, 'Grammar should issue one active-item working-set read');
+    assert.match(itemReads[0].sql, /item_id IN \(SELECT value FROM json_each\(\?\)\)/i);
+    assert.equal(itemReads[0].rowCount, 0,
+      '10,000 retired item rows must stay outside the active command working set');
+    assert.equal(
+      harness.DB.db.prepare(`
+        SELECT COUNT(*) AS total FROM grammar_item_state
+        WHERE learner_id = 'learner-cmd' AND item_id LIKE 'retired-template:%'
+      `).get().total,
+      10_000,
+      'generated-item history must remain complete',
+    );
+    const hotRow = harness.DB.db.prepare(`
+      SELECT ui_json, data_json FROM child_subject_state
+      WHERE learner_id = 'learner-cmd' AND subject_id = 'grammar'
+    `).get();
+    assert.deepEqual(JSON.parse(hotRow.ui_json).mastery.items, {});
+    assert.deepEqual(JSON.parse(hotRow.data_json).mastery.items, {});
+  } finally {
+    harness.close();
+  }
+});
+
+test('Reading gameplay reads a bounded scheduler working set, not lifetime question mastery', async () => {
+  const harness = createCommandHarness({ subjectId: 'reading' });
+  try {
+    const start = await harness.command('start-session', {
+      mode: 'smart',
+      viewMode: 'one',
+    });
+    assert.equal(start.response.status, 200, JSON.stringify(start.body));
+
+    const insertQuestion = harness.DB.db.prepare(`
+      INSERT INTO reading_question_state (
+        learner_id, question_id, mastery_json, updated_at, updated_by_account_id
+      ) VALUES ('learner-cmd', ?, ?, ?, 'adult-cmd')
+    `);
+    for (let index = 0; index < 10_000; index += 1) {
+      insertQuestion.run(
+        `retired-reading-question:${index}`,
+        JSON.stringify({ attempts: 10, correct: 8, wrong: 2, strength: 0.8 }),
+        NOW - index,
+      );
+    }
+
+    const readingHotRow = harness.DB.db.prepare(`
+      SELECT data_json FROM child_subject_state
+      WHERE learner_id = 'learner-cmd' AND subject_id = 'reading'
+    `).get();
+    const readingHotData = JSON.parse(readingHotRow.data_json);
+    readingHotData.retryQueue = [{
+      questionId: 'retired-reading-question:0',
+      passageId: 'retired-passage',
+      skillId: '2a',
+      dueAt: NOW,
+    }];
+    harness.DB.db.prepare(`
+      UPDATE child_subject_state SET data_json = ?
+      WHERE learner_id = 'learner-cmd' AND subject_id = 'reading'
+    `).run(JSON.stringify(readingHotData));
+
+    harness.DB.clearQueryLog();
+    const hot = await harness.command('save-prefs', { mode: 'smart', viewMode: 'one' });
+    assert.equal(hot.response.status, 200, JSON.stringify(hot.body));
+
+    const queries = harness.DB.takeQueryLog();
+    const questionReads = queries.filter((entry) => /FROM reading_question_state/i.test(entry.sql || ''));
+    assert.equal(questionReads.length, 1, 'Reading should issue one scheduler working-set read');
+    assert.match(questionReads[0].sql, /question_id IN \(SELECT value FROM json_each\(\?\)\)/i);
+    assert.equal(questionReads[0].rowCount, 1,
+      'the retired question referenced by the bounded retry queue may be point-read');
+    assert.equal(
+      harness.DB.db.prepare(`
+        SELECT COUNT(*) AS total FROM reading_question_state
+        WHERE learner_id = 'learner-cmd' AND question_id LIKE 'retired-reading-question:%'
+      `).get().total,
+      10_000,
+      'Reading question history must remain complete',
+    );
+    const hotData = JSON.parse(harness.DB.db.prepare(`
+      SELECT data_json FROM child_subject_state
+      WHERE learner_id = 'learner-cmd' AND subject_id = 'reading'
+    `).get().data_json);
+    assert.deepEqual(hotData.questions, {});
+  } finally {
+    harness.close();
+  }
+});
+
+test('Punctuation gameplay and bootstrap ignore lifetime item history', async () => {
+  const harness = createCommandHarness({ subjectId: 'punctuation' });
+  try {
+    const start = await harness.command('start-session', {
+      mode: 'endmarks',
+      roundLength: '1',
+    });
+    assert.equal(start.response.status, 200, JSON.stringify(start.body));
+
+    const hotRow = harness.DB.db.prepare(`
+      SELECT ui_json, data_json FROM child_subject_state
+      WHERE learner_id = 'learner-cmd' AND subject_id = 'punctuation'
+    `).get();
+    const hotData = JSON.parse(hotRow.data_json);
+    const hotUi = JSON.parse(hotRow.ui_json);
+    hotUi.session.currentItemId = 'retired-punctuation:0';
+    hotData.progress.itemTotals = {
+      version: 1,
+      tracked: 10_000,
+      new: 0,
+      secure: 0,
+      weak: 0,
+    };
+    hotData.progress.attempts = Array.from({ length: 1000 }, (_unused, index) => ({
+      ts: NOW - index,
+      itemId: `retired-punctuation:${index}`,
+      itemMode: 'choose',
+      mode: 'choose',
+      skillIds: ['sentence_endings'],
+      rewardUnitId: 'sentence-endings-core',
+      correct: index % 2 === 0,
+    }));
+    hotData.progress.starEvidence = {
+      version: 1,
+      releaseId: 'punctuation-qg-p24-15072-2026-05-13',
+      secureItemIds: [],
+    };
+    harness.DB.db.prepare(`
+      UPDATE child_subject_state SET ui_json = ?, data_json = ?
+      WHERE learner_id = 'learner-cmd' AND subject_id = 'punctuation'
+    `).run(JSON.stringify(hotUi), JSON.stringify(hotData));
+
+    const insertItem = harness.DB.db.prepare(`
+      INSERT INTO punctuation_item_state (
+        learner_id, item_id, state_json, updated_at, updated_by_account_id
+      ) VALUES ('learner-cmd', ?, ?, ?, 'adult-cmd')
+    `);
+    for (let index = 0; index < 10_000; index += 1) {
+      insertItem.run(
+        `retired-punctuation:${index}`,
+        JSON.stringify({ attempts: 10, correct: 8, incorrect: 2, streak: 1, dueAt: 1 }),
+        NOW - index,
+      );
+    }
+
+    harness.DB.clearQueryLog();
+    const hot = await harness.command('save-prefs', { mode: 'smart', roundLength: '1' });
+    assert.equal(hot.response.status, 200, JSON.stringify(hot.body));
+
+    const queries = harness.DB.takeQueryLog();
+    const itemReads = queries.filter((entry) => /FROM punctuation_item_state/i.test(entry.sql || ''));
+    assert.equal(itemReads.length, 1, 'Punctuation should issue one bounded item working-set read');
+    assert.match(itemReads[0].sql, /item_id IN \(SELECT value FROM json_each\(\?\)\)/i);
+    assert.equal(itemReads[0].rowCount, 1,
+      'the retired item referenced by the bounded active session may be point-read');
+    const hydratedIds = JSON.parse(itemReads[0].params[1]);
+    assert.ok(hydratedIds.length <= 128, `expected scheduler-only hydration, received ${hydratedIds.length} ids`);
+    assert.equal(
+      hydratedIds.some((itemId) => itemId.startsWith('retired-punctuation:')),
+      true,
+      'only the active-session retired item, not the 1,000 Star attempts, should be hydrated',
+    );
+    assert.equal(
+      harness.DB.db.prepare(`
+        SELECT COUNT(*) AS total FROM punctuation_item_state
+        WHERE learner_id = 'learner-cmd' AND item_id LIKE 'retired-punctuation:%'
+      `).get().total,
+      10_000,
+      'Punctuation item history must remain complete',
+    );
+    const persistedData = JSON.parse(harness.DB.db.prepare(`
+      SELECT data_json FROM child_subject_state
+      WHERE learner_id = 'learner-cmd' AND subject_id = 'punctuation'
+    `).get().data_json);
+    assert.equal(persistedData.progress.items, undefined);
+
+    harness.DB.clearQueryLog();
+    const bootstrap = await harness.bootstrap();
+    assert.equal(bootstrap.response.status, 200, JSON.stringify(bootstrap.body));
+    const bootstrapQueries = harness.DB.takeQueryLog();
+    assert.equal(
+      bootstrapQueries.some((entry) => /FROM punctuation_item_state/i.test(entry.sql || '')),
+      false,
+      'bootstrap must not touch item history when retained Star attempts reference no item rows',
+    );
+    assert.doesNotMatch(JSON.stringify(bootstrap.body), /retired-punctuation:/);
   } finally {
     harness.close();
   }
@@ -1029,6 +1357,70 @@ test('U3 query budget: Hero read-model GET ≤ BUDGET_HERO_READ_MODEL', async ()
   }
 });
 
+test('Hero read model never hydrates the legacy spelling lifetime profile', async () => {
+  const server = createWorkerRepositoryServer({
+    defaultAccountId: 'adult-hero-fat',
+    env: {
+      HERO_MODE_SHADOW_ENABLED: '1',
+      HERO_MODE_LAUNCH_ENABLED: '1',
+    },
+  });
+  try {
+    runSql(server, `
+      INSERT INTO adult_accounts (id, email, display_name, platform_role, created_at, updated_at, selected_learner_id)
+      VALUES ('adult-hero-fat', 'hero-fat@test', 'Hero Fat Parent', 'parent', ?, ?, NULL)
+    `, [NOW, NOW]);
+    insertLearner(server, 'adult-hero-fat', {
+      id: 'learner-hero-fat',
+      name: 'Hero Fat Learner',
+      sortIndex: 0,
+      selected: true,
+    });
+    insertSubjectState(server, 'adult-hero-fat', 'learner-hero-fat', 'spelling');
+    const coldProgress = Object.fromEntries(Array.from({ length: 10_000 }, (_, index) => [
+      `retired-${index}`,
+      { stage: index % 5, attempts: 10, correct: 8, wrong: 2, dueDay: 1 },
+    ]));
+    const coldBlob = JSON.stringify({ progress: coldProgress });
+    runSql(server, `
+      UPDATE child_subject_state
+      SET data_json = ?
+      WHERE learner_id = 'learner-hero-fat' AND subject_id = 'spelling'
+    `, [coldBlob]);
+
+    server.DB.clearQueryLog();
+    const response = await server.fetch(`${BASE_URL}/api/hero/read-model?learnerId=learner-hero-fat`, {
+      method: 'GET',
+      headers: { accept: 'application/json' },
+    });
+    assert.equal(response.status, 200);
+    const payload = await readJsonBody(response);
+    assert.equal(payload.ok, true);
+
+    const queries = server.DB.takeQueryLog();
+    const subjectRead = queries.find((entry) => /FROM child_subject_state/i.test(entry.sql || '')
+      && /UNION ALL/i.test(entry.sql || ''));
+    assert.ok(subjectRead, 'Hero must use the bounded subject-state union');
+    assert.match(subjectRead.sql, /subject_id <> 'spelling'/i);
+    assert.match(subjectRead.sql, /FROM spelling_learner_state/i);
+    assert.equal(
+      queries.some((entry) => /SELECT[^;]*child_subject_state[^;]*subject_id\s*=\s*'spelling'/is.test(entry.sql || '')),
+      false,
+      'Hero must not select the legacy spelling blob',
+    );
+    assert.equal(
+      server.DB.db.prepare(`
+        SELECT data_json FROM child_subject_state
+        WHERE learner_id = 'learner-hero-fat' AND subject_id = 'spelling'
+      `).get()?.data_json,
+      coldBlob,
+      'cold history remains complete and untouched',
+    );
+  } finally {
+    server.close();
+  }
+});
+
 // ---------------------------------------------------------------------------
 // Scenario 6b — Hero command POST (start-task)
 // ---------------------------------------------------------------------------
@@ -1078,6 +1470,16 @@ test('U3 query budget: Hero command POST start-task ≤ BUDGET_HERO_COMMAND', as
       INSERT INTO child_subject_state (learner_id, subject_id, ui_json, data_json, updated_at, updated_by_account_id)
       VALUES (?, 'spelling', '{}', ?, ?, ?)
     `).run('learner-hero-cmd', JSON.stringify(spellingData), NOW, 'adult-hero-cmd');
+    server.DB.db.prepare(`
+      INSERT INTO spelling_learner_state (learner_id, ui_json, data_json, stats_json, updated_at, updated_by_account_id)
+      VALUES (?, '{}', '{}', ?, ?, ?)
+      ON CONFLICT(learner_id) DO UPDATE SET
+        ui_json = excluded.ui_json,
+        data_json = excluded.data_json,
+        stats_json = excluded.stats_json,
+        updated_at = excluded.updated_at,
+        updated_by_account_id = excluded.updated_by_account_id
+    `).run('learner-hero-cmd', JSON.stringify(spellingData.stats), NOW, 'adult-hero-cmd');
 
     // Read model to discover a launchable task.
     const rmResponse = await server.fetch(`${BASE_URL}/api/hero/read-model?learnerId=learner-hero-cmd`);

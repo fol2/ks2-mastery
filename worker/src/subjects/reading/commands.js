@@ -4,7 +4,9 @@ import { combineCommandEvents } from '../../projections/events.js';
 import { buildCommandProjectionReadModel } from '../../projections/read-models.js';
 import { projectReadingRewards } from '../../projections/rewards.js';
 import { resolveProjectionInput } from '../projection-input.js';
-import { createServerReadingEngine } from './engine.js';
+import { isLegacyGameplayWorkingSet } from '../gameplay-store.js';
+import { createServerReadingEngine, planReadingStart } from './engine.js';
+import { readingGameplayQuestionIds } from './gameplay-state.js';
 import { buildReadingReadModel } from './read-models.js';
 
 export const READING_COMMANDS = Object.freeze([
@@ -37,17 +39,37 @@ export function createReadingCommandHandlers({ now, random } = {}) {
       'reading',
       { skipAccessCheck: true },
     );
+    const startPlan = command.command === 'start-session'
+      ? planReadingStart({
+          subjectRecord: runtimeRecord.subjectRecord,
+          payload: command.payload,
+          nowValue,
+          random: typeof random === 'function' ? random : Math.random,
+        })
+      : null;
+    const gameplaySubjectRecord = typeof context.repository.readReadingGameplayWorkingSet === 'function'
+      ? await context.repository.readReadingGameplayWorkingSet(
+          context.session.accountId,
+          command.learnerId,
+          readingGameplayQuestionIds(runtimeRecord.subjectRecord, startPlan?.questionIds),
+          {
+            skipAccessCheck: true,
+            subjectRecord: runtimeRecord.subjectRecord,
+          },
+        )
+      : runtimeRecord.subjectRecord;
     const engine = createServerReadingEngine({
       now: typeof now === 'function' ? now : () => nowValue,
       random,
     });
     const result = engine.apply({
       learnerId: command.learnerId,
-      subjectRecord: runtimeRecord.subjectRecord,
+      subjectRecord: gameplaySubjectRecord,
       latestSession: runtimeRecord.latestSession,
       command: command.command,
       payload: command.payload,
       requestId: command.requestId,
+      startPlan,
     });
 
     const projectionInput = result.changed === false
@@ -112,6 +134,12 @@ export function createReadingCommandHandlers({ now, random } = {}) {
         previousActiveSessionId: runtimeRecord.latestSession?.status === 'active'
           ? runtimeRecord.latestSession.id
           : null,
+        ...(!isLegacyGameplayWorkingSet(gameplaySubjectRecord) ? {
+          readingGameplay: {
+            previousData: gameplaySubjectRecord?.data || {},
+            resetAllQuestions: command.command === 'reset-learner',
+          },
+        } : {}),
       };
       response.projectionContext = projectionInput;
     }

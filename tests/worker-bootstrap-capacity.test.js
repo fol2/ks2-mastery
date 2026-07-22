@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 
 import { analyseBootstrapPayload } from '../scripts/probe-production-bootstrap.mjs';
 import { BOOTSTRAP_PHASE_TIMING_NAMES } from '../worker/src/bootstrap-repository.js';
+import { upsertBoundedSpellingState } from './helpers/bounded-spelling-state.js';
 import { createWorkerRepositoryServer } from './helpers/worker-server.js';
 
 function captureLogs(fn) {
@@ -68,12 +69,10 @@ function insertLearner(server, accountId, {
 }
 
 function insertSubjectState(server, accountId, learnerId) {
-  runSql(server, `
-    INSERT INTO child_subject_state (learner_id, subject_id, ui_json, data_json, updated_at, updated_by_account_id)
-    VALUES (?, 'spelling', ?, ?, ?, ?)
-  `, [
+  upsertBoundedSpellingState(server.DB.db, {
     learnerId,
-    JSON.stringify({
+    accountId,
+    ui: {
       phase: 'session',
       session: {
         id: `${learnerId}-active`,
@@ -89,16 +88,15 @@ function insertSubjectState(server, accountId, learnerId) {
           },
         },
       },
-    }),
-    JSON.stringify({
+    },
+    data: {
       prefs: { mode: 'smart' },
       progress: {
         possess: { stage: 4 },
       },
-    }),
-    NOW,
-    accountId,
-  ]);
+    },
+    now: NOW,
+  });
 }
 
 function insertPracticeSession(server, accountId, {

@@ -12,6 +12,28 @@ import {
 const PASSAGE_MAP = readingPassageMap();
 const QUESTION_REF_MAP = readingQuestionRefMap();
 const SKILL_IDS = Object.freeze(Object.keys(READING_SKILLS));
+const PASSAGE_IDS = Object.freeze(Object.keys(PASSAGE_MAP));
+const QUESTION_IDS = Object.freeze(Object.keys(QUESTION_REF_MAP));
+const READING_GENRES = Object.freeze(['fiction', 'non-fiction', 'poetry']);
+const READING_QUESTION_TYPES = Object.freeze([...new Set(
+  Object.values(QUESTION_REF_MAP).map((entry) => entry?.question?.type).filter(Boolean),
+)]);
+const READING_MISCONCEPTION_IDS = Object.freeze([
+  'vocab_out_of_context',
+  'selection_slip',
+  'misread_detail',
+  'summary_too_narrow',
+  'weak_evidence',
+  'prediction_not_text_based',
+  'whole_text_structure',
+  'author_choice_literal_only',
+  'comparison_partial',
+  'punctuation_meaning',
+  'punctuation_voice',
+  'punctuation_extra_info',
+  'punctuation_linking',
+  'sequence_tracking',
+]);
 const PUNCTUATION_SKILL_IDS = new Set(['P1', 'P2', 'P3', 'P4']);
 const STRETCH_SKILL_IDS = new Set(['2a', '2c', '2d', '2e', '2f', '2g', '2h']);
 const STRETCH_TYPE_PRIORITY = Object.freeze({
@@ -514,26 +536,51 @@ function normalisePrefs(raw = {}) {
   };
 }
 
+function knownObjectMap(value, allowedIds) {
+  const source = value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+  const output = {};
+  for (const id of allowedIds) {
+    const entry = source[id];
+    if (entry && typeof entry === 'object' && !Array.isArray(entry)) output[id] = clone(entry);
+  }
+  return output;
+}
+
+function normaliseReadingRetryQueue(value) {
+  if (!Array.isArray(value)) return [];
+  return value
+    .filter((entry) => entry && typeof entry === 'object' && !Array.isArray(entry))
+    .filter((entry) => QUESTION_REF_MAP[entry.questionId])
+    .map((entry) => clone(entry))
+    .sort((left, right) => (Number(left.dueAt) || 0) - (Number(right.dueAt) || 0))
+    .slice(0, 500);
+}
+
 function normaliseData(raw) {
   const base = defaultData();
   const data = raw && typeof raw === 'object' && !Array.isArray(raw) ? clone(raw) : {};
   return {
     ...base,
-    ...data,
     version: 1,
     contentReleaseId: READING_CONTENT_RELEASE_ID,
     prefs: normalisePrefs(data.prefs || {}),
-    skills: data.skills || {},
-    passages: data.passages || {},
-    questions: data.questions || {},
-    genres: data.genres || {},
-    qtypes: data.qtypes || {},
-    misconceptions: data.misconceptions || {},
-    retryQueue: Array.isArray(data.retryQueue) ? data.retryQueue.slice(0, 500) : [],
+    skills: knownObjectMap(data.skills, SKILL_IDS),
+    passages: knownObjectMap(data.passages, PASSAGE_IDS),
+    questions: knownObjectMap(data.questions, QUESTION_IDS),
+    genres: knownObjectMap(data.genres, READING_GENRES),
+    qtypes: knownObjectMap(data.qtypes, READING_QUESTION_TYPES),
+    misconceptions: knownObjectMap(data.misconceptions, READING_MISCONCEPTION_IDS),
+    retryQueue: normaliseReadingRetryQueue(data.retryQueue),
     events: Array.isArray(data.events) ? data.events.slice(-1200) : [],
     sessions: Array.isArray(data.sessions) ? data.sessions.slice(-180) : [],
     recentPassageStarts: Array.isArray(data.recentPassageStarts) ? data.recentPassageStarts.slice(-180) : [],
-    securedSkillKeys: Array.isArray(data.securedSkillKeys) ? data.securedSkillKeys : [],
+    securedSkillKeys: Array.isArray(data.securedSkillKeys)
+      ? data.securedSkillKeys.filter((key) => SKILL_IDS.some((skillId) => key === `${READING_CONTENT_RELEASE_ID}:${skillId}`))
+      : [],
+    lastPracticeDay: typeof data.lastPracticeDay === 'string' || Number.isFinite(Number(data.lastPracticeDay))
+      ? data.lastPracticeDay
+      : null,
+    streakDays: Math.max(0, Math.floor(Number(data.streakDays) || 0)),
   };
 }
 
@@ -762,12 +809,20 @@ function relevantQuestionsForMode(passage, mode, skillFilter, allowSkillFallback
 }
 
 function questionWeakness(data, question, nowValue = Date.now()) {
-  const qNode = data.questions[question.id] || defaultNode();
   const sNode = data.skills[question.skill] || defaultNode();
   const tNode = data.qtypes[question.type] || defaultNode();
-  let score = (1 - qNode.strength) * 3 + (1 - sNode.strength) * 2 + (1 - tNode.strength);
-  if (!qNode.attempts) score += 0.9;
-  if (qNode.dueAt && qNode.dueAt <= nowValue) score += 2;
+  const qNode = data.questions[question.id] || null;
+  // A missing node can mean either genuinely unseen or deliberately not
+  // loaded by a bounded caller. Shrink it to the subject aggregates instead
+  // of inventing strong "new question" evidence. Production start planning
+  // subsequently loads every question in the chosen passage, so a missing
+  // node there is genuinely unseen.
+  const questionStrength = qNode
+    ? Number(qNode.strength) || 0
+    : ((Number(sNode.strength) || 0) * 2 + (Number(tNode.strength) || 0)) / 3;
+  let score = (1 - questionStrength) * 3 + (1 - sNode.strength) * 2 + (1 - tNode.strength);
+  if (qNode && !qNode.attempts) score += 0.9;
+  if (qNode?.dueAt && qNode.dueAt <= nowValue) score += 2;
   return score;
 }
 
@@ -827,6 +882,101 @@ function chooseWeightedPassage(data, prefs, random, nowValue = Date.now()) {
   return weighted[weighted.length - 1][0];
 }
 
+function aggregateQuestionWeakness(data, question) {
+  const sNode = data.skills[question.skill] || defaultNode();
+  const tNode = data.qtypes[question.type] || defaultNode();
+  const priorStrength = ((Number(sNode.strength) || 0) * 2 + (Number(tNode.strength) || 0)) / 3;
+  return (1 - priorStrength) * 3 + (1 - sNode.strength) * 2 + (1 - tNode.strength);
+}
+
+function eligiblePracticePassages(data, prefs) {
+  const strictSkillMatch = hasStrictModeMatch(data, prefs);
+  return READING_PASSAGES.filter((passage) => {
+    if (prefs.genre && passage.genre !== prefs.genre) return false;
+    if (prefs.mode !== 'stretch' && prefs.difficulty && Number(passage.difficulty) !== Number(prefs.difficulty)) return false;
+    if (prefs.mode === 'guided' && passage.difficulty > 3) return false;
+    if (prefs.mode === 'stamina' && !passage.isLong) return false;
+    if (prefs.mode === 'stretch' && !(passage.isLong || Number(passage.difficulty || 0) >= 4)) return false;
+    return relevantQuestionsForMode(passage, prefs.mode, prefs.focusSkillId, !strictSkillMatch).length > 0;
+  });
+}
+
+/**
+ * Choose a passage from compact aggregate evidence only. Per-question rows are
+ * deliberately excluded from this stage; the command layer fetches every
+ * question in the chosen passage before the engine ranks those questions.
+ */
+function chooseAggregateWeightedPassage(data, prefs, random, nowValue = Date.now()) {
+  const strictSkillMatch = hasStrictModeMatch(data, prefs);
+  let candidates = eligiblePracticePassages(data, prefs);
+  if (!candidates.length) return null;
+
+  const candidateIds = new Set(candidates.map((passage) => passage.id));
+  const dueRetry = (data.retryQueue || []).find((entry) => {
+    if ((Number(entry?.dueAt) || 0) > nowValue || !candidateIds.has(entry?.passageId)) return false;
+    const ref = QUESTION_REF_MAP[entry?.questionId];
+    if (!ref) return false;
+    const passage = PASSAGE_MAP[entry.passageId];
+    return relevantQuestionsForMode(passage, prefs.mode, prefs.focusSkillId, !strictSkillMatch)
+      .some((question) => question.id === entry.questionId);
+  });
+  if (dueRetry) return PASSAGE_MAP[dueRetry.passageId] || null;
+
+  const recentStartedPassageIds = new Set((data.recentPassageStarts || [])
+    .slice(-4)
+    .map((entry) => entry?.passageId)
+    .filter(Boolean));
+  if (recentStartedPassageIds.size && candidates.length > 1) {
+    const notRecentlyStarted = candidates.filter((passage) => !recentStartedPassageIds.has(passage.id));
+    if (notRecentlyStarted.length) candidates = notRecentlyStarted;
+  }
+
+  const weighted = candidates.map((passage) => {
+    const pNode = data.passages[passage.id] || defaultNode();
+    const gNode = data.genres[passage.genre] || defaultNode();
+    const questions = relevantQuestionsForMode(passage, prefs.mode, prefs.focusSkillId, !strictSkillMatch);
+    let weight = 1 + (1 - pNode.strength) * 1.7 + (1 - gNode.strength);
+    if (!pNode.attempts) weight += 0.7;
+    weight += average(questions.map((question) => aggregateQuestionWeakness(data, question)));
+    const recentCount = data.events.slice(-12).filter((event) => event.passageId === passage.id).length;
+    const recentStartCount = (data.recentPassageStarts || []).slice(-12)
+      .filter((entry) => entry?.passageId === passage.id).length;
+    weight *= Math.pow(0.58, recentCount);
+    weight *= Math.pow(0.72, recentStartCount);
+    return [passage, Math.max(0.05, weight)];
+  });
+  let roll = random() * weighted.reduce((sum, [, weight]) => sum + weight, 0);
+  for (const [passage, weight] of weighted) {
+    roll -= weight;
+    if (roll <= 0) return passage;
+  }
+  return weighted[weighted.length - 1][0];
+}
+
+export function planReadingStart({
+  subjectRecord = {},
+  payload = {},
+  nowValue = Date.now(),
+  random = Math.random,
+} = {}) {
+  const data = normaliseData(subjectRecord?.data || subjectRecord?.snapshot?.data || subjectRecord?.state?.data || {});
+  const prefs = normalisePrefs({ ...data.prefs, ...(payload || {}) });
+  if (prefs.mode === 'test') {
+    const paper = choosePaper(data, prefs.paperId, random);
+    return {
+      mode: 'test',
+      paperId: paper.id,
+      questionIds: paper.sections.flatMap((section) => section.questionIds),
+    };
+  }
+  const passage = chooseAggregateWeightedPassage(data, prefs, random, nowValue);
+  return passage ? {
+    mode: prefs.mode,
+    passageId: passage.id,
+    questionIds: (passage.questions || []).map((question) => question.id),
+  } : null;
+}
+
 function chooseQuestionIds(data, passage, prefs, nowValue = Date.now()) {
   const strictSkillMatch = hasStrictModeMatch(data, prefs);
   let questions = relevantQuestionsForMode(passage, prefs.mode, prefs.focusSkillId, !strictSkillMatch);
@@ -871,9 +1021,11 @@ function choosePaper(data, requestedPaperId, random) {
   return weighted[0][0];
 }
 
-function buildPracticeSession(data, prefs, { nowValue, random, heroContext } = {}) {
+function buildPracticeSession(data, prefs, { nowValue, random, heroContext, startPlan = null } = {}) {
   if (prefs.mode === 'test') {
-    const paper = choosePaper(data, prefs.paperId, random);
+    const paper = (startPlan?.mode === 'test'
+      ? READING_TEST_PAPERS.find((entry) => entry.id === startPlan.paperId)
+      : null) || choosePaper(data, prefs.paperId, random);
     return {
       id: uid('reading_session'),
       mode: 'test',
@@ -899,7 +1051,8 @@ function buildPracticeSession(data, prefs, { nowValue, random, heroContext } = {
       })),
     };
   }
-  const passage = chooseWeightedPassage(data, prefs, random, nowValue);
+  const passage = (startPlan?.passageId ? PASSAGE_MAP[startPlan.passageId] : null)
+    || chooseWeightedPassage(data, prefs, random, nowValue);
   if (!passage) return null;
   const questionIds = chooseQuestionIds(data, passage, prefs, nowValue);
   return {
@@ -1316,7 +1469,15 @@ export function createServerReadingEngine({ now = Date.now, random = Math.random
     return Number.isFinite(value) ? value : Date.now();
   }
 
-  function apply({ learnerId, subjectRecord = null, latestSession = null, command, payload = {}, requestId = '' } = {}) {
+  function apply({
+    learnerId,
+    subjectRecord = null,
+    latestSession = null,
+    command,
+    payload = {},
+    requestId = '',
+    startPlan = null,
+  } = {}) {
     const t = nowValue();
     let data = normaliseData(subjectRecord?.data || subjectRecord?.snapshot?.data || subjectRecord?.state?.data || {});
     let state = normaliseState(subjectRecord?.state || subjectRecord?.ui || {}, data);
@@ -1339,7 +1500,12 @@ export function createServerReadingEngine({ now = Date.now, random = Math.random
     } else if (command === 'start-session') {
       const prefs = normalisePrefs({ ...data.prefs, ...(payload || {}) });
       data.prefs = prefs;
-      const session = buildPracticeSession(data, prefs, { nowValue: t, random, heroContext: payload.heroContext || null });
+      const session = buildPracticeSession(data, prefs, {
+        nowValue: t,
+        random,
+        heroContext: payload.heroContext || null,
+        startPlan,
+      });
       if (!session) {
         state = { ...state, error: 'No reading passage matches that setup yet.', phase: 'setup', session: null, feedback: null, updatedAt: t };
       } else {

@@ -462,6 +462,62 @@ test('reading guided mode uses weakness and variety rather than always taking th
   assert.ok(questionIds.includes('rtb_q5'));
 });
 
+test('reading command plans a passage before loading its complete question working set', async () => {
+  const strongQuestion = {
+    attempts: 6,
+    correct: 6,
+    wrong: 0,
+    strength: 0.97,
+    intervalDays: 14,
+    dueAt: 1000 + 14 * 86400000,
+    lastSeenAt: 900,
+    correctStreak: 6,
+  };
+  let requestedQuestionIds = [];
+  const runtime = createWorkerSubjectRuntime({ reading: { now: () => 1000, random: () => 0 } });
+  const context = {
+    now: 1000,
+    session: { accountId: 'acc1' },
+    repository: {
+      async readSubjectRuntime() {
+        return {
+          subjectRecord: { ui: null, data: { prefs: { mode: 'guided' } } },
+          latestSession: null,
+        };
+      },
+      async readReadingGameplayWorkingSet(_accountId, _learnerId, questionIds, { subjectRecord }) {
+        requestedQuestionIds = questionIds;
+        return {
+          ...subjectRecord,
+          data: {
+            ...subjectRecord.data,
+            questions: Object.fromEntries(questionIds
+              .filter((questionId) => ['rtb_q1', 'rtb_q2', 'rtb_q3', 'rtb_q4'].includes(questionId))
+              .map((questionId) => [questionId, strongQuestion])),
+          },
+        };
+      },
+      async readLearnerProjectionInput() {
+        return { projectionState: { gameState: {}, events: [] }, tokens: [] };
+      },
+    },
+  };
+
+  const started = await runtime.dispatch({
+    subjectId: 'reading',
+    command: 'start-session',
+    learnerId: 'l1',
+    requestId: 'reading-bounded-start',
+    expectedLearnerRevision: 0,
+    payload: { mode: 'guided', viewMode: 'one' },
+  }, context);
+
+  const passage = READING_PASSAGES.find((entry) => entry.id === 'red_tin_box');
+  assert.deepEqual(new Set(requestedQuestionIds), new Set(passage.questions.map((question) => question.id)));
+  assert.equal(started.runtimeWrite.state.session.sections[0].passageId, passage.id);
+  assert.ok(started.runtimeWrite.state.session.sections[0].questionIds.includes('rtb_q5'));
+});
+
 test('worker subject runtime wires reading command handlers', async () => {
   const runtime = createWorkerSubjectRuntime({ reading: { now: () => 1000, random: () => 0 } });
   const context = fakeContext();

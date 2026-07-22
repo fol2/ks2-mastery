@@ -7,6 +7,7 @@ import {
   SPELLING_CONTENT_RELEASE_ID,
   normaliseGuardianMap,
   normalisePostMegaRecord,
+  normaliseStats,
   normaliseYearFilter,
 } from './service-contract.js';
 import {
@@ -55,6 +56,29 @@ function accuracyPercent(correct, wrong) {
   const attempts = Math.max(0, Number(correct) || 0) + Math.max(0, Number(wrong) || 0);
   if (!attempts) return null;
   return Math.round((Math.max(0, Number(correct) || 0) / attempts) * 100);
+}
+
+function boundedProgressSnapshot(stateRecord) {
+  const rawStats = isPlainObject(stateRecord?.ui?.stats) ? stateRecord.ui.stats : null;
+  if (!rawStats) return null;
+  const stats = normaliseStats(rawStats.core || rawStats.all || {});
+  // Both legacy imports and current gameplay writes materialise `fresh`, so
+  // total - fresh is a stable approximation of words with learner evidence.
+  // It avoids counting or hydrating the lifetime spelling_item_state table.
+  const trackedWords = Math.max(
+    0,
+    stats.total - stats.fresh,
+    stats.secure,
+    stats.due,
+    stats.trouble,
+  );
+  return {
+    trackedWords,
+    secureWords: stats.secure,
+    dueWords: stats.due,
+    troubleWords: stats.trouble,
+    accuracyPercent: stats.accuracy,
+  };
 }
 
 function isTroubleProgress(progress, currentDay) {
@@ -453,6 +477,7 @@ export function buildSpellingLearnerReadModel({
     : {};
   const progressMap = isPlainObject(stateRecord?.data?.progress) ? stateRecord.data.progress : {};
   const prefs = isPlainObject(stateRecord?.data?.prefs) ? stateRecord.data.prefs : {};
+  const boundedSnapshot = boundedProgressSnapshot(stateRecord);
   const runtime = runtimeWordMap(runtimeSnapshot);
   const trackedRows = Object.entries(progressMap).map(([slug, entry]) => {
     const progress = normaliseProgressRecord(entry);
@@ -490,6 +515,13 @@ export function buildSpellingLearnerReadModel({
     trackedRows.reduce((sum, row) => sum + row.progress.correct, 0),
     trackedRows.reduce((sum, row) => sum + row.progress.wrong, 0),
   );
+  const trackedWordCount = boundedSnapshot?.trackedWords ?? trackedRows.length;
+  const secureWordCount = boundedSnapshot?.secureWords ?? secureRows.length;
+  const dueWordCount = boundedSnapshot?.dueWords ?? dueRows.length;
+  const troubleWordCount = boundedSnapshot?.troubleWords ?? troubleRows.length;
+  const aggregateAccuracy = boundedSnapshot
+    ? boundedSnapshot.accuracyPercent
+    : accuracy;
 
   const sessionRecords = (Array.isArray(practiceSessions) ? practiceSessions : [])
     .filter((record) => record?.subjectId === 'spelling')
@@ -606,8 +638,8 @@ export function buildSpellingLearnerReadModel({
     detail: secureRows.length
       ? `${secureRows.length} secure words ready for light review.`
       : 'No secure words yet. Start a fresh Smart Review round.',
-    dueCount: dueRows.length,
-    troubleCount: troubleRows.length,
+    dueCount: dueWordCount,
+    troubleCount: troubleWordCount,
     activeSessionId: null,
     currentWord: null,
   };
@@ -638,30 +670,32 @@ export function buildSpellingLearnerReadModel({
       recommendedMode,
       label: `Continue ${sessionLabel(kind)}`,
       detail: currentWord ? `Current word: ${currentWord}.` : 'A live spelling round is saved for this learner.',
-      dueCount: dueRows.length,
-      troubleCount: troubleRows.length,
+      dueCount: dueWordCount,
+      troubleCount: troubleWordCount,
       activeSessionId: activeSession.id,
       currentWord,
     };
-  } else if (weaknesses.length) {
+  } else if (weaknesses.length || troubleWordCount > 0) {
     currentFocus = {
       subjectId: 'spelling',
       recommendedMode: 'trouble',
       label: 'Run a Trouble Drill next',
-      detail: `${weaknesses[0].label} is carrying the heaviest current load.`,
-      dueCount: dueRows.length,
-      troubleCount: troubleRows.length,
+      detail: weaknesses.length
+        ? `${weaknesses[0].label} is carrying the heaviest current load.`
+        : `${troubleWordCount} word${troubleWordCount === 1 ? '' : 's'} need focused spelling practice.`,
+      dueCount: dueWordCount,
+      troubleCount: troubleWordCount,
       activeSessionId: null,
       currentWord: null,
     };
-  } else if (dueRows.length) {
+  } else if (dueWordCount > 0) {
     currentFocus = {
       subjectId: 'spelling',
       recommendedMode: 'smart',
       label: 'Clear due spelling words',
-      detail: `${dueRows.length} word${dueRows.length === 1 ? '' : 's'} are due for spaced review.`,
-      dueCount: dueRows.length,
-      troubleCount: troubleRows.length,
+      detail: `${dueWordCount} word${dueWordCount === 1 ? '' : 's'} are due for spaced review.`,
+      dueCount: dueWordCount,
+      troubleCount: troubleWordCount,
       activeSessionId: null,
       currentWord: null,
     };
@@ -671,6 +705,7 @@ export function buildSpellingLearnerReadModel({
     ...trackedRows.map((row) => (row.progress.lastDay == null ? 0 : row.progress.lastDay * DAY_MS)),
     ...sessionRecords.map((record) => asTs(record.updatedAt, 0)),
     ...((Array.isArray(eventLog) ? eventLog : []).filter((event) => event?.subjectId === 'spelling').map((event) => asTs(event.createdAt, 0))),
+    asTs(stateRecord?.updatedAt, 0),
     0,
   );
 
@@ -712,18 +747,18 @@ export function buildSpellingLearnerReadModel({
     progressSnapshot: {
       subjectId: 'spelling',
       totalPublishedWords: Array.isArray(runtime.words) ? runtime.words.length : 0,
-      trackedWords: trackedRows.length,
-      secureWords: secureRows.length,
-      dueWords: dueRows.length,
-      troubleWords: troubleRows.length,
-      accuracyPercent: accuracy,
+      trackedWords: trackedWordCount,
+      secureWords: secureWordCount,
+      dueWords: dueWordCount,
+      troubleWords: troubleWordCount,
+      accuracyPercent: aggregateAccuracy,
     },
     overview: {
-      trackedWords: trackedRows.length,
-      secureWords: secureRows.length,
-      dueWords: dueRows.length,
-      troubleWords: troubleRows.length,
-      accuracyPercent: accuracy,
+      trackedWords: trackedWordCount,
+      secureWords: secureWordCount,
+      dueWords: dueWordCount,
+      troubleWords: troubleWordCount,
+      accuracyPercent: aggregateAccuracy,
       lastActivityAt,
     },
     strengths,

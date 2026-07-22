@@ -166,7 +166,9 @@ export async function resolveSpellingAudioRequest({
     });
   }
 
-  const runtime = await repository.readSubjectRuntime(accountId, learnerId, 'spelling');
+  const runtime = typeof repository.readSpellingCommandRuntime === 'function'
+    ? await repository.readSpellingCommandRuntime(accountId, learnerId)
+    : await repository.readSubjectRuntime(accountId, learnerId, 'spelling');
   const state = runtime.subjectRecord?.ui || null;
   let parts = currentPromptParts({ learnerId, state });
   if (parts && shouldResolveSessionSentenceCanonically(state)) {

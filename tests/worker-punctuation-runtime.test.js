@@ -232,6 +232,47 @@ test('punctuation command route starts a session and persists through generic ru
   }
 });
 
+test('punctuation learner reset clears bounded item rows and restores compact totals', async () => {
+  const harness = createHarness();
+  try {
+    const start = await harness.command('start-session', { mode: 'endmarks', roundLength: '1' });
+    await harness.command(
+      'submit-answer',
+      correctAnswerFor(start.body.subjectReadModel.session.currentItem),
+    );
+    assert.equal(
+      harness.DB.db.prepare(`
+        SELECT COUNT(*) AS total FROM punctuation_item_state WHERE learner_id = 'learner-a'
+      `).get().total,
+      1,
+      'the attempted item should be persisted independently',
+    );
+
+    const reset = await harness.command('reset-learner');
+    assert.equal(reset.body.subjectReadModel.phase, 'setup');
+    assert.equal(
+      harness.DB.db.prepare(`
+        SELECT COUNT(*) AS total FROM punctuation_item_state WHERE learner_id = 'learner-a'
+      `).get().total,
+      0,
+    );
+    const hotData = JSON.parse(harness.DB.db.prepare(`
+      SELECT data_json FROM child_subject_state
+      WHERE learner_id = 'learner-a' AND subject_id = 'punctuation'
+    `).get().data_json);
+    assert.equal(hotData.progress.items, undefined);
+    assert.deepEqual(hotData.progress.itemTotals, {
+      version: 1,
+      tracked: 0,
+      new: 0,
+      secure: 0,
+      weak: 0,
+    });
+  } finally {
+    harness.close();
+  }
+});
+
 test('punctuation command route starts guided mode with a redacted teach box', async () => {
   const harness = createHarness();
   try {

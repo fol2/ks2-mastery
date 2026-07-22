@@ -387,14 +387,26 @@ export function buildPunctuationLearnerReadModel({
   const data = isPlainObject(stateRecord.data) ? stateRecord.data : {};
   const progress = isPlainObject(data.progress) ? data.progress : {};
   const items = isPlainObject(progress.items) ? progress.items : {};
+  const itemTotals = isPlainObject(progress.itemTotals) && Number(progress.itemTotals.version) === 1
+    ? progress.itemTotals
+    : null;
   const rewardUnits = isPlainObject(progress.rewardUnits) ? progress.rewardUnits : {};
   const attempts = (Array.isArray(progress.attempts) ? progress.attempts : []).map(normaliseAttempt);
   const correct = attempts.filter((attempt) => attempt.correct).length;
   const skills = skillById();
   const itemSnapshots = Object.entries(items).map(([itemId, value]) => ({ itemId, ...memorySnapshot(value, nowTs) }));
-  const secureItems = itemSnapshots.filter((entry) => entry.bucket === 'secure').length;
-  const dueItems = itemSnapshots.filter((entry) => entry.bucket === 'due').length;
-  const weakItems = itemSnapshots.filter((entry) => entry.bucket === 'weak').length;
+  const facetSnapshots = itemTotals
+    ? Object.values(isPlainObject(progress.facets) ? progress.facets : {}).map((value) => memorySnapshot(value, nowTs))
+    : [];
+  const secureItems = itemTotals
+    ? facetSnapshots.filter((entry) => entry.bucket === 'secure').length
+    : itemSnapshots.filter((entry) => entry.bucket === 'secure').length;
+  const dueItems = itemTotals
+    ? facetSnapshots.filter((entry) => entry.bucket === 'due').length
+    : itemSnapshots.filter((entry) => entry.bucket === 'due').length;
+  const weakItems = itemTotals
+    ? facetSnapshots.filter((entry) => entry.bucket === 'weak').length
+    : itemSnapshots.filter((entry) => entry.bucket === 'weak').length;
   const trackedRewardUnitEntries = currentReleaseRewardEntries(rewardUnits, CURRENT_RELEASE_ID);
   const trackedRewardUnitCount = trackedRewardUnitEntries.length;
   const securedRewardUnitCount = trackedRewardUnitEntries.filter(
@@ -541,7 +553,9 @@ export function buildPunctuationLearnerReadModel({
       trackedRewardUnits: trackedRewardUnitCount,
       securedRewardUnits: securedRewardUnitCount,
       deepSecuredRewardUnits: deepSecuredRewardUnitCount,
-      trackedItems: itemSnapshots.length,
+      trackedItems: itemTotals ? Math.max(0, Number(itemTotals.tracked) || 0) : itemSnapshots.length,
+      reviewSignalScope: itemTotals ? 'skill-mode-facets' : 'items',
+      trackedItemScope: itemTotals ? 'lifetime' : 'current-release',
       secureItems,
       dueItems,
       weakItems,

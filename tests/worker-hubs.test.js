@@ -111,6 +111,47 @@ test('worker parent hub allows parent or admin platform roles with readable lear
   server.close();
 });
 
+test('worker parent hub ignores 10,000-entry legacy spelling history and bounds recent evidence', async () => {
+  const server = createWorkerRepositoryServer();
+  try {
+    await seedLearnerData(server, 'adult-parent', 'parent');
+    const legacyProgress = Object.fromEntries(Array.from({ length: 10_000 }, (_, index) => [
+      `retired-word-${index}`,
+      { stage: 1, attempts: 1, correct: 0, wrong: 1, dueDay: 0 },
+    ]));
+    server.DB.db.prepare(`
+      INSERT OR REPLACE INTO child_subject_state (
+        learner_id, subject_id, ui_json, data_json, updated_at, updated_by_account_id
+      ) VALUES ('learner-a', 'spelling', '{}', ?, 1, 'adult-parent')
+    `).run(JSON.stringify({ progress: legacyProgress }));
+
+    server.DB.clearQueryLog();
+    const response = await server.fetchAs(
+      'adult-parent',
+      'https://repo.test/api/hubs/parent?learnerId=learner-a',
+    );
+    const payload = await response.json();
+    const queries = server.DB.takeQueryLog();
+
+    assert.equal(response.status, 200);
+    assert.equal(payload.parentHub.learnerOverview.dueWords, 1,
+      'the authoritative split aggregate remains the hub source');
+    assert.equal(queries.some((entry) => /FROM spelling_item_state/i.test(entry.sql || '')), false,
+      'Parent Hub must not hydrate lifetime spelling item rows');
+    assert.ok(queries.some((entry) => (
+      /FROM practice_sessions/i.test(entry.sql || '')
+      && /ROW_NUMBER\(\) OVER/i.test(entry.sql || '')
+      && /subject_rank <= 6/i.test(entry.sql || '')
+    )), 'recent sessions are capped per subject inside D1');
+    assert.ok(queries.some((entry) => (
+      /FROM event_log/i.test(entry.sql || '')
+      && /LIMIT 50/i.test(entry.sql || '')
+    )), 'relevant misconception evidence is capped inside D1');
+  } finally {
+    server.close();
+  }
+});
+
 test('worker hubs supplement operator legacy core-only content with seeded runtime additions', async () => {
   const server = createWorkerRepositoryServer();
   try {

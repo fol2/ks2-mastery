@@ -85,17 +85,65 @@ function insertLearner(server, accountId, { id, name, sortIndex, selected = fals
   }
 }
 
-function insertSubjectState(server, accountId, learnerId, { sessions = 0 } = {}) {
+function insertSpellingSubjectState(server, accountId, learnerId, {
+  ui = { phase: 'idle' },
+  data = { prefs: { mode: 'smart' }, progress: { possess: { stage: 3 } } },
+} = {}) {
+  const progress = data?.progress && typeof data.progress === 'object' ? data.progress : {};
+  const entries = Object.entries(progress);
+  const totals = entries.reduce((stats, [, rawEntry]) => {
+    const entry = rawEntry && typeof rawEntry === 'object' ? rawEntry : {};
+    const attempts = Math.max(0, Number(entry.attempts) || 0);
+    const correct = Math.max(0, Number(entry.correct) || 0);
+    const wrong = Math.max(0, Number(entry.wrong) || 0);
+    stats.total += 1;
+    stats.attempts += attempts;
+    stats.correct += correct;
+    if (attempts === 0) stats.fresh += 1;
+    if ((Number(entry.stage) || 0) >= 4) stats.secure += 1;
+    if (attempts > 0 && (Number(entry.dueDay) || 0) <= Math.floor(NOW / 86_400_000)) stats.due += 1;
+    if (wrong > 0 && (wrong >= correct || (Number(entry.stage) || 0) < 4)) stats.trouble += 1;
+    return stats;
+  }, { total: 0, secure: 0, due: 0, fresh: 0, trouble: 0, attempts: 0, correct: 0, accuracy: null });
+  totals.accuracy = totals.attempts ? Math.round((totals.correct / totals.attempts) * 100) : null;
+  const empty = { total: 0, secure: 0, due: 0, fresh: 0, trouble: 0, attempts: 0, correct: 0, accuracy: null };
+  const stats = {
+    all: totals,
+    core: { ...totals },
+    y34: { ...empty },
+    y56: { ...empty },
+    secureExtension: { ...empty },
+    extra: { ...empty },
+  };
   runSql(server, `
-    INSERT INTO child_subject_state (learner_id, subject_id, ui_json, data_json, updated_at, updated_by_account_id)
-    VALUES (?, 'spelling', ?, ?, ?, ?)
+    INSERT INTO spelling_learner_state (
+      learner_id, ui_json, data_json, stats_json, updated_at, updated_by_account_id
+    ) VALUES (?, ?, ?, ?, ?, ?)
+    ON CONFLICT(learner_id) DO UPDATE SET
+      ui_json = excluded.ui_json,
+      data_json = excluded.data_json,
+      stats_json = excluded.stats_json,
+      updated_at = excluded.updated_at,
+      updated_by_account_id = excluded.updated_by_account_id
   `, [
     learnerId,
-    JSON.stringify({ phase: 'idle' }),
-    JSON.stringify({ prefs: { mode: 'smart' }, progress: { possess: { stage: 3 } } }),
+    JSON.stringify(ui),
+    JSON.stringify({ prefs: data?.prefs || {} }),
+    JSON.stringify(stats),
     NOW,
     accountId,
   ]);
+  for (const [slug, entry] of entries) {
+    runSql(server, `
+      INSERT INTO spelling_item_state (
+        learner_id, slug, progress_json, guardian_json, pattern_json, updated_at, updated_by_account_id
+      ) VALUES (?, ?, ?, NULL, NULL, ?, ?)
+    `, [learnerId, slug, JSON.stringify(entry), NOW, accountId]);
+  }
+}
+
+function insertSubjectState(server, accountId, learnerId, { sessions = 0 } = {}) {
+  insertSpellingSubjectState(server, accountId, learnerId);
   for (let i = 0; i < sessions; i += 1) {
     runSql(server, `
       INSERT INTO practice_sessions (id, learner_id, subject_id, session_kind, status, session_state_json, summary_json, created_at, updated_at, updated_by_account_id)
@@ -1094,15 +1142,10 @@ test('U7 scenario 21: redaction — private prompt text does not leak on bounded
   try {
     insertLearner(server, 'adult-u7', { id: 'learner-a', name: 'Alpha', sortIndex: 0, selected: true });
     // Seed with a subject state that includes private prompt text in data_json.
-    runSql(server, `
-      INSERT INTO child_subject_state (learner_id, subject_id, ui_json, data_json, updated_at, updated_by_account_id)
-      VALUES ('learner-a', 'spelling', ?, ?, ?, ?)
-    `, [
-      JSON.stringify({ phase: 'session', currentCard: { prompt: { sentence: 'top-secret-private-prompt' } } }),
-      JSON.stringify({ prefs: { mode: 'smart' } }),
-      NOW,
-      'adult-u7',
-    ]);
+    insertSpellingSubjectState(server, 'adult-u7', 'learner-a', {
+      ui: { phase: 'session', currentCard: { prompt: { sentence: 'top-secret-private-prompt' } } },
+      data: { prefs: { mode: 'smart' } },
+    });
 
     const response = await getBootstrap(server);
     const text = await response.text();
@@ -1194,6 +1237,13 @@ function punctuationHydrationData() {
 }
 
 function insertSubjectStateFor(server, accountId, learnerId, subjectId, { ui = { phase: 'idle' }, data = null } = {}) {
+  if (subjectId === 'spelling') {
+    insertSpellingSubjectState(server, accountId, learnerId, {
+      ui,
+      data: data || { prefs: { mode: 'smart' }, progress: { possess: { stage: 3 } } },
+    });
+    return;
+  }
   runSql(server, `
     INSERT INTO child_subject_state (learner_id, subject_id, ui_json, data_json, updated_at, updated_by_account_id)
     VALUES (?, ?, ?, ?, ?, ?)

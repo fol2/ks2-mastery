@@ -305,6 +305,60 @@ test('weak mode falls back to mixed review when no weak evidence exists', () => 
   assert.equal(result.weakFocus.bucket, 'new');
 });
 
+test('bounded weak scheduling uses facet authority even after candidate item rows are hydrated', () => {
+  const first = {
+    id: 'first-prompt',
+    mode: 'choose',
+    skillIds: ['sentence_endings'],
+    clusterId: 'endmarks',
+    rewardUnitId: 'sentence-endings-core',
+  };
+  const oldWeakPrompt = { ...first, id: 'old-weak-prompt' };
+  const items = [first, oldWeakPrompt];
+  const indexes = {
+    items,
+    itemById: new Map(items.map((item) => [item.id, item])),
+    itemsByMode: new Map([['choose', items]]),
+    skillById: new Map([[
+      'sentence_endings',
+      { id: 'sentence_endings', name: 'Sentence endings', published: true },
+    ]]),
+  };
+  const weakItemState = updateMemoryState(createMemoryState(), false, 0);
+  const base = {
+    indexes,
+    session: { mode: 'weak', answeredCount: 0, recentItemIds: [] },
+    prefs: { mode: 'weak' },
+    now: 0,
+    random: () => 0,
+    candidateWindow: 1,
+  };
+
+  const legacy = selectPunctuationItem({
+    ...base,
+    progress: {
+      items: { [oldWeakPrompt.id]: weakItemState },
+      facets: {},
+      attempts: [],
+    },
+  });
+  assert.equal(legacy.item.id, oldWeakPrompt.id,
+    'the pre-0023 whole-map scheduler keeps its compatibility behaviour');
+
+  const bounded = selectPunctuationItem({
+    ...base,
+    progress: {
+      items: { [oldWeakPrompt.id]: weakItemState },
+      facets: {},
+      attempts: [],
+      itemTotals: { version: 1, tracked: 1, new: 0, secure: 0, weak: 1 },
+    },
+  });
+  assert.equal(bounded.item.id, first.id);
+  assert.deepEqual(bounded.inspectedItemIds, [first.id],
+    'hydration cannot expand the fixed facet/recent candidate window');
+});
+
 test('weak mode selects due skill-by-mode facets before fallback review', () => {
   let dueFacet = createMemoryState();
   dueFacet = updateMemoryState(dueFacet, true, 0);

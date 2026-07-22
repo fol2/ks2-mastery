@@ -25,6 +25,7 @@ import {
   MONSTER_UNIT_COUNT,
   DIRECT_PUNCTUATION_MONSTER_IDS,
 } from './punctuation-manifest.js';
+import { normalisePunctuationStarEvidence } from '../../../shared/punctuation/star-evidence.js';
 
 export { PUNCTUATION_CLIENT_CLUSTER_TO_MONSTER, ACTIVE_PUNCTUATION_MONSTER_IDS, CLASPIN_REQUIRED_SKILLS };
 
@@ -443,7 +444,15 @@ function computePracticeStars(monsterAttempts) {
   return Math.min(PRACTICE_CAP, Math.floor(rawScore));
 }
 
-function computeSecureStars(monsterClusterIds, items, rewardUnitEntries, monsterId, itemSignatureAliases, monsterAttempts) {
+function computeSecureStars(
+  monsterClusterIds,
+  items,
+  rewardUnitEntries,
+  monsterId,
+  itemSignatureAliases,
+  monsterAttempts,
+  explicitSecureItemIds = null,
+) {
   // Count items that have reached the secure bucket, deduped by variant
   // signature per skill+mode facet (QG-P4-U5).
   //
@@ -457,10 +466,14 @@ function computeSecureStars(monsterClusterIds, items, rewardUnitEntries, monster
 
   // Build the set of secure item IDs so we only dedup items that actually
   // reached the secure bucket.
-  const secureItemIds = new Set();
-  for (const [itemId, itemState] of Object.entries(itemEntries)) {
-    const snap = memorySnapshot(itemState);
-    if (snap.secure) secureItemIds.add(itemId);
+  const secureItemIds = explicitSecureItemIds instanceof Set
+    ? new Set(explicitSecureItemIds)
+    : new Set();
+  if (!(explicitSecureItemIds instanceof Set)) {
+    for (const [itemId, itemState] of Object.entries(itemEntries)) {
+      const snap = memorySnapshot(itemState);
+      if (snap.secure) secureItemIds.add(itemId);
+    }
   }
 
   // Per-facet signature tracking for dedup.
@@ -554,6 +567,18 @@ function computeSecureStars(monsterClusterIds, items, rewardUnitEntries, monster
   const w = unitWeightMultiplier(monsterId);
   const rawScore = (secureItemCount * 2 * w) + (securedUnitCount * 8 * w);
   return Math.min(SECURE_CAP, Math.round(rawScore));
+}
+
+function secureEvidenceForMonster(secureItemIds, attempts, monsterClusterIds) {
+  const matching = new Set();
+  if (!(secureItemIds instanceof Set) || secureItemIds.size === 0) return matching;
+  for (const attempt of attempts) {
+    if (!secureItemIds.has(attempt.itemId)) continue;
+    if ([...clustersForAttempt(attempt)].some((clusterId) => monsterClusterIds.has(clusterId))) {
+      matching.add(attempt.itemId);
+    }
+  }
+  return matching;
 }
 
 function computeMasteryStars(monsterClusterIds, facets, rewardUnitEntries, monsterId, monsterAttempts) {
@@ -943,6 +968,13 @@ export function projectPunctuationStars(progress, releaseId, options) {
   const rewardUnits = isPlainObject(safeProgress.rewardUnits) ? safeProgress.rewardUnits : {};
   const rawAttempts = Array.isArray(safeProgress.attempts) ? safeProgress.attempts : [];
   const attempts = normaliseAttempts(rawAttempts);
+  const starEvidence = normalisePunctuationStarEvidence(safeProgress.starEvidence, {
+    attempts,
+    releaseId,
+  });
+  const secureEvidenceItemIds = starEvidence
+    ? new Set(starEvidence.secureItemIds)
+    : null;
   const itemSignatureAliases = itemVariantSignatureAliasMap(attempts);
   const rewardUnitEntries = currentReleaseRewardEntries(rewardUnits, releaseId);
 
@@ -970,7 +1002,17 @@ export function projectPunctuationStars(progress, releaseId, options) {
 
     const tryStars = computeTryStars(mAttempts);
     const practiceStars = computePracticeStars(mAttempts);
-    const secureStars = computeSecureStars(clusterIds, mItems, rewardUnitEntries, monsterId, itemSignatureAliases, mAttempts);
+    const secureStars = computeSecureStars(
+      clusterIds,
+      mItems,
+      rewardUnitEntries,
+      monsterId,
+      itemSignatureAliases,
+      mAttempts,
+      secureEvidenceItemIds
+        ? secureEvidenceForMonster(secureEvidenceItemIds, mAttempts, clusterIds)
+        : null,
+    );
     const masteryStars = computeMasteryStars(clusterIds, facets, rewardUnitEntries, monsterId, mAttempts);
     const total = tryStars + practiceStars + secureStars + masteryStars;
 

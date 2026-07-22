@@ -88,6 +88,88 @@ test('punctuation service default runtime bank exposes the P20 15000+ depth', ()
   assert.equal(stats.publishedRewardUnits, 14);
 });
 
+test('bounded Punctuation due signals advance with time without scanning or rewriting item history', () => {
+  const repository = makeRepository();
+  const dueAt = Date.UTC(2026, 0, 2);
+  let now = Date.UTC(2026, 0, 1);
+  repository.writeData('learner-a', {
+    prefs: { mode: 'smart', roundLength: '4' },
+    progress: {
+      items: {},
+      itemTotals: { version: 1, tracked: 1, new: 0, secure: 0, weak: 0 },
+      facets: {
+        'sentence_endings::choose': {
+          attempts: 1,
+          correct: 1,
+          incorrect: 0,
+          streak: 1,
+          lapses: 0,
+          dueAt,
+          firstCorrectAt: now,
+          lastCorrectAt: now,
+          lastSeen: now,
+        },
+      },
+      rewardUnits: {},
+      attempts: [],
+      sessionsCompleted: 0,
+    },
+  });
+  const service = createPunctuationService({ repository, now: () => now, random: () => 0 });
+
+  assert.equal(service.getStats('learner-a').due, 0);
+  now = Date.UTC(2026, 0, 3);
+  const afterClockTransition = service.getStats('learner-a');
+  assert.equal(afterClockTransition.due, 1);
+  assert.equal(afterClockTransition.reviewSignalScope, 'skill-mode-facets');
+  assert.deepEqual(repository.snapshot().data.progress.itemTotals, {
+    version: 1,
+    tracked: 1,
+    new: 0,
+    secure: 0,
+    weak: 0,
+  });
+});
+
+test('bounded Punctuation read-model getters do not rescan the 15,072-item catalogue', () => {
+  const repository = makeRepository();
+  repository.writeData('learner-a', {
+    prefs: { mode: 'smart', roundLength: '4' },
+    progress: {
+      items: {},
+      itemTotals: { version: 1, tracked: 0, new: 0, secure: 0, weak: 0 },
+      facets: {},
+      rewardUnits: {},
+      attempts: [],
+      sessionsCompleted: 0,
+    },
+  });
+  const rejectCatalogueIteration = (items) => new Proxy(items, {
+    get(target, property, receiver) {
+      if (property === Symbol.iterator || ['filter', 'map', 'some'].includes(property)) {
+        throw new Error('bounded read model rescanned content items');
+      }
+      return Reflect.get(target, property, receiver);
+    },
+  });
+  const baseIndexes = createPunctuationContentIndexes(DEFAULT_PUNCTUATION_RUNTIME_MANIFEST);
+  const indexes = {
+    ...baseIndexes,
+    items: rejectCatalogueIteration(baseIndexes.items),
+    itemsBySkill: new Map([...baseIndexes.itemsBySkill.entries()]
+      .map(([skillId, items]) => [skillId, rejectCatalogueIteration(items)])),
+  };
+  const service = createPunctuationService({
+    repository,
+    indexes,
+    now: () => Date.UTC(2026, 0, 1),
+    random: () => 0,
+  });
+
+  assert.equal(service.getStats('learner-a').total, 15072);
+  assert.ok(service.getAnalyticsSnapshot('learner-a').skillRows.length > 0);
+});
+
 test('punctuation service keeps the default P20 runtime manifest and indexes cached', () => {
   const fixedItems = DEFAULT_PUNCTUATION_RUNTIME_MANIFEST.items.filter((item) => item.source === 'fixed');
   const generatedItems = DEFAULT_PUNCTUATION_RUNTIME_MANIFEST.items.filter((item) => item.source === 'generated');

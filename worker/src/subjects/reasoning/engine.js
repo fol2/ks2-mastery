@@ -14,6 +14,7 @@ import {
 const TEMPLATE_MAP = Object.freeze(Object.fromEntries(REASONING_TEMPLATES.map((template) => [template.id, template])));
 const TEMPLATE_IDS = Object.freeze(REASONING_TEMPLATES.map((template) => template.id));
 const SKILL_IDS = Object.freeze(Object.keys(REASONING_SKILLS));
+const MISCONCEPTION_IDS = Object.freeze(Object.keys(REASONING_MISCONCEPTIONS));
 const DEFAULT_ROUND_LENGTH = 6;
 const REASONING_RETRY_QUEUE_LIMIT = 200;
 const REASONING_EVENT_HISTORY_LIMIT = 240;
@@ -144,10 +145,6 @@ function toNonNegativeInt(value) {
   return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : 0;
 }
 
-function clonePlainObject(value) {
-  return value && typeof value === 'object' && !Array.isArray(value) ? clone(value) : {};
-}
-
 function boundedArray(value, limit) {
   if (!Array.isArray(value)) return [];
   return value.slice(-limit).map((entry) => clone(entry));
@@ -224,7 +221,7 @@ function normaliseData(raw = {}) {
     skills: boundedNodeMap(source.skills, { allowedIds: SKILL_IDS }),
     templates: boundedNodeMap(source.templates, { allowedIds: TEMPLATE_IDS }),
     items: boundedNodeMap(source.items, { limit: REASONING_ITEM_NODE_LIMIT }),
-    misconceptions: clonePlainObject(source.misconceptions),
+    misconceptions: boundedNodeMap(source.misconceptions, { allowedIds: MISCONCEPTION_IDS }),
     retryQueue: normaliseRetryQueue(source.retryQueue),
     recentTemplateStarts: boundedArray(source.recentTemplateStarts, REASONING_TEMPLATE_START_LIMIT),
     events: boundedArray(rawEvents, REASONING_EVENT_HISTORY_LIMIT),

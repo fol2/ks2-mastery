@@ -15,6 +15,11 @@ import assert from 'node:assert/strict';
 
 import { buildHeroShadowReadModel } from '../worker/src/hero/read-model.js';
 import { createApiPlatformRepositories } from '../src/platform/core/repositories/index.js';
+import {
+  readBoundedSpellingUi,
+  updateBoundedSpellingUi,
+  upsertBoundedSpellingState,
+} from './helpers/bounded-spelling-state.js';
 import { createWorkerRepositoryServer } from './helpers/worker-server.js';
 
 const HERO_COMMAND_URL = 'https://repo.test/api/hero/command';
@@ -76,10 +81,11 @@ async function seedLearner(server, accountId, learnerId) {
   });
   await repos.flush();
 
-  server.DB.db.prepare(`
-    INSERT OR REPLACE INTO child_subject_state (learner_id, subject_id, ui_json, data_json, updated_at, updated_by_account_id)
-    VALUES (?, 'spelling', '{}', ?, ?, ?)
-  `).run(learnerId, JSON.stringify(HERO_SPELLING_DATA), Date.now(), accountId);
+  upsertBoundedSpellingState(server.DB.db, {
+    learnerId,
+    accountId,
+    data: HERO_SPELLING_DATA,
+  });
 
   return repos;
 }
@@ -118,50 +124,62 @@ async function postHeroCommand(server, body, accountId = 'adult-a') {
 }
 
 function seedHeroSession(server, learnerId, subjectId, heroContext) {
-  const uiJson = JSON.stringify({
+  const ui = {
     session: {
       id: `session-${subjectId}-hero`,
       startedAt: new Date().toISOString(),
       mode: 'smart',
       heroContext,
     },
-  });
+  };
+  if (subjectId === 'spelling') {
+    updateBoundedSpellingUi(server.DB.db, learnerId, ui);
+    return;
+  }
   server.DB.db.prepare(`
     UPDATE child_subject_state
     SET ui_json = ?
     WHERE learner_id = ? AND subject_id = ?
-  `).run(uiJson, learnerId, subjectId);
+  `).run(JSON.stringify(ui), learnerId, subjectId);
 }
 
 function seedNonHeroSession(server, learnerId, subjectId) {
-  const uiJson = JSON.stringify({
+  const ui = {
     session: {
       id: `session-${subjectId}-normal`,
       startedAt: new Date().toISOString(),
       mode: 'smart',
     },
-  });
+  };
+  if (subjectId === 'spelling') {
+    updateBoundedSpellingUi(server.DB.db, learnerId, ui);
+    return;
+  }
   server.DB.db.prepare(`
     UPDATE child_subject_state
     SET ui_json = ?
     WHERE learner_id = ? AND subject_id = ?
-  `).run(uiJson, learnerId, subjectId);
+  `).run(JSON.stringify(ui), learnerId, subjectId);
 }
 
 function seedSummaryPhaseStaleSession(server, learnerId, subjectId) {
-  const uiJson = JSON.stringify({
+  const ui = {
     phase: 'summary',
     session: {
       id: `session-${subjectId}-stale-summary`,
       startedAt: new Date().toISOString(),
       mode: 'smart',
     },
-  });
+  };
+  if (subjectId === 'spelling') {
+    updateBoundedSpellingUi(server.DB.db, learnerId, ui);
+    return;
+  }
   server.DB.db.prepare(`
     UPDATE child_subject_state
     SET ui_json = ?
     WHERE learner_id = ? AND subject_id = ?
-  `).run(uiJson, learnerId, subjectId);
+  `).run(JSON.stringify(ui), learnerId, subjectId);
 }
 
 function makeSubjectReadModel(subjectId) {
@@ -690,11 +708,12 @@ test('heroContext.phase is p2-child-launch on successful launch', async () => {
   assert.equal(response.status, 200, `Expected 200, got ${response.status}: ${JSON.stringify(payload)}`);
 
   const subjectId = payload.heroLaunch.subjectId;
-  const row = server.DB.db.prepare(
-    `SELECT ui_json FROM child_subject_state WHERE learner_id = ? AND subject_id = ?`,
-  ).get('learner-a', subjectId);
-  assert.ok(row, 'child_subject_state must have ui_json after launch');
-  const ui = JSON.parse(row.ui_json);
+  const ui = subjectId === 'spelling'
+    ? readBoundedSpellingUi(server.DB.db, 'learner-a')
+    : JSON.parse(server.DB.db.prepare(
+      `SELECT ui_json FROM child_subject_state WHERE learner_id = ? AND subject_id = ?`,
+    ).get('learner-a', subjectId)?.ui_json || 'null');
+  assert.ok(ui, 'authoritative subject state must have ui_json after launch');
   assert.ok(ui?.session?.heroContext, 'Session must carry heroContext');
   assert.equal(ui.session.heroContext.phase, 'p2-child-launch');
 

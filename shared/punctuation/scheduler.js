@@ -621,6 +621,13 @@ function weakRows(indexes, progress, session, now, maxWindow) {
   const rows = [];
   const seen = new Set();
   const limit = Math.max(1, maxWindow);
+  // In the bounded model, generated item rows are prompt evidence, not the
+  // curriculum-wide scheduling authority. Skill-by-mode facets and the recent
+  // attempt ring decide which fixed candidate window to hydrate; item memory
+  // then weights those candidates. This also keeps the planner and the real
+  // selection on the same ID set after hydration. Legacy records without the
+  // versioned aggregate retain the former whole-item-map behaviour.
+  const usesBoundedFacetAuthority = Number(progress?.itemTotals?.version) === 1;
   const addItem = (item) => {
     if (rows.length >= limit || !publishedItem(indexes, item) || seen.has(item.id)) return;
     seen.add(item.id);
@@ -634,12 +641,16 @@ function weakRows(indexes, progress, session, now, maxWindow) {
   };
 
   for (const entry of facetEvidenceRows(progress, now, 'weak')) addFacet(entry);
-  for (const entry of itemEvidenceRows(progress, now, 'weak')) addItem(indexes.itemById.get(entry.itemId));
+  if (!usesBoundedFacetAuthority) {
+    for (const entry of itemEvidenceRows(progress, now, 'weak')) addItem(indexes.itemById.get(entry.itemId));
+  }
   for (const attempt of (Array.isArray(progress?.attempts) ? progress.attempts.slice(-12).reverse() : [])) {
     if (attempt?.correct === false) addItem(indexes.itemById.get(attempt.itemId));
   }
   for (const entry of facetEvidenceRows(progress, now, 'due')) addFacet(entry);
-  for (const entry of itemEvidenceRows(progress, now, 'due')) addItem(indexes.itemById.get(entry.itemId));
+  if (!usesBoundedFacetAuthority) {
+    for (const entry of itemEvidenceRows(progress, now, 'due')) addItem(indexes.itemById.get(entry.itemId));
+  }
   for (const item of indexes.items) {
     addItem(item);
     if (rows.length >= limit) break;
@@ -786,6 +797,7 @@ export function selectPunctuationItem({
       weakFocus: null,
       inspectedCount: 1,
       candidateCount: 1,
+      inspectedItemIds: misconceptionResult.item?.id ? [misconceptionResult.item.id] : [],
     };
   }
 
@@ -802,6 +814,7 @@ export function selectPunctuationItem({
       weakFocus: pickedRow ? clone(pickedRow.weakFocus) : null,
       inspectedCount: rows.length,
       candidateCount: indexes.items.length,
+      inspectedItemIds: rows.map((row) => row.item.id),
     };
   }
 
@@ -865,6 +878,7 @@ export function selectPunctuationItem({
     weakFocus: null,
     inspectedCount: windowed.length,
     candidateCount: candidates.length,
+    inspectedItemIds: windowed.map((entry) => entry.id),
   };
 }
 

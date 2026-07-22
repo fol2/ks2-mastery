@@ -236,6 +236,34 @@ test('session cleared from ui_json but present in practice_sessions succeeds', (
   assert.equal(result.status, 'claimed');
 });
 
+test('newer active evidence does not mask an older completed session for the same task', () => {
+  const heroContext = {
+    source: 'hero-mode',
+    questId: 'quest-abc',
+    taskId: 'task-spelling-1',
+    questFingerprint: 'fp-xyz',
+  };
+  const result = findCompletionEvidence({
+    taskId: 'task-spelling-1',
+    questId: 'quest-abc',
+    questFingerprint: 'fp-xyz',
+    learnerId: 'learner-1',
+    subjectId: 'spelling',
+    practiceSessionRows: [
+      {
+        id: 'new-active',
+        learner_id: 'learner-1',
+        subject_id: 'spelling',
+        status: 'active',
+        session_state_json: JSON.stringify({ heroContext }),
+      },
+      makeCompletedPracticeRow({ id: 'older-completed', subjectId: 'spelling' }),
+    ],
+  });
+  assert.equal(result.completed, true);
+  assert.equal(result.practiceSessionId, 'older-completed');
+});
+
 test('claim at 00:30 for task started at 23:50 (dateKey yesterday) succeeds within grace', () => {
   // Yesterday is 2026-04-27, claim at 00:30 on 2026-04-28 (within 2h grace of midnight)
   const yesterdayDateKey = '2026-04-27';
@@ -563,19 +591,19 @@ test('findCompletionEvidence with specific practiceSessionId checks it first', (
   assert.equal(result.practiceSessionId, 'session-target');
 });
 
-test('findCompletionEvidence falls back to ui_json when no practice row matches', () => {
-  const subjectUiStates = {
-    spelling: {
-      session: {
-        heroContext: {
-          source: 'hero-mode',
-          questId: 'quest-abc',
-          taskId: 'task-spelling-1',
-          questFingerprint: 'fp-xyz',
-        },
-      },
-    },
-  };
+test('findCompletionEvidence recognises matching active practice evidence without subject state', () => {
+  const rows = [{
+    id: 'session-active',
+    learner_id: 'learner-1',
+    subject_id: 'spelling',
+    status: 'active',
+    active_hero_context_json: JSON.stringify({
+      source: 'hero-mode',
+      questId: 'quest-abc',
+      taskId: 'task-spelling-1',
+      questFingerprint: 'fp-xyz',
+    }),
+  }];
 
   const result = findCompletionEvidence({
     taskId: 'task-spelling-1',
@@ -584,13 +612,13 @@ test('findCompletionEvidence falls back to ui_json when no practice row matches'
     learnerId: 'learner-1',
     subjectId: 'spelling',
     practiceSessionId: null,
-    practiceSessionRows: [],
-    subjectUiStates,
+    practiceSessionRows: rows,
   });
 
   assert.equal(result.found, true);
-  assert.equal(result.completed, false); // still active in ui
-  assert.equal(result.source, 'subject-ui-json');
+  assert.equal(result.completed, false);
+  assert.equal(result.source, 'practice-session');
+  assert.equal(result.practiceSessionId, 'session-active');
 });
 
 test('HERO_CLAIM_GRACE_HOURS is exported as 2', () => {

@@ -19,6 +19,16 @@ import {
   updateMemoryState,
 } from './scheduler.js';
 import {
+  buildPunctuationItemTotals,
+  normalisePunctuationItemTotals,
+  updatePunctuationItemTotals,
+} from './item-totals.js';
+import {
+  buildPunctuationStarEvidence,
+  normalisePunctuationStarEvidence,
+  updatePunctuationStarEvidence,
+} from './star-evidence.js';
+import {
   cloneSerialisable,
   createInitialPunctuationState,
   normaliseNonNegativeInteger,
@@ -181,30 +191,49 @@ export function createInitialPunctuationData() {
       facets: {},
       rewardUnits: {},
       attempts: [],
+      starEvidence: {
+        version: 1,
+        releaseId: PUNCTUATION_RELEASE_ID,
+        secureItemIds: [],
+      },
       sessionsCompleted: 0,
     },
   };
 }
 
-export function normalisePunctuationData(value) {
+export { buildPunctuationItemTotals } from './item-totals.js';
+
+export function normalisePunctuationData(value, { indexes = getDefaultPunctuationContentIndexes() } = {}) {
   const raw = isPlainObject(value) ? value : {};
   const progress = isPlainObject(raw.progress) ? raw.progress : {};
-  const normaliseMap = (input) => {
+  const normaliseMap = (input, keyAllowed = () => true) => {
     const output = {};
     if (!isPlainObject(input)) return output;
     for (const [key, entry] of Object.entries(input)) {
-      if (typeof key !== 'string' || !key) continue;
+      if (typeof key !== 'string' || !key || !keyAllowed(key)) continue;
       output[key] = normaliseMemoryState(entry);
     }
     return output;
+  };
+
+  const itemAllowed = (key) => indexes.itemById.has(key);
+  const facetAllowed = (key) => {
+    const [skillId, mode, ...extra] = key.split('::');
+    return extra.length === 0
+      && Boolean(skillId)
+      && Boolean(mode)
+      && indexes.skillById.has(skillId)
+      && itemModesForSkill(indexes, skillId).includes(mode);
   };
 
   const rewardUnits = {};
   if (isPlainObject(progress.rewardUnits)) {
     for (const [key, entry] of Object.entries(progress.rewardUnits)) {
       if (!key || !isPlainObject(entry)) continue;
-      rewardUnits[key] = {
-        masteryKey: typeof entry.masteryKey === 'string' && entry.masteryKey ? entry.masteryKey : key,
+      const masteryKey = typeof entry.masteryKey === 'string' && entry.masteryKey ? entry.masteryKey : key;
+      if (!indexes.rewardUnitByKey.has(masteryKey)) continue;
+      rewardUnits[masteryKey] = {
+        masteryKey,
         releaseId: typeof entry.releaseId === 'string' ? entry.releaseId : PUNCTUATION_RELEASE_ID,
         clusterId: typeof entry.clusterId === 'string' ? entry.clusterId : '',
         rewardUnitId: typeof entry.rewardUnitId === 'string' ? entry.rewardUnitId : '',
@@ -213,42 +242,53 @@ export function normalisePunctuationData(value) {
     }
   }
 
+  const attempts = Array.isArray(progress.attempts)
+    ? progress.attempts
+        .filter(isPlainObject)
+        .map((attempt) => ({
+          ts: normaliseTimestamp(attempt.ts, 0),
+          sessionId: typeof attempt.sessionId === 'string' ? attempt.sessionId : null,
+          itemId: typeof attempt.itemId === 'string' ? attempt.itemId : '',
+          variantSignature: typeof attempt.variantSignature === 'string' ? attempt.variantSignature : '',
+          mode: typeof attempt.mode === 'string' ? attempt.mode : '',
+          itemMode: typeof attempt.itemMode === 'string'
+            ? attempt.itemMode
+            : (typeof attempt.mode === 'string' ? attempt.mode : ''),
+          skillIds: normaliseStringArray(attempt.skillIds),
+          rewardUnitId: typeof attempt.rewardUnitId === 'string' ? attempt.rewardUnitId : '',
+          sessionMode: typeof attempt.sessionMode === 'string' ? attempt.sessionMode : '',
+          testMode: attempt.testMode === 'gps' ? 'gps' : null,
+          supportLevel: normaliseNonNegativeInteger(attempt.supportLevel, 0),
+          supportKind: typeof attempt.supportKind === 'string'
+            ? attempt.supportKind
+            : (normaliseNonNegativeInteger(attempt.supportLevel, 0) > 0 ? 'guided' : null),
+          meaningful: attempt.meaningful !== false,
+          correct: attempt.correct === true,
+          misconceptionTags: normaliseStringArray(attempt.misconceptionTags),
+          facetOutcomes: Array.isArray(attempt.facetOutcomes)
+            ? attempt.facetOutcomes.map(normaliseFacetForReview).filter(Boolean)
+            : [],
+        }))
+        .slice(-1000)
+    : [];
+  const items = normaliseMap(progress.items, itemAllowed);
+  const starEvidence = normalisePunctuationStarEvidence(progress.starEvidence, {
+    attempts,
+    releaseId: PUNCTUATION_RELEASE_ID,
+  }) || buildPunctuationStarEvidence(items, attempts, PUNCTUATION_RELEASE_ID);
+
   return {
     prefs: normalisePunctuationPrefs(raw.prefs),
     progress: {
-      items: normaliseMap(progress.items),
-      facets: normaliseMap(progress.facets),
+      items,
+      facets: normaliseMap(progress.facets, facetAllowed),
       rewardUnits,
-      attempts: Array.isArray(progress.attempts)
-        ? progress.attempts
-            .filter(isPlainObject)
-            .map((attempt) => ({
-              ts: normaliseTimestamp(attempt.ts, 0),
-              sessionId: typeof attempt.sessionId === 'string' ? attempt.sessionId : null,
-              itemId: typeof attempt.itemId === 'string' ? attempt.itemId : '',
-              variantSignature: typeof attempt.variantSignature === 'string' ? attempt.variantSignature : '',
-              mode: typeof attempt.mode === 'string' ? attempt.mode : '',
-              itemMode: typeof attempt.itemMode === 'string'
-                ? attempt.itemMode
-                : (typeof attempt.mode === 'string' ? attempt.mode : ''),
-              skillIds: normaliseStringArray(attempt.skillIds),
-              rewardUnitId: typeof attempt.rewardUnitId === 'string' ? attempt.rewardUnitId : '',
-              sessionMode: typeof attempt.sessionMode === 'string' ? attempt.sessionMode : '',
-              testMode: attempt.testMode === 'gps' ? 'gps' : null,
-              supportLevel: normaliseNonNegativeInteger(attempt.supportLevel, 0),
-              supportKind: typeof attempt.supportKind === 'string'
-                ? attempt.supportKind
-                : (normaliseNonNegativeInteger(attempt.supportLevel, 0) > 0 ? 'guided' : null),
-              meaningful: attempt.meaningful !== false,
-              correct: attempt.correct === true,
-              misconceptionTags: normaliseStringArray(attempt.misconceptionTags),
-              facetOutcomes: Array.isArray(attempt.facetOutcomes)
-                ? attempt.facetOutcomes.map(normaliseFacetForReview).filter(Boolean)
-                : [],
-            }))
-            .slice(-1000)
-        : [],
+      attempts,
+      starEvidence,
       sessionsCompleted: normaliseNonNegativeInteger(progress.sessionsCompleted, 0),
+      ...(normalisePunctuationItemTotals(progress.itemTotals)
+        ? { itemTotals: normalisePunctuationItemTotals(progress.itemTotals) }
+        : {}),
     },
   };
 }
@@ -476,16 +516,27 @@ function facetKey(skillId, mode) {
   return `${skillId}::${mode}`;
 }
 
+function itemModesForSkill(indexes, skillId, items = null) {
+  const indexedModes = indexes.itemModesBySkill?.get(skillId);
+  if (Array.isArray(indexedModes)) return indexedModes;
+  const skillItems = Array.isArray(items) ? items : (indexes.itemsBySkill.get(skillId) || []);
+  return [...new Set(skillItems.map((item) => item.mode))];
+}
+
 function publishedSkill(indexes, skillId) {
   const skill = indexes.skillById.get(skillId);
   return skill?.published ? skill : null;
 }
 
-function chooseGuidedSkill(data, indexes, requestedSkillId, now = Date.now) {
+export function choosePunctuationGuidedSkill(data, indexes, requestedSkillId, now = Date.now) {
   if (publishedSkill(indexes, requestedSkillId)) return requestedSkillId;
   const rows = indexes.publishedSkillIds.map((skillId, order) => {
     const items = indexes.itemsBySkill.get(skillId) || [];
-    const snaps = items.map((item) => memorySnapshot(data.progress.items[item.id], now));
+    const boundedItemState = normalisePunctuationItemTotals(data.progress.itemTotals);
+    const snaps = boundedItemState
+      ? itemModesForSkill(indexes, skillId, items)
+          .map((mode) => memorySnapshot(data.progress.facets[facetKey(skillId, mode)], now))
+      : items.map((item) => memorySnapshot(data.progress.items[item.id], now));
     const hasWeak = snaps.some((snap) => snap.bucket === 'weak');
     const hasDue = snaps.some((snap) => snap.bucket === 'due');
     const mastery = snaps.length ? snaps.reduce((sum, snap) => sum + snap.mastery, 0) / snaps.length : 0;
@@ -514,8 +565,15 @@ function currentPublishedRewardUnits(data, indexes = PUNCTUATION_CONTENT_INDEXES
 }
 
 function statsFromData(data, indexes = PUNCTUATION_CONTENT_INDEXES, now = Date.now) {
-  const publishedItems = indexes.items.filter((item) => indexes.skillById.get(item.skillIds?.[0])?.published);
-  const snaps = publishedItems.map((item) => memorySnapshot(data.progress.items[item.id], now));
+  const publishedItems = indexes.publishedItems
+    || indexes.items.filter((item) => indexes.skillById.get(item.skillIds?.[0])?.published);
+  const itemTotals = normalisePunctuationItemTotals(data.progress.itemTotals);
+  const snaps = itemTotals
+    ? null
+    : publishedItems.map((item) => memorySnapshot(data.progress.items[item.id], now));
+  const liveFacetSnaps = itemTotals
+    ? Object.values(data.progress.facets).map((facet) => memorySnapshot(facet, now))
+    : null;
   const attempts = data.progress.attempts.length;
   const correct = data.progress.attempts.filter((attempt) => attempt.correct).length;
   const trackedRewardUnits = currentPublishedRewardUnits(data, indexes);
@@ -524,10 +582,12 @@ function statsFromData(data, indexes = PUNCTUATION_CONTENT_INDEXES, now = Date.n
   ).length;
   return {
     total: publishedItems.length,
-    secure: snaps.filter((snap) => snap.bucket === 'secure').length,
-    due: snaps.filter((snap) => snap.bucket === 'due').length,
-    fresh: snaps.filter((snap) => snap.bucket === 'new').length,
-    weak: snaps.filter((snap) => snap.bucket === 'weak').length,
+    secure: itemTotals ? liveFacetSnaps.filter((snap) => snap.bucket === 'secure').length : snaps.filter((snap) => snap.bucket === 'secure').length,
+    due: itemTotals ? liveFacetSnaps.filter((snap) => snap.bucket === 'due').length : snaps.filter((snap) => snap.bucket === 'due').length,
+    fresh: itemTotals ? liveFacetSnaps.filter((snap) => snap.bucket === 'new').length : snaps.filter((snap) => snap.bucket === 'new').length,
+    weak: itemTotals ? liveFacetSnaps.filter((snap) => snap.bucket === 'weak').length : snaps.filter((snap) => snap.bucket === 'weak').length,
+    reviewSignalScope: itemTotals ? 'skill-mode-facets' : 'items',
+    trackedItemScope: itemTotals ? 'lifetime' : 'current-release',
     attempts,
     correct,
     accuracy: attempts ? Math.round((correct / attempts) * 100) : 0,
@@ -732,11 +792,17 @@ function dailyGoalSummary(attempts, now) {
 }
 
 function analyticsFromData(data, indexes = PUNCTUATION_CONTENT_INDEXES, now = Date.now) {
+  const boundedItemState = normalisePunctuationItemTotals(data.progress.itemTotals);
   const skillRows = indexes.skills.map((skill) => {
     const items = indexes.itemsBySkill.get(skill.id) || [];
-    const snaps = items.map((item) => memorySnapshot(data.progress.items[item.id], now));
+    const facetModes = itemModesForSkill(indexes, skill.id, items);
+    const snaps = boundedItemState
+      ? facetModes.map((mode) => memorySnapshot(data.progress.facets[facetKey(skill.id, mode)], now))
+      : items.map((item) => memorySnapshot(data.progress.items[item.id], now));
     const attempts = snaps.reduce((sum, snap) => sum + snap.attempts, 0);
-    const correct = items.reduce((sum, item) => sum + (data.progress.items[item.id]?.correct || 0), 0);
+    const correct = boundedItemState
+      ? facetModes.reduce((sum, mode) => sum + (data.progress.facets[facetKey(skill.id, mode)]?.correct || 0), 0)
+      : items.reduce((sum, item) => sum + (data.progress.items[item.id]?.correct || 0), 0);
     return {
       skillId: skill.id,
       name: skill.name,
@@ -919,9 +985,18 @@ function applyMarkedAttemptToProgress({
   const guidedSupport = supportLevel > 0;
   const rewardUnit = rewardUnitForItem(indexes, item);
 
-  data.progress.items[item.id] = updateMemoryState(data.progress.items[item.id], result.correct, nowValue, {
+  const hadPreviousItemState = Object.prototype.hasOwnProperty.call(data.progress.items, item.id);
+  const previousItemState = data.progress.items[item.id];
+  data.progress.items[item.id] = updateMemoryState(previousItemState, result.correct, nowValue, {
     supported: guidedSupport,
   });
+  if (data.progress.itemTotals) {
+    data.progress.itemTotals = updatePunctuationItemTotals(data.progress.itemTotals, {
+      hadPrevious: hadPreviousItemState,
+      previousValue: previousItemState,
+      nextValue: data.progress.items[item.id],
+    });
+  }
   for (const skillId of item.skillIds || []) {
     data.progress.facets[facetKey(skillId, item.mode)] = updateMemoryState(
       data.progress.facets[facetKey(skillId, item.mode)],
@@ -965,6 +1040,12 @@ function applyMarkedAttemptToProgress({
       : [],
   });
   data.progress.attempts = data.progress.attempts.slice(-1000);
+  data.progress.starEvidence = updatePunctuationStarEvidence(data.progress.starEvidence, {
+    itemId: item.id,
+    secure: nextItemSnap.secure,
+    attempts: data.progress.attempts,
+    releaseId: PUNCTUATION_RELEASE_ID,
+  });
 
   return { securedRows };
 }
@@ -1288,12 +1369,13 @@ function nextActiveState({ learnerId, session, data, indexes, prefs, now, random
   };
 }
 
-function readData(repository, learnerId) {
-  return normalisePunctuationData(repository.readData?.(learnerId));
+function readData(repository, learnerId, indexes) {
+  return normalisePunctuationData(repository.readData?.(learnerId), { indexes });
 }
 
-function writeData(repository, learnerId, data) {
-  return repository.writeData?.(learnerId, normalisePunctuationData(data)) || normalisePunctuationData(data);
+function writeData(repository, learnerId, data, indexes) {
+  const normalised = normalisePunctuationData(data, { indexes });
+  return repository.writeData?.(learnerId, normalised) || normalised;
 }
 
 function syncPracticeSession(repository, learnerId, state, now) {
@@ -1453,7 +1535,7 @@ export function createPunctuationService({
       ])],
     };
     data.progress.sessionsCompleted += responses.length > 0 ? 1 : 0;
-    writeData(repository, learnerId, data);
+    writeData(repository, learnerId, data, indexes);
     const summary = sessionSummary(nextSession, data, indexes, clock);
     const nextState = {
       ...state,
@@ -1490,10 +1572,10 @@ export function createPunctuationService({
       return normaliseState(rawState);
     },
     getPrefs(learnerId) {
-      return cloneSerialisable(readData(repository, learnerId).prefs);
+      return cloneSerialisable(readData(repository, learnerId, indexes).prefs);
     },
     savePrefs(learnerId, patch = {}) {
-      const current = readData(repository, learnerId);
+      const current = readData(repository, learnerId, indexes);
       const next = {
         ...current,
         prefs: normalisePunctuationPrefs({
@@ -1501,22 +1583,22 @@ export function createPunctuationService({
           ...(isPlainObject(patch) ? patch : {}),
         }),
       };
-      return cloneSerialisable(writeData(repository, learnerId, next).prefs);
+      return cloneSerialisable(writeData(repository, learnerId, next, indexes).prefs);
     },
     getStats(learnerId) {
-      return statsFromData(readData(repository, learnerId), indexes, clock);
+      return statsFromData(readData(repository, learnerId, indexes), indexes, clock);
     },
     getAnalyticsSnapshot(learnerId) {
-      return analyticsFromData(readData(repository, learnerId), indexes, clock);
+      return analyticsFromData(readData(repository, learnerId, indexes), indexes, clock);
     },
     startSession(learnerId, options = {}) {
-      const current = readData(repository, learnerId);
+      const current = readData(repository, learnerId, indexes);
       const prefs = normalisePunctuationPrefs({ ...current.prefs, ...options });
       const requestedGuidedSkillId = typeof options?.skillId === 'string'
         ? options.skillId
         : (typeof options?.guidedSkillId === 'string' ? options.guidedSkillId : null);
       const guidedSkillId = prefs.mode === 'guided'
-        ? chooseGuidedSkill(current, indexes, requestedGuidedSkillId, clock)
+        ? choosePunctuationGuidedSkill(current, indexes, requestedGuidedSkillId, clock)
         : null;
       const session = {
         id: uid('punctuation-session', clock, random),
@@ -1559,7 +1641,7 @@ export function createPunctuationService({
     submitAnswer(learnerId, uiState, rawAnswer = '', expectedContext = {}) {
       const state = requireActiveItem(uiState, 'submit-answer');
       assertExpectedSessionContext(state.session, expectedContext, 'submit-answer');
-      const data = readData(repository, learnerId);
+      const data = readData(repository, learnerId, indexes);
       const item = itemForId(indexes, state.session.currentItemId);
       if (!item) {
         throw serviceError('punctuation_item_unsupported', 'The active Punctuation item is no longer available.', {
@@ -1631,7 +1713,7 @@ export function createPunctuationService({
         meaningfulAttempt,
       });
       const securedUnits = securedRows.map((entry) => entry.masteryKey);
-      writeData(repository, learnerId, data);
+      writeData(repository, learnerId, data, indexes);
 
       const nextSession = {
         ...state.session,
@@ -1696,10 +1778,10 @@ export function createPunctuationService({
     },
     continueSession(learnerId, uiState) {
       const state = requireFeedback(uiState, 'continue-session');
-      const data = readData(repository, learnerId);
+      const data = readData(repository, learnerId, indexes);
       if (state.session.answeredCount >= state.session.length) {
         data.progress.sessionsCompleted += 1;
-        writeData(repository, learnerId, data);
+        writeData(repository, learnerId, data, indexes);
         const summary = sessionSummary(state.session, data, indexes, clock);
         const nextState = {
           ...state,
@@ -1733,14 +1815,14 @@ export function createPunctuationService({
           ? { choiceIndex: null }
           : { typed: '' }, expectedContext);
       }
-      const data = readData(repository, learnerId);
+      const data = readData(repository, learnerId, indexes);
       const nextSession = {
         ...state.session,
         answeredCount: state.session.answeredCount + 1,
       };
       if (nextSession.answeredCount >= nextSession.length) {
         data.progress.sessionsCompleted += 1;
-        writeData(repository, learnerId, data);
+        writeData(repository, learnerId, data, indexes);
         const summary = sessionSummary(nextSession, data, indexes, clock);
         const nextState = {
           ...state,
@@ -1773,7 +1855,7 @@ export function createPunctuationService({
       if (state.phase === 'summary') return stateTransition(state, { changed: false });
       assertGpsReleaseCurrent(state.session, state.session.mode === 'gps' ? 'finalise-gps' : 'end-session');
       assertExpectedSessionContext(state.session, expectedContext, 'end-session');
-      const data = readData(repository, learnerId);
+      const data = readData(repository, learnerId, indexes);
       if (state.session.mode === 'gps') {
         const nowValue = clock();
         const gps = normaliseGpsSession(state.session.gps);
@@ -1799,7 +1881,7 @@ export function createPunctuationService({
         });
       }
       data.progress.sessionsCompleted += state.session.answeredCount > 0 ? 1 : 0;
-      writeData(repository, learnerId, data);
+      writeData(repository, learnerId, data, indexes);
       const summary = sessionSummary(state.session, data, indexes, clock);
       const nextState = {
         ...state,

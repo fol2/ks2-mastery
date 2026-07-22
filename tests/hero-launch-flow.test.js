@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { createApiPlatformRepositories } from '../src/platform/core/repositories/index.js';
+import { readBoundedSpellingUi, upsertBoundedSpellingState } from './helpers/bounded-spelling-state.js';
 import { createWorkerRepositoryServer } from './helpers/worker-server.js';
 
 const HERO_COMMAND_URL = 'https://repo.test/api/hero/command';
@@ -51,10 +52,12 @@ async function seedLearnerWithSubjectState(server, accountId, learnerId) {
     },
   };
   const now = Date.now();
-  server.DB.db.prepare(`
-    INSERT INTO child_subject_state (learner_id, subject_id, ui_json, data_json, updated_at, updated_by_account_id)
-    VALUES (?, 'spelling', '{}', ?, ?, ?)
-  `).run(learnerId, JSON.stringify(spellingData), now, accountId);
+  upsertBoundedSpellingState(server.DB.db, {
+    learnerId,
+    accountId,
+    data: spellingData,
+    now,
+  });
 
   return repos;
 }
@@ -92,10 +95,14 @@ async function postHeroCommand(server, body, accountId = 'adult-a') {
   });
 }
 
-// heroContext lives on the subject state (ui_json.session.heroContext) because
+// heroContext lives on the authoritative subject state
+// (ui_json.session.heroContext) because
 // the engine adds it after service.startSession returns. The practice_sessions
-// snapshot is taken before that point, so we verify via child_subject_state.
+// snapshot is taken before that point.
 function getSubjectSessionState(server, learnerId, subjectId) {
+  if (subjectId === 'spelling') {
+    return readBoundedSpellingUi(server.DB.db, learnerId)?.session || null;
+  }
   const row = server.DB.db.prepare(
     `SELECT ui_json FROM child_subject_state
      WHERE learner_id = ? AND subject_id = ?`,
