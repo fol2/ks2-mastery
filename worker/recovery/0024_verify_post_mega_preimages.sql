@@ -96,45 +96,37 @@ checks AS (
         ON archive.preimage_id = achievement.preimage_id
       WHERE archive.preimage_id IS NULL) AS orphan_achievements
 )
-SELECT 'metadata table' AS check_name, 1 AS expected, metadata_table AS actual,
-       metadata_table = 1 AS ok FROM checks
-UNION ALL
-SELECT 'item table', 1, item_table, item_table = 1 FROM checks
-UNION ALL
-SELECT 'achievement table', 1, achievement_table, achievement_table = 1 FROM checks
-UNION ALL
-SELECT 'lookup index', 1, lookup_index, lookup_index = 1 FROM checks
-UNION ALL
-SELECT 'metadata columns', 14, metadata_columns, metadata_columns = 14 FROM checks
-UNION ALL
-SELECT 'item columns', 7, item_columns, item_columns = 7 FROM checks
-UNION ALL
-SELECT 'item primary key', 'preimage_id,slug', item_primary_key,
-       item_primary_key = 'preimage_id,slug' FROM checks
-UNION ALL
-SELECT 'achievement columns', 5, achievement_columns, achievement_columns = 5 FROM checks
-UNION ALL
-SELECT 'achievement primary key', 'preimage_id,achievement_id', achievement_primary_key,
-       achievement_primary_key = 'preimage_id,achievement_id' FROM checks
-UNION ALL
-SELECT 'metadata idempotency key', 1, metadata_idempotency_key,
-       metadata_idempotency_key = 1 FROM checks
-UNION ALL
-SELECT 'item archive foreign key', 1, item_archive_foreign_key,
-       item_archive_foreign_key = 1 FROM checks
-UNION ALL
-SELECT 'achievement archive foreign key', 1, achievement_archive_foreign_key,
-       achievement_archive_foreign_key = 1 FROM checks
-UNION ALL
-SELECT 'item count integrity', 0, item_count_mismatches,
-       item_count_mismatches = 0 FROM checks
-UNION ALL
-SELECT 'achievement count integrity', 0, achievement_count_mismatches,
-       achievement_count_mismatches = 0 FROM checks
-UNION ALL
-SELECT 'orphan archive items', 0, orphan_items,
-       orphan_items = 0 FROM checks
-UNION ALL
-SELECT 'orphan archive achievements', 0, orphan_achievements,
-       orphan_achievements = 0 FROM checks
+SELECT
+  json_extract(check_row.value, '$[0]') AS check_name,
+  json_extract(check_row.value, '$[1]') AS expected,
+  json_extract(check_row.value, '$[2]') AS actual,
+  json_extract(check_row.value, '$[1]')
+    = json_extract(check_row.value, '$[2]') AS ok
+FROM checks,
+     json_each(json_array(
+       json_array('metadata table', 1, metadata_table),
+       json_array('item table', 1, item_table),
+       json_array('achievement table', 1, achievement_table),
+       json_array('lookup index', 1, lookup_index),
+       json_array('metadata columns', 14, metadata_columns),
+       json_array('item columns', 7, item_columns),
+       json_array('item primary key', 'preimage_id,slug', item_primary_key),
+       json_array('achievement columns', 5, achievement_columns),
+       json_array(
+         'achievement primary key',
+         'preimage_id,achievement_id',
+         achievement_primary_key
+       ),
+       json_array('metadata idempotency key', 1, metadata_idempotency_key),
+       json_array('item archive foreign key', 1, item_archive_foreign_key),
+       json_array(
+         'achievement archive foreign key',
+         1,
+         achievement_archive_foreign_key
+       ),
+       json_array('item count integrity', 0, item_count_mismatches),
+       json_array('achievement count integrity', 0, achievement_count_mismatches),
+       json_array('orphan archive items', 0, orphan_items),
+       json_array('orphan archive achievements', 0, orphan_achievements)
+     )) AS check_row
 ORDER BY check_name;

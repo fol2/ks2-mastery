@@ -266,7 +266,11 @@ WITH
             CAST(marker.ready_at / 86400000 AS INTEGER)
           ) <= CAST(marker.ready_at / 86400000 AS INTEGER)
         THEN 1 ELSE 0 END) AS due,
-      SUM(CASE WHEN COALESCE(CAST(json_extract(item.value, '$.attempts') AS INTEGER), 0) = 0 THEN 1 ELSE 0 END) AS fresh,
+      SUM(CASE
+        WHEN item.key IS NOT NULL
+          AND COALESCE(CAST(json_extract(item.value, '$.attempts') AS INTEGER), 0) = 0
+        THEN 1 ELSE 0
+      END) AS fresh,
       SUM(CASE
         WHEN COALESCE(CAST(json_extract(item.value, '$.wrong') AS INTEGER), 0) > 0
           AND (
@@ -505,57 +509,51 @@ metrics AS (
     (SELECT COUNT(*) FROM reading_mismatches) AS reading_value_mismatches,
     (SELECT COUNT(*) FROM punctuation_mismatches) AS punctuation_value_mismatches
 )
-SELECT 'readiness' AS check_name, 1 AS expected, ready_rows AS actual,
-       ready_rows = 1 AS ok FROM metrics
-UNION ALL
-SELECT 'spelling learners', all_learners, spelling_split_learners,
-       all_learners = spelling_split_learners FROM metrics
-UNION ALL
-SELECT 'spelling items', spelling_legacy_items, spelling_split_items,
-       spelling_legacy_items = spelling_split_items FROM metrics
-UNION ALL
-SELECT 'spelling achievements', spelling_legacy_achievements, spelling_split_achievements,
-       spelling_legacy_achievements = spelling_split_achievements FROM metrics
-UNION ALL
-SELECT 'grammar items', grammar_archived_items, grammar_split_items,
-       grammar_archived_items = grammar_split_items FROM metrics
-UNION ALL
-SELECT 'reading items', reading_archived_items, reading_split_items,
-       reading_archived_items = reading_split_items FROM metrics
-UNION ALL
-SELECT 'punctuation items', punctuation_archived_items, punctuation_split_items,
-       punctuation_archived_items = punctuation_split_items FROM metrics
-UNION ALL
-SELECT 'grammar embedded maps', 0, grammar_embedded_maps,
-       grammar_embedded_maps = 0 FROM metrics
-UNION ALL
-SELECT 'reading embedded maps', 0, reading_embedded_maps,
-       reading_embedded_maps = 0 FROM metrics
-UNION ALL
-SELECT 'punctuation embedded maps', 0, punctuation_embedded_maps,
-       punctuation_embedded_maps = 0 FROM metrics
-UNION ALL
-SELECT 'spelling value mismatches', 0, spelling_value_mismatches,
-       spelling_value_mismatches = 0 FROM metrics
-UNION ALL
-SELECT 'spelling learner value mismatches', 0, spelling_learner_value_mismatches,
-       spelling_learner_value_mismatches = 0 FROM metrics
-UNION ALL
-SELECT 'spelling learner integrity violations', 0, spelling_learner_integrity_violations,
-       spelling_learner_integrity_violations = 0 FROM metrics
-UNION ALL
-SELECT 'spelling achievement value mismatches', 0, spelling_achievement_value_mismatches,
-       spelling_achievement_value_mismatches = 0 FROM metrics
-UNION ALL
-SELECT 'spelling progress achievement violations', 0, spelling_progress_achievement_violations,
-       spelling_progress_achievement_violations = 0 FROM metrics
-UNION ALL
-SELECT 'grammar value mismatches', 0, grammar_value_mismatches,
-       grammar_value_mismatches = 0 FROM metrics
-UNION ALL
-SELECT 'reading value mismatches', 0, reading_value_mismatches,
-       reading_value_mismatches = 0 FROM metrics
-UNION ALL
-SELECT 'punctuation value mismatches', 0, punctuation_value_mismatches,
-       punctuation_value_mismatches = 0 FROM metrics
+SELECT
+  json_extract(check_row.value, '$[0]') AS check_name,
+  CAST(json_extract(check_row.value, '$[1]') AS INTEGER) AS expected,
+  CAST(json_extract(check_row.value, '$[2]') AS INTEGER) AS actual,
+  CAST(json_extract(check_row.value, '$[1]') AS INTEGER)
+    = CAST(json_extract(check_row.value, '$[2]') AS INTEGER) AS ok
+FROM metrics,
+     json_each(json_array(
+       json_array('readiness', 1, ready_rows),
+       json_array('spelling learners', all_learners, spelling_split_learners),
+       json_array('spelling items', spelling_legacy_items, spelling_split_items),
+       json_array(
+         'spelling achievements',
+         spelling_legacy_achievements,
+         spelling_split_achievements
+       ),
+       json_array('grammar items', grammar_archived_items, grammar_split_items),
+       json_array('reading items', reading_archived_items, reading_split_items),
+       json_array('punctuation items', punctuation_archived_items, punctuation_split_items),
+       json_array('grammar embedded maps', 0, grammar_embedded_maps),
+       json_array('reading embedded maps', 0, reading_embedded_maps),
+       json_array('punctuation embedded maps', 0, punctuation_embedded_maps),
+       json_array('spelling value mismatches', 0, spelling_value_mismatches),
+       json_array(
+         'spelling learner value mismatches',
+         0,
+         spelling_learner_value_mismatches
+       ),
+       json_array(
+         'spelling learner integrity violations',
+         0,
+         spelling_learner_integrity_violations
+       ),
+       json_array(
+         'spelling achievement value mismatches',
+         0,
+         spelling_achievement_value_mismatches
+       ),
+       json_array(
+         'spelling progress achievement violations',
+         0,
+         spelling_progress_achievement_violations
+       ),
+       json_array('grammar value mismatches', 0, grammar_value_mismatches),
+       json_array('reading value mismatches', 0, reading_value_mismatches),
+       json_array('punctuation value mismatches', 0, punctuation_value_mismatches)
+     )) AS check_row
 ORDER BY check_name;

@@ -154,6 +154,11 @@ Do not change the order. Code must be live before schema authority changes.
    active if readiness, row counts, item values or embedded-map checks
    disagree.
 
+   The 0023 proof compares the live split authority with its frozen cutover
+   archive. Run it only while the fence is active, before any post-cutover
+   gameplay write; legitimate new history will make that parity proof fail
+   closed after mutations resume.
+
 6. Resume mutations by deploying the normal configuration:
 
    ```bash
