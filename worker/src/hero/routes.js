@@ -9,26 +9,10 @@ import { NotFoundError } from '../errors.js';
 import { buildHeroShadowReadModel } from './read-model.js';
 import { resolveHeroFlagsForAccount } from '../../../shared/hero/account-override.js';
 import { heroCampMonsterIdsFromRewardTracks } from './exposure.js';
+import { logN503HeroCheckpoint } from './debug-n503.js';
 
 const HERO_READ_MODEL_IN_FLIGHT_LIMIT = 64;
 const heroReadModelInFlight = new Map();
-
-// Temporary production trace for the Nelson 503 investigation. Keep every
-// field on a closed, non-identifying allowlist so an exceeded-CPU invocation
-// leaves a useful last checkpoint without logging learner or account data.
-function logN503HeroCheckpoint(capacity, phase, counts = {}) {
-  try {
-    // eslint-disable-next-line no-console
-    console.log('[DEBUG-N503]', JSON.stringify({
-      event: 'n503.hero-read-model.phase',
-      requestId: capacity?.requestId || null,
-      phase,
-      subjectCount: Number.isFinite(counts.subjectCount) ? counts.subjectCount : null,
-      recentSessionCount: Number.isFinite(counts.recentSessionCount) ? counts.recentSessionCount : null,
-      taskCount: Number.isFinite(counts.taskCount) ? counts.taskCount : null,
-    }));
-  } catch { /* best-effort diagnostic only */ }
-}
 
 function heroReadModelInFlightKey({ accountId, learnerId }) {
   return [
@@ -181,6 +165,7 @@ export async function handleHeroReadModel({
 
     // 5. Assemble the shadow read model (v3, v4, v5, or v6: pass accountId and env for
     //    quest fingerprint and the HERO_MODE_CHILD_UI_ENABLED gate).
+    logN503HeroCheckpoint(capacity, 'assemble-start');
     const result = buildHeroShadowReadModel({
       learnerId,
       accountId: session.accountId || '',
@@ -215,6 +200,7 @@ export async function handleHeroReadModel({
     // only available via operator scripts / event_log, never over HTTP.
     const { debug, ...safeResult } = result;
 
+    logN503HeroCheckpoint(capacity, 'payload-ready');
     return { ok: true, hero: safeResult };
   });
 

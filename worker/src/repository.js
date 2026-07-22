@@ -207,6 +207,7 @@ import { __readingEngineInternals } from './subjects/reading/engine.js';
 import { buildArithmeticReadModel } from './subjects/arithmetic/read-models.js';
 import { __arithmeticEngineInternals } from './subjects/arithmetic/engine.js';
 import { buildReasoningReadModel } from './subjects/reasoning/read-models.js';
+import { logN503HeroCheckpoint } from './hero/debug-n503.js';
 import { listPunctuationEvents } from './subjects/punctuation/events.js';
 import {
   createInitialPunctuationState,
@@ -12120,6 +12121,7 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
     // Returns both the normalised hero progress state AND recent completed
     // practice sessions (last 24h) for pending-completed detection.
     async readHeroProgressData(learnerId) {
+      logN503HeroCheckpoint(capacity, 'progress-query-start');
       const [progressState, sessionRows] = await Promise.all([
         readHeroProgressState(db, learnerId),
         all(db, `
@@ -12130,6 +12132,9 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
           LIMIT 20
         `, [learnerId, Date.now() - (24 * 60 * 60 * 1000)]),
       ]);
+      logN503HeroCheckpoint(capacity, 'progress-query-done', {
+        recentSessionCount: sessionRows.length,
+      });
       return { heroProgressState: progressState, recentCompletedSessions: sessionRows };
     },
     // Hero progress markers only change the daily field. Applying that field
@@ -13168,6 +13173,7 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
     // P2 active session detection inspects `ui` for heroContext.
     async readHeroSubjectReadModels(learnerId, { accountId = '', now = Date.now() } = {}) {
       let rows;
+      logN503HeroCheckpoint(capacity, 'subject-row-query-start');
       if (!await boundedGameplayTableAvailable(db, 'spelling')) {
         rows = await all(db, `
           SELECT learner_id, subject_id, data_json, ui_json, updated_at, NULL AS spelling_stats_json
@@ -13207,10 +13213,19 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
           WHERE learner_id = ?
         `, [learnerId]);
       }
+      logN503HeroCheckpoint(capacity, 'subject-row-query-done', {
+        rowCount: rows.length,
+      });
       const result = {};
+      logN503HeroCheckpoint(capacity, 'punctuation-items-start');
       const punctuationItems = accountId
         ? await readPublicPunctuationItemRows(db, rows)
         : new Map();
+      logN503HeroCheckpoint(capacity, 'punctuation-items-done', {
+        itemCount: [...punctuationItems.values()]
+          .reduce((total, items) => total + (Array.isArray(items) ? items.length : 0), 0),
+      });
+      logN503HeroCheckpoint(capacity, 'spelling-content-start');
       const spellingContent = accountId && rows.some((row) => row.subject_id === 'spelling')
         ? await readSpellingRuntimeContentBundle(db, accountId, 'spelling', {
           includeAccountContent: false,
@@ -13219,7 +13234,15 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
           env,
         })
         : null;
+      logN503HeroCheckpoint(capacity, 'spelling-content-done', {
+        wordCount: spellingContent?.snapshot?.words?.length || 0,
+      });
       for (const row of rows) {
+        const traceSubject = ['spelling', 'punctuation', 'grammar', 'reading', 'arithmetic', 'reasoning']
+          .includes(row.subject_id)
+          ? row.subject_id
+          : 'other';
+        logN503HeroCheckpoint(capacity, `projection-${traceSubject}-start`);
         const rawRecord = subjectStateRowToRecord(row);
         const publicRecord = accountId
           ? await publicSubjectStateRowToRecord(row, {
@@ -13255,6 +13278,7 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
               : {}),
           };
         }
+        logN503HeroCheckpoint(capacity, `projection-${traceSubject}-done`);
       }
       return result;
     },

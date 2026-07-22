@@ -51,6 +51,7 @@ import { consumeRateLimit, rateLimitResponse, rateLimitSubject } from './rate-li
 import { getReadModelDerivedWriteBreaker } from './circuit-breaker-server.js';
 import { isResetableBreakerName } from '../../src/platform/core/circuit-breaker.js';
 import { handleHeroReadModel } from './hero/routes.js';
+import { logN503HeroCheckpoint } from './hero/debug-n503.js';
 import { handleContentOperationsAdminRequest } from './content-operations/routes.js';
 import { readPublishedContentOperationMonsterAssetObject } from './content-operations/assets.js';
 import { resolveHeroStartTaskCommand } from './hero/launch.js';
@@ -947,6 +948,9 @@ export function createWorkerApp({
         method: request.method,
         startedAt: capacityStartedAt,
       });
+      if (url.pathname === '/api/hero/read-model') {
+        logN503HeroCheckpoint(capacity, 'fetch-enter');
+      }
 
       // U3 round 1 (P1 #03): thread the capacity collector through the
       // auth boundary so the production session-lookup query is counted.
@@ -3776,6 +3780,9 @@ export function createWorkerApp({
 
       try {
         response = await runHandler();
+        if (url.pathname === '/api/hero/read-model') {
+          logN503HeroCheckpoint(capacity, 'handler-done');
+        }
       } catch (error) {
         errorCaught = error;
         response = errorResponse(error);
@@ -3867,6 +3874,9 @@ async function finaliseTelemetry({
   request = null,
   resolvedPlatformRole = null,
 }) {
+  if (url.pathname === '/api/hero/read-model') {
+    logN503HeroCheckpoint(capacity, 'telemetry-start');
+  }
   const wallMs = typeof performance?.now === 'function'
     ? Math.max(0, performance.now() - capacityStartedAt)
     : 0;
@@ -3945,6 +3955,10 @@ async function finaliseTelemetry({
   });
 
   capacityRequest(capacity, { env });
+
+  if (url.pathname === '/api/hero/read-model') {
+    logN503HeroCheckpoint(capacity, 'telemetry-done');
+  }
 
   return decorateResponse(outgoing, {
     capacity,
