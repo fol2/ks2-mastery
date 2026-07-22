@@ -189,11 +189,19 @@ async function replayContextEvents(context, learnerId) {
   return [...replayRequests, ...referenceEvents];
 }
 
-async function readRuntimeContent(context) {
+async function readRuntimeContent(context, observe = null) {
   if (typeof context.repository.readSpellingRuntimeContent === 'function') {
-    return context.repository.readSpellingRuntimeContent(context.session.accountId, 'spelling', {
+    const options = {
       includeAccountContent: false,
-    });
+    };
+    if (typeof observe === 'function') {
+      Object.defineProperty(options, 'observe', { value: observe });
+    }
+    return context.repository.readSpellingRuntimeContent(
+      context.session.accountId,
+      'spelling',
+      options,
+    );
   }
   const contentResult = await context.repository.readSubjectContent(context.session.accountId, 'spelling');
   const seededBundle = await readSeededSpellingContentBundle();
@@ -395,6 +403,21 @@ export function createSpellingCommandHandlers({ now, random } = {}) {
       }));
       observationPhaseStartedAt = observedAt;
     };
+    const observeRepository = (phase, details = {}) => {
+      if (!observesColdCommand) return;
+      const observedAt = performance.now();
+      // Temporary production observation. Remove with the phase checkpoints
+      // once the cold-command cost has been attributed.
+      // eslint-disable-next-line no-console
+      console.info('[ks2-observe]', JSON.stringify({
+        event: 'spelling_repository_phase',
+        command: command.command,
+        requestId: command.requestId,
+        phase,
+        elapsedMs: Math.round((observedAt - observationStartedAt) * 100) / 100,
+        ...details,
+      }));
+    };
     observePhase('handler-started');
 
     const nowValue = Number.isFinite(Number(context.now)) ? Number(context.now) : Date.now();
@@ -413,7 +436,7 @@ export function createSpellingCommandHandlers({ now, random } = {}) {
         { skipAccessCheck: true },
       ));
     observePhase('runtime-read');
-    const contentResult = await readRuntimeContent(context);
+    const contentResult = await readRuntimeContent(context, observeRepository);
     observePhase('content-read');
     const snapshot = contentResult.snapshot;
     if (!snapshot?.words?.length) {
@@ -471,6 +494,7 @@ export function createSpellingCommandHandlers({ now, random } = {}) {
           skipAccessCheck: true,
           learnerData: runtimeRecord.subjectRecord?.data || {},
           now: nowValue,
+          observe: observeRepository,
         },
       );
       runtimeRecord = {

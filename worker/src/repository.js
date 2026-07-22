@@ -1064,19 +1064,39 @@ async function readSpellingRuntimeContentReleaseBundle(
   subjectId,
   releaseRow,
   cachePrefix = 'release',
+  { observe = null } = {},
 ) {
   if (!releaseRow) return readSeededSpellingRuntimeContentBundle(subjectId);
   const key = spellingRuntimeContentReleaseKey(releaseRow, subjectId, cachePrefix);
   const cached = readCachedSpellingRuntimeContent(key);
+  if (typeof observe === 'function') {
+    observe('content-release-cache-checked', { cacheHit: Boolean(cached) });
+  }
   if (cached) return cached;
+  const rowReadStartedAt = performance.now();
   const fullReleaseRow = await readPublishedContentOperationReleaseRow(db, subjectId, {
     includeSnapshot: true,
     releaseId: releaseRow.release_id,
   });
-  return rememberSpellingRuntimeContent(
-    key,
-    await buildSpellingRuntimeContentFromRelease(fullReleaseRow, subjectId),
-  );
+  if (typeof observe === 'function') {
+    observe('content-release-row-read', {
+      durationMs: Math.round((performance.now() - rowReadStartedAt) * 100) / 100,
+      snapshotBytes: typeof fullReleaseRow?.snapshot_json === 'string'
+        ? fullReleaseRow.snapshot_json.length
+        : 0,
+    });
+  }
+  const buildStartedAt = performance.now();
+  const runtimeContent = await buildSpellingRuntimeContentFromRelease(fullReleaseRow, subjectId);
+  if (typeof observe === 'function') {
+    observe('content-release-built', {
+      durationMs: Math.round((performance.now() - buildStartedAt) * 100) / 100,
+      wordCount: Array.isArray(runtimeContent?.snapshot?.words)
+        ? runtimeContent.snapshot.words.length
+        : 0,
+    });
+  }
+  return rememberSpellingRuntimeContent(key, runtimeContent);
 }
 
 async function readPublishedContentOperationReleaseRow(db, subjectId = 'spelling', {
@@ -1321,9 +1341,18 @@ async function readSpellingRuntimeContentBundle(db, accountId, subjectId = 'spel
   includeGlobalContent = true,
   nowMs = Date.now(),
   env = {},
+  observe = null,
 } = {}) {
   if (includeGlobalContent) {
+    const releaseResolutionStartedAt = performance.now();
     const releaseRow = await readResolvedContentOperationReleaseRow(db, accountId, subjectId);
+    if (typeof observe === 'function') {
+      observe('content-release-resolved', {
+        durationMs: Math.round((performance.now() - releaseResolutionStartedAt) * 100) / 100,
+        releaseFound: Boolean(releaseRow),
+        releaseSource: releaseRow?.release_source || null,
+      });
+    }
     if (releaseRow) {
       const cachePrefix = releaseRow.release_source === 'override' ? 'override' : 'release';
       const runtimeContent = await readSpellingRuntimeContentReleaseBundle(
@@ -1331,6 +1360,7 @@ async function readSpellingRuntimeContentBundle(db, accountId, subjectId = 'spel
         subjectId,
         releaseRow,
         cachePrefix,
+        { observe },
       );
       return resolveLearnerVisibleRuntimeContent(runtimeContent, { nowMs, env });
     }
@@ -7718,7 +7748,6 @@ async function withMonsterVisualConfigMutation(db, {
 }) {
   const nextMutation = normaliseMonsterVisualMutation(mutation);
   const requestHash = mutationPayloadHash(kind, payload);
-
   // NOTE: non-atomic by design — (a) branching on intermediate read results
   // (existingReceipt short-circuit, currentRevision CAS compare) plus (b) an
   // `apply()` callback that runs its own `batch()`. `withTransaction` was
@@ -9586,11 +9615,20 @@ async function readSpellingGameplayWorkingSet(db, accountId, learnerId, slugs, {
   skipAccessCheck = false,
   learnerData = {},
   now = Date.now(),
+  observe = null,
 } = {}) {
   if (!skipAccessCheck) {
     await requireLearnerWriteAccess(db, accountId, learnerId);
   }
-  if (!await boundedGameplayTableAvailable(db, 'spelling')) {
+  const tableCheckStartedAt = performance.now();
+  const boundedTableAvailable = await boundedGameplayTableAvailable(db, 'spelling');
+  if (typeof observe === 'function') {
+    observe('working-set-table-checked', {
+      durationMs: Math.round((performance.now() - tableCheckStartedAt) * 100) / 100,
+      boundedTableAvailable,
+    });
+  }
+  if (!boundedTableAvailable) {
     return markGameplayWorkingSet(cloneSerialisable(learnerData) || {}, 'legacy');
   }
   const workingSlugs = [...new Set((Array.isArray(slugs) ? slugs : [])
@@ -9601,6 +9639,7 @@ async function readSpellingGameplayWorkingSet(db, accountId, learnerId, slugs, {
   // catalogue. The composite primary key turns each value into a point lookup;
   // lifetime/orphan rows are neither returned nor parsed by the Worker.
   try {
+    const queryStartedAt = performance.now();
     const rows = await all(db, `
       SELECT
         'item' AS row_kind,
@@ -9655,10 +9694,29 @@ async function readSpellingGameplayWorkingSet(db, accountId, learnerId, slugs, {
     markBoundedGameplayTableAvailable(db, 'spelling');
     const itemRows = rows.filter((row) => row?.row_kind === 'item');
     const achievementRows = rows.filter((row) => row?.row_kind === 'achievement');
-    return markGameplayWorkingSet(
+    if (typeof observe === 'function') {
+      observe('working-set-query-completed', {
+        durationMs: Math.round((performance.now() - queryStartedAt) * 100) / 100,
+        requestedSlugCount: workingSlugs.length,
+        returnedRowCount: rows.length,
+        itemRowCount: itemRows.length,
+        achievementRowCount: achievementRows.length,
+      });
+    }
+    const composeStartedAt = performance.now();
+    const workingData = markGameplayWorkingSet(
       composeSpellingGameplayData(learnerData, itemRows, now, achievementRows),
       'bounded',
     );
+    if (typeof observe === 'function') {
+      observe('working-set-composed', {
+        durationMs: Math.round((performance.now() - composeStartedAt) * 100) / 100,
+        progressCount: Object.keys(workingData?.progress || {}).length,
+        guardianCount: Object.keys(workingData?.guardian || {}).length,
+        patternCount: Object.keys(workingData?.pattern?.wobbling || {}).length,
+      });
+    }
+    return workingData;
   } catch (error) {
     if (
       isMissingTableError(error, 'spelling_item_state')
@@ -11266,6 +11324,28 @@ async function runSubjectCommandMutation(db, {
     expectedLearnerRevision: command.expectedLearnerRevision,
   }, 'learner');
   const requestHash = mutationPayloadHash(kind, payload);
+  const observesSpellingCommand = command.subjectId === 'spelling'
+    && (command.command === 'start-session' || command.command === 'submit-answer');
+  const mutationObservationStartedAt = performance.now();
+  let mutationObservationPhaseStartedAt = mutationObservationStartedAt;
+  const observeMutation = (phase, details = {}) => {
+    if (!observesSpellingCommand) return;
+    const observedAt = performance.now();
+    // Temporary production observation. Remove once the cold-command CPU
+    // cost has been attributed to a concrete mutation phase.
+    // eslint-disable-next-line no-console
+    console.info('[ks2-observe]', JSON.stringify({
+      event: 'subject_command_mutation_phase',
+      command: command.command,
+      requestId: command.requestId,
+      phase,
+      phaseMs: Math.round((observedAt - mutationObservationPhaseStartedAt) * 100) / 100,
+      elapsedMs: Math.round((observedAt - mutationObservationStartedAt) * 100) / 100,
+      ...details,
+    }));
+    mutationObservationPhaseStartedAt = observedAt;
+  };
+  observeMutation('mutation-started');
 
   // U6 queryCount budget: fold the mutation-receipt idempotency lookup
   // and the learner revision read into a single LEFT JOIN so the hot
@@ -11361,6 +11441,7 @@ async function runSubjectCommandMutation(db, {
         : Number(combinedRow.spelling_bounded_gameplay_ready) === 1,
     );
   }
+  observeMutation('preflight-read');
 
   const existingReceipt = combinedRow.receipt_request_id
     ? {
@@ -11431,9 +11512,11 @@ async function runSubjectCommandMutation(db, {
     // Re-run the command against fresh state for each attempt so the
     // rebased plan sees the concurrent winner's reward/counts/token ring
     // (via the subject handler's internal `resolveProjectionInput` call).
+    observeMutation('handler-apply-started', { includeProjection });
     const freshApplyRaw = await applyCommand(preloadedCommandRuntime
       ? { commandRuntime: preloadedCommandRuntime }
       : undefined);
+    observeMutation('handler-apply-completed', { includeProjection });
     preloadedCommandRuntime = null;
     const freshPayload = isPlainObject(freshApplyRaw) ? freshApplyRaw : {};
     const {
@@ -11526,6 +11609,10 @@ async function runSubjectCommandMutation(db, {
       WHERE id = ?
         AND state_revision = ?
     `, [nowTs, command.learnerId, effectiveExpectedRevision]));
+    observeMutation('write-plan-built', {
+      includeProjection,
+      statementCount: attemptStatements.length,
+    });
 
     // U9 round 1 fix (adv-u9-r1-004): record D1 projection-write health against
     // the server-side `readModelDerivedWrite` breaker. A batch() that throws is
@@ -11548,6 +11635,10 @@ async function runSubjectCommandMutation(db, {
       }
       throw err;
     }
+    observeMutation('write-batch-completed', {
+      includeProjection,
+      statementCount: attemptStatements.length,
+    });
     const attemptCasResult = attemptResults[attemptResults.length - 1] || null;
     const attemptCasChanges = Number(attemptCasResult?.meta?.changes) || 0;
     if (includeProjection && attemptCasChanges === 1) {
