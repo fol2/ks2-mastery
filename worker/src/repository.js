@@ -1062,18 +1062,31 @@ async function readSpellingRuntimeContentReleaseBundle(
   subjectId,
   releaseRow,
   cachePrefix = 'release',
+  { observe = null } = {},
 ) {
   if (!releaseRow) return readSeededSpellingRuntimeContentBundle(subjectId);
   const key = spellingRuntimeContentReleaseKey(releaseRow, subjectId, cachePrefix);
   const cached = readCachedSpellingRuntimeContent(key);
+  if (typeof observe === 'function') {
+    observe('content-release-cache-checked', { cacheHit: Boolean(cached) });
+  }
   if (cached) return cached;
+  const rowReadStartedAt = performance.now();
   const fullReleaseRow = await readPublishedContentOperationReleaseRow(db, subjectId, {
     includeSnapshot: true,
     releaseId: releaseRow.release_id,
   });
+  if (typeof observe === 'function') {
+    observe('content-release-row-read', {
+      durationMs: Math.round((performance.now() - rowReadStartedAt) * 100) / 100,
+      snapshotBytes: typeof fullReleaseRow?.snapshot_json === 'string'
+        ? fullReleaseRow.snapshot_json.length
+        : 0,
+    });
+  }
   return rememberSpellingRuntimeContent(
     key,
-    await buildSpellingRuntimeContentFromRelease(fullReleaseRow, subjectId),
+    await buildSpellingRuntimeContentFromRelease(fullReleaseRow, subjectId, { observe }),
   );
 }
 
@@ -1319,9 +1332,18 @@ async function readSpellingRuntimeContentBundle(db, accountId, subjectId = 'spel
   includeGlobalContent = true,
   nowMs = Date.now(),
   env = {},
+  observe = null,
 } = {}) {
   if (includeGlobalContent) {
+    const releaseResolutionStartedAt = performance.now();
     const releaseRow = await readResolvedContentOperationReleaseRow(db, accountId, subjectId);
+    if (typeof observe === 'function') {
+      observe('content-release-resolved', {
+        durationMs: Math.round((performance.now() - releaseResolutionStartedAt) * 100) / 100,
+        releaseFound: Boolean(releaseRow),
+        releaseSource: releaseRow?.release_source || null,
+      });
+    }
     if (releaseRow) {
       const cachePrefix = releaseRow.release_source === 'override' ? 'override' : 'release';
       const runtimeContent = await readSpellingRuntimeContentReleaseBundle(
@@ -1329,8 +1351,19 @@ async function readSpellingRuntimeContentBundle(db, accountId, subjectId = 'spel
         subjectId,
         releaseRow,
         cachePrefix,
+        { observe },
       );
-      return resolveLearnerVisibleRuntimeContent(runtimeContent, { nowMs, env });
+      const visibilityStartedAt = performance.now();
+      const visibleRuntimeContent = resolveLearnerVisibleRuntimeContent(runtimeContent, { nowMs, env });
+      if (typeof observe === 'function') {
+        observe('content-visibility-resolved', {
+          durationMs: Math.round((performance.now() - visibilityStartedAt) * 100) / 100,
+          wordCount: Array.isArray(visibleRuntimeContent?.snapshot?.words)
+            ? visibleRuntimeContent.snapshot.words.length
+            : 0,
+        });
+      }
+      return visibleRuntimeContent;
     }
   }
 
@@ -1370,7 +1403,13 @@ async function readSpellingRuntimeContentBundle(db, accountId, subjectId = 'spel
   if (includeGlobalContent) {
     const releaseRow = await readPublishedContentOperationReleaseRow(db, subjectId);
     if (releaseRow) {
-      const runtimeContent = await readSpellingRuntimeContentReleaseBundle(db, subjectId, releaseRow);
+      const runtimeContent = await readSpellingRuntimeContentReleaseBundle(
+        db,
+        subjectId,
+        releaseRow,
+        'release',
+        { observe },
+      );
       return resolveLearnerVisibleRuntimeContent(runtimeContent, { nowMs, env });
     }
   }
@@ -1708,20 +1747,52 @@ async function buildSpellingRuntimeContent(row, subjectId) {
   };
 }
 
-async function buildSpellingRuntimeContentFromRelease(row, subjectId) {
+async function buildSpellingRuntimeContentFromRelease(row, subjectId, { observe = null } = {}) {
   if (!row?.snapshot_json) {
     return buildSeededSpellingRuntimeContent(subjectId);
   }
 
   try {
+    let phaseStartedAt = performance.now();
     const snapshotJson = await decodeContentOperationSnapshot(row.snapshot_json);
+    if (typeof observe === 'function') {
+      observe('content-snapshot-decoded', {
+        durationMs: Math.round((performance.now() - phaseStartedAt) * 100) / 100,
+        decodedBytes: snapshotJson.length,
+      });
+    }
+    phaseStartedAt = performance.now();
     const decodedSnapshot = JSON.parse(snapshotJson);
+    if (typeof observe === 'function') {
+      observe('content-snapshot-parsed', {
+        durationMs: Math.round((performance.now() - phaseStartedAt) * 100) / 100,
+      });
+    }
+    phaseStartedAt = performance.now();
     const content = normaliseSpellingContentBundle(decodedSnapshot);
+    if (typeof observe === 'function') {
+      observe('content-bundle-normalised', {
+        durationMs: Math.round((performance.now() - phaseStartedAt) * 100) / 100,
+      });
+    }
+    phaseStartedAt = performance.now();
     const snapshot = buildPublishedSnapshotFromDraft(content.draft, {
       generatedAt: Number(row.published_at) || Date.now(),
       includeDeferredVisibility: true,
     });
+    if (typeof observe === 'function') {
+      observe('content-snapshot-built', {
+        durationMs: Math.round((performance.now() - phaseStartedAt) * 100) / 100,
+        wordCount: Array.isArray(snapshot?.words) ? snapshot.words.length : 0,
+      });
+    }
+    phaseStartedAt = performance.now();
     const baseSummary = runtimeContentSummary(content, snapshot);
+    if (typeof observe === 'function') {
+      observe('content-summary-built', {
+        durationMs: Math.round((performance.now() - phaseStartedAt) * 100) / 100,
+      });
+    }
     return {
       subjectId,
       content,
@@ -12681,6 +12752,7 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
     async readSpellingRuntimeContent(accountId, subjectId = 'spelling', options = {}) {
       return readSpellingRuntimeContentBundle(db, accountId, subjectId, {
         ...options,
+        observe: options.observe,
         nowMs: nowFactory(),
         env,
       });

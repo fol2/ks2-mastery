@@ -28,12 +28,33 @@ export function createSubjectRuntime({ handlers = {} } = {}) {
   };
 }
 
-function createLazyCommandHandlers(loadHandlers, options = {}) {
+function createLazyCommandHandlers(subjectId, loadHandlers, options = {}) {
   let handlersPromise = null;
   return async (command, context) => {
     if (!handlersPromise) {
+      const startedAt = performance.now();
+      // Temporary production observation. Remove after the cold Spelling
+      // initialisation phase has been attributed.
+      // eslint-disable-next-line no-console
+      console.info('[ks2-observe]', JSON.stringify({
+        event: 'subject_handler_load_started',
+        subjectId,
+        command: command.command,
+        requestId: command.requestId,
+      }));
       handlersPromise = loadHandlers()
-        .then((createHandlers) => createHandlers(options));
+        .then((createHandlers) => createHandlers(options))
+        .then((loadedHandlers) => {
+          // eslint-disable-next-line no-console
+          console.info('[ks2-observe]', JSON.stringify({
+            event: 'subject_handler_load_completed',
+            subjectId,
+            command: command.command,
+            requestId: command.requestId,
+            durationMs: Math.round((performance.now() - startedAt) * 100) / 100,
+          }));
+          return loadedHandlers;
+        });
     }
     const handlers = await handlersPromise;
     const handler = typeof handlers === 'function'
@@ -60,7 +81,7 @@ const SUBJECT_HANDLER_LOADERS = Object.freeze({
 });
 
 function createSubjectLazyCommandHandlers(subjectId, options = {}) {
-  return createLazyCommandHandlers(SUBJECT_HANDLER_LOADERS[subjectId], options);
+  return createLazyCommandHandlers(subjectId, SUBJECT_HANDLER_LOADERS[subjectId], options);
 }
 
 export function createWorkerSubjectRuntime(options = {}) {
