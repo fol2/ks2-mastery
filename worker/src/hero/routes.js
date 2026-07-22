@@ -13,6 +13,23 @@ import { heroCampMonsterIdsFromRewardTracks } from './exposure.js';
 const HERO_READ_MODEL_IN_FLIGHT_LIMIT = 64;
 const heroReadModelInFlight = new Map();
 
+// Temporary production trace for the Nelson 503 investigation. Keep every
+// field on a closed, non-identifying allowlist so an exceeded-CPU invocation
+// leaves a useful last checkpoint without logging learner or account data.
+function logN503HeroCheckpoint(capacity, phase, counts = {}) {
+  try {
+    // eslint-disable-next-line no-console
+    console.log('[DEBUG-N503]', JSON.stringify({
+      event: 'n503.hero-read-model.phase',
+      requestId: capacity?.requestId || null,
+      phase,
+      subjectCount: Number.isFinite(counts.subjectCount) ? counts.subjectCount : null,
+      recentSessionCount: Number.isFinite(counts.recentSessionCount) ? counts.recentSessionCount : null,
+      taskCount: Number.isFinite(counts.taskCount) ? counts.taskCount : null,
+    }));
+  } catch { /* best-effort diagnostic only */ }
+}
+
 function heroReadModelInFlightKey({ accountId, learnerId }) {
   return [
     'hero-read-model-v1',
@@ -76,6 +93,8 @@ export async function handleHeroReadModel({
   now,
   capacity,
 }) {
+  logN503HeroCheckpoint(capacity, 'route-enter');
+
   // 1. Apply per-account override before feature flag gate (pA2 #683 fix).
   //    Without this, internal cohort accounts with global flags OFF cannot
   //    access the read-model — the override only applied on command routes.
@@ -125,6 +144,7 @@ export async function handleHeroReadModel({
   // 3. Validate learner access — reuses the repository's authz gate so a
   //    caller without membership receives a 403 before any data read.
   await repository.requireLearnerReadAccess(session.accountId, learnerId);
+  logN503HeroCheckpoint(capacity, 'access-checked');
 
   const payload = await readHeroReadModelInFlight({
     accountId: session.accountId,
@@ -135,9 +155,13 @@ export async function handleHeroReadModel({
     // 4. Load per-subject read models for the learner.
     //    This uses the same public read-model projection as bootstrap so Hero
     //    sees provider-readable subject signals rather than raw storage slots.
+    logN503HeroCheckpoint(capacity, 'subject-read-start');
     const subjectReadModels = await repository.readHeroSubjectReadModels(learnerId, {
       accountId: session.accountId,
       now: nowTs,
+    });
+    logN503HeroCheckpoint(capacity, 'subject-read-done', {
+      subjectCount: Object.keys(subjectReadModels || {}).length,
     });
 
     // 4b. P3 U7: load progress bundle for the v4 read model when progress enabled.
@@ -151,6 +175,9 @@ export async function handleHeroReadModel({
     const heroProgressData = progressFlagEnabled
       ? await repository.readHeroProgressData(learnerId)
       : { heroProgressState: null, recentCompletedSessions: [] };
+    logN503HeroCheckpoint(capacity, 'progress-read-done', {
+      recentSessionCount: heroProgressData.recentCompletedSessions?.length || 0,
+    });
 
     // 5. Assemble the shadow read model (v3, v4, v5, or v6: pass accountId and env for
     //    quest fingerprint and the HERO_MODE_CHILD_UI_ENABLED gate).
@@ -166,6 +193,9 @@ export async function handleHeroReadModel({
       economyEnabled: progressFlagEnabled && economyFlagEnabled,
       campEnabled: progressFlagEnabled && economyFlagEnabled && campFlagEnabled,
       campMonsterIds,
+    });
+    logN503HeroCheckpoint(capacity, 'assemble-done', {
+      taskCount: result.dailyQuest?.tasks?.length || 0,
     });
 
     // U10: structured observability — fire-and-forget, never blocks the response.
