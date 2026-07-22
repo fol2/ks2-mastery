@@ -958,16 +958,35 @@ async function readSeededSpellingRuntimeContentBundle(subjectId = 'spelling') {
     || rememberSpellingRuntimeContent(key, await buildSeededSpellingRuntimeContent(subjectId));
 }
 
-async function readSpellingRuntimeContentReleaseBundle(db, subjectId, releaseRow, cachePrefix = 'release') {
+async function readSpellingRuntimeContentReleaseBundle(
+  db,
+  subjectId,
+  releaseRow,
+  cachePrefix = 'release',
+  debugN503Capacity = null,
+) {
   if (!releaseRow) return readSeededSpellingRuntimeContentBundle(subjectId);
   const key = spellingRuntimeContentReleaseKey(releaseRow, subjectId, cachePrefix);
   const cached = readCachedSpellingRuntimeContent(key);
-  if (cached) return cached;
+  if (cached) {
+    logN503HeroCheckpoint(debugN503Capacity, 'release-cache-hit');
+    return cached;
+  }
+  logN503HeroCheckpoint(debugN503Capacity, 'release-cache-miss');
+  logN503HeroCheckpoint(debugN503Capacity, 'release-snapshot-query-start');
   const fullReleaseRow = await readPublishedContentOperationReleaseRow(db, subjectId, {
     includeSnapshot: true,
     releaseId: releaseRow.release_id,
   });
-  return rememberSpellingRuntimeContent(key, await buildSpellingRuntimeContentFromRelease(fullReleaseRow, subjectId));
+  logN503HeroCheckpoint(debugN503Capacity, 'release-snapshot-query-done', {
+    byteCount: typeof fullReleaseRow?.snapshot_json === 'string'
+      ? fullReleaseRow.snapshot_json.length
+      : 0,
+  });
+  return rememberSpellingRuntimeContent(
+    key,
+    await buildSpellingRuntimeContentFromRelease(fullReleaseRow, subjectId, debugN503Capacity),
+  );
 }
 
 async function readPublishedContentOperationReleaseRow(db, subjectId = 'spelling', {
@@ -1197,13 +1216,27 @@ async function readSpellingRuntimeContentBundle(db, accountId, subjectId = 'spel
   includeGlobalContent = true,
   nowMs = Date.now(),
   env = {},
+  debugN503Capacity = null,
 } = {}) {
   if (includeGlobalContent) {
+    logN503HeroCheckpoint(debugN503Capacity, 'release-metadata-query-start');
     const releaseRow = await readResolvedContentOperationReleaseRow(db, accountId, subjectId);
+    logN503HeroCheckpoint(debugN503Capacity, 'release-metadata-query-done');
     if (releaseRow) {
       const cachePrefix = releaseRow.release_source === 'override' ? 'override' : 'release';
-      const runtimeContent = await readSpellingRuntimeContentReleaseBundle(db, subjectId, releaseRow, cachePrefix);
-      return resolveLearnerVisibleRuntimeContent(runtimeContent, { nowMs, env });
+      const runtimeContent = await readSpellingRuntimeContentReleaseBundle(
+        db,
+        subjectId,
+        releaseRow,
+        cachePrefix,
+        debugN503Capacity,
+      );
+      logN503HeroCheckpoint(debugN503Capacity, 'learner-visibility-start');
+      const visibleContent = resolveLearnerVisibleRuntimeContent(runtimeContent, { nowMs, env });
+      logN503HeroCheckpoint(debugN503Capacity, 'learner-visibility-done', {
+        wordCount: visibleContent?.snapshot?.words?.length || 0,
+      });
+      return visibleContent;
     }
   }
 
@@ -1585,19 +1618,36 @@ async function buildSpellingRuntimeContent(row, subjectId) {
   };
 }
 
-async function buildSpellingRuntimeContentFromRelease(row, subjectId) {
+async function buildSpellingRuntimeContentFromRelease(row, subjectId, debugN503Capacity = null) {
   if (!row?.snapshot_json) {
     return buildSeededSpellingRuntimeContent(subjectId);
   }
 
   try {
+    logN503HeroCheckpoint(debugN503Capacity, 'release-decode-start', {
+      byteCount: row.snapshot_json.length,
+    });
     const snapshotJson = await decodeContentOperationSnapshot(row.snapshot_json);
-    const content = normaliseSpellingContentBundle(JSON.parse(snapshotJson));
+    logN503HeroCheckpoint(debugN503Capacity, 'release-decode-done', {
+      byteCount: snapshotJson.length,
+    });
+    logN503HeroCheckpoint(debugN503Capacity, 'release-json-parse-start');
+    const decodedSnapshot = JSON.parse(snapshotJson);
+    logN503HeroCheckpoint(debugN503Capacity, 'release-json-parse-done');
+    logN503HeroCheckpoint(debugN503Capacity, 'release-normalise-start');
+    const content = normaliseSpellingContentBundle(decodedSnapshot);
+    logN503HeroCheckpoint(debugN503Capacity, 'release-normalise-done');
+    logN503HeroCheckpoint(debugN503Capacity, 'published-snapshot-start');
     const snapshot = buildPublishedSnapshotFromDraft(content.draft, {
       generatedAt: Number(row.published_at) || Date.now(),
       includeDeferredVisibility: true,
     });
+    logN503HeroCheckpoint(debugN503Capacity, 'published-snapshot-done', {
+      wordCount: snapshot?.words?.length || 0,
+    });
+    logN503HeroCheckpoint(debugN503Capacity, 'runtime-summary-start');
     const baseSummary = runtimeContentSummary(content, snapshot);
+    logN503HeroCheckpoint(debugN503Capacity, 'runtime-summary-done');
     return {
       subjectId,
       content,
@@ -13232,6 +13282,7 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
           includeGlobalContent: true,
           nowMs: now,
           env,
+          debugN503Capacity: capacity,
         })
         : null;
       logN503HeroCheckpoint(capacity, 'spelling-content-done', {

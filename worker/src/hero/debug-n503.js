@@ -2,6 +2,7 @@
 // investigation. Remove this module once the root cause is fixed and proved.
 
 export function logN503HeroCheckpoint(capacity, phase, counts = {}) {
+  if (!capacity) return;
   try {
     // eslint-disable-next-line no-console
     console.log('[DEBUG-N503]', JSON.stringify({
@@ -14,6 +15,7 @@ export function logN503HeroCheckpoint(capacity, phase, counts = {}) {
       rowCount: Number.isFinite(counts.rowCount) ? counts.rowCount : null,
       itemCount: Number.isFinite(counts.itemCount) ? counts.itemCount : null,
       wordCount: Number.isFinite(counts.wordCount) ? counts.wordCount : null,
+      byteCount: Number.isFinite(counts.byteCount) ? counts.byteCount : null,
     }));
   } catch { /* best-effort diagnostic only */ }
 }
