@@ -384,7 +384,7 @@ export function createSpellingCommandHandlers({ now, random } = {}) {
       });
     }
 
-    const observesColdCommand = command.command === 'start-session' || command.command === 'submit-answer';
+    const observesColdCommand = true;
     const observationStartedAt = performance.now();
     let observationPhaseStartedAt = observationStartedAt;
     const observePhase = (phase) => {

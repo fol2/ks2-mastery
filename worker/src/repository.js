@@ -11324,8 +11324,7 @@ async function runSubjectCommandMutation(db, {
     expectedLearnerRevision: command.expectedLearnerRevision,
   }, 'learner');
   const requestHash = mutationPayloadHash(kind, payload);
-  const observesSpellingCommand = command.subjectId === 'spelling'
-    && (command.command === 'start-session' || command.command === 'submit-answer');
+  const observesSpellingCommand = command.subjectId === 'spelling';
   const mutationObservationStartedAt = performance.now();
   let mutationObservationPhaseStartedAt = mutationObservationStartedAt;
   const observeMutation = (phase, details = {}) => {
