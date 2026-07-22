@@ -1,5 +1,8 @@
 import { uid } from '../core/utils.js';
-import { reportIngressRequestFailure } from '../core/request-id.js';
+import {
+  createIngressRequestId,
+  reportIngressRequestFailure,
+} from '../core/request-id.js';
 
 const DEFAULT_RETRY_JITTER_MAX_MS = 125;
 const DEFAULT_RETRY_MAX_DELAY_MS = 2_000;
@@ -155,16 +158,7 @@ export function createSubjectCommandClient({
     return queued;
   }
 
-  async function sendOnce({ cleanSubjectId, requestId, body }) {
-    // U3 audit: the command client sends the mutation's `requestId` on
-    // the `x-ks2-request-id` header for legacy mutation-receipt
-    // correlation. If that id does not match the Worker's ingress
-    // validator (`ks2_req_` + UUID v4), the Worker rejects the header
-    // value and server-generates a fresh one for capacity telemetry.
-    // Mutation receipt idempotency is unaffected — that uses the body
-    // `requestId`, not the header. See `worker/src/logger.js` for the
-    // ingress-validator shape. U6 will add `isCommandBackendExhausted()`
-    // alongside this function — the audit here is U3-only.
+  async function sendOnce({ cleanSubjectId, ingressRequestId, body }) {
     const endpoint = joinUrl(baseUrl, `/api/subjects/${encodeURIComponent(cleanSubjectId)}/command`);
     let response;
     try {
@@ -173,8 +167,8 @@ export function createSubjectCommandClient({
         headers: {
           accept: 'application/json',
           'content-type': 'application/json',
-          'x-ks2-request-id': requestId,
-          'x-ks2-correlation-id': requestId,
+          'x-ks2-request-id': ingressRequestId,
+          'x-ks2-correlation-id': ingressRequestId,
         },
         body,
       });
@@ -183,8 +177,8 @@ export function createSubjectCommandClient({
         status: 0,
         payload: { code: 'subject_command_network_error' },
         message: error?.message || 'Subject command could not reach the server.',
-        requestId,
-        correlationId: requestId,
+        requestId: ingressRequestId,
+        correlationId: ingressRequestId,
       });
     }
 
@@ -193,15 +187,15 @@ export function createSubjectCommandClient({
       throw new SubjectCommandClientError({
         status: response.status,
         payload: responsePayload,
-        requestId,
-        correlationId: requestId,
+        requestId: ingressRequestId,
+        correlationId: ingressRequestId,
       });
     }
 
     return responsePayload;
   }
 
-  async function sendWithRetry({ cleanSubjectId, cleanLearnerId, cleanCommand, payload, requestId }) {
+  async function sendWithRetry({ cleanSubjectId, cleanLearnerId, cleanCommand, payload, requestId, ingressRequestId }) {
     const maxRetryAttempts = Math.max(0, Number(retryAttempts) || 0);
     const baseRetryDelayMs = Math.max(0, Number(retryDelayMs) || 0);
     const retryJitterMaxMs = retryJitterMs == null
@@ -235,7 +229,7 @@ export function createSubjectCommandClient({
       try {
         responsePayload = await sendOnce({
           cleanSubjectId,
-          requestId,
+          ingressRequestId,
           body,
         });
       } catch (error) {
@@ -278,7 +272,7 @@ export function createSubjectCommandClient({
           endpoint: joinUrl(baseUrl, `/api/subjects/${encodeURIComponent(cleanSubjectId)}/command`),
           method: 'POST',
           status: error?.status,
-          requestId,
+          requestId: ingressRequestId,
         });
         throw error;
       }
@@ -325,6 +319,7 @@ export function createSubjectCommandClient({
       cleanCommand,
       payload,
       requestId,
+      ingressRequestId: createIngressRequestId(),
     }));
   }
 

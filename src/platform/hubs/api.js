@@ -2,6 +2,7 @@ import {
   applyRepositoryAuthSession,
   createNoopRepositoryAuthSession,
 } from '../core/repositories/auth-session.js';
+import { reportIngressRequestFailure } from '../core/request-id.js';
 
 function joinUrl(baseUrl, path) {
   const base = String(baseUrl || '').replace(/\/$/, '');
@@ -40,14 +41,32 @@ async function parseResponse(response) {
 
 async function fetchHubJson(fetchFn, url, init, authSession) {
   const requestInit = await applyRepositoryAuthSession(authSession, init);
-  const response = await fetchFn(url, requestInit);
+  const method = String(requestInit.method || 'GET').toUpperCase();
+  const requestId = new Headers(requestInit.headers || {}).get('x-ks2-request-id') || '';
+  let response;
+  try {
+    response = await fetchFn(url, requestInit);
+  } catch (cause) {
+    reportIngressRequestFailure({ endpoint: url, method, status: 0, requestId });
+    const error = new Error(cause?.message || 'Hub request could not reach the server.');
+    error.status = 0;
+    error.code = 'network_error';
+    error.payload = null;
+    error.requestId = requestId;
+    error.correlationId = requestId;
+    error.cause = cause;
+    throw error;
+  }
   const payload = await parseResponse(response);
   if (!response.ok) {
+    reportIngressRequestFailure({ endpoint: url, method, status: response.status, requestId });
     const message = payload?.message || `Hub request failed (${response.status}).`;
     const error = new Error(message);
     error.status = response.status;
     error.code = payload?.code || null;
     error.payload = payload;
+    error.requestId = requestId;
+    error.correlationId = payload?.correlationId || payload?.requestId || requestId;
     throw error;
   }
   return payload;
@@ -65,33 +84,14 @@ async function fetchHubJsonWithBreaker(fetchFn, url, init, authSession, breaker)
     return fetchHubJson(fetchFn, url, init, authSession);
   }
   try {
-    const requestInit = await applyRepositoryAuthSession(authSession, init);
-    const response = await fetchFn(url, requestInit);
-    if (response.status >= 500 && response.status <= 599) {
-      breaker.recordFailure();
-    } else if (response.ok) {
-      breaker.recordSuccess();
-    }
-    // 4xx: neither — client-side error (auth / validation).
-    const payload = await parseResponse(response);
-    if (!response.ok) {
-      const message = payload?.message || `Hub request failed (${response.status}).`;
-      const error = new Error(message);
-      error.status = response.status;
-      error.code = payload?.code || null;
-      error.payload = payload;
-      throw error;
-    }
+    const payload = await fetchHubJson(fetchFn, url, init, authSession);
+    breaker.recordSuccess();
     return payload;
   } catch (error) {
-    // Re-throw without double-recording: 5xx already recorded above, and
-    // only genuine network failures (no response.status on the thrown error)
-    // should trip the breaker here. When a 5xx throws further down the
-    // parsing path, `error.status` is set — skip the second recordFailure.
-    if (error && typeof error === 'object' && typeof error.status === 'number') {
-      throw error;
+    const status = Number(error?.status) || 0;
+    if (status === 0 || status >= 500) {
+      breaker.recordFailure();
     }
-    breaker.recordFailure();
     throw error;
   }
 }

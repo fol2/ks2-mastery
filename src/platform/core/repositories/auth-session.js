@@ -1,3 +1,8 @@
+import {
+  createIngressRequestId,
+  isIngressRequestId,
+} from '../request-id.js';
+
 function normaliseHeaders(input) {
   const headers = {};
   if (!input || typeof input !== 'object') return headers;
@@ -46,12 +51,17 @@ export async function applyRepositoryAuthSession(authSession, init = {}) {
     ? normaliseHeaders(await session.getRequestHeaders())
     : {};
 
+  const headers = new Headers(init.headers || {});
+  for (const [key, value] of Object.entries(extraHeaders)) {
+    headers.set(key, value);
+  }
+  if (!isIngressRequestId(headers.get('x-ks2-request-id'))) {
+    headers.set('x-ks2-request-id', createIngressRequestId());
+  }
+
   return {
     ...init,
-    headers: {
-      ...(init.headers || {}),
-      ...extraHeaders,
-    },
+    headers: Object.fromEntries(headers.entries()),
   };
 }
 

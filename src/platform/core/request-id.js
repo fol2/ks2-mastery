@@ -10,6 +10,12 @@ function randomHex(length) {
   return Array.from(bytes, value => value.toString(16).padStart(2, '0')).join('').slice(0, length);
 }
 
+const INGRESS_REQUEST_ID_PATTERN = /^ks2_req_[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+export function isIngressRequestId(value) {
+  return typeof value === 'string' && INGRESS_REQUEST_ID_PATTERN.test(value);
+}
+
 /**
  * Create the client-owned identifier captured by Cloudflare invocation logs
  * even when the Worker is terminated before application logging completes.

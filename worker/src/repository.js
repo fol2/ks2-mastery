@@ -12925,25 +12925,39 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
         parentHub: model,
       };
     },
-    async readAdminHub(accountId, { learnerId = null, requestId = null, auditLimit = 20 } = {}) {
+    async readAdminHub(accountId, {
+      learnerId = null,
+      requestId = null,
+      auditLimit = 20,
+      observe = null,
+    } = {}) {
+      const observePhase = (phase, details = {}) => {
+        if (typeof observe === 'function') observe(phase, details);
+      };
       // P3 U1 (R22): single assertAdminHubActor call — the resolved actor
       // row is threaded to every downstream helper so the admin-role DB
       // lookup fires exactly once per readAdminHub invocation.
       const actor = await assertAdminHubActor(db, accountId);
       const account = actor;
+      observePhase('actor-read');
 
       // Sequential: memberships depend on account lookup, learner bundles
       // depend on membership list, spelling content is an independent read
       // but must complete before buildAdminHubReadModel.
       const memberships = await listMembershipRows(db, accountId, { writableOnly: false });
+      observePhase('memberships-read', { membershipCount: memberships.length });
       const spellingContent = await readSpellingContentForReadModels(db, accountId, 'spelling', {
         nowMs: nowFactory(),
         env,
+        observe: (phase, details) => observePhase(`spelling-${phase}`, details),
       });
+      observePhase('spelling-content-read');
       const hubNow = nowFactory();
       const learnerBundles = {};
-      for (const row of memberships) {
+      for (let index = 0; index < memberships.length; index += 1) {
+        const row = memberships[index];
         learnerBundles[row.id] = await loadLearnerReadBundle(db, row.id, { now: hubNow });
+        observePhase('learner-bundle-read', { index: index + 1, total: memberships.length });
       }
       const defaultLearnerId = account?.selected_learner_id && memberships.some((membership) => membership.id === account.selected_learner_id)
         ? account.selected_learner_id
@@ -12953,6 +12967,7 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
         requestId,
         limit: auditLimit,
       });
+      observePhase('audit-read');
       const nowTs = hubNow;
 
       // P3 U1 (R22): parallelise independent queries. These share no
@@ -12989,6 +13004,7 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
           limit: OPS_ERROR_EVENTS_DEFAULT_LIMIT,
         }),
       ]);
+      observePhase('operations-read');
       // Phase E UX-1: surface the build's current release hash on the
       // admin hub payload so `ErrorLogCentrePanel` can pre-fill the
       // "New in release" filter and the drawer helper text. The value
@@ -13031,6 +13047,7 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
         selectedLearnerId,
         now: nowFactory,
       });
+      observePhase('model-built');
       return {
         adminHub: {
           ...model,

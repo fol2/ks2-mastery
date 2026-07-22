@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   createIngressRequestId,
+  isIngressRequestId,
   reportIngressRequestFailure,
 } from '../src/platform/core/request-id.js';
 
@@ -10,6 +11,12 @@ test('browser ingress request ids match the Worker correlation contract', () => 
     createIngressRequestId(),
     /^ks2_req_[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
   );
+});
+
+test('browser ingress request id validation rejects domain mutation ids', () => {
+  assert.equal(isIngressRequestId(createIngressRequestId()), true);
+  assert.equal(isIngressRequestId('subject-command-observation-503'), false);
+  assert.equal(isIngressRequestId('ks2_req_123'), false);
 });
 
 test('failed browser requests emit the correlation fields needed for Cloudflare log joins', () => {

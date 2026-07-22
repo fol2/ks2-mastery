@@ -639,6 +639,12 @@ function createHubLoadState() {
   };
 }
 
+function hubLoadErrorMessage(error, fallback) {
+  const message = error?.message || fallback;
+  const requestId = typeof error?.requestId === 'string' ? error.requestId : '';
+  return requestId ? `${message} Request ID: ${requestId}.` : message;
+}
+
 let adultSurfaceState = {
   selectedLearnerId: '',
   notice: '',
@@ -796,7 +802,7 @@ async function loadParentHub({ learnerId = null, force = false } = {}) {
         status: 'error',
         learnerId: cacheKey,
         payload: null,
-        error: error?.message || 'Could not load Parent Hub.',
+        error: hubLoadErrorMessage(error, 'Could not load Parent Hub.'),
         requestToken,
       },
     }));
@@ -853,7 +859,7 @@ async function loadAdminHub({ learnerId = null, force = false, auditLimit = 20 }
         status: 'error',
         learnerId: cacheKey,
         payload: null,
-        error: error?.message || 'Could not load Admin / Operations.',
+        error: hubLoadErrorMessage(error, 'Could not load Admin / Operations.'),
         requestToken,
       },
     }));

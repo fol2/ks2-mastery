@@ -85,6 +85,50 @@ test('hub api client calls admin hub with learner, request id, audit limit, and 
   assert.equal(requestUrl.searchParams.get('auditLimit'), '12');
   assert.equal(calls[0].init.method, 'GET');
   assert.equal(calls[0].init.headers['x-test-auth'], 'adult-ops');
+  assert.match(
+    calls[0].init.headers['x-ks2-request-id'],
+    /^ks2_req_[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
+  );
+});
+
+test('hub api failures retain the browser ingress id for CPU termination joins', async () => {
+  const hadWindow = Object.prototype.hasOwnProperty.call(globalThis, 'window');
+  const previousWindow = globalThis.window;
+  const previousConsoleError = globalThis.console.error;
+  const events = [];
+  const calls = [];
+  globalThis.window = {};
+  globalThis.console.error = (...args) => events.push(args);
+
+  try {
+    const api = createHubApi({
+      baseUrl: '',
+      fetch: async (url, init = {}) => {
+        calls.push({ url: String(url), init });
+        return jsonResponse({ ok: false }, 503);
+      },
+    });
+
+    const error = await api.readAdminHub().catch((caught) => caught);
+    const ingressRequestId = calls[0].init.headers['x-ks2-request-id'];
+
+    assert.equal(error.status, 503);
+    assert.equal(error.requestId, ingressRequestId);
+    assert.equal(error.correlationId, ingressRequestId);
+    assert.deepEqual(events, [[
+      '[network] request_failed',
+      {
+        endpoint: '/api/hubs/admin',
+        method: 'GET',
+        status: 503,
+        requestId: ingressRequestId,
+      },
+    ]]);
+  } finally {
+    globalThis.console.error = previousConsoleError;
+    if (hadWindow) globalThis.window = previousWindow;
+    else delete globalThis.window;
+  }
 });
 
 test('hub api client supports same-origin relative URLs when no base URL is configured', async () => {

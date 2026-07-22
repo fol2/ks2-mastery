@@ -1,6 +1,5 @@
 import { uid } from '../utils.js';
 import {
-  createIngressRequestId,
   reportIngressRequestFailure,
 } from '../request-id.js';
 import {
@@ -283,24 +282,15 @@ async function fetchJson(fetchFn, url, init, authSession) {
   const resolvedInit = await applyRepositoryAuthSession(authSession, init);
   const method = String(resolvedInit?.method || 'GET').toUpperCase();
 
-  // U3: stamp a Worker-ingress-valid `x-ks2-request-id` on every outgoing
-  // call when the caller has not supplied one in the canonical shape.
-  // Callers that set their own (e.g. sync operations that use the
-  // mutation receipt id as the header value) are left untouched — the
-  // Worker rejects the malformed value at ingress and generates its own
-  // anyway. This preserves back-compat while hardening the default path.
-  const existingHeaders = resolvedInit?.headers || {};
-  const headersWithRequestId = new Headers(existingHeaders);
-  if (!headersWithRequestId.has('x-ks2-request-id')) {
-    headersWithRequestId.set('x-ks2-request-id', createIngressRequestId());
-  }
-  const requestId = headersWithRequestId.get('x-ks2-request-id');
-  const headersInit = Object.fromEntries(headersWithRequestId.entries());
-  const decoratedInit = { ...resolvedInit, headers: headersInit };
+  // `applyRepositoryAuthSession()` stamps every repository-authenticated
+  // request before fetch. Keeping that policy at the shared boundary means
+  // Hub and content clients receive the same CPU-termination correlation as
+  // bootstrap without duplicating header logic in each API wrapper.
+  const requestId = new Headers(resolvedInit?.headers || {}).get('x-ks2-request-id');
 
   let response;
   try {
-    response = await fetchFn(url, decoratedInit);
+    response = await fetchFn(url, resolvedInit);
   } catch (error) {
     reportIngressRequestFailure({ endpoint: url, method, status: 0, requestId });
     const wrapped = new RepositoryHttpError({

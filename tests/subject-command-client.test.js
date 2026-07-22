@@ -112,11 +112,12 @@ test('subject command client retries transient server failures with the same req
 });
 
 test('subject command failures expose the browser request id for Cloudflare invocation joins', async () => {
-  const requestId = 'subject-command-observation-503';
+  const mutationRequestId = 'subject-command-observation-503';
   const previousWindow = globalThis.window;
   const previousConsoleError = globalThis.console.error;
   const hadWindow = Object.prototype.hasOwnProperty.call(globalThis, 'window');
   const events = [];
+  const requestHeaders = [];
   globalThis.window = {};
   globalThis.console.error = (...args) => events.push(args);
 
@@ -124,16 +125,19 @@ test('subject command failures expose the browser request id for Cloudflare invo
   try {
     const commands = createSubjectCommandClient({
       retryAttempts: 0,
-      fetch: async () => new Response(JSON.stringify({
-        ok: false,
-        code: 'backend_unavailable',
-      }), { status: 503, headers: { 'content-type': 'application/json' } }),
+      fetch: async (url, init = {}) => {
+        requestHeaders.push(init.headers);
+        return new Response(JSON.stringify({
+          ok: false,
+          code: 'backend_unavailable',
+        }), { status: 503, headers: { 'content-type': 'application/json' } });
+      },
     });
     await commands.send({
       subjectId: 'spelling',
       learnerId: 'learner-a',
       command: 'start-session',
-      requestId,
+      requestId: mutationRequestId,
     });
   } catch (error) {
     thrown = error;
@@ -143,16 +147,22 @@ test('subject command failures expose the browser request id for Cloudflare invo
     else delete globalThis.window;
   }
 
+  const ingressRequestId = requestHeaders[0]['x-ks2-request-id'];
   assert.ok(thrown instanceof SubjectCommandClientError);
-  assert.equal(thrown.requestId, requestId);
-  assert.equal(thrown.correlationId, requestId);
+  assert.match(
+    ingressRequestId,
+    /^ks2_req_[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
+  );
+  assert.notEqual(ingressRequestId, mutationRequestId);
+  assert.equal(thrown.requestId, ingressRequestId);
+  assert.equal(thrown.correlationId, ingressRequestId);
   assert.deepEqual(events, [[
     '[network] request_failed',
     {
       endpoint: '/api/subjects/spelling/command',
       method: 'POST',
       status: 503,
-      requestId,
+      requestId: ingressRequestId,
     },
   ]]);
 });
