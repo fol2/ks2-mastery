@@ -355,6 +355,10 @@ certified tier.
 Treat any of these as release blockers until investigated:
 
 - Any Worker Error 1102 or `exceededCpu` signal.
+- Spelling command HTTP bodies that re-ship unchanged `projections.rewards.state`
+  (fat monster-codex) or `recentEventTokens` on every wrong→correct recovery —
+  those belong in the persisted `command.projection.v1` row, not the response.
+  Gate: `tests/worker-spelling-command-response-slim.test.js`.
 - Any `/api/bootstrap` 503 during the high-history probe or classroom load run.
 - Any D1 overloaded or D1 daily-limit response.
 - P95 bootstrap wall time above 1,000 ms in a synthetic run.

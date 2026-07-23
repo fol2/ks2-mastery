@@ -579,6 +579,16 @@ export function createSpellingCommandHandlers({ now, random } = {}) {
           existingEvents: projectionState.events,
           seedTokens: nextProjectionInput.tokens || [],
         });
+      // Omit fat rewards.state from the HTTP body when this command did not
+      // mutate monster-codex. Clients keep their cached gameState
+      // (applyCommandResultToCache only overwrites when state is present).
+      // Also omit recentEventTokens — they exist for server persist/dedupe.
+      const rewardsChanged = nextProjectedRewards.changedGameState
+        && typeof nextProjectedRewards.changedGameState === 'object'
+        && Object.prototype.hasOwnProperty.call(
+          nextProjectedRewards.changedGameState,
+          MONSTER_CODEX_SYSTEM_ID,
+        );
       const nextProjections = nextProjectionInput.degraded
         ? emptyRewardProjection(nextProjectedEvents.domainEvents)
         : buildCommandProjectionReadModel({
@@ -586,6 +596,8 @@ export function createSpellingCommandHandlers({ now, random } = {}) {
           domainEvents: nextProjectedEvents.domainEvents,
           reactionEvents: nextProjectedEvents.reactionEvents,
           toastEvents: nextProjectedEvents.toastEvents,
+          includeRewardState: Boolean(rewardsChanged),
+          includeRecentEventTokens: false,
         });
       return {
         projectionInput: nextProjectionInput,

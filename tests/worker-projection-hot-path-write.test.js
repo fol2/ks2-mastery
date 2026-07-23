@@ -13,12 +13,14 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { createWorkerApp } from '../worker/src/app.js';
-import { COMMAND_PROJECTION_MODEL_KEY } from '../worker/src/read-models/learner-read-models.js';
+import {
+  COMMAND_PROJECTION_MODEL_KEY,
+  COMMAND_PROJECTION_RECENT_EVENT_LIMIT as PROJECTION_RECENT_EVENT_LIMIT,
+  RECENT_EVENT_TOKEN_RING_LIMIT,
+} from '../worker/src/read-models/learner-read-models.js';
 import { createMigratedSqliteD1Database } from './helpers/sqlite-d1.js';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
-const PROJECTION_RECENT_EVENT_LIMIT = 200;
-const RECENT_EVENT_TOKEN_RING_LIMIT = 250;
 const BASE_URL = 'https://repo.test';
 
 function seedAccountLearner(DB, { accountId = 'adult-a', learnerId = 'learner-a' } = {}) {

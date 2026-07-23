@@ -22,12 +22,17 @@ export function projectSpellingRewards({
   existingEvents = [],
   repositories = null,
 } = {}) {
-  let codexState = cloneSerialisable(gameState?.[MONSTER_CODEX_SYSTEM_ID]) || {};
+  // Share the incoming codex reference until the first write. Wrong→correct
+  // recovery usually emits toasts without mutating mastered[], so avoid
+  // cloning the fat monster-codex snapshot on every answer.
+  let codexState = gameState?.[MONSTER_CODEX_SYSTEM_ID] || {};
   let wroteCodexState = false;
   const repository = {
     read(_learnerId, systemId) {
       if (systemId !== MONSTER_CODEX_SYSTEM_ID) return {};
-      return cloneSerialisable(codexState) || {};
+      return wroteCodexState
+        ? (cloneSerialisable(codexState) || {})
+        : (codexState && typeof codexState === 'object' ? codexState : {});
     },
     write(_learnerId, systemId, nextState) {
       if (systemId !== MONSTER_CODEX_SYSTEM_ID) return cloneSerialisable(nextState) || {};
@@ -50,10 +55,14 @@ export function projectSpellingRewards({
   });
 
   return {
-    gameState: {
-      ...(cloneSerialisable(gameState) || {}),
-      [MONSTER_CODEX_SYSTEM_ID]: codexState,
-    },
+    // When codex is unchanged, return the same gameState reference — callers
+    // must not mutate it. Persistence only consumes changedGameState.
+    gameState: wroteCodexState
+      ? {
+        ...(cloneSerialisable(gameState) || {}),
+        [MONSTER_CODEX_SYSTEM_ID]: codexState,
+      }
+      : gameState,
     changedGameState: wroteCodexState
       ? { [MONSTER_CODEX_SYSTEM_ID]: codexState }
       : {},

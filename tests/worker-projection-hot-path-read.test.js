@@ -13,12 +13,14 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { createWorkerApp } from '../worker/src/app.js';
-import { COMMAND_PROJECTION_MODEL_KEY } from '../worker/src/read-models/learner-read-models.js';
+import {
+  COMMAND_PROJECTION_MODEL_KEY,
+  COMMAND_PROJECTION_RECENT_EVENT_LIMIT as PROJECTION_RECENT_EVENT_LIMIT,
+  RECENT_EVENT_TOKEN_RING_LIMIT,
+} from '../worker/src/read-models/learner-read-models.js';
 import { createMigratedSqliteD1Database } from './helpers/sqlite-d1.js';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
-const PROJECTION_RECENT_EVENT_LIMIT = 200;
-const RECENT_EVENT_TOKEN_RING_LIMIT = 250;
 const BASE_URL = 'https://repo.test';
 
 function seedAccountLearner(DB, { accountId = 'adult-a', learnerId = 'learner-a' } = {}) {
@@ -696,16 +698,17 @@ test('U6 scenario 13: client isCommandBackendExhausted() rejects projection_unav
 });
 
 // ---------------------------------------------------------------------------
-// Scenario 18 — Token ring size (default 250) is strictly greater than
-//   lag window (200) — token set is superset of bootstrap eventLog.
+// Scenario 18 — Token ring size is strictly greater than the lag window —
+//   token set is a superset of the bounded bootstrap eventLog lookback.
 // ---------------------------------------------------------------------------
-test('U6 scenario 18: recentEventTokens ring size (250) strictly exceeds lag window (200)', async () => {
+test('U6 scenario 18: recentEventTokens ring size strictly exceeds lag window', async () => {
   assert.ok(RECENT_EVENT_TOKEN_RING_LIMIT > PROJECTION_RECENT_EVENT_LIMIT,
     `token ring ${RECENT_EVENT_TOKEN_RING_LIMIT} must strictly exceed lag window ${PROJECTION_RECENT_EVENT_LIMIT}`);
   // Also pull the constant from the module so the test fails if the
   // production constant drifts below the lag window.
   const learnerReadModels = await import('../worker/src/read-models/learner-read-models.js');
-  assert.equal(learnerReadModels.RECENT_EVENT_TOKEN_RING_LIMIT, 250);
+  assert.equal(learnerReadModels.RECENT_EVENT_TOKEN_RING_LIMIT, RECENT_EVENT_TOKEN_RING_LIMIT);
+  assert.equal(learnerReadModels.COMMAND_PROJECTION_RECENT_EVENT_LIMIT, PROJECTION_RECENT_EVENT_LIMIT);
 });
 
 // ---------------------------------------------------------------------------
