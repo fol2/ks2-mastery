@@ -180,6 +180,7 @@ import {
   punctuationStateWithoutItemMastery,
 } from './subjects/punctuation/gameplay-persistence.js';
 import { markGameplayWorkingSet } from './subjects/gameplay-store.js';
+import { COMMAND_PHASE_TIMING } from './subjects/command-contract.js';
 import {
   activityFeedRowFromEventRow,
   appendRecentEventTokens,
@@ -8899,6 +8900,18 @@ function measureBootstrapPhaseSync(capacity, name, fn) {
   }
 }
 
+async function measureCommandPhase(capacity, name, fn) {
+  if (!capacity || typeof capacity.recordCommandPhaseTiming !== 'function') {
+    return fn();
+  }
+  const startedAt = bootstrapTimingNowMs();
+  try {
+    return await fn();
+  } finally {
+    capacity.recordCommandPhaseTiming(name, bootstrapTimingNowMs() - startedAt);
+  }
+}
+
 function accountSnapshotForBootstrap(account, accountId) {
   return account && String(account.id || '') === String(accountId || '') ? account : null;
 }
@@ -11499,64 +11512,66 @@ async function runSubjectCommandMutation(db, {
   const spellingRuntimeModelKey = COMMAND_PROJECTION_MODEL_KEY;
   let combinedRow;
   let preloadedCommandRuntime = null;
-  if (canPreloadSpellingRuntime) {
-    try {
-      combinedRow = await readSpellingSubjectCommandPreflightRow(db, {
-        accountId,
-        learnerId: command.learnerId,
-        requestId: nextMutation.requestId,
-        modelKey: spellingRuntimeModelKey,
-      });
-      markLearnerReadModelsTableAvailable(db);
-      if (Number(combinedRow?.spelling_bounded_gameplay_ready) === 1) {
-        markBoundedGameplayTableAvailable(db, 'spelling');
+  await measureCommandPhase(capacity, COMMAND_PHASE_TIMING.preflight, async () => {
+    if (canPreloadSpellingRuntime) {
+      try {
+        combinedRow = await readSpellingSubjectCommandPreflightRow(db, {
+          accountId,
+          learnerId: command.learnerId,
+          requestId: nextMutation.requestId,
+          modelKey: spellingRuntimeModelKey,
+        });
+        markLearnerReadModelsTableAvailable(db);
+        if (Number(combinedRow?.spelling_bounded_gameplay_ready) === 1) {
+          markBoundedGameplayTableAvailable(db, 'spelling');
+        }
+        preloadedCommandRuntime = spellingCommandRuntimeFromRow(combinedRow, spellingRuntimeModelKey, {
+          prefix: 'spelling_',
+        });
+        if (preloadedCommandRuntime.legacyFallbackRequired) preloadedCommandRuntime = null;
+      } catch (error) {
+        if (
+          !isMissingTableError(error, 'learner_read_models')
+          && !isMissingTableError(error, 'spelling_learner_state')
+          && !isMissingTableError(error, 'bounded_gameplay_state_migrations')
+        ) throw error;
+        combinedRow = await readSubjectCommandPreflightRow(db, {
+          accountId,
+          learnerId: command.learnerId,
+          requestId: nextMutation.requestId,
+        });
+        if (isMissingTableError(error, 'learner_read_models')) {
+          // Capacity projections are optional during their own rollout, but
+          // the 0023 authority check is not. Recover only the two presence
+          // bits needed by the fail-closed guard; never read legacy data_json.
+          const spellingPresence = await first(db, `
+            SELECT
+              EXISTS (
+                SELECT 1 FROM spelling_learner_state WHERE learner_id = ?
+              ) AS spelling_state_present,
+              EXISTS (
+                SELECT 1
+                FROM bounded_gameplay_state_migrations
+                WHERE migration_id = '0023' AND state = 'ready'
+              ) AS spelling_bounded_gameplay_ready
+          `, [command.learnerId]);
+          combinedRow = {
+            ...combinedRow,
+            spelling_state_learner_id: Number(spellingPresence?.spelling_state_present) === 1
+              ? command.learnerId
+              : null,
+            spelling_bounded_gameplay_ready: spellingPresence?.spelling_bounded_gameplay_ready,
+          };
+        }
       }
-      preloadedCommandRuntime = spellingCommandRuntimeFromRow(combinedRow, spellingRuntimeModelKey, {
-        prefix: 'spelling_',
-      });
-      if (preloadedCommandRuntime.legacyFallbackRequired) preloadedCommandRuntime = null;
-    } catch (error) {
-      if (
-        !isMissingTableError(error, 'learner_read_models')
-        && !isMissingTableError(error, 'spelling_learner_state')
-        && !isMissingTableError(error, 'bounded_gameplay_state_migrations')
-      ) throw error;
+    } else {
       combinedRow = await readSubjectCommandPreflightRow(db, {
         accountId,
         learnerId: command.learnerId,
         requestId: nextMutation.requestId,
       });
-      if (isMissingTableError(error, 'learner_read_models')) {
-        // Capacity projections are optional during their own rollout, but
-        // the 0023 authority check is not. Recover only the two presence
-        // bits needed by the fail-closed guard; never read legacy data_json.
-        const spellingPresence = await first(db, `
-          SELECT
-            EXISTS (
-              SELECT 1 FROM spelling_learner_state WHERE learner_id = ?
-            ) AS spelling_state_present,
-            EXISTS (
-              SELECT 1
-              FROM bounded_gameplay_state_migrations
-              WHERE migration_id = '0023' AND state = 'ready'
-            ) AS spelling_bounded_gameplay_ready
-        `, [command.learnerId]);
-        combinedRow = {
-          ...combinedRow,
-          spelling_state_learner_id: Number(spellingPresence?.spelling_state_present) === 1
-            ? command.learnerId
-            : null,
-          spelling_bounded_gameplay_ready: spellingPresence?.spelling_bounded_gameplay_ready,
-        };
-      }
     }
-  } else {
-    combinedRow = await readSubjectCommandPreflightRow(db, {
-      accountId,
-      learnerId: command.learnerId,
-      requestId: nextMutation.requestId,
-    });
-  }
+  });
 
   if (!combinedRow || !combinedRow.learner_id) {
     throw new NotFoundError('Learner was not found.', { learnerId: command.learnerId });
@@ -11757,7 +11772,11 @@ async function runSubjectCommandMutation(db, {
     // breaker health.
     let attemptResults;
     try {
-      attemptResults = await batch(db, attemptStatements);
+      attemptResults = await measureCommandPhase(
+        capacity,
+        COMMAND_PHASE_TIMING.d1Batch,
+        () => batch(db, attemptStatements),
+      );
     } catch (err) {
       // Only record failure for attempts that actually included the projection
       // write (`includeProjection=true`). Projection-skipped attempts that still

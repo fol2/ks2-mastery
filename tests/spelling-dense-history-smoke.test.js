@@ -115,16 +115,27 @@ function installDemoBootstrapHandlers({ bootstrapCapacity = null } = {}) {
     }
     if (pathname === '/api/subjects/spelling/command') {
       const body = JSON.parse(init.body || '{}');
+      const nextRevision = Number(body.expectedLearnerRevision || 0) + 1;
       if (body.command === 'start-session') {
         return jsonResponse(buildCommandResponse({
-          appliedRevision: 8,
+          appliedRevision: nextRevision,
           subjectReadModel: buildSpellingStartModel(),
         }));
       }
       if (body.command === 'submit-answer') {
+        const typed = String(body.payload?.typed || '');
         return jsonResponse(buildCommandResponse({
-          appliedRevision: 9,
-          subjectReadModel: { phase: 'feedback', feedback: { kind: 'mistake' } },
+          appliedRevision: nextRevision,
+          subjectReadModel: {
+            phase: 'session',
+            awaitingAdvance: typed === 'possess',
+            session: {
+              type: 'learning',
+              phase: typed === 'possess' ? 'question' : 'retry',
+              currentSlug: 'possess',
+            },
+            feedback: { kind: typed === 'possess' ? 'success' : 'error' },
+          },
         }));
       }
     }
@@ -189,10 +200,13 @@ test('runSpellingDenseHistorySmoke happy path reports start-session wall time un
     });
     assert.equal(evidence.ok, true);
     assert.equal(evidence.thresholds.violations.length, 0);
-    assert.equal(evidence.commands.length, 2);
+    assert.equal(evidence.commands.length, 5);
     assert.equal(evidence.commands[0].command, 'start-session');
     assert.equal(evidence.commands[0].status, 200);
     assert.equal(evidence.commands[1].command, 'submit-answer');
+    assert.equal(evidence.commands[2].label, 'recovery-start');
+    assert.equal(evidence.commands[3].label, 'recovery-wrong');
+    assert.equal(evidence.commands[4].label, 'recovery-correct');
     assert.equal(evidence.bootstrap.capacity?.mode, 'public-bounded');
     assert.ok(evidence.commands[0].wallMs >= 0, 'wallMs must be a non-negative number');
     assert.equal(evidence.commands[0].serverCapacity?.queryCount, 3);
@@ -390,7 +404,7 @@ test('runCli --output persists evidence JSON with reportMeta + summary envelope'
     assert.ok(written.safety, 'envelope must include safety block');
     assert.equal(written.safety.mode, 'production-spelling-dense-smoke');
     assert.equal(Array.isArray(written.summary.commands), true);
-    assert.equal(written.summary.commands.length, 2);
+    assert.equal(written.summary.commands.length, 5);
     assert.match(written.summary.startedAt, /^\d{4}-\d{2}-\d{2}T/);
     assert.match(written.summary.finishedAt, /^\d{4}-\d{2}-\d{2}T/);
   } finally {

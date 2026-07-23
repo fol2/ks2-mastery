@@ -1,5 +1,23 @@
 import { BadRequestError } from '../errors.js';
 
+// Closed allowlist of subject-command phase labels for structured capacity
+// logs only. Durations are recorded by CapacityCollector and never returned
+// in child-facing `meta.capacity` JSON.
+export const COMMAND_PHASE_TIMING = Object.freeze({
+  preflight: 'preflight',
+  content: 'content',
+  workingSet: 'workingSet',
+  engineApply: 'engineApply',
+  rewardProjection: 'rewardProjection',
+  readModelBuild: 'readModelBuild',
+  persistPlan: 'persistPlan',
+  d1Batch: 'd1Batch',
+});
+
+export const COMMAND_PHASE_TIMING_NAMES = Object.freeze(
+  Object.values(COMMAND_PHASE_TIMING),
+);
+
 function cleanText(value) {
   return String(value || '').trim();
 }

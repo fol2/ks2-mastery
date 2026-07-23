@@ -23,10 +23,14 @@ import {
   spellingGameplayStatsWithDueSchedule,
   updateSpellingGameplayStats,
 } from './gameplay-state.js';
-import { buildSpellingReadModel } from './read-models.js';
+import {
+  buildSpellingPublicSubjectReadModel,
+  buildSpellingReadModel,
+} from './read-models.js';
 import { checkSpellingWordBankAnswer } from '../../content/spelling-read-models.js';
 import { resolveProjectionInput } from '../projection-input.js';
 import { isLegacyGameplayWorkingSet } from '../gameplay-store.js';
+import { COMMAND_PHASE_TIMING } from '../command-contract.js';
 
 const SPELLING_COMMANDS = Object.freeze([
   'start-session',
@@ -187,6 +191,22 @@ async function replayContextEvents(context, learnerId) {
     },
   );
   return [...replayRequests, ...referenceEvents];
+}
+
+function commandTimingNowMs() {
+  return typeof performance?.now === 'function' ? performance.now() : Date.now();
+}
+
+async function measureCommandPhase(capacity, name, fn) {
+  if (!capacity || typeof capacity.recordCommandPhaseTiming !== 'function') {
+    return fn();
+  }
+  const startedAt = commandTimingNowMs();
+  try {
+    return await fn();
+  } finally {
+    capacity.recordCommandPhaseTiming(name, commandTimingNowMs() - startedAt);
+  }
 }
 
 async function readRuntimeContent(context) {
@@ -381,6 +401,7 @@ export function createSpellingCommandHandlers({ now, random } = {}) {
     }
 
     const nowValue = Number.isFinite(Number(context.now)) ? Number(context.now) : Date.now();
+    const capacity = context.capacity || null;
     let runtimeRecord = context.commandRuntime || (typeof context.repository.readSpellingCommandRuntime === 'function'
       ? await context.repository.readSpellingCommandRuntime(
         context.session.accountId,
@@ -395,7 +416,11 @@ export function createSpellingCommandHandlers({ now, random } = {}) {
         'spelling',
         { skipAccessCheck: true },
       ));
-    const contentResult = await readRuntimeContent(context);
+    const contentResult = await measureCommandPhase(
+      capacity,
+      COMMAND_PHASE_TIMING.content,
+      () => readRuntimeContent(context),
+    );
     const snapshot = contentResult.snapshot;
     if (!snapshot?.words?.length) {
       throw new NotFoundError('No published spelling content is available.', {
@@ -444,15 +469,19 @@ export function createSpellingCommandHandlers({ now, random } = {}) {
       statsCurrent,
     );
     if (typeof context.repository.readSpellingGameplayWorkingSet === 'function') {
-      const workingData = await context.repository.readSpellingGameplayWorkingSet(
-        context.session.accountId,
-        command.learnerId,
-        workingSetPlan.slugs,
-        {
-          skipAccessCheck: true,
-          learnerData: runtimeRecord.subjectRecord?.data || {},
-          now: nowValue,
-        },
+      const workingData = await measureCommandPhase(
+        capacity,
+        COMMAND_PHASE_TIMING.workingSet,
+        () => context.repository.readSpellingGameplayWorkingSet(
+          context.session.accountId,
+          command.learnerId,
+          workingSetPlan.slugs,
+          {
+            skipAccessCheck: true,
+            learnerData: runtimeRecord.subjectRecord?.data || {},
+            now: nowValue,
+          },
+        ),
       );
       runtimeRecord = {
         ...runtimeRecord,
@@ -471,77 +500,100 @@ export function createSpellingCommandHandlers({ now, random } = {}) {
       }
       : null;
 
-    const engine = createServerSpellingEngine({
-      now: typeof now === 'function' ? now : () => nowValue,
-      random,
-      contentSnapshot: snapshot,
-      aggregateProgress,
-      completeCatalogue,
-    });
-    const result = engine.apply({
-      learnerId: command.learnerId,
-      subjectRecord: runtimeRecord.subjectRecord,
-      latestSession: runtimeRecord.latestSession,
-      command: command.command,
-      payload: command.payload,
+    const result = await measureCommandPhase(capacity, COMMAND_PHASE_TIMING.engineApply, async () => {
+      const engine = createServerSpellingEngine({
+        now: typeof now === 'function' ? now : () => nowValue,
+        random,
+        contentSnapshot: snapshot,
+        aggregateProgress,
+        completeCatalogue,
+      });
+      return engine.apply({
+        learnerId: command.learnerId,
+        subjectRecord: runtimeRecord.subjectRecord,
+        latestSession: runtimeRecord.latestSession,
+        command: command.command,
+        payload: command.payload,
+      });
     });
     const domainEvents = Array.isArray(result.events) ? result.events : [];
     // Projection is a derived reward/read-model dependency. If it is
     // temporarily unavailable, keep the primary spelling command flowing and
     // omit reward side effects for this response.
-    const projectionInput = await resolveSpellingProjectionInput(context, {
-      learnerId: command.learnerId,
-      currentRevision: Number(command.expectedLearnerRevision) || 0,
-      readModel: runtimeRecord.commandProjectionReadModel,
-    });
-    const projectionState = projectionInput.projectionState;
-    const projectedRewards = projectionInput.degraded
-      ? { gameState: {}, changedGameState: {}, rewardEvents: [] }
-      : projectSpellingRewards({
+    const {
+      projectionInput,
+      projectedRewards,
+      projectedEvents,
+      projections,
+    } = await measureCommandPhase(capacity, COMMAND_PHASE_TIMING.rewardProjection, async () => {
+      const nextProjectionInput = await resolveSpellingProjectionInput(context, {
         learnerId: command.learnerId,
-        domainEvents,
-        gameState: projectionState.gameState,
-        // P2 U12 MEDIUM (u12-corr-02): thread the bounded-fallback event list
-        // so the achievement subscriber sees prior Guardian mission history +
-        // Pattern Quest completions from earlier commands. Without this, the
-        // Worker-twin achievement path never unlocks Guardian 7-day — each
-        // command starts from an empty `existingEvents` list and cumulative
-        // state collapses to just `result.events`. Matches client path at
-        // `src/platform/events/runtime.js:69` where `existingEvents` is
-        // `repositories.eventLog.list()`.
-        existingEvents: projectionState.events,
+        currentRevision: Number(command.expectedLearnerRevision) || 0,
+        readModel: runtimeRecord.commandProjectionReadModel,
       });
-    let replayEvents = [];
-    if (!projectionInput.degraded && result.state?.phase === 'summary') {
-      const replayContext = await replayContextEvents(context, command.learnerId);
-      replayEvents = monsterCelebrationReplayEvents([
-        ...projectionState.events,
-        ...replayContext,
-      ], {
-        learnerId: command.learnerId,
-        subjectId: 'spelling',
-        now: nowValue,
-      });
-    }
-    // On the hot path (`hit`), `projectionState.events` is empty and we
-    // pass the persisted token ring as `seedTokens` so
-    // `combineCommandEvents` can dedupe without re-scanning the event log.
-    // On miss/stale/newer-opaque the events list is populated from the
-    // bounded fallback and tokens are either the refreshed ring or null
-    // (newer-opaque).
-    const projectedEvents = projectionInput.degraded
-      ? {
-        events: domainEvents,
-        domainEvents,
-        reactionEvents: [],
-        toastEvents: [],
+      const projectionState = nextProjectionInput.projectionState;
+      const nextProjectedRewards = nextProjectionInput.degraded
+        ? { gameState: {}, changedGameState: {}, rewardEvents: [] }
+        : projectSpellingRewards({
+          learnerId: command.learnerId,
+          domainEvents,
+          gameState: projectionState.gameState,
+          // P2 U12 MEDIUM (u12-corr-02): thread the bounded-fallback event list
+          // so the achievement subscriber sees prior Guardian mission history +
+          // Pattern Quest completions from earlier commands. Without this, the
+          // Worker-twin achievement path never unlocks Guardian 7-day — each
+          // command starts from an empty `existingEvents` list and cumulative
+          // state collapses to just `result.events`. Matches client path at
+          // `src/platform/events/runtime.js:69` where `existingEvents` is
+          // `repositories.eventLog.list()`.
+          existingEvents: projectionState.events,
+        });
+      let replayEvents = [];
+      if (!nextProjectionInput.degraded && result.state?.phase === 'summary') {
+        const replayContext = await replayContextEvents(context, command.learnerId);
+        replayEvents = monsterCelebrationReplayEvents([
+          ...projectionState.events,
+          ...replayContext,
+        ], {
+          learnerId: command.learnerId,
+          subjectId: 'spelling',
+          now: nowValue,
+        });
       }
-      : combineCommandEvents({
-        domainEvents,
-        reactionEvents: [...projectedRewards.rewardEvents, ...replayEvents],
-        existingEvents: projectionState.events,
-        seedTokens: projectionInput.tokens || [],
-      });
+      // On the hot path (`hit`), `projectionState.events` is empty and we
+      // pass the persisted token ring as `seedTokens` so
+      // `combineCommandEvents` can dedupe without re-scanning the event log.
+      // On miss/stale/newer-opaque the events list is populated from the
+      // bounded fallback and tokens are either the refreshed ring or null
+      // (newer-opaque).
+      const nextProjectedEvents = nextProjectionInput.degraded
+        ? {
+          events: domainEvents,
+          domainEvents,
+          reactionEvents: [],
+          toastEvents: [],
+        }
+        : combineCommandEvents({
+          domainEvents,
+          reactionEvents: [...nextProjectedRewards.rewardEvents, ...replayEvents],
+          existingEvents: projectionState.events,
+          seedTokens: nextProjectionInput.tokens || [],
+        });
+      const nextProjections = nextProjectionInput.degraded
+        ? emptyRewardProjection(nextProjectedEvents.domainEvents)
+        : buildCommandProjectionReadModel({
+          gameState: nextProjectedRewards.gameState,
+          domainEvents: nextProjectedEvents.domainEvents,
+          reactionEvents: nextProjectedEvents.reactionEvents,
+          toastEvents: nextProjectedEvents.toastEvents,
+        });
+      return {
+        projectionInput: nextProjectionInput,
+        projectedRewards: nextProjectedRewards,
+        projectedEvents: nextProjectedEvents,
+        projections: nextProjections,
+      };
+    });
     const replayAudioCue = await buildSpellingAudioCue({
       learnerId: command.learnerId,
       state: result.state,
@@ -551,15 +603,6 @@ export function createSpellingCommandHandlers({ now, random } = {}) {
       state: result.state,
       audio: result.audio,
     }) : null;
-
-    const projections = projectionInput.degraded
-      ? emptyRewardProjection(projectedEvents.domainEvents)
-      : buildCommandProjectionReadModel({
-        gameState: projectedRewards.gameState,
-        domainEvents: projectedEvents.domainEvents,
-        reactionEvents: projectedEvents.reactionEvents,
-        toastEvents: projectedEvents.toastEvents,
-      });
 
     let persistedSpellingStats = runtimeRecord.spellingStats || {};
     if (usesBoundedGameplayStore) {
@@ -585,21 +628,46 @@ export function createSpellingCommandHandlers({ now, random } = {}) {
       ? materialiseSpellingGameplayStats(persistedSpellingStats, nowValue)
       : result.stats;
 
+    const { subjectReadModel, publicSubjectReadModel } = await measureCommandPhase(
+      capacity,
+      COMMAND_PHASE_TIMING.readModelBuild,
+      async () => {
+        const nextSubjectReadModel = buildSpellingReadModel({
+          learnerId: command.learnerId,
+          state: result.state,
+          prefs: result.prefs,
+          stats: responseStats,
+          analytics: clientAnalytics({
+            ...result.analytics,
+            pools: responseStats,
+          }),
+          audio: replayAudioCue,
+          content: contentMeta(contentResult, snapshot),
+        });
+        // Atomic public projection for bootstrap: keep this thinner than the
+        // command response so every answer does not rewrite a fat UI blob.
+        const nextPublicSubjectReadModel = buildSpellingPublicSubjectReadModel({
+          learnerId: command.learnerId,
+          state: result.state,
+          prefs: result.prefs,
+          stats: responseStats,
+          // Bootstrap replays the active prompt via this token; keep it on the
+          // public projection even though feedback/analytics stay stripped.
+          audio: replayAudioCue,
+          postMastery: result.postMastery || null,
+        });
+        return {
+          subjectReadModel: nextSubjectReadModel,
+          publicSubjectReadModel: nextPublicSubjectReadModel,
+        };
+      },
+    );
+
     return {
       learnerId: command.learnerId,
       changed: result.changed,
-      subjectReadModel: buildSpellingReadModel({
-        learnerId: command.learnerId,
-        state: result.state,
-        prefs: result.prefs,
-        stats: responseStats,
-        analytics: clientAnalytics({
-          ...result.analytics,
-          pools: responseStats,
-        }),
-        audio: replayAudioCue,
-        content: contentMeta(contentResult, snapshot),
-      }),
+      subjectReadModel,
+      publicSubjectReadModel,
       // P2 U4: additive — client `applyCommandResponse` merges this into
       // `subjectUi.spelling.postMastery`, keeping the Setup scene post-Mega
       // gate in lockstep with the worker. Old clients that never read this

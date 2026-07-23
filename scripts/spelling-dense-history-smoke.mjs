@@ -472,7 +472,83 @@ export async function runSpellingDenseHistorySmoke(options = {}) {
     throw validationError('Spelling submit-answer surfaced exceededCpu.');
   }
 
+  // Human retry path (tester report): wrong answer then immediately type
+  // the correct word on the same prompt. Fixed slug keeps the recovery
+  // independent of Smart Review selection while still exercising two
+  // sequential submit-answer commands under the same dense profile.
+  const recoveryStart = await runSpellingCommand({
+    origin,
+    cookie,
+    learnerId: bootstrap.learnerId,
+    revision: submit.nextRevision,
+    command: 'start-session',
+    payload: { mode: 'single', slug: 'possess', length: 1 },
+  });
+  assertHttpOkOrThrow(recoveryStart.status, 'Spelling recovery start-session');
+  if (!recoveryStart.ok) {
+    throw validationError('Spelling recovery start-session returned ok=false.');
+  }
+  if (recoveryStart.signals.includes('exceededCpu')) {
+    throw validationError('Spelling recovery start-session surfaced exceededCpu.');
+  }
+
+  const recoveryWrong = await runSpellingCommand({
+    origin,
+    cookie,
+    learnerId: bootstrap.learnerId,
+    revision: recoveryStart.nextRevision,
+    command: 'submit-answer',
+    payload: { typed: 'posess' },
+  });
+  assertHttpOkOrThrow(recoveryWrong.status, 'Spelling recovery wrong submit-answer');
+  if (!recoveryWrong.ok) {
+    throw validationError('Spelling recovery wrong submit-answer returned ok=false.');
+  }
+  rethrowAsValidation(() => {
+    assertSpellingSubmitModelRedaction(
+      recoveryWrong.payload?.subjectReadModel,
+      'spellingDense.recoveryWrongModel',
+    );
+  });
+  if (recoveryWrong.signals.includes('exceededCpu')) {
+    throw validationError('Spelling recovery wrong submit-answer surfaced exceededCpu.');
+  }
+
+  const recoveryCorrect = await runSpellingCommand({
+    origin,
+    cookie,
+    learnerId: bootstrap.learnerId,
+    revision: recoveryWrong.nextRevision,
+    command: 'submit-answer',
+    payload: { typed: 'possess' },
+  });
+  assertHttpOkOrThrow(recoveryCorrect.status, 'Spelling recovery correct submit-answer');
+  if (!recoveryCorrect.ok) {
+    throw validationError('Spelling recovery correct submit-answer returned ok=false.');
+  }
+  rethrowAsValidation(() => {
+    assertSpellingSubmitModelRedaction(
+      recoveryCorrect.payload?.subjectReadModel,
+      'spellingDense.recoveryCorrectModel',
+    );
+  });
+  if (recoveryCorrect.signals.includes('exceededCpu')) {
+    throw validationError('Spelling recovery correct submit-answer surfaced exceededCpu.');
+  }
+
   const finishedAt = new Date().toISOString();
+  const commandResults = [
+    { command: 'start-session', ...start, label: 'smart-start' },
+    { command: 'submit-answer', ...submit, label: 'smart-wrong' },
+    { command: 'start-session', ...recoveryStart, label: 'recovery-start' },
+    { command: 'submit-answer', ...recoveryWrong, label: 'recovery-wrong' },
+    { command: 'submit-answer', ...recoveryCorrect, label: 'recovery-correct' },
+  ];
+  const commandWallMs = commandResults.map((entry) => entry.wallMs);
+  const commandWallSorted = [...commandWallMs].sort((left, right) => left - right);
+  const p50WallMs = commandWallSorted[Math.floor((commandWallSorted.length - 1) * 0.5)];
+  const p95WallMs = commandWallSorted[Math.floor((commandWallSorted.length - 1) * 0.95)];
+  const maxResponseBytes = Math.max(...commandResults.map((entry) => entry.responseBytes));
 
   // Canonical `summary.endpoints[key]` shape mirrors
   // scripts/classroom-load-test.mjs:summariseCapacityResults so
@@ -481,15 +557,17 @@ export async function runSpellingDenseHistorySmoke(options = {}) {
   // `p50 === p95 === wallMs` and `count: 1`.
   const endpoints = {
     [SPELLING_COMMAND_ENDPOINT_KEY]: {
-      count: 2,
-      p50WallMs: start.wallMs,
-      p95WallMs: start.wallMs,
-      maxResponseBytes: Math.max(start.responseBytes, submit.responseBytes),
+      count: commandResults.length,
+      p50WallMs,
+      p95WallMs,
+      maxResponseBytes,
     },
   };
   const signalsAggregate = {};
-  for (const signal of [...start.signals, ...submit.signals]) {
-    signalsAggregate[signal] = (signalsAggregate[signal] || 0) + 1;
+  for (const entry of commandResults) {
+    for (const signal of entry.signals) {
+      signalsAggregate[signal] = (signalsAggregate[signal] || 0) + 1;
+    }
   }
 
   const evidence = {
@@ -514,27 +592,17 @@ export async function runSpellingDenseHistorySmoke(options = {}) {
     // reads `endpoints` exclusively.
     endpoints,
     signals: signalsAggregate,
-    totalRequests: 2,
-    commands: [
-      {
-        command: 'start-session',
-        status: start.status,
-        wallMs: start.wallMs,
-        responseBytes: start.responseBytes,
-        signals: start.signals,
-        serverCapacity: start.capacity,
-        requestId: start.requestId,
-      },
-      {
-        command: 'submit-answer',
-        status: submit.status,
-        wallMs: submit.wallMs,
-        responseBytes: submit.responseBytes,
-        signals: submit.signals,
-        serverCapacity: submit.capacity,
-        requestId: submit.requestId,
-      },
-    ],
+    totalRequests: commandResults.length,
+    commands: commandResults.map((entry) => ({
+      command: entry.command,
+      label: entry.label,
+      status: entry.status,
+      wallMs: entry.wallMs,
+      responseBytes: entry.responseBytes,
+      signals: entry.signals,
+      serverCapacity: entry.capacity,
+      requestId: entry.requestId,
+    })),
     thresholds: {
       maxP95Ms,
       latencyGateApplied,

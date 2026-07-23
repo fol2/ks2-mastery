@@ -128,11 +128,23 @@ function buildAbandonedRecord(learnerId, latestSession, now) {
 }
 
 function markServerOwnedState(rawState) {
-  const state = cloneSerialisable(rawState) || createInitialSpellingState();
-  if (state.phase === 'session' && state.session) {
-    state.session.serverAuthority = SERVER_AUTHORITY;
+  // Shallow ownership stamp — avoid JSON deep-clone of the whole session
+  // graph on every command. Callers must treat the returned state as the
+  // authoritative next value and must not mutate the previous snapshot.
+  const base = rawState && typeof rawState === 'object' && !Array.isArray(rawState)
+    ? rawState
+    : createInitialSpellingState();
+  if (base.phase !== 'session' || !base.session || typeof base.session !== 'object') {
+    return base;
   }
-  return state;
+  if (base.session.serverAuthority === SERVER_AUTHORITY) return base;
+  return {
+    ...base,
+    session: {
+      ...base.session,
+      serverAuthority: SERVER_AUTHORITY,
+    },
+  };
 }
 
 function isServerOwnedRawUi(rawUi) {
@@ -484,7 +496,18 @@ export function createServerSpellingEngine({
           postMastery = undefined;
         }
       }
+      // Hot path: pool counters only (no word groups). Prefer the bounded
+      // aggregate wrapper when present so answer commands do not re-scan
+      // lifetime progress maps for analytics.
       const analytics = service.getAnalyticsSnapshot(learnerId, { includeWordGroups: false });
+      const stats = {
+        all: analytics.pools.all,
+        core: analytics.pools.core,
+        y34: analytics.pools.y34,
+        y56: analytics.pools.y56,
+        secureExtension: analytics.pools.secureExtension,
+        extra: analytics.pools.extra,
+      };
       return {
         ok: transition.ok !== false,
         changed: transition.changed !== false,
@@ -494,15 +517,13 @@ export function createServerSpellingEngine({
         events: transition.events || [],
         audio: transition.audio || null,
         prefs: transition.prefs || finalSnapshot.prefs,
-        stats: {
-          all: analytics.pools.all,
-          core: analytics.pools.core,
-          y34: analytics.pools.y34,
-          y56: analytics.pools.y56,
-          secureExtension: analytics.pools.secureExtension,
-          extra: analytics.pools.extra,
+        stats,
+        // Keep analytics for command consumers, but never re-attach wordGroups.
+        analytics: {
+          version: analytics.version,
+          generatedAt: analytics.generatedAt,
+          pools: analytics.pools,
         },
-        analytics,
         postMastery,
       };
     },

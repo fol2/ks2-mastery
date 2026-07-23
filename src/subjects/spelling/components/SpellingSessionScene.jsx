@@ -299,7 +299,13 @@ export function SpellingSessionScene({
           <form
             data-action="spelling-submit-form"
             className="session-form"
-            onSubmit={(event) => renderFormAction(actions, event, 'spelling-submit-form')}
+            onSubmit={(event) => {
+              // SH2-U1: submit uses pendingCommand + adapter dedupe already;
+              // lock the form submit the same way Continue/Skip do so a
+              // double Enter or fast re-submit in the same tick cannot race
+              // the store patch that sets pendingCommand.
+              submitLock.run(async () => renderFormAction(actions, event, 'spelling-submit-form'));
+            }}
           >
             <div className="word-input-wrap">
               <input
@@ -360,8 +366,14 @@ export function SpellingSessionScene({
               </div>
             ) : null}
             <div className="action-row">
-              <Button variant="primary" size="lg" style={{ '--btn-accent': accent }} type="submit" disabled={awaitingAdvance || runtimeReadOnly || pending}>
-                {effectiveSubmitLabel}{awaitingAdvance || pending ? null : <> <ArrowRightIcon /></>}
+              <Button
+                variant="primary"
+                size="lg"
+                style={{ '--btn-accent': accent }}
+                type="submit"
+                disabled={awaitingAdvance || runtimeReadOnly || pending || submitLock.locked}
+              >
+                {effectiveSubmitLabel}{awaitingAdvance || pending || submitLock.locked ? null : <> <ArrowRightIcon /></>}
               </Button>
               {awaitingAdvance ? (
                 <Button
