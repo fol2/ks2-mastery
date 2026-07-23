@@ -2230,10 +2230,13 @@ function bindLearnerReadModelUpsertStatement(db, learnerId, modelKey, model, {
 } = {}) {
   const key = normaliseReadModelKey(modelKey);
   const timestamp = Math.max(0, Number(updatedAt) || Date.now());
+  // Hot path: callers already hand a plain JSON-safe object. Avoid a second
+  // deep clone of fat command.projection.v1 (rewards + token ring) before
+  // stringify — that clone was a material share of Nelson submit CPU.
   const params = [
     learnerId,
     key,
-    JSON.stringify(cloneSerialisable(model) || {}),
+    JSON.stringify(model && typeof model === 'object' ? model : {}),
     Math.max(0, Number(sourceRevision) || 0),
     Math.max(0, Number(generatedAt) || timestamp),
     timestamp,
@@ -2247,6 +2250,61 @@ function bindLearnerReadModelUpsertStatement(db, learnerId, modelKey, model, {
         source_revision = excluded.source_revision,
         generated_at = excluded.generated_at,
         updated_at = excluded.updated_at
+    `, guardedParams(params, guard));
+  } catch (error) {
+    if (isMissingTableError(error, 'learner_read_models')) return null;
+    throw error;
+  }
+}
+
+/**
+ * Light touch when monster-codex rewards are unchanged: only refresh the
+ * token ring / eventCounts / revision metadata inside the existing JSON
+ * document. Avoids re-stringifying the fat mastered[] snapshot on every answer.
+ */
+function bindLearnerReadModelProjectionPatchStatement(db, learnerId, modelKey, {
+  recentEventTokens = [],
+  eventCounts = {},
+  sourceRevision = 0,
+  generatedAt = Date.now(),
+  updatedAt = generatedAt,
+  guard = null,
+} = {}) {
+  const key = normaliseReadModelKey(modelKey);
+  const timestamp = Math.max(0, Number(updatedAt) || Date.now());
+  const tokensJson = JSON.stringify(
+    Array.isArray(recentEventTokens)
+      ? recentEventTokens.filter((token) => typeof token === 'string' && token)
+      : [],
+  );
+  const countsJson = JSON.stringify(
+    eventCounts && typeof eventCounts === 'object' && !Array.isArray(eventCounts)
+      ? eventCounts
+      : {},
+  );
+  const params = [
+    tokensJson,
+    countsJson,
+    Math.max(0, Number(generatedAt) || timestamp),
+    Math.max(0, Number(sourceRevision) || 0),
+    timestamp,
+    learnerId,
+    key,
+  ];
+  try {
+    return bindStatement(db, `
+      UPDATE learner_read_models
+      SET
+        model_json = json_set(
+          model_json,
+          '$.recentEventTokens', json(?),
+          '$.eventCounts', json(?),
+          '$.generatedAt', ?
+        ),
+        source_revision = ?,
+        updated_at = ?
+      WHERE learner_id = ? AND model_key = ?
+        ${guardedWhere(guard)}
     `, guardedParams(params, guard));
   } catch (error) {
     if (isMissingTableError(error, 'learner_read_models')) return null;
@@ -2399,6 +2457,8 @@ function commandProjectionReadModelFromRuntime(runtime, events, nowTs, {
   // so the sub-shape (`{inklet, glimmerbug, phaeton, vellhorn}`)
   // survives round-trips.
   const hasCodexUpdate = Object.prototype.hasOwnProperty.call(gameState, PUBLIC_MONSTER_CODEX_SYSTEM_ID);
+  // When rewards are unchanged, keep the prior state object by reference so
+  // callers can choose a json_set patch instead of re-stringifying mastered[].
   const previousRewardState = previousProjection
     && typeof previousProjection === 'object'
     && !Array.isArray(previousProjection)
@@ -2408,7 +2468,7 @@ function commandProjectionReadModelFromRuntime(runtime, events, nowTs, {
     && previousProjection.rewards.state
     && typeof previousProjection.rewards.state === 'object'
     && !Array.isArray(previousProjection.rewards.state)
-    ? cloneSerialisable(previousProjection.rewards.state)
+    ? previousProjection.rewards.state
     : null;
   const rewardState = hasCodexUpdate
     ? (cloneSerialisable(gameState[PUBLIC_MONSTER_CODEX_SYSTEM_ID]) || {})
@@ -2445,6 +2505,10 @@ function commandProjectionReadModelFromRuntime(runtime, events, nowTs, {
       reactions: eventList.filter((event) => typeof event?.type === 'string' && event.type.startsWith('reward.')).length,
     },
     recentEventTokens,
+    // Internal hint for the persistence planner (stripped before durable write
+    // when using the full upsert path via JSON.stringify of own keys only —
+    // kept as a non-enumerable? No: delete before upsert. See caller.).
+    __rewardsUnchanged: !hasCodexUpdate && previousRewardState != null,
   };
 }
 
@@ -11187,18 +11251,37 @@ function buildSubjectRuntimePersistencePlan(db, accountId, learnerId, subjectId,
         existingTokens,
         previousProjection,
       });
-      const readModelStatement = bindLearnerReadModelUpsertStatement(
-        db,
-        learnerId,
-        COMMAND_PROJECTION_MODEL_KEY,
-        commandProjectionReadModel,
-        {
-          sourceRevision: guard ? guard.expectedRevision + 1 : 0,
-          generatedAt: nowTs,
-          updatedAt: nowTs,
-          guard,
-        },
-      );
+      const sourceRevision = guard ? guard.expectedRevision + 1 : 0;
+      const rewardsUnchanged = commandProjectionReadModel.__rewardsUnchanged === true
+        && projectionMode === 'hit'
+        && previousProjection != null;
+      delete commandProjectionReadModel.__rewardsUnchanged;
+      const readModelStatement = rewardsUnchanged
+        ? bindLearnerReadModelProjectionPatchStatement(
+          db,
+          learnerId,
+          COMMAND_PROJECTION_MODEL_KEY,
+          {
+            recentEventTokens: commandProjectionReadModel.recentEventTokens,
+            eventCounts: commandProjectionReadModel.eventCounts,
+            sourceRevision,
+            generatedAt: nowTs,
+            updatedAt: nowTs,
+            guard,
+          },
+        )
+        : bindLearnerReadModelUpsertStatement(
+          db,
+          learnerId,
+          COMMAND_PROJECTION_MODEL_KEY,
+          commandProjectionReadModel,
+          {
+            sourceRevision,
+            generatedAt: nowTs,
+            updatedAt: nowTs,
+            guard,
+          },
+        );
       if (readModelStatement) statements.push(readModelStatement);
     }
   }

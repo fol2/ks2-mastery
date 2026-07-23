@@ -98,10 +98,50 @@ function seedHarness() {
 
   return {
     command,
+    readProjection() {
+      return DB.db.prepare(`
+        SELECT model_json, source_revision, length(model_json) AS bytes
+        FROM learner_read_models
+        WHERE learner_id = 'learner-slim' AND model_key = ?
+      `).get(COMMAND_PROJECTION_MODEL_KEY);
+    },
     close() { DB.close(); },
     lines,
   };
 }
+
+test('unchanged rewards use json_set patch (preserve mastered[], refresh tokens only)', async () => {
+  const harness = seedHarness();
+  try {
+    let revision = 0;
+    const start = await harness.command('start-session', {
+      mode: 'single',
+      slug: 'possess',
+      length: 1,
+    }, revision, 'patch-start');
+    assert.equal(start.status, 200, JSON.stringify(start.body));
+    revision = start.revision;
+
+    const wrong = await harness.command('submit-answer', { typed: 'posess' }, revision, 'patch-wrong');
+    assert.equal(wrong.status, 200, JSON.stringify(wrong.body));
+    revision = wrong.revision;
+
+    const row = harness.readProjection();
+    assert.ok(row, 'projection row must exist');
+    const model = JSON.parse(row.model_json);
+    assert.equal(model.rewards.state.inklet.mastered.length, FAT_MASTERED.length);
+    assert.ok(
+      Array.isArray(model.recentEventTokens) && model.recentEventTokens.length > 0,
+      'token ring must be refreshed',
+    );
+    assert.ok(
+      model.recentEventTokens.length <= 120,
+      `token ring must respect cap; got ${model.recentEventTokens.length}`,
+    );
+  } finally {
+    harness.close();
+  }
+});
 
 test('wrong then correct omits unchanged rewards.state and stays under slim byte budget', async () => {
   const harness = seedHarness();
