@@ -1,0 +1,54 @@
+{
+  "capturedAt": "2026-07-24T01:29:34.910Z",
+  "prodBuildHash": "e974a40",
+  "mergeCommit": "e974a4003727f1e454b0562e2929ca0f15a7076a",
+  "pr": "https://github.com/fol2/ks2-mastery/pull/937",
+  "verdict": "KEEP — fix verified on production",
+  "before": {
+    "note": "Pre-fix prod on 3be4e7a",
+    "freshStartD1RowsRead": 1512,
+    "paced450": "1102 by round ~25 under isolate pressure",
+    "burst": "1102 by round ~14"
+  },
+  "after": {
+    "freshStartD1RowsRead": [
+      34,
+      33,
+      33
+    ],
+    "paced450": {
+      "completedRounds": 40,
+      "html1102Or503": 0,
+      "d1RowsRead": {
+        "n": 120,
+        "min": 33,
+        "p50": 33,
+        "p95": 39,
+        "max": 39
+      },
+      "statuses": {
+        "200": 120,
+        "400": 40
+      },
+      "note": "400 after round 30 is demo_rate_limited, not Worker 1102"
+    },
+    "burst": {
+      "completedRounds": 40,
+      "html1102Or503": 0,
+      "d1RowsRead": {
+        "n": 120,
+        "min": 33,
+        "p50": 33,
+        "p95": 39,
+        "max": 39
+      },
+      "statuses": {
+        "200": 120,
+        "400": 40
+      },
+      "note": "400 after round 30 is demo_rate_limited, not Worker 1102"
+    },
+    "spellingDense": "pass",
+    "classroom8": "pass zero 5xx"
+  }
+}
