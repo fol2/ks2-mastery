@@ -1,0 +1,30 @@
+{
+  "capturedAt": "2026-07-24T16:16:00.000Z",
+  "prodVersionIdBefore": "e41ac74d-15ae-4d7e-bc9b-30343b2066cb",
+  "h2Verdict": {
+    "paced500Rounds": 40,
+    "http1102": 0,
+    "cfCpuP50Ms": 16,
+    "passHttp": true,
+    "passCpuUnder10ms": false,
+    "deltaVsBaselineMs": -2,
+    "evidence": "reports/capacity/evidence/2026-07-24-postfix-h2/paced500-cpu-join.json"
+  },
+  "validatedRootCauseH3": {
+    "id": "FC2-fat-session-working-set",
+    "symptom": "Every Nelson submit-answer hydrated ~51 spelling_item_state rows",
+    "mechanism": "activeSessionSlugs unioned uniqueWords/results/status/sentenceHistory/guardianResults from the long-lived practice session",
+    "engineNeed": "submitAnswer only needs the current card slug (Pattern Quest: current + next)",
+    "prodEvidence": {
+      "itemRowsP50": 51,
+      "cfCpuP50Ms": 16,
+      "d1RowsReadP50": 60
+    },
+    "fix": "submitAnswerWorkingSlugs + advanceSessionWorkingSlugs; end-session binds zero item slugs"
+  },
+  "acceptanceGate": {
+    "nelsonPaced500": "≥40 rounds, 0×1102, CF cpuTime p50 <10ms",
+    "nelsonBurst": "improved vs pre-fix / ideally 0×1102",
+    "concurrent5Short": "0×1102 after cooldown"
+  }
+}

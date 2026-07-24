@@ -78,7 +78,13 @@ function activeSpellingSession(runtimeRecord) {
   return persisted && typeof persisted === 'object' && !Array.isArray(persisted) ? persisted : null;
 }
 
-function activeSessionSlugs(runtimeRecord) {
+/**
+ * Mid-session submit only mutates the active card. Historical uniqueWords /
+ * results / status / sentenceHistory keys must not expand the D1 working-set
+ * read — on fat Nelson sessions that was ~50 extra item rows per answer and
+ * kept Free-tier CF cpuTime above the 10ms budget after the catalogue cut.
+ */
+function submitAnswerWorkingSlugs(runtimeRecord) {
   const session = activeSpellingSession(runtimeRecord);
   if (!session) return [];
   const output = new Set();
@@ -88,22 +94,49 @@ function activeSessionSlugs(runtimeRecord) {
     session.currentCard,
     session.patternQuestCard,
   ]) addSessionSlug(output, value);
-  for (const key of [
-    'uniqueWords',
-    'queue',
-    'results',
-    'patternQuestCards',
-    'patternQuestResults',
-    'patternQuestWobbledSlugs',
-    'patternQuestSeedSlugs',
-  ]) {
-    for (const value of Array.isArray(session[key]) ? session[key] : []) addSessionSlug(output, value);
+
+  if (session.mode === 'pattern-quest') {
+    const cards = Array.isArray(session.patternQuestCards) ? session.patternQuestCards : [];
+    const index = Math.max(0, Math.floor(Number(session.patternQuestCardIndex) || 0));
+    addSessionSlug(output, cards[index]);
+    addSessionSlug(output, cards[index + 1]);
   }
-  for (const key of ['status', 'guardianResults', 'sentenceHistory']) {
-    const map = session[key];
-    if (!map || typeof map !== 'object' || Array.isArray(map)) continue;
-    for (const slug of Object.keys(map)) addSessionSlug(output, slug);
+  return [...output];
+}
+
+const QUEUE_SELECTION_WINDOW = 8;
+
+function queueWindowSlugs(session, size = QUEUE_SELECTION_WINDOW) {
+  const output = new Set();
+  const queue = Array.isArray(session?.queue) ? session.queue : [];
+  for (const value of queue.slice(0, Math.max(0, size))) addSessionSlug(output, value);
+  return output;
+}
+
+/**
+ * continue/skip may advance into a small queue window. Keep that window only —
+ * never the lifetime uniqueWords/results maps carried on a long live session.
+ */
+function advanceSessionWorkingSlugs(runtimeRecord) {
+  const session = activeSpellingSession(runtimeRecord);
+  if (!session) return [];
+  const output = new Set(submitAnswerWorkingSlugs(runtimeRecord));
+  if (session.mode === 'pattern-quest') return [...output];
+  if (session.type === 'test' || session.mode === 'boss') {
+    const queue = Array.isArray(session.queue) ? session.queue : [];
+    addSessionSlug(output, queue[0]);
+    return [...output];
   }
+  if (session.mode === 'guardian') {
+    const queue = Array.isArray(session.queue) ? session.queue : [];
+    const status = session.status && typeof session.status === 'object' && !Array.isArray(session.status)
+      ? session.status
+      : {};
+    const next = queue.find((slug) => status[slug]?.done !== true);
+    addSessionSlug(output, next);
+    return [...output];
+  }
+  for (const slug of queueWindowSlugs(session)) output.add(slug);
   return [...output];
 }
 
@@ -158,18 +191,22 @@ function commandWorkingSlugs(command, runtimeRecord, allCurrentSlugs, statsCurre
   // Mid-session commands are always session-bounded. Stale stats or a missing
   // session must not expand submit/continue into a full-catalogue D1 read —
   // the engine rejects stale sessions after the working-set fetch.
-  if (
-    command.command === 'submit-answer'
-    || command.command === 'continue-session'
-    || command.command === 'skip-word'
-    || command.command === 'end-session'
-  ) {
-    return { slugs: activeSessionSlugs(runtimeRecord), completeCatalogue: false };
+  //
+  // Slug sets stay proportional to the active card / small queue window — not
+  // every historical key hanging off a long-lived practice session.
+  if (command.command === 'submit-answer') {
+    return { slugs: submitAnswerWorkingSlugs(runtimeRecord), completeCatalogue: false };
+  }
+  if (command.command === 'continue-session' || command.command === 'skip-word') {
+    return { slugs: advanceSessionWorkingSlugs(runtimeRecord), completeCatalogue: false };
+  }
+  if (command.command === 'end-session') {
+    return { slugs: [], completeCatalogue: false };
   }
   if (!statsCurrent) {
     return { slugs: resolveAllCurrentSlugs(), completeCatalogue: true };
   }
-  return { slugs: activeSessionSlugs(runtimeRecord), completeCatalogue: false };
+  return { slugs: submitAnswerWorkingSlugs(runtimeRecord), completeCatalogue: false };
 }
 
 function clientAnalytics(analytics) {
