@@ -8,6 +8,27 @@ function errorMessage(error, fallback) {
   return error?.payload?.message || error?.message || fallback;
 }
 
+/** Minimum gap after a paced gameplay command settles before the next may start (Workers Free). */
+export const SUBJECT_COMMAND_MIN_GAP_MS = 450;
+
+const PACED_COMMANDS = new Set([
+  'start-session',
+  'submit-answer',
+  'continue-session',
+  'skip-item',
+  'end-session',
+]);
+
+function delay(ms) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
+
+function pacedLockKey(subjectId, learnerId) {
+  return `${subjectId}:paced:${learnerId || 'default'}`;
+}
+
 export function createSubjectCommandActionHandler({
   subjectId,
   actions = {},
@@ -21,6 +42,7 @@ export function createSubjectCommandActionHandler({
   onCommandResult = () => {},
   onCommandSettled = () => {},
   onCommandError = null,
+  pacedCommandMinGapMs = SUBJECT_COMMAND_MIN_GAP_MS,
 } = {}) {
   if (!subjectId || typeof subjectId !== 'string') {
     throw new TypeError('Subject command action handler requires a subject id.');
@@ -31,6 +53,8 @@ export function createSubjectCommandActionHandler({
   if (typeof getState !== 'function') {
     throw new TypeError('Subject command action handler requires getState().');
   }
+
+  const minGapMs = Math.max(0, Number(pacedCommandMinGapMs) || 0);
 
   function handle(actionName, data = {}) {
     const config = actions[actionName];
@@ -56,8 +80,13 @@ export function createSubjectCommandActionHandler({
       ? config.dedupeKey({ action: actionName, data, state, learnerId, subjectId, command, payload })
       : (config.dedupeKey === false ? '' : defaultDedupeKey({ command, learnerId, subjectId, state }));
 
+    const isPaced = PACED_COMMANDS.has(command) && minGapMs > 0;
+    const paceKey = isPaced ? pacedLockKey(subjectId, learnerId) : '';
+
+    if (paceKey && pendingKeys.has(paceKey)) return true;
     if (dedupeKey && pendingKeys.has(dedupeKey)) return true;
     if (dedupeKey) pendingKeys.add(dedupeKey);
+    if (paceKey) pendingKeys.add(paceKey);
     onBeforeCommand({ action: actionName, data, state, learnerId, subjectId, command, payload });
 
     subjectCommands.send({
@@ -74,8 +103,16 @@ export function createSubjectCommandActionHandler({
       }
       setSubjectError(errorMessage(error, `${subjectId} command could not be completed.`));
     }).finally(() => {
-      if (dedupeKey) pendingKeys.delete(dedupeKey);
-      onCommandSettled({ action: actionName, data, learnerId, subjectId, command, payload });
+      const finish = () => {
+        if (dedupeKey) pendingKeys.delete(dedupeKey);
+        if (paceKey) pendingKeys.delete(paceKey);
+        onCommandSettled({ action: actionName, data, learnerId, subjectId, command, payload });
+      };
+      if (isPaced && minGapMs > 0) {
+        delay(minGapMs).then(finish);
+        return;
+      }
+      finish();
     });
 
     return true;

@@ -3611,6 +3611,7 @@ test('punctuation remote dispatch (adv-234 HIGH 1): production-shape routing lat
     },
   };
   const punctuationCommandHandler = createSubjectCommandActionHandler({
+    pacedCommandMinGapMs: 0,
     subjectId: 'punctuation',
     subjectCommands,
     getState: () => harness.store.getState(),
@@ -3736,6 +3737,7 @@ test('punctuation remote dispatch (adv-234-006 MEDIUM): Worker save-prefs failur
   // Wire the PRODUCTION onCommandError factory so the test exercises the
   // same code path as main.js — not a test-only inline copy.
   const punctuationCommandHandler = createSubjectCommandActionHandler({
+    pacedCommandMinGapMs: 0,
     subjectId: 'punctuation',
     subjectCommands,
     getState: () => harness.store.getState(),

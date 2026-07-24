@@ -5,6 +5,7 @@ import {
   createRemoteSpellingActionHandler,
   spellingCommandDedupeKey,
 } from '../src/subjects/spelling/remote-actions.js';
+import { SUBJECT_COMMAND_MIN_GAP_MS } from '../src/platform/runtime/subject-command-actions.js';
 import {
   acknowledgeMonsterCelebrationEvents,
   clearMonsterCelebrationAcknowledgements,
@@ -195,6 +196,7 @@ test('remote spelling actions dedupe in-flight session commands and release afte
   const pending = deferred();
   const sent = [];
   const handler = createRemoteSpellingActionHandler({
+    pacedCommandMinGapMs: 0,
     store,
     services: { spelling: {} },
     tts,
@@ -238,6 +240,7 @@ test('remote spelling setup preference changes are coalesced before saving', asy
   });
   const sent = [];
   const handler = createRemoteSpellingActionHandler({
+    pacedCommandMinGapMs: 0,
     store,
     services: {
       spelling: {
@@ -300,6 +303,7 @@ test('remote spelling start flushes pending setup preferences first', async () =
   });
   const sent = [];
   const handler = createRemoteSpellingActionHandler({
+    pacedCommandMinGapMs: 0,
     store,
     services: {
       spelling: {
@@ -352,6 +356,7 @@ test('remote spelling start marks pending and ignores duplicate clicks before se
   const pending = deferred();
   const sent = [];
   const handler = createRemoteSpellingActionHandler({
+    pacedCommandMinGapMs: 0,
     store,
     services: {
       spelling: {
@@ -405,6 +410,7 @@ test('remote spelling start waits while an option save is in flight', async () =
   const tts = createTtsHarness();
   const sent = [];
   const handler = createRemoteSpellingActionHandler({
+    pacedCommandMinGapMs: 0,
     store,
     services: {
       spelling: {
@@ -466,6 +472,7 @@ test('remote spelling keeps newer pending preferences when an older save respons
   const firstSave = deferred();
   const sent = [];
   const handler = createRemoteSpellingActionHandler({
+    pacedCommandMinGapMs: 0,
     store,
     services: {
       spelling: {
@@ -524,6 +531,7 @@ test('remote spelling command response preserves reward side effects and TTS sto
   const { calls, store } = createStoreHarness();
   const tts = createTtsHarness();
   const handler = createRemoteSpellingActionHandler({
+    pacedCommandMinGapMs: 0,
     store,
     services: { spelling: {} },
     tts,
@@ -584,6 +592,7 @@ test('remote spelling command response applies the live summary read model after
     },
   });
   const handler = createRemoteSpellingActionHandler({
+    pacedCommandMinGapMs: 0,
     store,
     services: { spelling: {} },
     tts: createTtsHarness(),
@@ -682,6 +691,7 @@ test('remote spelling command compensates a logged monster celebration after the
     },
   });
   const handler = createRemoteSpellingActionHandler({
+    pacedCommandMinGapMs: 0,
     store,
     services: { spelling: {} },
     tts: createTtsHarness(),
@@ -769,6 +779,7 @@ test('remote spelling compensation baselines recent logged celebrations that exi
     },
   });
   const handler = createRemoteSpellingActionHandler({
+    pacedCommandMinGapMs: 0,
     store,
     services: { spelling: {} },
     tts: createTtsHarness(),
@@ -825,6 +836,7 @@ test('remote spelling compensation can replay a deterministic reward id after re
     },
   });
   const handler = createRemoteSpellingActionHandler({
+    pacedCommandMinGapMs: 0,
     store,
     services: { spelling: {} },
     tts: createTtsHarness(),
@@ -919,6 +931,7 @@ test('remote spelling command compensates only rewards appended after the comman
     },
   });
   const handler = createRemoteSpellingActionHandler({
+    pacedCommandMinGapMs: 0,
     store,
     services: { spelling: {} },
     tts: createTtsHarness(),
@@ -994,6 +1007,7 @@ test('remote spelling compensation excludes pre-command rewards even with an exi
     },
   });
   const handler = createRemoteSpellingActionHandler({
+    pacedCommandMinGapMs: 0,
     store,
     services: { spelling: {} },
     tts: createTtsHarness(),
@@ -1034,6 +1048,7 @@ test('remote spelling command response ignores stale learner TTS side effects', 
   });
   const tts = createTtsHarness();
   const handler = createRemoteSpellingActionHandler({
+    pacedCommandMinGapMs: 0,
     store,
     services: { spelling: {} },
     tts,
@@ -1068,6 +1083,7 @@ test('remote spelling word bank open loads analytics and detail into the store',
     },
   });
   const handler = createRemoteSpellingActionHandler({
+    pacedCommandMinGapMs: 0,
     store,
     services: { spelling: {} },
     tts: createTtsHarness(),
@@ -1108,6 +1124,7 @@ test('remote spelling word-bank drill submit is blocked while read-only', () => 
   const sent = [];
   const errors = [];
   const handler = createRemoteSpellingActionHandler({
+    pacedCommandMinGapMs: 0,
     store,
     services: { spelling: {} },
     tts: createTtsHarness(),
@@ -1146,6 +1163,7 @@ test('remote spelling optimistic prefs reapply after learner switches', async ()
   });
   const sent = [];
   const handler = createRemoteSpellingActionHandler({
+    pacedCommandMinGapMs: 0,
     store,
     services: {
       spelling: {
@@ -1228,6 +1246,7 @@ test('remote spelling save failures stay scoped to the original learner', async 
   const errors = [];
   const originalWarn = globalThis.console?.warn;
   const handler = createRemoteSpellingActionHandler({
+    pacedCommandMinGapMs: 0,
     store,
     services: {
       spelling: {
@@ -1337,6 +1356,7 @@ test('remote spelling successful commands clear scoped save errors', async () =>
     }));
   };
   const handler = createRemoteSpellingActionHandler({
+    pacedCommandMinGapMs: 0,
     store,
     services: {
       spelling: {
@@ -1414,6 +1434,7 @@ function createDrillHarness({ summaryMode, mistakes = [{ slug: 'possess', word: 
   });
   const sent = [];
   const handler = createRemoteSpellingActionHandler({
+    pacedCommandMinGapMs: 0,
     store,
     services: {
       spelling: {
@@ -1510,6 +1531,7 @@ function createBossShortcutHarness({
   });
   const sent = [];
   const handler = createRemoteSpellingActionHandler({
+    pacedCommandMinGapMs: 0,
     store,
     services: {
       spelling: {
@@ -1657,6 +1679,7 @@ function createGuardianShortcutHarness({
   });
   const sent = [];
   const handler = createRemoteSpellingActionHandler({
+    pacedCommandMinGapMs: 0,
     store,
     services: {
       spelling: {
@@ -1892,4 +1915,56 @@ test('U4 module.js: Alt+5 Boss is a no-op when allWordsMega=false — neither st
     'Boss gate held — startSession must NOT fire before graduation');
   assert.equal(names.includes('savePrefs'), false,
     'Boss gate held — savePrefs must NOT fire before graduation');
+});
+
+test('remote spelling actions hold Free-tier paced gap after submit-answer', async (t) => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+
+  const sent = [];
+  const { store } = createStoreHarness();
+  const handler = createRemoteSpellingActionHandler({
+    pacedCommandMinGapMs: SUBJECT_COMMAND_MIN_GAP_MS,
+    store,
+    services: { spelling: {} },
+    tts: { speak() {}, stop() {} },
+    readModels: { readJson: async () => ({}) },
+    subjectCommands: {
+      send(request) {
+        sent.push(request.command);
+        return Promise.resolve({
+          ok: true,
+          subjectReadModel: {
+            phase: 'session',
+            session: {
+              id: 'session-a',
+              currentSlug: 'early',
+              phase: 'feedback',
+              promptCount: 1,
+            },
+          },
+        });
+      },
+    },
+  });
+
+  const formData = new FormData();
+  formData.set('typed', 'wrong');
+  assert.equal(handler.handle('spelling-submit-form', { formData }), true);
+  await flushPromises();
+  assert.deepEqual(sent, ['submit-answer']);
+  assert.equal(store.getState().transientUi?.spellingPendingCommand, 'submit-answer');
+
+  // Immediate correct retry must stay blocked while the Free-tier gap holds.
+  formData.set('typed', 'correct');
+  assert.equal(handler.handle('spelling-submit-form', { formData }), true);
+  await flushPromises();
+  assert.deepEqual(sent, ['submit-answer']);
+
+  t.mock.timers.tick(SUBJECT_COMMAND_MIN_GAP_MS);
+  await flushPromises();
+  assert.equal(store.getState().transientUi?.spellingPendingCommand, '');
+
+  assert.equal(handler.handle('spelling-submit-form', { formData }), true);
+  await flushPromises();
+  assert.deepEqual(sent, ['submit-answer', 'submit-answer']);
 });

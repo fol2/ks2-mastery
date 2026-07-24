@@ -1,7 +1,7 @@
 # Grammar QG P21 — smart-practice surface audit
 
 Content release: `grammar-qg-p21-2026-05-11`
-Generated: `2026-05-12T14:37:11.570Z`
+Generated: `2026-07-23T22:52:41.036Z`
 Sessions: 330 (11 profiles × 30 seeds, size=5)
 Status: **PASS** — 0 failures, 0 advisories.
 

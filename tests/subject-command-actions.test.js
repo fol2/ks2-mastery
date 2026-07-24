@@ -1,7 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { createSubjectCommandActionHandler } from '../src/platform/runtime/subject-command-actions.js';
+import {
+  SUBJECT_COMMAND_MIN_GAP_MS,
+  createSubjectCommandActionHandler,
+} from '../src/platform/runtime/subject-command-actions.js';
 import { punctuationSubjectCommandActions } from '../src/subjects/punctuation/command-actions.js';
 
 function flushPromises() {
@@ -23,6 +26,7 @@ test('subject command action handler sends mapped subject commands', async () =>
   const sent = [];
   const results = [];
   const handler = createSubjectCommandActionHandler({
+    pacedCommandMinGapMs: 0,
     subjectId: 'punctuation',
     getState: baseState,
     subjectCommands: {
@@ -60,6 +64,7 @@ test('subject command action handler blocks mutations while read-only', () => {
   const sent = [];
   const errors = [];
   const handler = createSubjectCommandActionHandler({
+    pacedCommandMinGapMs: 0,
     subjectId: 'punctuation',
     getState: baseState,
     isReadOnly: () => true,
@@ -97,6 +102,7 @@ test('subject command action handler dedupes in-flight session commands', async 
   let resolveCommand = null;
   const pending = new Set();
   const handler = createSubjectCommandActionHandler({
+    pacedCommandMinGapMs: 0,
     subjectId: 'punctuation',
     getState: baseState,
     pendingKeys: pending,
@@ -132,6 +138,7 @@ test('subject command action handler dedupes in-flight session commands', async 
 test('subject command action handler reports command failures', async () => {
   const errors = [];
   const handler = createSubjectCommandActionHandler({
+    pacedCommandMinGapMs: 0,
     subjectId: 'punctuation',
     getState: baseState,
     setSubjectError(message) {
@@ -156,6 +163,7 @@ test('subject command action handler reports command failures', async () => {
 async function sendPunctuationActionPayload(data) {
   const sent = [];
   const handler = createSubjectCommandActionHandler({
+    pacedCommandMinGapMs: 0,
     subjectId: 'punctuation',
     getState: baseState,
     subjectCommands: {
@@ -194,6 +202,7 @@ test('punctuation browser command action keeps choiceIndex parsing strict', asyn
 test('punctuation browser command action binds submits to the visible item context', async () => {
   const sent = [];
   const handler = createSubjectCommandActionHandler({
+    pacedCommandMinGapMs: 0,
     subjectId: 'punctuation',
     getState() {
       return {
@@ -252,6 +261,7 @@ test('punctuation round-length command action persists setup lengths through sav
   for (const roundLength of ['4', '6', '8', '12']) {
     const sent = [];
     const handler = createSubjectCommandActionHandler({
+    pacedCommandMinGapMs: 0,
       subjectId: 'punctuation',
       getState() {
         return {
@@ -287,6 +297,7 @@ test('punctuation round-length command action persists setup lengths through sav
 test('punctuation round-length command action rejects non-setup and off-enum values', async () => {
   const sent = [];
   const handler = createSubjectCommandActionHandler({
+    pacedCommandMinGapMs: 0,
     subjectId: 'punctuation',
     getState() {
       return {
@@ -326,6 +337,7 @@ test('punctuation guidance display command actions persist setup booleans throug
   for (const { pref, current, expected } of cases) {
     const sent = [];
     const handler = createSubjectCommandActionHandler({
+    pacedCommandMinGapMs: 0,
       subjectId: 'punctuation',
       getState() {
         return {
@@ -365,6 +377,7 @@ test('punctuation guidance display command actions persist setup booleans throug
 test('punctuation guidance display command action rejects non-setup and unknown prefs', async () => {
   const nonSetupSent = [];
   const nonSetupHandler = createSubjectCommandActionHandler({
+    pacedCommandMinGapMs: 0,
     subjectId: 'punctuation',
     getState() {
       return {
@@ -396,6 +409,7 @@ test('punctuation guidance display command action rejects non-setup and unknown 
 
   const invalidPrefSent = [];
   const invalidPrefHandler = createSubjectCommandActionHandler({
+    pacedCommandMinGapMs: 0,
     subjectId: 'punctuation',
     getState() {
       return {
@@ -442,6 +456,7 @@ test('punctuation context-pack action remains available while practice is read-o
   const sent = [];
   const errors = [];
   const handler = createSubjectCommandActionHandler({
+    pacedCommandMinGapMs: 0,
     subjectId: 'punctuation',
     getState: baseState,
     isReadOnly: () => true,
@@ -467,4 +482,93 @@ test('punctuation context-pack action remains available while practice is read-o
     command: 'request-context-pack',
     payload: { seed: 'read-only-seed' },
   }]);
+});
+
+test('subject command action handler holds paced gap before the next gameplay command', async (t) => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+
+  const sent = [];
+  const settled = [];
+  const pending = new Set();
+  const handler = createSubjectCommandActionHandler({
+    pacedCommandMinGapMs: SUBJECT_COMMAND_MIN_GAP_MS,
+    subjectId: 'punctuation',
+    getState: baseState,
+    pendingKeys: pending,
+    subjectCommands: {
+      send(request) {
+        sent.push(request.command);
+        return Promise.resolve({ ok: true });
+      },
+    },
+    onCommandSettled() {
+      settled.push(Date.now());
+    },
+    actions: {
+      'punctuation-submit-form': {
+        command: 'submit-answer',
+        payload: { typed: 'Answer.' },
+      },
+      'punctuation-continue': {
+        command: 'continue-session',
+      },
+    },
+  });
+
+  assert.equal(handler.handle('punctuation-submit-form'), true);
+  await flushPromises();
+  assert.deepEqual(sent, ['submit-answer']);
+  assert.equal(settled.length, 0);
+  assert.equal(pending.size, 2);
+
+  // During the Free-tier gap, a different paced command must not start.
+  assert.equal(handler.handle('punctuation-continue'), true);
+  await flushPromises();
+  assert.deepEqual(sent, ['submit-answer']);
+
+  t.mock.timers.tick(SUBJECT_COMMAND_MIN_GAP_MS - 1);
+  await flushPromises();
+  assert.equal(settled.length, 0);
+  assert.equal(pending.size, 2);
+
+  t.mock.timers.tick(1);
+  await flushPromises();
+  assert.equal(settled.length, 1);
+  assert.equal(pending.size, 0);
+
+  assert.equal(handler.handle('punctuation-continue'), true);
+  await flushPromises();
+  assert.deepEqual(sent, ['submit-answer', 'continue-session']);
+});
+
+test('subject command action handler does not pace non-gameplay commands', async () => {
+  const settled = [];
+  const setupHandler = createSubjectCommandActionHandler({
+    pacedCommandMinGapMs: SUBJECT_COMMAND_MIN_GAP_MS,
+    subjectId: 'punctuation',
+    getState() {
+      return {
+        ...baseState(),
+        subjectUi: {
+          punctuation: {
+            phase: 'setup',
+            prefs: { mode: 'smart', roundLength: '6' },
+          },
+        },
+      };
+    },
+    subjectCommands: {
+      send() {
+        return Promise.resolve({ ok: true });
+      },
+    },
+    onCommandSettled() {
+      settled.push('ok');
+    },
+    actions: punctuationSubjectCommandActions,
+  });
+
+  assert.equal(setupHandler.handle('punctuation-set-round-length', { value: '8' }), true);
+  await flushPromises();
+  assert.deepEqual(settled, ['ok']);
 });

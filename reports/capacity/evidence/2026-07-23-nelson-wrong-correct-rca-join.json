@@ -1,0 +1,950 @@
+{
+  "capturedAt": "2026-07-23T23:38:57.151Z",
+  "buildId": "3934bbe",
+  "hammerSummary": {
+    "total": 203,
+    "statuses": {
+      "200": 202,
+      "503": 1
+    },
+    "hardFails": [
+      {
+        "at": "2026-07-23T23:38:29.728Z",
+        "step": "submit-wrong",
+        "status": 503,
+        "wallMs": 136.3,
+        "bytes": 4657,
+        "headers": {
+          "cf-ray": "a1fe84df1a22a5eb-LHR",
+          "cf-cache-status": null,
+          "content-type": "text/html; charset=UTF-8",
+          "x-ks2-request-id": null
+        },
+        "title": "Worker exceeded resource limits | ks2.eugnel.uk | Cloudflare",
+        "error": null,
+        "capacity": null,
+        "phase": null,
+        "round": 50,
+        "slug": "describe"
+      }
+    ],
+    "stoppedReason": "hard-fail-wrong:503",
+    "learnerId": "86a6c60f-e1ef-4985-954d-95ab13349c6f",
+    "learnerName": "Nelson",
+    "startedAt": "2026-07-23T23:38:07.154Z",
+    "finishedAt": "2026-07-23T23:38:29.728Z"
+  },
+  "join": {
+    "tailEvents": 128,
+    "spellingJoinedWithCpu": 128,
+    "spellingCommands": 202,
+    "cfCpu": {
+      "min": 12,
+      "p50": 15,
+      "p95": 26,
+      "max": 64
+    },
+    "outcomes": {
+      "ok": 127,
+      "exceededCpu": 1
+    },
+    "fails": [
+      {
+        "round": 50,
+        "step": "submit-wrong",
+        "slug": "describe",
+        "status": 503,
+        "clientWall": 136.3,
+        "bytes": 4657,
+        "ray": "a1fe84df1a22a5eb-LHR",
+        "cfCpu": 17,
+        "cfWall": 78,
+        "outcome": "exceededCpu",
+        "phases": null,
+        "title": "Worker exceeded resource limits | ks2.eugnel.uk | Cloudflare"
+      }
+    ],
+    "nearFailWindow": [
+      {
+        "round": 48,
+        "step": "submit-wrong",
+        "slug": "continue",
+        "status": 200,
+        "appWall": 54,
+        "clientWall": 108.7,
+        "bytes": 3817,
+        "ray": "a1fe84d9da09a5eb-LHR",
+        "rid": "ks2_req_7cff8003-7340-4404-acb8-45b3094e089c",
+        "cfCpu": 20,
+        "cfWall": 81,
+        "outcome": "ok",
+        "phases": [
+          {
+            "name": "preflight",
+            "durationMs": 9
+          },
+          {
+            "name": "content",
+            "durationMs": 8
+          },
+          {
+            "name": "workingSet",
+            "durationMs": 10
+          },
+          {
+            "name": "engineApply",
+            "durationMs": 0
+          },
+          {
+            "name": "rewardProjection",
+            "durationMs": 0
+          },
+          {
+            "name": "readModelBuild",
+            "durationMs": 0
+          },
+          {
+            "name": "d1Batch",
+            "durationMs": 19
+          }
+        ],
+        "title": null
+      },
+      {
+        "round": 48,
+        "step": "submit-correct",
+        "slug": "continue",
+        "status": 200,
+        "appWall": 49,
+        "clientWall": 116.5,
+        "bytes": 4434,
+        "ray": "a1fe84da8b9ba5eb-LHR",
+        "rid": "ks2_req_d0d80045-870e-4a2d-8a6f-32ac1f45ac12",
+        "cfCpu": 20,
+        "cfWall": 77,
+        "outcome": "ok",
+        "phases": [
+          {
+            "name": "preflight",
+            "durationMs": 8
+          },
+          {
+            "name": "content",
+            "durationMs": 7
+          },
+          {
+            "name": "workingSet",
+            "durationMs": 6
+          },
+          {
+            "name": "engineApply",
+            "durationMs": 0
+          },
+          {
+            "name": "rewardProjection",
+            "durationMs": 0
+          },
+          {
+            "name": "readModelBuild",
+            "durationMs": 0
+          },
+          {
+            "name": "d1Batch",
+            "durationMs": 20
+          }
+        ],
+        "title": null
+      },
+      {
+        "round": 48,
+        "step": "continue",
+        "slug": "continue",
+        "status": 200,
+        "appWall": 50,
+        "clientWall": 94.8,
+        "bytes": 3555,
+        "ray": "a1fe84db4c89a5eb-LHR",
+        "rid": "ks2_req_e0a98baa-9d37-4822-bf8e-2a417b3b568e",
+        "cfCpu": 15,
+        "cfWall": 73,
+        "outcome": "ok",
+        "phases": [
+          {
+            "name": "preflight",
+            "durationMs": 9
+          },
+          {
+            "name": "content",
+            "durationMs": 7
+          },
+          {
+            "name": "workingSet",
+            "durationMs": 12
+          },
+          {
+            "name": "engineApply",
+            "durationMs": 0
+          },
+          {
+            "name": "rewardProjection",
+            "durationMs": 0
+          },
+          {
+            "name": "readModelBuild",
+            "durationMs": 0
+          },
+          {
+            "name": "d1Batch",
+            "durationMs": 14
+          }
+        ],
+        "title": null
+      },
+      {
+        "round": 49,
+        "step": "start-session",
+        "slug": "decide",
+        "status": 200,
+        "appWall": 50,
+        "clientWall": 93.1,
+        "bytes": 3523,
+        "ray": "a1fe84dbdd50a5eb-LHR",
+        "rid": "ks2_req_8016ab7f-c6fc-4eb7-8be8-ccc2bef15d77",
+        "cfCpu": 14,
+        "cfWall": 73,
+        "outcome": "ok",
+        "phases": [
+          {
+            "name": "preflight",
+            "durationMs": 8
+          },
+          {
+            "name": "content",
+            "durationMs": 7
+          },
+          {
+            "name": "workingSet",
+            "durationMs": 11
+          },
+          {
+            "name": "engineApply",
+            "durationMs": 0
+          },
+          {
+            "name": "rewardProjection",
+            "durationMs": 0
+          },
+          {
+            "name": "readModelBuild",
+            "durationMs": 0
+          },
+          {
+            "name": "d1Batch",
+            "durationMs": 16
+          }
+        ],
+        "title": null
+      },
+      {
+        "round": 49,
+        "step": "submit-wrong",
+        "slug": "decide",
+        "status": 200,
+        "appWall": 49,
+        "clientWall": 96.1,
+        "bytes": 3804,
+        "ray": "a1fe84dc7e45a5eb-LHR",
+        "rid": "ks2_req_c4ea0bd7-b8ef-4174-a7a7-56d2c1d5bf5a",
+        "cfCpu": 15,
+        "cfWall": 73,
+        "outcome": "ok",
+        "phases": [
+          {
+            "name": "preflight",
+            "durationMs": 7
+          },
+          {
+            "name": "content",
+            "durationMs": 7
+          },
+          {
+            "name": "workingSet",
+            "durationMs": 11
+          },
+          {
+            "name": "engineApply",
+            "durationMs": 0
+          },
+          {
+            "name": "rewardProjection",
+            "durationMs": 0
+          },
+          {
+            "name": "readModelBuild",
+            "durationMs": 0
+          },
+          {
+            "name": "d1Batch",
+            "durationMs": 15
+          }
+        ],
+        "title": null
+      },
+      {
+        "round": 49,
+        "step": "submit-correct",
+        "slug": "decide",
+        "status": 200,
+        "appWall": 52,
+        "clientWall": 95.2,
+        "bytes": 4403,
+        "ray": "a1fe84dd0f3ea5eb-LHR",
+        "rid": "ks2_req_bb935c70-e14e-4a55-9cd2-d5b8ceae8756",
+        "cfCpu": 15,
+        "cfWall": 74,
+        "outcome": "ok",
+        "phases": [
+          {
+            "name": "preflight",
+            "durationMs": 9
+          },
+          {
+            "name": "content",
+            "durationMs": 6
+          },
+          {
+            "name": "workingSet",
+            "durationMs": 14
+          },
+          {
+            "name": "engineApply",
+            "durationMs": 0
+          },
+          {
+            "name": "rewardProjection",
+            "durationMs": 0
+          },
+          {
+            "name": "readModelBuild",
+            "durationMs": 0
+          },
+          {
+            "name": "d1Batch",
+            "durationMs": 16
+          }
+        ],
+        "title": null
+      },
+      {
+        "round": 49,
+        "step": "continue",
+        "slug": "decide",
+        "status": 200,
+        "appWall": 51,
+        "clientWall": 133.3,
+        "bytes": 3545,
+        "ray": "a1fe84dda815a5eb-LHR",
+        "rid": "ks2_req_a19e6833-2f70-46c5-9dc2-da0dd139c7ad",
+        "cfCpu": 14,
+        "cfWall": 74,
+        "outcome": "ok",
+        "phases": [
+          {
+            "name": "preflight",
+            "durationMs": 9
+          },
+          {
+            "name": "content",
+            "durationMs": 6
+          },
+          {
+            "name": "workingSet",
+            "durationMs": 12
+          },
+          {
+            "name": "engineApply",
+            "durationMs": 0
+          },
+          {
+            "name": "rewardProjection",
+            "durationMs": 0
+          },
+          {
+            "name": "readModelBuild",
+            "durationMs": 0
+          },
+          {
+            "name": "d1Batch",
+            "durationMs": 16
+          }
+        ],
+        "title": null
+      },
+      {
+        "round": 50,
+        "step": "start-session",
+        "slug": "describe",
+        "status": 200,
+        "appWall": 54,
+        "clientWall": 95.7,
+        "bytes": 3534,
+        "ray": "a1fe84de7945a5eb-LHR",
+        "rid": "ks2_req_ce539121-d503-4bb9-b802-803a6ce43f40",
+        "cfCpu": 13,
+        "cfWall": 76,
+        "outcome": "ok",
+        "phases": [
+          {
+            "name": "preflight",
+            "durationMs": 14
+          },
+          {
+            "name": "content",
+            "durationMs": 6
+          },
+          {
+            "name": "workingSet",
+            "durationMs": 9
+          },
+          {
+            "name": "engineApply",
+            "durationMs": 0
+          },
+          {
+            "name": "rewardProjection",
+            "durationMs": 0
+          },
+          {
+            "name": "readModelBuild",
+            "durationMs": 0
+          },
+          {
+            "name": "d1Batch",
+            "durationMs": 17
+          }
+        ],
+        "title": null
+      },
+      {
+        "round": 50,
+        "step": "submit-wrong",
+        "slug": "describe",
+        "status": 503,
+        "clientWall": 136.3,
+        "bytes": 4657,
+        "ray": "a1fe84df1a22a5eb-LHR",
+        "cfCpu": 17,
+        "cfWall": 78,
+        "outcome": "exceededCpu",
+        "phases": null,
+        "title": "Worker exceeded resource limits | ks2.eugnel.uk | Cloudflare"
+      }
+    ],
+    "topCpu": [
+      {
+        "round": 35,
+        "step": "submit-wrong",
+        "slug": "bicycle",
+        "status": 200,
+        "appWall": 48,
+        "clientWall": 140.2,
+        "bytes": 3812,
+        "ray": "a1fe84b7ce48a5eb-LHR",
+        "rid": "ks2_req_0b1b0b74-6fb9-4981-b92d-4852e322f7aa",
+        "cfCpu": 64,
+        "cfWall": 119,
+        "outcome": "ok",
+        "phases": [
+          {
+            "name": "preflight",
+            "durationMs": 10
+          },
+          {
+            "name": "content",
+            "durationMs": 6
+          },
+          {
+            "name": "workingSet",
+            "durationMs": 9
+          },
+          {
+            "name": "engineApply",
+            "durationMs": 0
+          },
+          {
+            "name": "rewardProjection",
+            "durationMs": 0
+          },
+          {
+            "name": "readModelBuild",
+            "durationMs": 0
+          },
+          {
+            "name": "d1Batch",
+            "durationMs": 16
+          }
+        ],
+        "title": null
+      },
+      {
+        "round": 25,
+        "step": "submit-correct",
+        "slug": "weight",
+        "status": 200,
+        "appWall": 50,
+        "clientWall": 141.2,
+        "bytes": 4429,
+        "ray": "a1fe849cff50a5eb-LHR",
+        "rid": "ks2_req_dd2e19fb-53e4-45ea-9e09-7d98bcea4091",
+        "cfCpu": 61,
+        "cfWall": 119,
+        "outcome": "ok",
+        "phases": [
+          {
+            "name": "preflight",
+            "durationMs": 8
+          },
+          {
+            "name": "content",
+            "durationMs": 6
+          },
+          {
+            "name": "workingSet",
+            "durationMs": 10
+          },
+          {
+            "name": "engineApply",
+            "durationMs": 0
+          },
+          {
+            "name": "rewardProjection",
+            "durationMs": 0
+          },
+          {
+            "name": "readModelBuild",
+            "durationMs": 0
+          },
+          {
+            "name": "d1Batch",
+            "durationMs": 17
+          }
+        ],
+        "title": null
+      },
+      {
+        "round": 45,
+        "step": "submit-wrong",
+        "slug": "circle",
+        "status": 200,
+        "appWall": 48,
+        "clientWall": 132.6,
+        "bytes": 3816,
+        "ray": "a1fe84d20e2ea5eb-LHR",
+        "rid": "ks2_req_48679dd3-5b32-44f1-95a3-16bad4f862f6",
+        "cfCpu": 58,
+        "cfWall": 112,
+        "outcome": "ok",
+        "phases": [
+          {
+            "name": "preflight",
+            "durationMs": 10
+          },
+          {
+            "name": "content",
+            "durationMs": 6
+          },
+          {
+            "name": "workingSet",
+            "durationMs": 9
+          },
+          {
+            "name": "engineApply",
+            "durationMs": 0
+          },
+          {
+            "name": "rewardProjection",
+            "durationMs": 0
+          },
+          {
+            "name": "readModelBuild",
+            "durationMs": 0
+          },
+          {
+            "name": "d1Batch",
+            "durationMs": 16
+          }
+        ],
+        "title": null
+      },
+      {
+        "round": 30,
+        "step": "submit-correct",
+        "slug": "address",
+        "status": 200,
+        "appWall": 54,
+        "clientWall": 135.7,
+        "bytes": 4436,
+        "ray": "a1fe84aab90fa5eb-LHR",
+        "rid": "ks2_req_93acbbd4-b838-44ad-8294-52ed7d3f53a2",
+        "cfCpu": 55,
+        "cfWall": 116,
+        "outcome": "ok",
+        "phases": [
+          {
+            "name": "preflight",
+            "durationMs": 9
+          },
+          {
+            "name": "content",
+            "durationMs": 8
+          },
+          {
+            "name": "workingSet",
+            "durationMs": 10
+          },
+          {
+            "name": "engineApply",
+            "durationMs": 0
+          },
+          {
+            "name": "rewardProjection",
+            "durationMs": 0
+          },
+          {
+            "name": "readModelBuild",
+            "durationMs": 0
+          },
+          {
+            "name": "d1Batch",
+            "durationMs": 19
+          }
+        ],
+        "title": null
+      },
+      {
+        "round": 40,
+        "step": "start-session",
+        "slug": "calendar",
+        "status": 200,
+        "appWall": 55,
+        "clientWall": 131,
+        "bytes": 3533,
+        "ray": "a1fe84c44974a5eb-LHR",
+        "rid": "ks2_req_0a0ba60b-e68c-43ff-b195-cd94bcf1f220",
+        "cfCpu": 51,
+        "cfWall": 113,
+        "outcome": "ok",
+        "phases": [
+          {
+            "name": "preflight",
+            "durationMs": 9
+          },
+          {
+            "name": "content",
+            "durationMs": 8
+          },
+          {
+            "name": "workingSet",
+            "durationMs": 9
+          },
+          {
+            "name": "engineApply",
+            "durationMs": 0
+          },
+          {
+            "name": "rewardProjection",
+            "durationMs": 0
+          },
+          {
+            "name": "readModelBuild",
+            "durationMs": 0
+          },
+          {
+            "name": "d1Batch",
+            "durationMs": 19
+          }
+        ],
+        "title": null
+      },
+      {
+        "round": 21,
+        "step": "submit-correct",
+        "slug": "though",
+        "status": 200,
+        "appWall": 51,
+        "clientWall": 149,
+        "bytes": 4444,
+        "ray": "a1fe84923b97a5eb-LHR",
+        "rid": "ks2_req_7cfaec53-0c08-4289-9156-e1575efc6ee1",
+        "cfCpu": 49,
+        "cfWall": 106,
+        "outcome": "ok",
+        "phases": [
+          {
+            "name": "preflight",
+            "durationMs": 9
+          },
+          {
+            "name": "content",
+            "durationMs": 8
+          },
+          {
+            "name": "workingSet",
+            "durationMs": 11
+          },
+          {
+            "name": "engineApply",
+            "durationMs": 0
+          },
+          {
+            "name": "rewardProjection",
+            "durationMs": 0
+          },
+          {
+            "name": "readModelBuild",
+            "durationMs": 0
+          },
+          {
+            "name": "d1Batch",
+            "durationMs": 16
+          }
+        ],
+        "title": null
+      },
+      {
+        "round": 25,
+        "step": "start-session",
+        "slug": "weight",
+        "status": 200,
+        "appWall": 53,
+        "clientWall": 119.4,
+        "bytes": 3545,
+        "ray": "a1fe849b8c7da5eb-LHR",
+        "rid": "ks2_req_7f041df5-e823-4e21-af95-fea8bc138396",
+        "cfCpu": 37,
+        "cfWall": 99,
+        "outcome": "ok",
+        "phases": [
+          {
+            "name": "preflight",
+            "durationMs": 9
+          },
+          {
+            "name": "content",
+            "durationMs": 7
+          },
+          {
+            "name": "workingSet",
+            "durationMs": 11
+          },
+          {
+            "name": "engineApply",
+            "durationMs": 0
+          },
+          {
+            "name": "rewardProjection",
+            "durationMs": 0
+          },
+          {
+            "name": "readModelBuild",
+            "durationMs": 0
+          },
+          {
+            "name": "d1Batch",
+            "durationMs": 18
+          }
+        ],
+        "title": null
+      },
+      {
+        "round": 30,
+        "step": "submit-wrong",
+        "slug": "address",
+        "status": 200,
+        "appWall": 51,
+        "clientWall": 102.8,
+        "bytes": 3830,
+        "ray": "a1fe84aa1fc2a5eb-LHR",
+        "rid": "ks2_req_2675e002-4b33-4eae-97e8-2f189acd2276",
+        "cfCpu": 26,
+        "cfWall": 82,
+        "outcome": "ok",
+        "phases": [
+          {
+            "name": "preflight",
+            "durationMs": 9
+          },
+          {
+            "name": "content",
+            "durationMs": 7
+          },
+          {
+            "name": "workingSet",
+            "durationMs": 11
+          },
+          {
+            "name": "engineApply",
+            "durationMs": 0
+          },
+          {
+            "name": "rewardProjection",
+            "durationMs": 0
+          },
+          {
+            "name": "readModelBuild",
+            "durationMs": 0
+          },
+          {
+            "name": "d1Batch",
+            "durationMs": 16
+          }
+        ],
+        "title": null
+      },
+      {
+        "round": 34,
+        "step": "submit-wrong",
+        "slug": "believe",
+        "status": 200,
+        "appWall": 50,
+        "clientWall": 102.5,
+        "bytes": 3809,
+        "ray": "a1fe84b51a14a5eb-LHR",
+        "rid": "ks2_req_c8ae7353-eec5-4c27-8ffb-04f5ff290569",
+        "cfCpu": 26,
+        "cfWall": 82,
+        "outcome": "ok",
+        "phases": [
+          {
+            "name": "preflight",
+            "durationMs": 9
+          },
+          {
+            "name": "content",
+            "durationMs": 7
+          },
+          {
+            "name": "workingSet",
+            "durationMs": 11
+          },
+          {
+            "name": "engineApply",
+            "durationMs": 0
+          },
+          {
+            "name": "rewardProjection",
+            "durationMs": 0
+          },
+          {
+            "name": "readModelBuild",
+            "durationMs": 0
+          },
+          {
+            "name": "d1Batch",
+            "durationMs": 15
+          }
+        ],
+        "title": null
+      },
+      {
+        "round": 29,
+        "step": "continue",
+        "slug": "actual",
+        "status": 200,
+        "appWall": 52,
+        "clientWall": 102.5,
+        "bytes": 3562,
+        "ray": "a1fe84a88d45a5eb-LHR",
+        "rid": "ks2_req_6a8bcfc9-5f73-4f1a-9e79-aea6b034a610",
+        "cfCpu": 24,
+        "cfWall": 84,
+        "outcome": "ok",
+        "phases": [
+          {
+            "name": "preflight",
+            "durationMs": 9
+          },
+          {
+            "name": "content",
+            "durationMs": 7
+          },
+          {
+            "name": "workingSet",
+            "durationMs": 12
+          },
+          {
+            "name": "engineApply",
+            "durationMs": 0
+          },
+          {
+            "name": "rewardProjection",
+            "durationMs": 0
+          },
+          {
+            "name": "readModelBuild",
+            "durationMs": 0
+          },
+          {
+            "name": "d1Batch",
+            "durationMs": 17
+          }
+        ],
+        "title": null
+      }
+    ],
+    "phaseAggregates": {
+      "preflight": {
+        "n": 127,
+        "p50": 9,
+        "p95": 14,
+        "max": 19
+      },
+      "content": {
+        "n": 127,
+        "p50": 7,
+        "p95": 9,
+        "max": 33
+      },
+      "workingSet": {
+        "n": 127,
+        "p50": 10,
+        "p95": 13,
+        "max": 47
+      },
+      "engineApply": {
+        "n": 127,
+        "p50": 0,
+        "p95": 0,
+        "max": 0
+      },
+      "rewardProjection": {
+        "n": 127,
+        "p50": 0,
+        "p95": 0,
+        "max": 0
+      },
+      "readModelBuild": {
+        "n": 127,
+        "p50": 0,
+        "p95": 0,
+        "max": 0
+      },
+      "d1Batch": {
+        "n": 127,
+        "p50": 16,
+        "p95": 20,
+        "max": 26
+      }
+    },
+    "allNonOk": [
+      {
+        "outcome": "exceededCpu",
+        "cpu": 17,
+        "wall": 78,
+        "status": 503,
+        "url": "https://ks2.eugnel.uk/api/subjects/spelling/command",
+        "requestId": null
+      }
+    ]
+  }
+}

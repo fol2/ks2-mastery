@@ -55,3 +55,6 @@ tests/playwright/__screenshots__/
 .claude/*.txt
 *.diff
 .test-cache/
+
+# Superpowers brainstorm local server state
+.superpowers/

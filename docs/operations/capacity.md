@@ -448,6 +448,17 @@ Use evidence-tied language:
 
 Do not claim classroom or school readiness from Free-tier limits alone.
 
+### Free-tier child command pacing
+
+Workers Free caps CPU at **10ms per request**. Nelson wrong→correct burst hammers measured CF CPU p50 ~15ms and then `exceededCpu` / Error 1102; the same shape with ~500ms gaps stayed healthy (see `reports/capacity/evidence/2026-07-23-nelson-wrong-correct-rca-verdict.json`).
+
+While the deployment stays on Free, the **child UI path** enforces a ~450ms inter-command gap (`SUBJECT_COMMAND_MIN_GAP_MS`) after paced gameplay commands settle (`start-session`, `submit-answer`, `continue-session`, `skip-*`, `end-session`) in:
+
+- `src/platform/runtime/subject-command-actions.js` (punctuation / reading / reasoning / arithmetic)
+- `src/subjects/spelling/remote-actions.js` (Spelling uses its own remote action handler)
+
+Pending UI stays disabled during the gap. Raw ungapped API hammers on Free may still 1102; that is expected without Paid or sub-10ms server CPU.
+
 ### Admin ops console KPI endpoint
 
 `GET /api/admin/ops/kpi` runs 7 live `COUNT(*)` queries against `adult_accounts`, `learner_profiles`, `practice_sessions`, `event_log`, `mutation_receipts` plus 1 read against `admin_kpi_metrics`. Event and mutation counts remain bounded by the retained migration `0010` indexes (`idx_event_log_created`, `idx_mutation_receipts_applied`). Migration `0019` removes the global `practice_sessions(updated_at)` index because it amplified every player session write; practice-session engagement remains a manual admin diagnostic rather than a player hot-path dependency.

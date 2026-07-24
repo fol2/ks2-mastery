@@ -1,0 +1,20 @@
+{
+  "summary": {
+    "total": 270,
+    "statuses": {
+      "200": 270
+    },
+    "hardFails": [],
+    "stoppedReason": "max-rounds",
+    "learnerId": "86a6c60f-e1ef-4985-954d-95ab13349c6f",
+    "learnerName": "Nelson",
+    "startedAt": "2026-07-23T23:39:59.528Z",
+    "finishedAt": "2026-07-23T23:41:03.866Z"
+  },
+  "cfCpuFromTail": {
+    "n": 269,
+    "p50": 3,
+    "p95": 31,
+    "max": 291
+  }
+}

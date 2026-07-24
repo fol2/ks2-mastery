@@ -15,10 +15,26 @@ import {
   unacknowledgedMonsterCelebrationEvents,
 } from '../../platform/game/monster-celebration-acks.js';
 import { isMegaSafeMode, isPostMasteryMode } from './service-contract.js';
+import { SUBJECT_COMMAND_MIN_GAP_MS } from '../../platform/runtime/subject-command-actions.js';
 
 const READ_ONLY_MESSAGE = 'Practice is read-only while sync is degraded. Retry sync before continuing.';
 const SETUP_PREF_SAVE_DEBOUNCE_MS = 120;
 const SPELLING_COMPENSATION_EVENT_LIMIT = 25;
+
+/** Gameplay commands that must stay Workers Free-paced (not save-prefs / acknowledge). */
+const SPELLING_PACED_COMMANDS = new Set([
+  'start-session',
+  'submit-answer',
+  'continue-session',
+  'skip-word',
+  'end-session',
+]);
+
+function delay(ms) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
 
 const SPELLING_COMMAND_ACTIONS = new Set([
   'spelling-set-mode',
@@ -194,6 +210,7 @@ export function createRemoteSpellingActionHandler({
   tts,
   isReadOnly = () => false,
   preferenceSaveDebounceMs = SETUP_PREF_SAVE_DEBOUNCE_MS,
+  pacedCommandMinGapMs = SUBJECT_COMMAND_MIN_GAP_MS,
   setRuntimeError = (message) => {
     store?.updateSubjectUi?.('spelling', { error: message || 'Practice is temporarily unavailable.' });
   },
@@ -659,6 +676,20 @@ export function createRemoteSpellingActionHandler({
     return true;
   }
 
+  const minGapMs = Math.max(0, Number(pacedCommandMinGapMs) || 0);
+
+  function releaseAfterPace(command, dedupeKey, onSettled = null) {
+    const finish = () => {
+      releasePendingCommand(command, dedupeKey);
+      onSettled?.();
+    };
+    if (SPELLING_PACED_COMMANDS.has(command) && minGapMs > 0) {
+      delay(minGapMs).then(finish);
+      return;
+    }
+    finish();
+  }
+
   function runCommand(command, payload = {}, options = {}) {
     const {
       learnerId: requestedLearnerId = '',
@@ -693,8 +724,7 @@ export function createRemoteSpellingActionHandler({
         errorMessage || commandErrorMessage(error, fallback),
       );
     }).finally(() => {
-      releasePendingCommand(command, pending.dedupeKey);
-      onSettled?.();
+      releaseAfterPace(command, pending.dedupeKey, onSettled);
     });
     return true;
   }
@@ -1086,7 +1116,7 @@ export function createRemoteSpellingActionHandler({
         globalThis.console?.warn?.('Spelling shortcut command failed.', error);
         setRuntimeErrorForLearner(learnerId, commandErrorMessage(error, 'The spelling shortcut could not be completed.'));
       }).finally(() => {
-        releasePendingCommand('start-session', pending.dedupeKey);
+        releaseAfterPace('start-session', pending.dedupeKey);
       });
       return true;
     }

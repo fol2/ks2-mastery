@@ -1,0 +1,1463 @@
+{
+  "summary": {
+    "method": "api-client-sim-gap",
+    "paceMs": 450,
+    "maxRounds": 40,
+    "completedRounds": 40,
+    "total": 160,
+    "statuses": {
+      "200": 160
+    },
+    "hardFails": [],
+    "html1102Or503": 0,
+    "stoppedReason": "max-rounds",
+    "learnerId": "86a6c60f-e1ef-4985-954d-95ab13349c6f",
+    "learnerName": "Nelson",
+    "deployVersionId": "b157af14-3fb9-4dc5-8776-ac21baff0a94",
+    "startedAt": "2026-07-23T23:58:35.599Z",
+    "finishedAt": "2026-07-24T00:00:10.051Z",
+    "note": "Simulates child UI SUBJECT_COMMAND_MIN_GAP_MS=450 between every gameplay command. Raw ungapped API burst on Free may still 1102."
+  },
+  "log": [
+    {
+      "step": "start",
+      "round": 0,
+      "slug": "possess",
+      "status": 200,
+      "wallMs": 487.6,
+      "title": null,
+      "ray": "a1fea252de453c70-LHR"
+    },
+    {
+      "step": "wrong",
+      "round": 0,
+      "slug": "possess",
+      "status": 200,
+      "wallMs": 189.8,
+      "title": null,
+      "ray": "a1fea25918253c70-LHR"
+    },
+    {
+      "step": "correct",
+      "round": 0,
+      "slug": "possess",
+      "status": 200,
+      "wallMs": 125.8,
+      "title": null,
+      "ray": "a1fea25cbcb13c70-LHR"
+    },
+    {
+      "step": "continue",
+      "round": 0,
+      "slug": "possess",
+      "status": 200,
+      "wallMs": 115.1,
+      "title": null,
+      "ray": "a1fea26059a53c70-LHR"
+    },
+    {
+      "step": "start",
+      "round": 1,
+      "slug": "position",
+      "status": 200,
+      "wallMs": 111.1,
+      "title": null,
+      "ray": "a1fea263ee4d3c70-LHR"
+    },
+    {
+      "step": "wrong",
+      "round": 1,
+      "slug": "position",
+      "status": 200,
+      "wallMs": 114.9,
+      "title": null,
+      "ray": "a1fea2676acd3c70-LHR"
+    },
+    {
+      "step": "correct",
+      "round": 1,
+      "slug": "position",
+      "status": 200,
+      "wallMs": 108.4,
+      "title": null,
+      "ray": "a1fea26affc33c70-LHR"
+    },
+    {
+      "step": "continue",
+      "round": 1,
+      "slug": "position",
+      "status": 200,
+      "wallMs": 104.4,
+      "title": null,
+      "ray": "a1fea26e7c763c70-LHR"
+    },
+    {
+      "step": "start",
+      "round": 2,
+      "slug": "possible",
+      "status": 200,
+      "wallMs": 102.6,
+      "title": null,
+      "ray": "a1fea271e9763c70-LHR"
+    },
+    {
+      "step": "wrong",
+      "round": 2,
+      "slug": "possible",
+      "status": 200,
+      "wallMs": 103.5,
+      "title": null,
+      "ray": "a1fea2756e783c70-LHR"
+    },
+    {
+      "step": "correct",
+      "round": 2,
+      "slug": "possible",
+      "status": 200,
+      "wallMs": 169.6,
+      "title": null,
+      "ray": "a1fea278dba33c70-LHR"
+    },
+    {
+      "step": "continue",
+      "round": 2,
+      "slug": "possible",
+      "status": 200,
+      "wallMs": 180.3,
+      "title": null,
+      "ray": "a1fea27d29823c70-LHR"
+    },
+    {
+      "step": "start",
+      "round": 3,
+      "slug": "probably",
+      "status": 200,
+      "wallMs": 115.7,
+      "title": null,
+      "ray": "a1fea280be8a3c70-LHR"
+    },
+    {
+      "step": "wrong",
+      "round": 3,
+      "slug": "probably",
+      "status": 200,
+      "wallMs": 111.2,
+      "title": null,
+      "ray": "a1fea2844ba53c70-LHR"
+    },
+    {
+      "step": "correct",
+      "round": 3,
+      "slug": "probably",
+      "status": 200,
+      "wallMs": 97.6,
+      "title": null,
+      "ray": "a1fea287c94f3c70-LHR"
+    },
+    {
+      "step": "continue",
+      "round": 3,
+      "slug": "probably",
+      "status": 200,
+      "wallMs": 98.1,
+      "title": null,
+      "ray": "a1fea28b3f2a3c70-LHR"
+    },
+    {
+      "step": "start",
+      "round": 4,
+      "slug": "promise",
+      "status": 200,
+      "wallMs": 99.4,
+      "title": null,
+      "ray": "a1fea28eac783c70-LHR"
+    },
+    {
+      "step": "wrong",
+      "round": 4,
+      "slug": "promise",
+      "status": 200,
+      "wallMs": 139.1,
+      "title": null,
+      "ray": "a1fea29219763c70-LHR"
+    },
+    {
+      "step": "correct",
+      "round": 4,
+      "slug": "promise",
+      "status": 200,
+      "wallMs": 99.2,
+      "title": null,
+      "ray": "a1fea295ce9d3c70-LHR"
+    },
+    {
+      "step": "continue",
+      "round": 4,
+      "slug": "promise",
+      "status": 200,
+      "wallMs": 100.2,
+      "title": null,
+      "ray": "a1fea2994b813c70-LHR"
+    },
+    {
+      "step": "start",
+      "round": 5,
+      "slug": "purpose",
+      "status": 200,
+      "wallMs": 102.4,
+      "title": null,
+      "ray": "a1fea29cb91f3c70-LHR"
+    },
+    {
+      "step": "wrong",
+      "round": 5,
+      "slug": "purpose",
+      "status": 200,
+      "wallMs": 171.4,
+      "title": null,
+      "ray": "a1fea2a02f173c70-LHR"
+    },
+    {
+      "step": "correct",
+      "round": 5,
+      "slug": "purpose",
+      "status": 200,
+      "wallMs": 190.5,
+      "title": null,
+      "ray": "a1fea2a47dc43c70-LHR"
+    },
+    {
+      "step": "continue",
+      "round": 5,
+      "slug": "purpose",
+      "status": 200,
+      "wallMs": 100.7,
+      "title": null,
+      "ray": "a1fea2a81ac83c70-LHR"
+    },
+    {
+      "step": "start",
+      "round": 6,
+      "slug": "quarter",
+      "status": 200,
+      "wallMs": 104.8,
+      "title": null,
+      "ray": "a1fea2ab8fe63c70-LHR"
+    },
+    {
+      "step": "wrong",
+      "round": 6,
+      "slug": "quarter",
+      "status": 200,
+      "wallMs": 114.5,
+      "title": null,
+      "ray": "a1fea2af0e233c70-LHR"
+    },
+    {
+      "step": "correct",
+      "round": 6,
+      "slug": "quarter",
+      "status": 200,
+      "wallMs": 99.7,
+      "title": null,
+      "ray": "a1fea2b28acb3c70-LHR"
+    },
+    {
+      "step": "continue",
+      "round": 6,
+      "slug": "quarter",
+      "status": 200,
+      "wallMs": 103.3,
+      "title": null,
+      "ray": "a1fea2b5f83c3c70-LHR"
+    },
+    {
+      "step": "start",
+      "round": 7,
+      "slug": "question",
+      "status": 200,
+      "wallMs": 106.1,
+      "title": null,
+      "ray": "a1fea2b97cec3c70-LHR"
+    },
+    {
+      "step": "wrong",
+      "round": 7,
+      "slug": "question",
+      "status": 200,
+      "wallMs": 106.8,
+      "title": null,
+      "ray": "a1fea2bceac53c70-LHR"
+    },
+    {
+      "step": "correct",
+      "round": 7,
+      "slug": "question",
+      "status": 200,
+      "wallMs": 113.3,
+      "title": null,
+      "ray": "a1fea2c06f553c70-LHR"
+    },
+    {
+      "step": "continue",
+      "round": 7,
+      "slug": "question",
+      "status": 200,
+      "wallMs": 102.3,
+      "title": null,
+      "ray": "a1fea2c3fc0e3c70-LHR"
+    },
+    {
+      "step": "start",
+      "round": 8,
+      "slug": "recent",
+      "status": 200,
+      "wallMs": 182.1,
+      "title": null,
+      "ray": "a1fea2c769583c70-LHR"
+    },
+    {
+      "step": "wrong",
+      "round": 8,
+      "slug": "recent",
+      "status": 200,
+      "wallMs": 182.2,
+      "title": null,
+      "ray": "a1fea2cbcf983c70-LHR"
+    },
+    {
+      "step": "correct",
+      "round": 8,
+      "slug": "recent",
+      "status": 200,
+      "wallMs": 115.9,
+      "title": null,
+      "ray": "a1fea2cf6cab3c70-LHR"
+    },
+    {
+      "step": "continue",
+      "round": 8,
+      "slug": "recent",
+      "status": 200,
+      "wallMs": 100.3,
+      "title": null,
+      "ray": "a1fea2d2e9e43c70-LHR"
+    },
+    {
+      "step": "start",
+      "round": 9,
+      "slug": "regular",
+      "status": 200,
+      "wallMs": 99.7,
+      "title": null,
+      "ray": "a1fea2d66e893c70-LHR"
+    },
+    {
+      "step": "wrong",
+      "round": 9,
+      "slug": "regular",
+      "status": 200,
+      "wallMs": 100.9,
+      "title": null,
+      "ray": "a1fea2d9db2d3c70-LHR"
+    },
+    {
+      "step": "correct",
+      "round": 9,
+      "slug": "regular",
+      "status": 200,
+      "wallMs": 106.3,
+      "title": null,
+      "ray": "a1fea2dd4fef3c70-LHR"
+    },
+    {
+      "step": "continue",
+      "round": 9,
+      "slug": "regular",
+      "status": 200,
+      "wallMs": 141.8,
+      "title": null,
+      "ray": "a1fea2e0fcec3c70-LHR"
+    },
+    {
+      "step": "start",
+      "round": 10,
+      "slug": "reign",
+      "status": 200,
+      "wallMs": 99.1,
+      "title": null,
+      "ray": "a1fea2e49a643c70-LHR"
+    },
+    {
+      "step": "wrong",
+      "round": 10,
+      "slug": "reign",
+      "status": 200,
+      "wallMs": 254.6,
+      "title": null,
+      "ray": "a1fea2e878263c70-LHR"
+    },
+    {
+      "step": "correct",
+      "round": 10,
+      "slug": "reign",
+      "status": 200,
+      "wallMs": 134.4,
+      "title": null,
+      "ray": "a1fea2ecb8103c70-LHR"
+    },
+    {
+      "step": "continue",
+      "round": 10,
+      "slug": "reign",
+      "status": 200,
+      "wallMs": 105.7,
+      "title": null,
+      "ray": "a1fea2f05e123c70-LHR"
+    },
+    {
+      "step": "start",
+      "round": 11,
+      "slug": "remember",
+      "status": 200,
+      "wallMs": 91.8,
+      "title": null,
+      "ray": "a1fea2f3fae83c70-LHR"
+    },
+    {
+      "step": "wrong",
+      "round": 11,
+      "slug": "remember",
+      "status": 200,
+      "wallMs": 152.8,
+      "title": null,
+      "ray": "a1fea2f768003c70-LHR"
+    },
+    {
+      "step": "correct",
+      "round": 11,
+      "slug": "remember",
+      "status": 200,
+      "wallMs": 116,
+      "title": null,
+      "ray": "a1fea2fb2d843c70-LHR"
+    },
+    {
+      "step": "continue",
+      "round": 11,
+      "slug": "remember",
+      "status": 200,
+      "wallMs": 103.1,
+      "title": null,
+      "ray": "a1fea2febba03c70-LHR"
+    },
+    {
+      "step": "start",
+      "round": 12,
+      "slug": "sentence",
+      "status": 200,
+      "wallMs": 105,
+      "title": null,
+      "ray": "a1fea302386d3c70-LHR"
+    },
+    {
+      "step": "wrong",
+      "round": 12,
+      "slug": "sentence",
+      "status": 200,
+      "wallMs": 186.5,
+      "title": null,
+      "ray": "a1fea305ad143c70-LHR"
+    },
+    {
+      "step": "correct",
+      "round": 12,
+      "slug": "sentence",
+      "status": 200,
+      "wallMs": 160,
+      "title": null,
+      "ray": "a1fea30a0b7d3c70-LHR"
+    },
+    {
+      "step": "continue",
+      "round": 12,
+      "slug": "sentence",
+      "status": 200,
+      "wallMs": 104.4,
+      "title": null,
+      "ray": "a1fea30d886f3c70-LHR"
+    },
+    {
+      "step": "start",
+      "round": 13,
+      "slug": "separate",
+      "status": 200,
+      "wallMs": 106.5,
+      "title": null,
+      "ray": "a1fea3110d4f3c70-LHR"
+    },
+    {
+      "step": "wrong",
+      "round": 13,
+      "slug": "separate",
+      "status": 200,
+      "wallMs": 112.4,
+      "title": null,
+      "ray": "a1fea314797f3c70-LHR"
+    },
+    {
+      "step": "correct",
+      "round": 13,
+      "slug": "separate",
+      "status": 200,
+      "wallMs": 103,
+      "title": null,
+      "ray": "a1fea3180eca3c70-LHR"
+    },
+    {
+      "step": "continue",
+      "round": 13,
+      "slug": "separate",
+      "status": 200,
+      "wallMs": 97.2,
+      "title": null,
+      "ray": "a1fea31b8b733c70-LHR"
+    },
+    {
+      "step": "start",
+      "round": 14,
+      "slug": "special",
+      "status": 200,
+      "wallMs": 104.4,
+      "title": null,
+      "ray": "a1fea31ef8663c70-LHR"
+    },
+    {
+      "step": "wrong",
+      "round": 14,
+      "slug": "special",
+      "status": 200,
+      "wallMs": 97.7,
+      "title": null,
+      "ray": "a1fea3226ce73c70-LHR"
+    },
+    {
+      "step": "correct",
+      "round": 14,
+      "slug": "special",
+      "status": 200,
+      "wallMs": 97.3,
+      "title": null,
+      "ray": "a1fea325da963c70-LHR"
+    },
+    {
+      "step": "continue",
+      "round": 14,
+      "slug": "special",
+      "status": 200,
+      "wallMs": 108.5,
+      "title": null,
+      "ray": "a1fea32949ef3c70-LHR"
+    },
+    {
+      "step": "start",
+      "round": 15,
+      "slug": "straight",
+      "status": 200,
+      "wallMs": 101,
+      "title": null,
+      "ray": "a1fea32cc8473c70-LHR"
+    },
+    {
+      "step": "wrong",
+      "round": 15,
+      "slug": "straight",
+      "status": 200,
+      "wallMs": 186,
+      "title": null,
+      "ray": "a1fea3304e183c70-LHR"
+    },
+    {
+      "step": "correct",
+      "round": 15,
+      "slug": "straight",
+      "status": 200,
+      "wallMs": 160.3,
+      "title": null,
+      "ray": "a1fea334ac5b3c70-LHR"
+    },
+    {
+      "step": "continue",
+      "round": 15,
+      "slug": "straight",
+      "status": 200,
+      "wallMs": 105.1,
+      "title": null,
+      "ray": "a1fea33829503c70-LHR"
+    },
+    {
+      "step": "start",
+      "round": 16,
+      "slug": "strange",
+      "status": 200,
+      "wallMs": 135.5,
+      "title": null,
+      "ray": "a1fea33b9f073c70-LHR"
+    },
+    {
+      "step": "wrong",
+      "round": 16,
+      "slug": "strange",
+      "status": 200,
+      "wallMs": 96.7,
+      "title": null,
+      "ray": "a1fea33f4cd23c70-LHR"
+    },
+    {
+      "step": "correct",
+      "round": 16,
+      "slug": "strange",
+      "status": 200,
+      "wallMs": 97.2,
+      "title": null,
+      "ray": "a1fea342a95d3c70-LHR"
+    },
+    {
+      "step": "continue",
+      "round": 16,
+      "slug": "strange",
+      "status": 200,
+      "wallMs": 103.4,
+      "title": null,
+      "ray": "a1fea3461e543c70-LHR"
+    },
+    {
+      "step": "start",
+      "round": 17,
+      "slug": "strength",
+      "status": 200,
+      "wallMs": 101.6,
+      "title": null,
+      "ray": "a1fea3499abc3c70-LHR"
+    },
+    {
+      "step": "wrong",
+      "round": 17,
+      "slug": "strength",
+      "status": 200,
+      "wallMs": 107.7,
+      "title": null,
+      "ray": "a1fea34d0fcd3c70-LHR"
+    },
+    {
+      "step": "correct",
+      "round": 17,
+      "slug": "strength",
+      "status": 200,
+      "wallMs": 95.7,
+      "title": null,
+      "ray": "a1fea3508c9a3c70-LHR"
+    },
+    {
+      "step": "continue",
+      "round": 17,
+      "slug": "strength",
+      "status": 200,
+      "wallMs": 96.9,
+      "title": null,
+      "ray": "a1fea353f9aa3c70-LHR"
+    },
+    {
+      "step": "start",
+      "round": 18,
+      "slug": "possess",
+      "status": 200,
+      "wallMs": 109.1,
+      "title": null,
+      "ray": "a1fea3576ece3c70-LHR"
+    },
+    {
+      "step": "wrong",
+      "round": 18,
+      "slug": "possess",
+      "status": 200,
+      "wallMs": 179.9,
+      "title": null,
+      "ray": "a1fea35aec333c70-LHR"
+    },
+    {
+      "step": "correct",
+      "round": 18,
+      "slug": "possess",
+      "status": 200,
+      "wallMs": 271.4,
+      "title": null,
+      "ray": "a1fea35f4c5c3c70-LHR"
+    },
+    {
+      "step": "continue",
+      "round": 18,
+      "slug": "possess",
+      "status": 200,
+      "wallMs": 163.3,
+      "title": null,
+      "ray": "a1fea363cc593c70-LHR"
+    },
+    {
+      "step": "start",
+      "round": 19,
+      "slug": "position",
+      "status": 200,
+      "wallMs": 99,
+      "title": null,
+      "ray": "a1fea367390e3c70-LHR"
+    },
+    {
+      "step": "wrong",
+      "round": 19,
+      "slug": "position",
+      "status": 200,
+      "wallMs": 98.9,
+      "title": null,
+      "ray": "a1fea36a9e593c70-LHR"
+    },
+    {
+      "step": "correct",
+      "round": 19,
+      "slug": "position",
+      "status": 200,
+      "wallMs": 94.5,
+      "title": null,
+      "ray": "a1fea36e0bb43c70-LHR"
+    },
+    {
+      "step": "continue",
+      "round": 19,
+      "slug": "position",
+      "status": 200,
+      "wallMs": 97.1,
+      "title": null,
+      "ray": "a1fea37178db3c70-LHR"
+    },
+    {
+      "step": "start",
+      "round": 20,
+      "slug": "possible",
+      "status": 200,
+      "wallMs": 94.4,
+      "title": null,
+      "ray": "a1fea374ee553c70-LHR"
+    },
+    {
+      "step": "wrong",
+      "round": 20,
+      "slug": "possible",
+      "status": 200,
+      "wallMs": 86.8,
+      "title": null,
+      "ray": "a1fea3784d2b3c70-LHR"
+    },
+    {
+      "step": "correct",
+      "round": 20,
+      "slug": "possible",
+      "status": 200,
+      "wallMs": 177.3,
+      "title": null,
+      "ray": "a1fea37baacd3c70-LHR"
+    },
+    {
+      "step": "continue",
+      "round": 20,
+      "slug": "possible",
+      "status": 200,
+      "wallMs": 274.3,
+      "title": null,
+      "ray": "a1fea38009793c70-LHR"
+    },
+    {
+      "step": "start",
+      "round": 21,
+      "slug": "probably",
+      "status": 200,
+      "wallMs": 164.1,
+      "title": null,
+      "ray": "a1fea384883c3c70-LHR"
+    },
+    {
+      "step": "wrong",
+      "round": 21,
+      "slug": "probably",
+      "status": 200,
+      "wallMs": 113,
+      "title": null,
+      "ray": "a1fea387fd7b3c70-LHR"
+    },
+    {
+      "step": "correct",
+      "round": 21,
+      "slug": "probably",
+      "status": 200,
+      "wallMs": 100.4,
+      "title": null,
+      "ray": "a1fea38b8a5d3c70-LHR"
+    },
+    {
+      "step": "continue",
+      "round": 21,
+      "slug": "probably",
+      "status": 200,
+      "wallMs": 99.8,
+      "title": null,
+      "ray": "a1fea38effb63c70-LHR"
+    },
+    {
+      "step": "start",
+      "round": 22,
+      "slug": "promise",
+      "status": 200,
+      "wallMs": 98.7,
+      "title": null,
+      "ray": "a1fea3926cdb3c70-LHR"
+    },
+    {
+      "step": "wrong",
+      "round": 22,
+      "slug": "promise",
+      "status": 200,
+      "wallMs": 96,
+      "title": null,
+      "ray": "a1fea395da9e3c70-LHR"
+    },
+    {
+      "step": "correct",
+      "round": 22,
+      "slug": "promise",
+      "status": 200,
+      "wallMs": 163.8,
+      "title": null,
+      "ray": "a1fea39948793c70-LHR"
+    },
+    {
+      "step": "continue",
+      "round": 22,
+      "slug": "promise",
+      "status": 200,
+      "wallMs": 170.9,
+      "title": null,
+      "ray": "a1fea39d8ea03c70-LHR"
+    },
+    {
+      "step": "start",
+      "round": 23,
+      "slug": "purpose",
+      "status": 200,
+      "wallMs": 172.3,
+      "title": null,
+      "ray": "a1fea3a10cb13c70-LHR"
+    },
+    {
+      "step": "wrong",
+      "round": 23,
+      "slug": "purpose",
+      "status": 200,
+      "wallMs": 162.6,
+      "title": null,
+      "ray": "a1fea3a55c863c70-LHR"
+    },
+    {
+      "step": "correct",
+      "round": 23,
+      "slug": "purpose",
+      "status": 200,
+      "wallMs": 103,
+      "title": null,
+      "ray": "a1fea3a8caec3c70-LHR"
+    },
+    {
+      "step": "continue",
+      "round": 23,
+      "slug": "purpose",
+      "status": 200,
+      "wallMs": 98.8,
+      "title": null,
+      "ray": "a1fea3ac39293c70-LHR"
+    },
+    {
+      "step": "start",
+      "round": 24,
+      "slug": "quarter",
+      "status": 200,
+      "wallMs": 104.1,
+      "title": null,
+      "ray": "a1fea3afae883c70-LHR"
+    },
+    {
+      "step": "wrong",
+      "round": 24,
+      "slug": "quarter",
+      "status": 200,
+      "wallMs": 107.8,
+      "title": null,
+      "ray": "a1fea3b32bef3c70-LHR"
+    },
+    {
+      "step": "correct",
+      "round": 24,
+      "slug": "quarter",
+      "status": 200,
+      "wallMs": 808.9,
+      "title": null,
+      "ray": "a1fea3bb08643c70-LHR"
+    },
+    {
+      "step": "continue",
+      "round": 24,
+      "slug": "quarter",
+      "status": 200,
+      "wallMs": 165.5,
+      "title": null,
+      "ray": "a1fea3be8d773c70-LHR"
+    },
+    {
+      "step": "start",
+      "round": 25,
+      "slug": "question",
+      "status": 200,
+      "wallMs": 164.3,
+      "title": null,
+      "ray": "a1fea3c2cb803c70-LHR"
+    },
+    {
+      "step": "wrong",
+      "round": 25,
+      "slug": "question",
+      "status": 200,
+      "wallMs": 91.6,
+      "title": null,
+      "ray": "a1fea3c648c63c70-LHR"
+    },
+    {
+      "step": "correct",
+      "round": 25,
+      "slug": "question",
+      "status": 200,
+      "wallMs": 142.5,
+      "title": null,
+      "ray": "a1fea3c9ade43c70-LHR"
+    },
+    {
+      "step": "continue",
+      "round": 25,
+      "slug": "question",
+      "status": 200,
+      "wallMs": 103,
+      "title": null,
+      "ray": "a1fea3cd5cb73c70-LHR"
+    },
+    {
+      "step": "start",
+      "round": 26,
+      "slug": "recent",
+      "status": 200,
+      "wallMs": 94.4,
+      "title": null,
+      "ray": "a1fea3d0db1f3c70-LHR"
+    },
+    {
+      "step": "wrong",
+      "round": 26,
+      "slug": "recent",
+      "status": 200,
+      "wallMs": 172.9,
+      "title": null,
+      "ray": "a1fea3d458943c70-LHR"
+    },
+    {
+      "step": "correct",
+      "round": 26,
+      "slug": "recent",
+      "status": 200,
+      "wallMs": 148.4,
+      "title": null,
+      "ray": "a1fea3d88e8d3c70-LHR"
+    },
+    {
+      "step": "continue",
+      "round": 26,
+      "slug": "recent",
+      "status": 200,
+      "wallMs": 174.6,
+      "title": null,
+      "ray": "a1fea3dbfc533c70-LHR"
+    },
+    {
+      "step": "start",
+      "round": 27,
+      "slug": "regular",
+      "status": 200,
+      "wallMs": 162.6,
+      "title": null,
+      "ray": "a1fea3e04b603c70-LHR"
+    },
+    {
+      "step": "wrong",
+      "round": 27,
+      "slug": "regular",
+      "status": 200,
+      "wallMs": 96.2,
+      "title": null,
+      "ray": "a1fea3e3c86f3c70-LHR"
+    },
+    {
+      "step": "correct",
+      "round": 27,
+      "slug": "regular",
+      "status": 200,
+      "wallMs": 98.9,
+      "title": null,
+      "ray": "a1fea3e72eb23c70-LHR"
+    },
+    {
+      "step": "continue",
+      "round": 27,
+      "slug": "regular",
+      "status": 200,
+      "wallMs": 98,
+      "title": null,
+      "ray": "a1fea3ea9dfb3c70-LHR"
+    },
+    {
+      "step": "start",
+      "round": 28,
+      "slug": "reign",
+      "status": 200,
+      "wallMs": 94.6,
+      "title": null,
+      "ray": "a1fea3ee0bdc3c70-LHR"
+    },
+    {
+      "step": "wrong",
+      "round": 28,
+      "slug": "reign",
+      "status": 200,
+      "wallMs": 91.2,
+      "title": null,
+      "ray": "a1fea3f1785b3c70-LHR"
+    },
+    {
+      "step": "correct",
+      "round": 28,
+      "slug": "reign",
+      "status": 200,
+      "wallMs": 94.7,
+      "title": null,
+      "ray": "a1fea3f4dd143c70-LHR"
+    },
+    {
+      "step": "continue",
+      "round": 28,
+      "slug": "reign",
+      "status": 200,
+      "wallMs": 184.9,
+      "title": null,
+      "ray": "a1fea3f84a693c70-LHR"
+    },
+    {
+      "step": "start",
+      "round": 29,
+      "slug": "remember",
+      "status": 200,
+      "wallMs": 148.8,
+      "title": null,
+      "ray": "a1fea3fc89113c70-LHR"
+    },
+    {
+      "step": "wrong",
+      "round": 29,
+      "slug": "remember",
+      "status": 200,
+      "wallMs": 192.8,
+      "title": null,
+      "ray": "a1fea4000e553c70-LHR"
+    },
+    {
+      "step": "correct",
+      "round": 29,
+      "slug": "remember",
+      "status": 200,
+      "wallMs": 115.4,
+      "title": null,
+      "ray": "a1fea4045c633c70-LHR"
+    },
+    {
+      "step": "continue",
+      "round": 29,
+      "slug": "remember",
+      "status": 200,
+      "wallMs": 95.3,
+      "title": null,
+      "ray": "a1fea407c96c3c70-LHR"
+    },
+    {
+      "step": "start",
+      "round": 30,
+      "slug": "sentence",
+      "status": 200,
+      "wallMs": 100,
+      "title": null,
+      "ray": "a1fea40b3fc63c70-LHR"
+    },
+    {
+      "step": "wrong",
+      "round": 30,
+      "slug": "sentence",
+      "status": 200,
+      "wallMs": 93.9,
+      "title": null,
+      "ray": "a1fea40eacec3c70-LHR"
+    },
+    {
+      "step": "correct",
+      "round": 30,
+      "slug": "sentence",
+      "status": 200,
+      "wallMs": 124.6,
+      "title": null,
+      "ray": "a1fea41219ea3c70-LHR"
+    },
+    {
+      "step": "continue",
+      "round": 30,
+      "slug": "sentence",
+      "status": 200,
+      "wallMs": 190.9,
+      "title": null,
+      "ray": "a1fea415af053c70-LHR"
+    },
+    {
+      "step": "start",
+      "round": 31,
+      "slug": "separate",
+      "status": 200,
+      "wallMs": 145.9,
+      "title": null,
+      "ray": "a1fea41a0dc13c70-LHR"
+    },
+    {
+      "step": "wrong",
+      "round": 31,
+      "slug": "separate",
+      "status": 200,
+      "wallMs": 179.2,
+      "title": null,
+      "ray": "a1fea41d7b0b3c70-LHR"
+    },
+    {
+      "step": "correct",
+      "round": 31,
+      "slug": "separate",
+      "status": 200,
+      "wallMs": 176.1,
+      "title": null,
+      "ray": "a1fea421dac53c70-LHR"
+    },
+    {
+      "step": "continue",
+      "round": 31,
+      "slug": "separate",
+      "status": 200,
+      "wallMs": 94.7,
+      "title": null,
+      "ray": "a1fea42558643c70-LHR"
+    },
+    {
+      "step": "start",
+      "round": 32,
+      "slug": "special",
+      "status": 200,
+      "wallMs": 102.4,
+      "title": null,
+      "ray": "a1fea428ce753c70-LHR"
+    },
+    {
+      "step": "wrong",
+      "round": 32,
+      "slug": "special",
+      "status": 200,
+      "wallMs": 98.1,
+      "title": null,
+      "ray": "a1fea42c3bfe3c70-LHR"
+    },
+    {
+      "step": "correct",
+      "round": 32,
+      "slug": "special",
+      "status": 200,
+      "wallMs": 116.3,
+      "title": null,
+      "ray": "a1fea42fa8963c70-LHR"
+    },
+    {
+      "step": "continue",
+      "round": 32,
+      "slug": "special",
+      "status": 200,
+      "wallMs": 172,
+      "title": null,
+      "ray": "a1fea4333cf93c70-LHR"
+    },
+    {
+      "step": "start",
+      "round": 33,
+      "slug": "straight",
+      "status": 200,
+      "wallMs": 160.6,
+      "title": null,
+      "ray": "a1fea4378b3a3c70-LHR"
+    },
+    {
+      "step": "wrong",
+      "round": 33,
+      "slug": "straight",
+      "status": 200,
+      "wallMs": 182,
+      "title": null,
+      "ray": "a1fea43af80e3c70-LHR"
+    },
+    {
+      "step": "correct",
+      "round": 33,
+      "slug": "straight",
+      "status": 200,
+      "wallMs": 162,
+      "title": null,
+      "ray": "a1fea43f5e563c70-LHR"
+    },
+    {
+      "step": "continue",
+      "round": 33,
+      "slug": "straight",
+      "status": 200,
+      "wallMs": 99,
+      "title": null,
+      "ray": "a1fea442bc2b3c70-LHR"
+    },
+    {
+      "step": "start",
+      "round": 34,
+      "slug": "strange",
+      "status": 200,
+      "wallMs": 103.4,
+      "title": null,
+      "ray": "a1fea446393d3c70-LHR"
+    },
+    {
+      "step": "wrong",
+      "round": 34,
+      "slug": "strange",
+      "status": 200,
+      "wallMs": 101.2,
+      "title": null,
+      "ray": "a1fea449ae8d3c70-LHR"
+    },
+    {
+      "step": "correct",
+      "round": 34,
+      "slug": "strange",
+      "status": 200,
+      "wallMs": 104.6,
+      "title": null,
+      "ray": "a1fea44d2c273c70-LHR"
+    },
+    {
+      "step": "continue",
+      "round": 34,
+      "slug": "strange",
+      "status": 200,
+      "wallMs": 97.1,
+      "title": null,
+      "ray": "a1fea450a94d3c70-LHR"
+    },
+    {
+      "step": "start",
+      "round": 35,
+      "slug": "strength",
+      "status": 200,
+      "wallMs": 161.2,
+      "title": null,
+      "ray": "a1fea4540eb43c70-LHR"
+    },
+    {
+      "step": "wrong",
+      "round": 35,
+      "slug": "strength",
+      "status": 200,
+      "wallMs": 158.2,
+      "title": null,
+      "ray": "a1fea4585de43c70-LHR"
+    },
+    {
+      "step": "correct",
+      "round": 35,
+      "slug": "strength",
+      "status": 200,
+      "wallMs": 182.1,
+      "title": null,
+      "ray": "a1fea45bbabb3c70-LHR"
+    },
+    {
+      "step": "continue",
+      "round": 35,
+      "slug": "strength",
+      "status": 200,
+      "wallMs": 167.8,
+      "title": null,
+      "ray": "a1fea46019593c70-LHR"
+    },
+    {
+      "step": "start",
+      "round": 36,
+      "slug": "possess",
+      "status": 200,
+      "wallMs": 111.6,
+      "title": null,
+      "ray": "a1fea46398eb3c70-LHR"
+    },
+    {
+      "step": "wrong",
+      "round": 36,
+      "slug": "possess",
+      "status": 200,
+      "wallMs": 109.2,
+      "title": null,
+      "ray": "a1fea46718913c70-LHR"
+    },
+    {
+      "step": "correct",
+      "round": 36,
+      "slug": "possess",
+      "status": 200,
+      "wallMs": 108,
+      "title": null,
+      "ray": "a1fea46a9f533c70-LHR"
+    },
+    {
+      "step": "continue",
+      "round": 36,
+      "slug": "possess",
+      "status": 200,
+      "wallMs": 188.3,
+      "title": null,
+      "ray": "a1fea46e1d323c70-LHR"
+    },
+    {
+      "step": "start",
+      "round": 37,
+      "slug": "position",
+      "status": 200,
+      "wallMs": 163.4,
+      "title": null,
+      "ray": "a1fea4728cf23c70-LHR"
+    },
+    {
+      "step": "wrong",
+      "round": 37,
+      "slug": "position",
+      "status": 200,
+      "wallMs": 175.4,
+      "title": null,
+      "ray": "a1fea475fa5c3c70-LHR"
+    },
+    {
+      "step": "correct",
+      "round": 37,
+      "slug": "position",
+      "status": 200,
+      "wallMs": 159.5,
+      "title": null,
+      "ray": "a1fea47a4a2d3c70-LHR"
+    },
+    {
+      "step": "continue",
+      "round": 37,
+      "slug": "position",
+      "status": 200,
+      "wallMs": 102.4,
+      "title": null,
+      "ray": "a1fea47db8f23c70-LHR"
+    },
+    {
+      "step": "start",
+      "round": 38,
+      "slug": "possible",
+      "status": 200,
+      "wallMs": 96.3,
+      "title": null,
+      "ray": "a1fea481283f3c70-LHR"
+    },
+    {
+      "step": "wrong",
+      "round": 38,
+      "slug": "possible",
+      "status": 200,
+      "wallMs": 136.7,
+      "title": null,
+      "ray": "a1fea4849d9f3c70-LHR"
+    },
+    {
+      "step": "correct",
+      "round": 38,
+      "slug": "possible",
+      "status": 200,
+      "wallMs": 106.5,
+      "title": null,
+      "ray": "a1fea4884bb93c70-LHR"
+    },
+    {
+      "step": "continue",
+      "round": 38,
+      "slug": "possible",
+      "status": 200,
+      "wallMs": 167.7,
+      "title": null,
+      "ray": "a1fea48bc9573c70-LHR"
+    },
+    {
+      "step": "start",
+      "round": 39,
+      "slug": "probably",
+      "status": 200,
+      "wallMs": 263.9,
+      "title": null,
+      "ray": "a1fea49008b43c70-LHR"
+    },
+    {
+      "step": "wrong",
+      "round": 39,
+      "slug": "probably",
+      "status": 200,
+      "wallMs": 159.5,
+      "title": null,
+      "ray": "a1fea49488943c70-LHR"
+    },
+    {
+      "step": "correct",
+      "round": 39,
+      "slug": "probably",
+      "status": 200,
+      "wallMs": 103.7,
+      "title": null,
+      "ray": "a1fea497feeb3c70-LHR"
+    },
+    {
+      "step": "continue",
+      "round": 39,
+      "slug": "probably",
+      "status": 200,
+      "wallMs": 104,
+      "title": null,
+      "ray": "a1fea49b6cd63c70-LHR"
+    }
+  ]
+}

@@ -1,0 +1,149 @@
+{
+  "question": "Why does Nelson spelling wrong→correct hammer get HTTP 503 / Error 1102?",
+  "confirmed": {
+    "platformOutcome": "exceededCpu",
+    "exceptionMessage": "Worker exceeded CPU time limit.",
+    "errorPage": "Worker exceeded resource limits | Cloudflare Error 1102",
+    "failHasNoAppLogs": true,
+    "failHasNoXKs2RequestId": true
+  },
+  "measurements": {
+    "burst": {
+      "firstFail": {
+        "round": 50,
+        "step": "submit-wrong"
+      },
+      "cfCpuOnFail": 17,
+      "cfWallOnFail": 78,
+      "okCfCpu": {
+        "min": 12,
+        "p50": 15,
+        "p95": 26,
+        "max": 64
+      },
+      "note": "Successful requests on same scriptVersion used up to 64ms CF CPU with outcome ok"
+    },
+    "paced500ms": {
+      "statuses": {
+        "200": 270
+      },
+      "stopped": "max-rounds",
+      "hardFails": 0,
+      "rounds": 80,
+      "cfCpuFromTail": {
+        "n": 269,
+        "p50": 3,
+        "p95": 31,
+        "max": 291
+      },
+      "interpretation": "Same Nelson, same build, 500ms pacing → 0×503. Burst (no pacing) → exceededCpu."
+    }
+  },
+  "falsified": [
+    {
+      "id": "H1",
+      "claim": "This request exceeds a hard ~50ms per-request CPU budget because work is too expensive",
+      "evidence": "Fail cpuTime=17ms; ok requests reached cpuTime=64ms on same scriptVersion"
+    },
+    {
+      "id": "H2",
+      "claim": "CPU climbs across rounds until it crosses a threshold",
+      "evidence": "Burst run: avg CPU first30=19.0ms vs last30=16.7ms (no climb)"
+    },
+    {
+      "id": "H-race",
+      "claim": "Classic CAS double-submit race causing 503",
+      "evidence": "Concurrent same-revision returns 409 stale_write locally; prod fail outcome is exceededCpu not conflict"
+    },
+    {
+      "id": "H-projection-unavailable",
+      "claim": "App-level projection_unavailable 503",
+      "evidence": "Fail body is Cloudflare HTML 1102, content-type text/html, no JSON code"
+    }
+  ],
+  "survivingHypotheses": [
+    {
+      "id": "H4+H5",
+      "claim": "Root cause class: effective per-request CPU ceiling is low (~Free 10ms / isolate flexibility), and rapid-fire Nelson commands routinely sit above it. Burst exhausts isolate flexibility → exceededCpu even when that request only shows ~17ms CPU; paced traffic stays under the effective ceiling (p50≈3ms) → 0×503.",
+      "status": "BEST SUPPORTED by A/B",
+      "evidence": [
+        "Burst: CF outcome exceededCpu, exception \"Worker exceeded CPU time limit.\", Ray a1fe84df1a22a5eb-LHR, cpuTime=17, prior ok up to 64ms",
+        "Burst CF CPU p50≈15ms (above Free 10ms limit)",
+        "Paced 500ms: 270/270 HTTP 200, 0 exceededCpu, CF CPU p50≈3ms",
+        "CF docs: isolate flexibility for infrequent over-limit; consistent hits enforce configured limit",
+        "Repo docs reference Free-tier 10ms CPU budget: docs/operations/capacity-1000-learner-free-tier-budget.md",
+        "wrangler.jsonc has no limits.cpu_ms override"
+      ]
+    },
+    {
+      "id": "H6",
+      "claim": "Nelson spelling command hot path is heavy enough (~15ms CF CPU in burst) to be incompatible with a 10ms-class ceiling once flexibility ends",
+      "status": "CONTRIBUTING FACTOR (load shape), not the paradox alone"
+    }
+  ],
+  "instrumentationNote": {
+    "commandPhaseTimingsOnProd": "preflight/content/workingSet/d1Batch dominate; engineApply/rewardProjection/readModelBuild always 0ms (measurement defect — Date.now granularity or misplaced timer). Phase timings are wall, not CF CPU."
+  },
+  "nextDiagnosticSteps": [
+    "Confirm Workers plan + dashboard CPU time limit for ks2-mastery (Free 10ms vs Paid 30s vs custom cpu_ms)",
+    "Compare paced (500ms) vs burst endurance and fail cpuTime",
+    "If Free/low limit confirmed: root cause class = effective CPU ceiling too low for Nelson command shape (~15–20ms typical)",
+    "If Paid 30s confirmed: escalate H4 isolate-flexibility / platform behaviour with Ray IDs to CF; do not keep guessing code cuts"
+  ],
+  "noFixApplied": true,
+  "rootCauseVerdict": {
+    "confidence": "very high",
+    "locked": true,
+    "statement": "Root cause: Workers Free 10ms CPU/request ceiling interacting with Nelson spelling command cost under rapid successive submits. Burst exhausts isolate flexibility → Error 1102 exceededCpu. Not an app race, not projection_unavailable, not a single runaway request.",
+    "primaryConstraint": "Cloudflare Workers Free: 10ms CPU time per HTTP request",
+    "triggerShape": "Rapid sequential wrong→correct (and continue) commands without human pacing",
+    "nonTriggers": [
+      "Human-paced submits (~500ms+ gaps)",
+      "Demo/thin profiles under same burst (lower CPU)"
+    ]
+  },
+  "planConfirmation": {
+    "confirmedBy": "James",
+    "at": "2026-07-23T23:45:46.974Z",
+    "workersPlan": "Free",
+    "configuredCpuMsPerRequest": 10,
+    "wranglerLimitsCpuMs": null,
+    "source": "operator confirmation + CF Free-tier limit docs + repo free-tier budget ledger"
+  },
+  "lockedTheory": {
+    "id": "RC-FREE-10MS-FLEXIBILITY",
+    "statement": "On Workers Free, each request has a 10ms CPU budget. Nelson spelling commands in rapid burst typically consume ~15ms CF CPU (p50), so they rely on isolate flexibility. Sustained burst withdraws flexibility and Cloudflare returns exceededCpu/1102 even when the failing invocation only records ~17ms. Human-paced input keeps CF CPU p50≈3ms and stays under the 10ms ceiling.",
+    "predictions": [
+      {
+        "id": "P1",
+        "ifTrue": "Burst hammer reproduces exceededCpu",
+        "observed": "PASS — burst round 50 submit-wrong, outcome exceededCpu, Ray a1fe84df1a22a5eb-LHR"
+      },
+      {
+        "id": "P2",
+        "ifTrue": "Paced (≥500ms) hammer of same shape does NOT reproduce",
+        "observed": "PASS — paced 80 rounds, 270/270 HTTP 200, 0 exceededCpu"
+      },
+      {
+        "id": "P3",
+        "ifTrue": "Burst CF CPU p50 is near/above 10ms; paced p50 is below 10ms",
+        "observed": "PASS — burst p50≈15ms; paced p50≈3ms"
+      },
+      {
+        "id": "P4",
+        "ifTrue": "Failing request need not be the highest-CPU request (flexibility withdrawal)",
+        "observed": "PASS — fail cpuTime=17ms; ok peers up to 64ms on same scriptVersion"
+      },
+      {
+        "id": "P5",
+        "ifTrue": "Platform exception names CPU time limit, not memory/app JSON",
+        "observed": "PASS — exceptions[0].message = \"Worker exceeded CPU time limit.\"; HTML Error 1102"
+      }
+    ],
+    "falsifiersStillOpen": [
+      "If dashboard shows Paid with cpu_ms≥30000, this lock is wrong (contradicts James Free confirmation)",
+      "If a single isolated Nelson submit after long idle exceeds 10ms AND returns exceededCpu with no prior burst, then per-request cost alone is sufficient without flexibility dynamics"
+    ],
+    "status": "LOCKED pending only dashboard screenshot/optional idle single-shot if James wants belt-and-braces"
+  }
+}

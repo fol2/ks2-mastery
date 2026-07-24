@@ -260,6 +260,7 @@ test('U4 client applyCommandResponse merges response.postMastery into subjectUi.
     },
   };
   const handler = createRemoteSpellingActionHandler({
+    pacedCommandMinGapMs: 0,
     store,
     services: { spelling: { getPrefs() { return getState().subjectUi.spelling.prefs; } } },
     tts: { speak() {}, stop() {} },
@@ -462,6 +463,7 @@ test('U4 client-read-models: hydrated postMastery cache wins even during the che
 test('U4 Worker response omits postMastery (old-worker characterisation): client keeps locked-fallback', async () => {
   const { getState, store } = createHydrationHarness();
   const handler = createRemoteSpellingActionHandler({
+    pacedCommandMinGapMs: 0,
     store,
     services: { spelling: { getPrefs() { return getState().subjectUi.spelling.prefs; } } },
     tts: { speak() {}, stop() {} },
@@ -618,6 +620,7 @@ test('PR #277 applyCommandResponse preserves postMastery cache when follow-up re
     },
   };
   const handler = createRemoteSpellingActionHandler({
+    pacedCommandMinGapMs: 0,
     store,
     services: { spelling: { getPrefs() { return getState().subjectUi.spelling.prefs; } } },
     tts: { speak() {}, stop() {} },
@@ -717,6 +720,7 @@ test('PR #277 handlePreferenceSaveError preserves postMastery cache so a graduat
   });
 
   const handler = createRemoteSpellingActionHandler({
+    pacedCommandMinGapMs: 0,
     store,
     services: { spelling: { getPrefs() { return getState().subjectUi.spelling.prefs; } } },
     tts: { speak() {}, stop() {} },
