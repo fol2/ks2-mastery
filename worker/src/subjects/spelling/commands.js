@@ -128,9 +128,6 @@ function commandWorkingSlugs(command, runtimeRecord, allCurrentSlugs, statsCurre
   if (command.command === 'save-prefs') {
     return { slugs: [], completeCatalogue: false };
   }
-  if (!statsCurrent) {
-    return { slugs: allCurrentSlugs, completeCatalogue: true };
-  }
   if (command.command === 'start-session') {
     const payloadWords = Array.isArray(command.payload?.words)
       ? command.payload.words.filter((slug) => typeof slug === 'string' && slug)
@@ -140,14 +137,31 @@ function commandWorkingSlugs(command, runtimeRecord, allCurrentSlugs, statsCurre
       : typeof command.payload?.slug === 'string' && command.payload.slug
         ? [command.payload.slug]
         : [];
+    // Explicit single/list starts must stay point-lookups even when gameplay
+    // stats are stale. On Workers Free, D1 counts json_each(catalogue) as
+    // ~catalogue-size rowsRead and that alone trips Error 1102.
     if (explicit.length) return { slugs: explicit, completeCatalogue: false };
     if (command.payload?.mode === 'test') return { slugs: [], completeCatalogue: false };
-    // Smart, Trouble, Guardian, Boss and Pattern Quest selection all inspect
-    // current published progress. This cost is tied to catalogue size once at
-    // round creation, never to lifetime history or to each answer.
+    // Smart, Trouble, Guardian, Boss and Pattern Quest selection inspect
+    // current published progress. Pay the catalogue cost once at round
+    // creation (also rebuilds stale stats), never on each answer.
     return { slugs: allCurrentSlugs, completeCatalogue: true };
   }
   if (command.command === 'continue-session' && continueWillFinish(runtimeRecord)) {
+    return { slugs: allCurrentSlugs, completeCatalogue: true };
+  }
+  // Mid-session commands are always session-bounded. Stale stats or a missing
+  // session must not expand submit/continue into a full-catalogue D1 read —
+  // the engine rejects stale sessions after the working-set fetch.
+  if (
+    command.command === 'submit-answer'
+    || command.command === 'continue-session'
+    || command.command === 'skip-word'
+    || command.command === 'end-session'
+  ) {
+    return { slugs: activeSessionSlugs(runtimeRecord), completeCatalogue: false };
+  }
+  if (!statsCurrent) {
     return { slugs: allCurrentSlugs, completeCatalogue: true };
   }
   return { slugs: activeSessionSlugs(runtimeRecord), completeCatalogue: false };
