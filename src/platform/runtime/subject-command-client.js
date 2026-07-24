@@ -13,10 +13,6 @@ function joinUrl(baseUrl, path) {
   return `${base}${suffix}`;
 }
 
-async function parseJson(response) {
-  return response.json().catch(() => ({}));
-}
-
 function isStaleWriteConflict(error) {
   return error instanceof SubjectCommandClientError
     && error.status === 409
@@ -182,11 +178,26 @@ export function createSubjectCommandClient({
       });
     }
 
-    const responsePayload = await parseJson(response);
+    // Prefer text-then-JSON so Cloudflare HTML 5xx pages (Error 1102) keep a
+    // snippet for ops ingest instead of collapsing to an empty object.
+    const rawText = await response.text().catch(() => '');
+    let responsePayload = {};
+    if (rawText) {
+      try {
+        responsePayload = JSON.parse(rawText);
+      } catch {
+        responsePayload = { responseSnippet: rawText.slice(0, 240) };
+      }
+    }
     if (!response.ok || responsePayload?.ok === false) {
       throw new SubjectCommandClientError({
         status: response.status,
         payload: responsePayload,
+        message: typeof responsePayload?.message === 'string'
+          ? responsePayload.message
+          : (typeof responsePayload?.responseSnippet === 'string'
+            ? responsePayload.responseSnippet.slice(0, 160)
+            : ''),
         requestId: ingressRequestId,
         correlationId: ingressRequestId,
       });
@@ -273,6 +284,11 @@ export function createSubjectCommandClient({
           method: 'POST',
           status: error?.status,
           requestId: ingressRequestId,
+          payload: error?.payload || null,
+          responseSnippet: typeof error?.payload?.responseSnippet === 'string'
+            ? error.payload.responseSnippet
+            : (typeof error?.message === 'string' ? error.message : ''),
+          text: typeof error?.message === 'string' ? error.message : '',
         });
         throw error;
       }

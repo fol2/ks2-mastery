@@ -163,6 +163,7 @@ test('subject command failures expose the browser request id for Cloudflare invo
       method: 'POST',
       status: 503,
       requestId: ingressRequestId,
+      signal: 'backend_unavailable',
     },
   ]]);
 });

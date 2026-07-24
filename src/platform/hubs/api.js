@@ -47,7 +47,13 @@ async function fetchHubJson(fetchFn, url, init, authSession) {
   try {
     response = await fetchFn(url, requestInit);
   } catch (cause) {
-    reportIngressRequestFailure({ endpoint: url, method, status: 0, requestId });
+    reportIngressRequestFailure({
+      endpoint: url,
+      method,
+      status: 0,
+      requestId,
+      text: cause?.message || String(cause),
+    });
     const error = new Error(cause?.message || 'Hub request could not reach the server.');
     error.status = 0;
     error.code = 'network_error';
@@ -59,7 +65,14 @@ async function fetchHubJson(fetchFn, url, init, authSession) {
   }
   const payload = await parseResponse(response);
   if (!response.ok) {
-    reportIngressRequestFailure({ endpoint: url, method, status: response.status, requestId });
+    reportIngressRequestFailure({
+      endpoint: url,
+      method,
+      status: response.status,
+      requestId,
+      payload,
+      responseSnippet: typeof payload?.message === 'string' ? payload.message : '',
+    });
     const message = payload?.message || `Hub request failed (${response.status}).`;
     const error = new Error(message);
     error.status = response.status;

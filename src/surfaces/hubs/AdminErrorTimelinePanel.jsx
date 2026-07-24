@@ -75,6 +75,8 @@ function ErrorEventDetailsDrawer({ entry, canViewAccount, onLoadOccurrences }) {
     && entry.resolvedInRelease)
     ? ` · fixed in ${String(entry.resolvedInRelease).slice(0, 7)}`
     : '';
+  const isNetworkFailure = typeof entry.errorKind === 'string'
+    && (/^Http\d+$/i.test(entry.errorKind) || entry.errorKind === 'NetworkError');
   return (
     <details data-testid={`error-event-drawer-${entry.id}`} style={{ gridColumn: '1 / -1', marginTop: 8 }}>
       <summary
@@ -96,6 +98,16 @@ function ErrorEventDetailsDrawer({ entry, canViewAccount, onLoadOccurrences }) {
 
         <dt className="muted">Route</dt>
         <dd>{entry.routeName || '—'}</dd>
+
+        {isNetworkFailure ? (
+          <React.Fragment>
+            <dt className="muted">Network join tip</dt>
+            <dd data-testid="error-drawer-network-tip">
+              Browser console `[network] request_failed` carries `requestId` for Cloudflare log joins.
+              Fingerprints stay stable (no request id) so transport failures dedupe by path + signal.
+            </dd>
+          </React.Fragment>
+        ) : null}
 
         <dt className="muted">User agent</dt>
         <dd style={{ wordBreak: 'break-all' }}>{entry.userAgent || '—'}</dd>
