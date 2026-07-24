@@ -1,5 +1,5 @@
 {
-  "capturedAt": "2026-07-24T15:08:00.000Z",
+  "capturedAt": "2026-07-24T16:35:00.000Z",
   "prodBuildHash": "6c6f6f4",
   "goal": "Free-tier full game for 5 fat Nelson-like players playing freely",
   "method": "evidence-first; no product code fix in this capture",
@@ -18,17 +18,17 @@
     {
       "id": "FC1-catalogue-stale-stats",
       "status": "FIXED_VERIFIED",
-      "symptom": "Error 1102 / high d1RowsRead≈1512 on start/submit",
+      "symptom": "Error 1102 / high d1RowsRead\u22481512 on start/submit",
       "evidence": [
         "reports/capacity/evidence/2026-07-24-prod-stress-stale-stats-rca.json",
         "reports/capacity/evidence/2026-07-24-prod-stress-stale-stats-postdeploy.json"
       ],
-      "currentBuildCheck": "thin start/submit d1RowsRead p50=33–34; Nelson p50=62 (not ~1512)"
+      "currentBuildCheck": "thin start/submit d1RowsRead p50=33\u201334; Nelson p50=62 (not ~1512)"
     },
     {
       "id": "FC2-free-10ms-nelson-single-burst",
-      "status": "REMEASURED_CONFIRMED_ON_6c6f6f4",
-      "symptom": "Nelson wrong→correct → Error 1102 exceededCpu (burst and paced500)",
+      "status": "FIXED_VERIFIED_ON_9c5533ea",
+      "symptom": "Nelson wrong\u2192correct \u2192 Error 1102 exceededCpu (burst and paced500)",
       "evidence": [
         "reports/capacity/evidence/2026-07-23-nelson-wrong-correct-rca-verdict.json",
         "reports/capacity/evidence/2026-07-24-local-remeasure/index.json",
@@ -49,13 +49,37 @@
         "paced500OkCfCpuMaxMs": 270,
         "d1RowsReadP50": 62
       },
-      "regressionNote": "Prior RCA: paced500 → 0×503. Remeasure after cooldown: paced500 still exceededCpu at round 37.",
-      "blockerToRemeasure": null
+      "regressionNote": "Prior RCA: paced500 \u2192 0\u00d7503. Remeasure after cooldown: paced500 still exceededCpu at round 37.",
+      "blockerToRemeasure": null,
+      "postfixH4": {
+        "paced500": {
+          "rounds": 40,
+          "http1102": 0,
+          "cfCpuP50Ms": 8,
+          "pass": true,
+          "evidence": "reports/capacity/evidence/2026-07-24-postfix-h4/paced500-cpu-join.json"
+        },
+        "burst": {
+          "rounds": 25,
+          "http1102": 0,
+          "cfCpuP50Ms": 8,
+          "pass": true,
+          "evidence": "reports/capacity/evidence/2026-07-24-postfix-h4/burst-cpu-join.json"
+        },
+        "concurrent5Short": {
+          "learners": 5,
+          "rounds": 4,
+          "http200": 80,
+          "http1102": 0,
+          "pass": true,
+          "evidence": "reports/capacity/evidence/2026-07-24-postfix-h4/spelling-hammer-h4-concurrent5-r4.json"
+        }
+      }
     },
     {
       "id": "FC3-multiplayer-concurrent-1102",
-      "status": "REPRODUCED_ON_6c6f6f4_CLOUD_SHORT_LOCAL_DID_NOT_REPRO",
-      "symptom": "N≥2 concurrent spelling command streams → Cloudflare Error 1102 (error_code 1102), often with no x-ks2-request-id",
+      "status": "SHORT_LOCAL_PASS_AFTER_H4_LONGER_STILL_PENDING",
+      "symptom": "N\u22652 concurrent spelling command streams \u2192 Cloudflare Error 1102 (error_code 1102), often with no x-ks2-request-id",
       "evidenceFiles": [
         "reports/capacity/evidence/2026-07-24-multiplayer-hammers/spelling-hammer-concurrent5-paced-100ms.json",
         "reports/capacity/evidence/2026-07-24-multiplayer-hammers/spelling-hammer-concurrent5-pace-0-retest.json",
@@ -65,18 +89,49 @@
         "reports/capacity/evidence/2026-07-24-local-remeasure/spelling-hammer-concurrent5-pace100-r4.json"
       ],
       "observed": {
-        "singleThinBurst0ms": { "rounds": 25, "http200": 100, "http503": 0 },
-        "singleThinPaced100ms": { "rounds": 20, "http200": 80, "http503": 0 },
+        "singleThinBurst0ms": {
+          "rounds": 25,
+          "http200": 100,
+          "http503": 0
+        },
+        "singleThinPaced100ms": {
+          "rounds": 20,
+          "http200": 80,
+          "http503": 0
+        },
         "concurrent5Lockstep": "repeated Error 1102 at pace 0/100/450/1000ms once isolate stressed (cloud agent)",
-        "staggered5Pace100Stagger250": { "http503": 5 },
-        "concurrent2Pace100": { "http503": 1 },
-        "localShortConcurrent2r12": { "http200": 96, "http503": 0 },
-        "localShortConcurrent5r4": { "http200": 80, "http503": 0, "spellingCpuP50": 25, "spellingCpuMax": 355 },
+        "staggered5Pace100Stagger250": {
+          "http503": 5
+        },
+        "concurrent2Pace100": {
+          "http503": 1
+        },
+        "localShortConcurrent2r12": {
+          "http200": 96,
+          "http503": 0
+        },
+        "localShortConcurrent5r4": {
+          "http200": 80,
+          "http503": 0,
+          "spellingCpuP50": 25,
+          "spellingCpuMax": 355
+        },
         "body": "Error 1102: Worker exceeded resource limits / error_code 1102",
-        "priorOkCapacityWhenPresent": { "d1RowsRead": "33–39", "serverWallMsP50": "~630" }
+        "priorOkCapacityWhenPresent": {
+          "d1RowsRead": "33\u201339",
+          "serverWallMsP50": "~630"
+        }
       },
       "interpretation": "Matches Free 10ms CPU/request + isolate flexibility withdrawal under overlapping spelling commands. Short local concurrent demos after cooldown did not reproduce; longer cloud hammers did. Not FC1 (rows stay ~33).",
-      "cpuAttribution": "Local wrangler tail on concurrent5 r4: 0×exceededCpu; spelling cpuTime p50≈25ms max≈355ms under flexibility. Nelson FC2 fails remain the clearer cpuTime join (11–12ms exceededCpu)."
+      "cpuAttribution": "Local wrangler tail on concurrent5 r4: 0\u00d7exceededCpu; spelling cpuTime p50\u224825ms max\u2248355ms under flexibility. Nelson FC2 fails remain the clearer cpuTime join (11\u201312ms exceededCpu).",
+      "postfixH4Short": {
+        "learners": 5,
+        "rounds": 4,
+        "http200": 80,
+        "http1102": 0,
+        "pass": true,
+        "evidence": "reports/capacity/evidence/2026-07-24-postfix-h4/spelling-hammer-h4-concurrent5-r4.json"
+      }
     },
     {
       "id": "FC4-demo-rate-limited",
@@ -98,13 +153,55 @@
   "localFatHistoryUnit": {
     "test": "tests/worker-spelling-wrong-then-correct-capacity.test.js",
     "result": "4/4 pass",
-    "note": "10k spelling_item_state rows; mid-session submit d1RowsRead≈10 locally. Local SQLite ≠ CF Free cpuTime."
+    "note": "10k spelling_item_state rows; mid-session submit d1RowsRead\u224810 locally. Local SQLite \u2260 CF Free cpuTime."
   },
   "nextEvidenceSteps": [
-    "DONE: Nelson cookie + wrangler tail cpuTime on 6c6f6f4 (FC2 confirmed; paced500 no longer safe)",
-    "Product fix gate: cut Nelson spelling command CF cpuTime p50 ~18ms → <10ms Free budget",
-    "After CPU cut: re-run Nelson paced500 (≥40 rounds 0×1102) then burst; only then longer concurrent N=5",
-    "Avoid further long concurrent prod storms without cooldown"
+    "DONE: Nelson paced500 \u226540 rounds 0\u00d71102 CF cpu p50=8ms on 9c5533ea",
+    "DONE: Nelson burst 25 rounds 0\u00d71102 CF cpu p50=8ms",
+    "DONE: short concurrent-5 r4 0\u00d71102",
+    "Optional: longer concurrent-5 / true free-play soak with cooldown discipline"
   ],
-  "noFixApplied": true
+  "noFixApplied": false,
+  "prodVersionId": "9c5533ea-f73c-40b6-a114-052adc335696",
+  "fixesApplied": [
+    {
+      "id": "H2",
+      "commit": "e8e51055",
+      "note": "release-bound catalogue walks; paced CPU 18\u219216ms insufficient"
+    },
+    {
+      "id": "H3",
+      "commit": "d3a4e77b",
+      "note": "submit working-set current-card only; Nelson hammer already thin (uniqueWords=1)"
+    },
+    {
+      "id": "H4",
+      "commit": "f02dac6a",
+      "note": "memoize learner-visible snapshot; paced/burst CF cpu p50=8ms"
+    }
+  ],
+  "postfixH4": {
+    "paced500": {
+      "rounds": 40,
+      "http1102": 0,
+      "cfCpuP50Ms": 8,
+      "pass": true,
+      "evidence": "reports/capacity/evidence/2026-07-24-postfix-h4/paced500-cpu-join.json"
+    },
+    "burst": {
+      "rounds": 25,
+      "http1102": 0,
+      "cfCpuP50Ms": 8,
+      "pass": true,
+      "evidence": "reports/capacity/evidence/2026-07-24-postfix-h4/burst-cpu-join.json"
+    },
+    "concurrent5Short": {
+      "learners": 5,
+      "rounds": 4,
+      "http200": 80,
+      "http1102": 0,
+      "pass": true,
+      "evidence": "reports/capacity/evidence/2026-07-24-postfix-h4/spelling-hammer-h4-concurrent5-r4.json"
+    }
+  }
 }
