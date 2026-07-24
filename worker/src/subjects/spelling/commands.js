@@ -19,6 +19,7 @@ import { buildSpellingAudioCue } from './audio.js';
 import { createServerSpellingEngine } from './engine.js';
 import {
   materialiseSpellingGameplayStats,
+  parseSpellingGameplayStats,
   spellingGameplayStatsAreCurrent,
   spellingGameplayStatsWithDueSchedule,
   updateSpellingGameplayStats,
@@ -648,6 +649,29 @@ export function createSpellingCommandHandlers({ now, random } = {}) {
           nowValue,
           statsOptions,
         );
+      } else {
+        // Fresh learners have no catalogue fingerprint yet. Rebuild pool
+        // totals from the in-memory published word list + the bounded
+        // working-set progress already loaded for this command. Do not do
+        // this when a prior schedule exists but the fingerprint is merely
+        // stale — that still needs a completeCatalogue pass so due rows
+        // are not wiped by a partial working set.
+        const existingCatalogue = parseSpellingGameplayStats(runtimeRecord.spellingStats).catalogueV1;
+        const hasCatalogueFingerprint = Boolean(
+          existingCatalogue
+          && typeof existingCatalogue === 'object'
+          && !Array.isArray(existingCatalogue)
+          && typeof existingCatalogue.fingerprint === 'string'
+          && existingCatalogue.fingerprint,
+        );
+        if (!hasCatalogueFingerprint) {
+          persistedSpellingStats = spellingGameplayStatsWithDueSchedule(
+            result.stats,
+            snapshot.words,
+            result.data,
+            statsOptions,
+          );
+        }
       }
     }
     const responseStats = usesBoundedGameplayStore
