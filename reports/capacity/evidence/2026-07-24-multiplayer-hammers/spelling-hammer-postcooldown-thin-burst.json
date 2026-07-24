@@ -1,0 +1,60 @@
+{
+  "summary": {
+    "method": "api-burst",
+    "paceMs": 0,
+    "maxRounds": 15,
+    "completedRounds": 0,
+    "total": 1,
+    "statuses": {
+      "503": 1
+    },
+    "hardFails": [
+      {
+        "step": "start",
+        "round": 0,
+        "slug": "possess",
+        "status": 503,
+        "wallMs": 570.3,
+        "bytes": 813,
+        "ray": "a202d9ba3d73a40c-CMH",
+        "requestId": null,
+        "signals": [],
+        "serverWallMs": null,
+        "queryCount": null,
+        "d1RowsRead": null,
+        "projectionFallback": null,
+        "error": null,
+        "code": null,
+        "bodySnippet": "{\"type\":\"https://developers.cloudflare.com/support/troubleshooting/http-status-codes/cloudflare-1xxx-errors/error-1102/\",\"title\":\"Error 1102: Worker exceeded resource limits\",\"status\":503,\"detail\":\"A Worker script configured by the website owner exceeded its resource limits (CPU time or memory) and was terminated.\",\"instance\":\"a202d9ba3d73a40c\",\"error_code\":1102,\"error_name\":\"worker_exceeded_resou"
+      }
+    ],
+    "html1102Or503": 1,
+    "d1RowsRead": null,
+    "stoppedReason": "hard-fail-start:503",
+    "learnerId": "learner-demo-zbG-E35Mv6HrTA",
+    "accountId": "demo-DWbM81-v2ctzlg",
+    "startedAt": "2026-07-24T12:15:28.361Z",
+    "finishedAt": "2026-07-24T12:15:28.932Z",
+    "label": "postcooldown-thin-burst"
+  },
+  "log": [
+    {
+      "step": "start",
+      "round": 0,
+      "slug": "possess",
+      "status": 503,
+      "wallMs": 570.3,
+      "bytes": 813,
+      "ray": "a202d9ba3d73a40c-CMH",
+      "requestId": null,
+      "signals": [],
+      "serverWallMs": null,
+      "queryCount": null,
+      "d1RowsRead": null,
+      "projectionFallback": null,
+      "error": null,
+      "code": null,
+      "bodySnippet": "{\"type\":\"https://developers.cloudflare.com/support/troubleshooting/http-status-codes/cloudflare-1xxx-errors/error-1102/\",\"title\":\"Error 1102: Worker exceeded resource limits\",\"status\":503,\"detail\":\"A Worker script configured by the website owner exceeded its resource limits (CPU time or memory) and was terminated.\",\"instance\":\"a202d9ba3d73a40c\",\"error_code\":1102,\"error_name\":\"worker_exceeded_resou"
+    }
+  ]
+}

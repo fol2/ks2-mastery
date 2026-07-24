@@ -1,0 +1,33 @@
+{
+  "method": "nelson-api-client-sim-gap",
+  "paceMs": 450,
+  "maxRounds": 3,
+  "completedRounds": 3,
+  "total": 12,
+  "statuses": {
+    "200": 12
+  },
+  "hardFails": [],
+  "html1102Or503": 0,
+  "d1RowsRead": {
+    "n": 12,
+    "min": 60,
+    "p50": 60,
+    "p95": 66,
+    "max": 67
+  },
+  "serverWallMs": {
+    "n": 12,
+    "p50": 73,
+    "p95": 75,
+    "max": 246
+  },
+  "stoppedReason": "max-rounds",
+  "learnerId": "86a6c60f-e1ef-4985-954d-95ab13349c6f",
+  "learnerName": "Nelson",
+  "bootstrapRay": "a203cd8abc447789-LHR",
+  "startedAt": "2026-07-24T15:01:55.368Z",
+  "finishedAt": "2026-07-24T15:02:03.411Z",
+  "label": "nelson-cooldown-probe",
+  "prodBuildHint": "see /api/version"
+}

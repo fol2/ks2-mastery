@@ -1,0 +1,90 @@
+{
+  "prodBuildHash": "6c6f6f4",
+  "hammer": {
+    "method": "nelson-api-client-sim-gap",
+    "paceMs": 500,
+    "maxRounds": 40,
+    "completedRounds": 37,
+    "total": 150,
+    "statuses": {
+      "200": 149,
+      "503": 1
+    },
+    "hardFails": [
+      {
+        "round": 37,
+        "step": "wrong",
+        "slug": "purpose",
+        "status": 503,
+        "wallMs": 75.3,
+        "ray": "a203d0175f94f41c-LHR",
+        "requestId": null,
+        "title": null,
+        "bodySnippet": "{\"type\":\"https://developers.cloudflare.com/support/troubleshooting/http-status-codes/cloudflare-1xxx-errors/error-1102/\",\"title\":\"Error 1102: Worker exceeded resource limits\",\"status\":503,\"detail\":\"A Worker script configured by the website owner exceeded its resource limits (CPU time or memory) and was terminated.\",\"instance\":\"a203d0175f94f41c\",\"error_code\":1102,\"error_name\":\"worker_exceeded_resou"
+      }
+    ],
+    "html1102Or503": 1,
+    "d1RowsRead": {
+      "n": 149,
+      "min": 60,
+      "p50": 62,
+      "p95": 66,
+      "max": 67
+    },
+    "serverWallMs": {
+      "n": 149,
+      "p50": 60,
+      "p95": 72,
+      "max": 188
+    },
+    "stoppedReason": "hard-fail-wrong:503",
+    "learnerId": "86a6c60f-e1ef-4985-954d-95ab13349c6f",
+    "learnerName": "Nelson",
+    "bootstrapRay": "a203cdc0e9b1f41c-LHR",
+    "startedAt": "2026-07-24T15:02:03.873Z",
+    "finishedAt": "2026-07-24T15:03:39.449Z",
+    "label": "nelson-paced500-fresh-6c6f6f4",
+    "prodBuildHint": "see /api/version"
+  },
+  "join": {
+    "tailObjects": 181,
+    "joined": 150,
+    "missingRay": 0,
+    "outcomes": {
+      "ok": 180,
+      "exceededCpu": 1
+    },
+    "okCfCpu": {
+      "n": 149,
+      "min": 14,
+      "p50": 18,
+      "p95": 52,
+      "max": 270
+    },
+    "failCfCpu": [
+      12
+    ],
+    "fails": [
+      {
+        "round": 37,
+        "step": "wrong",
+        "slug": "purpose",
+        "status": 503,
+        "clientWall": 75.3,
+        "serverWallMs": null,
+        "d1RowsRead": null,
+        "ray": "a203d0175f94f41c-LHR",
+        "cfCpu": 12,
+        "cfWall": 62,
+        "outcome": "exceededCpu",
+        "exceptions": [
+          {
+            "name": "Error",
+            "message": "Worker exceeded CPU time limit.",
+            "timestamp": 1784905419455
+          }
+        ]
+      }
+    ]
+  }
+}

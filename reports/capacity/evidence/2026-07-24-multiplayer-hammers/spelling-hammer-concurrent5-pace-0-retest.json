@@ -1,0 +1,901 @@
+{
+  "summary": {
+    "buildProbeNote": "Client-observed; CF cpuTime requires wrangler tail",
+    "method": "concurrent-demo-api",
+    "paceMs": 0,
+    "maxRounds": 8,
+    "learners": 5,
+    "label": "concurrent5-pace-0-retest",
+    "origin": "https://ks2.eugnel.uk",
+    "startedAt": "2026-07-24T12:05:09.132Z",
+    "finishedAt": "2026-07-24T12:05:12.579Z",
+    "statuses": {
+      "200": 7,
+      "503": 5
+    },
+    "html1102Or503": 5,
+    "hardFailLearners": [
+      {
+        "learnerId": "learner-demo-n7n6LgC04TnINw",
+        "stoppedReason": "hard-fail-wrong:503",
+        "firstHard": {
+          "learnerIndex": 0,
+          "learnerId": "learner-demo-n7n6LgC04TnINw",
+          "step": "wrong",
+          "round": 0,
+          "slug": "possess",
+          "status": 503,
+          "wallMs": 439.6,
+          "bytes": 813,
+          "ray": "a202caa97d85284b-CMH",
+          "requestId": null,
+          "title": null,
+          "signals": [],
+          "serverWallMs": null,
+          "queryCount": null,
+          "d1RowsRead": null,
+          "projectionFallback": null,
+          "error": null,
+          "code": null,
+          "bodySnippet": "{\"type\":\"https://developers.cloudflare.com/support/troubleshooting/http-status-codes/cloudflare-1xxx-errors/error-1102/\",\"title\":\"Error 1102: Worker exceeded resource limits\",\"status\":503,\"detail\":\"A Worker script configured by the website owner exceeded its resource limits (CPU time or memory) and was terminated.\",\"instance\":\"a202caa97d85284b\",\"error_code\":1102,\"error_name\":\"worker_exceeded_resou"
+        }
+      },
+      {
+        "learnerId": "learner-demo-Lc421tWTPaC24A",
+        "stoppedReason": "hard-fail-wrong:503",
+        "firstHard": {
+          "learnerIndex": 1,
+          "learnerId": "learner-demo-Lc421tWTPaC24A",
+          "step": "wrong",
+          "round": 0,
+          "slug": "position",
+          "status": 503,
+          "wallMs": 476.9,
+          "bytes": 813,
+          "ray": "a202caa91ee621ca-CMH",
+          "requestId": null,
+          "title": null,
+          "signals": [],
+          "serverWallMs": null,
+          "queryCount": null,
+          "d1RowsRead": null,
+          "projectionFallback": null,
+          "error": null,
+          "code": null,
+          "bodySnippet": "{\"type\":\"https://developers.cloudflare.com/support/troubleshooting/http-status-codes/cloudflare-1xxx-errors/error-1102/\",\"title\":\"Error 1102: Worker exceeded resource limits\",\"status\":503,\"detail\":\"A Worker script configured by the website owner exceeded its resource limits (CPU time or memory) and was terminated.\",\"instance\":\"a202caa91ee621ca\",\"error_code\":1102,\"error_name\":\"worker_exceeded_resou"
+        }
+      },
+      {
+        "learnerId": "learner-demo-hDxW7-ppx21Qjw",
+        "stoppedReason": "hard-fail-correct:503",
+        "firstHard": {
+          "learnerIndex": 2,
+          "learnerId": "learner-demo-hDxW7-ppx21Qjw",
+          "step": "correct",
+          "round": 0,
+          "slug": "possible",
+          "status": 503,
+          "wallMs": 450.6,
+          "bytes": 813,
+          "ray": "a202caadfa5821ca-CMH",
+          "requestId": null,
+          "title": null,
+          "signals": [],
+          "serverWallMs": null,
+          "queryCount": null,
+          "d1RowsRead": null,
+          "projectionFallback": null,
+          "error": null,
+          "code": null,
+          "bodySnippet": "{\"type\":\"https://developers.cloudflare.com/support/troubleshooting/http-status-codes/cloudflare-1xxx-errors/error-1102/\",\"title\":\"Error 1102: Worker exceeded resource limits\",\"status\":503,\"detail\":\"A Worker script configured by the website owner exceeded its resource limits (CPU time or memory) and was terminated.\",\"instance\":\"a202caadfa5821ca\",\"error_code\":1102,\"error_name\":\"worker_exceeded_resou"
+        }
+      },
+      {
+        "learnerId": "learner-demo-FJTJX6ZVh5DCSg",
+        "stoppedReason": "hard-fail-correct:503",
+        "firstHard": {
+          "learnerIndex": 3,
+          "learnerId": "learner-demo-FJTJX6ZVh5DCSg",
+          "step": "correct",
+          "round": 0,
+          "slug": "probably",
+          "status": 503,
+          "wallMs": 444,
+          "bytes": 813,
+          "ray": "a202caaed86c984a-CMH",
+          "requestId": null,
+          "title": null,
+          "signals": [],
+          "serverWallMs": null,
+          "queryCount": null,
+          "d1RowsRead": null,
+          "projectionFallback": null,
+          "error": null,
+          "code": null,
+          "bodySnippet": "{\"type\":\"https://developers.cloudflare.com/support/troubleshooting/http-status-codes/cloudflare-1xxx-errors/error-1102/\",\"title\":\"Error 1102: Worker exceeded resource limits\",\"status\":503,\"detail\":\"A Worker script configured by the website owner exceeded its resource limits (CPU time or memory) and was terminated.\",\"instance\":\"a202caaed86c984a\",\"error_code\":1102,\"error_name\":\"worker_exceeded_resou"
+        }
+      },
+      {
+        "learnerId": "learner-demo-KX8V5GqvRpmTQQ",
+        "stoppedReason": "hard-fail-wrong:503",
+        "firstHard": {
+          "learnerIndex": 4,
+          "learnerId": "learner-demo-KX8V5GqvRpmTQQ",
+          "step": "wrong",
+          "round": 0,
+          "slug": "promise",
+          "status": 503,
+          "wallMs": 552.1,
+          "bytes": 813,
+          "ray": "a202caa92ea8984a-CMH",
+          "requestId": null,
+          "title": null,
+          "signals": [],
+          "serverWallMs": null,
+          "queryCount": null,
+          "d1RowsRead": null,
+          "projectionFallback": null,
+          "error": null,
+          "code": null,
+          "bodySnippet": "{\"type\":\"https://developers.cloudflare.com/support/troubleshooting/http-status-codes/cloudflare-1xxx-errors/error-1102/\",\"title\":\"Error 1102: Worker exceeded resource limits\",\"status\":503,\"detail\":\"A Worker script configured by the website owner exceeded its resource limits (CPU time or memory) and was terminated.\",\"instance\":\"a202caa92ea8984a\",\"error_code\":1102,\"error_name\":\"worker_exceeded_resou"
+        }
+      }
+    ],
+    "perLearner": [
+      {
+        "learnerIndex": 0,
+        "learnerId": "learner-demo-n7n6LgC04TnINw",
+        "accountId": "demo-dMy_T1urKgRVgQ",
+        "completedRounds": 0,
+        "stoppedReason": "hard-fail-wrong:503",
+        "statuses": {
+          "200": 1,
+          "503": 1
+        },
+        "hardFails": [
+          {
+            "learnerIndex": 0,
+            "learnerId": "learner-demo-n7n6LgC04TnINw",
+            "step": "wrong",
+            "round": 0,
+            "slug": "possess",
+            "status": 503,
+            "wallMs": 439.6,
+            "bytes": 813,
+            "ray": "a202caa97d85284b-CMH",
+            "requestId": null,
+            "title": null,
+            "signals": [],
+            "serverWallMs": null,
+            "queryCount": null,
+            "d1RowsRead": null,
+            "projectionFallback": null,
+            "error": null,
+            "code": null,
+            "bodySnippet": "{\"type\":\"https://developers.cloudflare.com/support/troubleshooting/http-status-codes/cloudflare-1xxx-errors/error-1102/\",\"title\":\"Error 1102: Worker exceeded resource limits\",\"status\":503,\"detail\":\"A Worker script configured by the website owner exceeded its resource limits (CPU time or memory) and was terminated.\",\"instance\":\"a202caa97d85284b\",\"error_code\":1102,\"error_name\":\"worker_exceeded_resou"
+          }
+        ],
+        "html1102Or503": 1,
+        "d1RowsRead": {
+          "n": 1,
+          "min": 33,
+          "p50": 33,
+          "p95": 33,
+          "max": 33
+        },
+        "serverWallMs": {
+          "n": 1,
+          "min": 615,
+          "p50": 615,
+          "p95": 615,
+          "max": 615
+        }
+      },
+      {
+        "learnerIndex": 1,
+        "learnerId": "learner-demo-Lc421tWTPaC24A",
+        "accountId": "demo-D_T66CrSUnn21g",
+        "completedRounds": 0,
+        "stoppedReason": "hard-fail-wrong:503",
+        "statuses": {
+          "200": 1,
+          "503": 1
+        },
+        "hardFails": [
+          {
+            "learnerIndex": 1,
+            "learnerId": "learner-demo-Lc421tWTPaC24A",
+            "step": "wrong",
+            "round": 0,
+            "slug": "position",
+            "status": 503,
+            "wallMs": 476.9,
+            "bytes": 813,
+            "ray": "a202caa91ee621ca-CMH",
+            "requestId": null,
+            "title": null,
+            "signals": [],
+            "serverWallMs": null,
+            "queryCount": null,
+            "d1RowsRead": null,
+            "projectionFallback": null,
+            "error": null,
+            "code": null,
+            "bodySnippet": "{\"type\":\"https://developers.cloudflare.com/support/troubleshooting/http-status-codes/cloudflare-1xxx-errors/error-1102/\",\"title\":\"Error 1102: Worker exceeded resource limits\",\"status\":503,\"detail\":\"A Worker script configured by the website owner exceeded its resource limits (CPU time or memory) and was terminated.\",\"instance\":\"a202caa91ee621ca\",\"error_code\":1102,\"error_name\":\"worker_exceeded_resou"
+          }
+        ],
+        "html1102Or503": 1,
+        "d1RowsRead": {
+          "n": 1,
+          "min": 33,
+          "p50": 33,
+          "p95": 33,
+          "max": 33
+        },
+        "serverWallMs": {
+          "n": 1,
+          "min": 614,
+          "p50": 614,
+          "p95": 614,
+          "max": 614
+        }
+      },
+      {
+        "learnerIndex": 2,
+        "learnerId": "learner-demo-hDxW7-ppx21Qjw",
+        "accountId": "demo-qfImWw9qteNG4A",
+        "completedRounds": 0,
+        "stoppedReason": "hard-fail-correct:503",
+        "statuses": {
+          "200": 2,
+          "503": 1
+        },
+        "hardFails": [
+          {
+            "learnerIndex": 2,
+            "learnerId": "learner-demo-hDxW7-ppx21Qjw",
+            "step": "correct",
+            "round": 0,
+            "slug": "possible",
+            "status": 503,
+            "wallMs": 450.6,
+            "bytes": 813,
+            "ray": "a202caadfa5821ca-CMH",
+            "requestId": null,
+            "title": null,
+            "signals": [],
+            "serverWallMs": null,
+            "queryCount": null,
+            "d1RowsRead": null,
+            "projectionFallback": null,
+            "error": null,
+            "code": null,
+            "bodySnippet": "{\"type\":\"https://developers.cloudflare.com/support/troubleshooting/http-status-codes/cloudflare-1xxx-errors/error-1102/\",\"title\":\"Error 1102: Worker exceeded resource limits\",\"status\":503,\"detail\":\"A Worker script configured by the website owner exceeded its resource limits (CPU time or memory) and was terminated.\",\"instance\":\"a202caadfa5821ca\",\"error_code\":1102,\"error_name\":\"worker_exceeded_resou"
+          }
+        ],
+        "html1102Or503": 1,
+        "d1RowsRead": {
+          "n": 2,
+          "min": 33,
+          "p50": 33,
+          "p95": 33,
+          "max": 33
+        },
+        "serverWallMs": {
+          "n": 2,
+          "min": 632,
+          "p50": 648,
+          "p95": 648,
+          "max": 648
+        }
+      },
+      {
+        "learnerIndex": 3,
+        "learnerId": "learner-demo-FJTJX6ZVh5DCSg",
+        "accountId": "demo-Vyky-ldvrUzEww",
+        "completedRounds": 0,
+        "stoppedReason": "hard-fail-correct:503",
+        "statuses": {
+          "200": 2,
+          "503": 1
+        },
+        "hardFails": [
+          {
+            "learnerIndex": 3,
+            "learnerId": "learner-demo-FJTJX6ZVh5DCSg",
+            "step": "correct",
+            "round": 0,
+            "slug": "probably",
+            "status": 503,
+            "wallMs": 444,
+            "bytes": 813,
+            "ray": "a202caaed86c984a-CMH",
+            "requestId": null,
+            "title": null,
+            "signals": [],
+            "serverWallMs": null,
+            "queryCount": null,
+            "d1RowsRead": null,
+            "projectionFallback": null,
+            "error": null,
+            "code": null,
+            "bodySnippet": "{\"type\":\"https://developers.cloudflare.com/support/troubleshooting/http-status-codes/cloudflare-1xxx-errors/error-1102/\",\"title\":\"Error 1102: Worker exceeded resource limits\",\"status\":503,\"detail\":\"A Worker script configured by the website owner exceeded its resource limits (CPU time or memory) and was terminated.\",\"instance\":\"a202caaed86c984a\",\"error_code\":1102,\"error_name\":\"worker_exceeded_resou"
+          }
+        ],
+        "html1102Or503": 1,
+        "d1RowsRead": {
+          "n": 2,
+          "min": 33,
+          "p50": 33,
+          "p95": 33,
+          "max": 33
+        },
+        "serverWallMs": {
+          "n": 2,
+          "min": 620,
+          "p50": 628,
+          "p95": 628,
+          "max": 628
+        }
+      },
+      {
+        "learnerIndex": 4,
+        "learnerId": "learner-demo-KX8V5GqvRpmTQQ",
+        "accountId": "demo-16vhsH17xUu3pA",
+        "completedRounds": 0,
+        "stoppedReason": "hard-fail-wrong:503",
+        "statuses": {
+          "200": 1,
+          "503": 1
+        },
+        "hardFails": [
+          {
+            "learnerIndex": 4,
+            "learnerId": "learner-demo-KX8V5GqvRpmTQQ",
+            "step": "wrong",
+            "round": 0,
+            "slug": "promise",
+            "status": 503,
+            "wallMs": 552.1,
+            "bytes": 813,
+            "ray": "a202caa92ea8984a-CMH",
+            "requestId": null,
+            "title": null,
+            "signals": [],
+            "serverWallMs": null,
+            "queryCount": null,
+            "d1RowsRead": null,
+            "projectionFallback": null,
+            "error": null,
+            "code": null,
+            "bodySnippet": "{\"type\":\"https://developers.cloudflare.com/support/troubleshooting/http-status-codes/cloudflare-1xxx-errors/error-1102/\",\"title\":\"Error 1102: Worker exceeded resource limits\",\"status\":503,\"detail\":\"A Worker script configured by the website owner exceeded its resource limits (CPU time or memory) and was terminated.\",\"instance\":\"a202caa92ea8984a\",\"error_code\":1102,\"error_name\":\"worker_exceeded_resou"
+          }
+        ],
+        "html1102Or503": 1,
+        "d1RowsRead": {
+          "n": 1,
+          "min": 33,
+          "p50": 33,
+          "p95": 33,
+          "max": 33
+        },
+        "serverWallMs": {
+          "n": 1,
+          "min": 630,
+          "p50": 630,
+          "p95": 630,
+          "max": 630
+        }
+      }
+    ]
+  },
+  "results": [
+    {
+      "learnerIndex": 0,
+      "learnerId": "learner-demo-n7n6LgC04TnINw",
+      "accountId": "demo-dMy_T1urKgRVgQ",
+      "completedRounds": 0,
+      "stoppedReason": "hard-fail-wrong:503",
+      "statuses": {
+        "200": 1,
+        "503": 1
+      },
+      "hardFails": [
+        {
+          "learnerIndex": 0,
+          "learnerId": "learner-demo-n7n6LgC04TnINw",
+          "step": "wrong",
+          "round": 0,
+          "slug": "possess",
+          "status": 503,
+          "wallMs": 439.6,
+          "bytes": 813,
+          "ray": "a202caa97d85284b-CMH",
+          "requestId": null,
+          "title": null,
+          "signals": [],
+          "serverWallMs": null,
+          "queryCount": null,
+          "d1RowsRead": null,
+          "projectionFallback": null,
+          "error": null,
+          "code": null,
+          "bodySnippet": "{\"type\":\"https://developers.cloudflare.com/support/troubleshooting/http-status-codes/cloudflare-1xxx-errors/error-1102/\",\"title\":\"Error 1102: Worker exceeded resource limits\",\"status\":503,\"detail\":\"A Worker script configured by the website owner exceeded its resource limits (CPU time or memory) and was terminated.\",\"instance\":\"a202caa97d85284b\",\"error_code\":1102,\"error_name\":\"worker_exceeded_resou"
+        }
+      ],
+      "html1102Or503": 1,
+      "d1RowsRead": {
+        "n": 1,
+        "min": 33,
+        "p50": 33,
+        "p95": 33,
+        "max": 33
+      },
+      "serverWallMs": {
+        "n": 1,
+        "min": 615,
+        "p50": 615,
+        "p95": 615,
+        "max": 615
+      },
+      "log": [
+        {
+          "learnerIndex": 0,
+          "learnerId": "learner-demo-n7n6LgC04TnINw",
+          "step": "start",
+          "round": 0,
+          "slug": "possess",
+          "status": 200,
+          "wallMs": 656.4,
+          "bytes": 3344,
+          "ray": "a202caa55e8b284b-CMH",
+          "requestId": "ks2_req_3a3ad657-a3cf-4c63-b657-98532b769f59",
+          "title": null,
+          "signals": [],
+          "serverWallMs": 615,
+          "queryCount": 10,
+          "d1RowsRead": 33,
+          "projectionFallback": "degraded",
+          "error": null,
+          "code": null,
+          "bodySnippet": null
+        },
+        {
+          "learnerIndex": 0,
+          "learnerId": "learner-demo-n7n6LgC04TnINw",
+          "step": "wrong",
+          "round": 0,
+          "slug": "possess",
+          "status": 503,
+          "wallMs": 439.6,
+          "bytes": 813,
+          "ray": "a202caa97d85284b-CMH",
+          "requestId": null,
+          "title": null,
+          "signals": [],
+          "serverWallMs": null,
+          "queryCount": null,
+          "d1RowsRead": null,
+          "projectionFallback": null,
+          "error": null,
+          "code": null,
+          "bodySnippet": "{\"type\":\"https://developers.cloudflare.com/support/troubleshooting/http-status-codes/cloudflare-1xxx-errors/error-1102/\",\"title\":\"Error 1102: Worker exceeded resource limits\",\"status\":503,\"detail\":\"A Worker script configured by the website owner exceeded its resource limits (CPU time or memory) and was terminated.\",\"instance\":\"a202caa97d85284b\",\"error_code\":1102,\"error_name\":\"worker_exceeded_resou"
+        }
+      ]
+    },
+    {
+      "learnerIndex": 1,
+      "learnerId": "learner-demo-Lc421tWTPaC24A",
+      "accountId": "demo-D_T66CrSUnn21g",
+      "completedRounds": 0,
+      "stoppedReason": "hard-fail-wrong:503",
+      "statuses": {
+        "200": 1,
+        "503": 1
+      },
+      "hardFails": [
+        {
+          "learnerIndex": 1,
+          "learnerId": "learner-demo-Lc421tWTPaC24A",
+          "step": "wrong",
+          "round": 0,
+          "slug": "position",
+          "status": 503,
+          "wallMs": 476.9,
+          "bytes": 813,
+          "ray": "a202caa91ee621ca-CMH",
+          "requestId": null,
+          "title": null,
+          "signals": [],
+          "serverWallMs": null,
+          "queryCount": null,
+          "d1RowsRead": null,
+          "projectionFallback": null,
+          "error": null,
+          "code": null,
+          "bodySnippet": "{\"type\":\"https://developers.cloudflare.com/support/troubleshooting/http-status-codes/cloudflare-1xxx-errors/error-1102/\",\"title\":\"Error 1102: Worker exceeded resource limits\",\"status\":503,\"detail\":\"A Worker script configured by the website owner exceeded its resource limits (CPU time or memory) and was terminated.\",\"instance\":\"a202caa91ee621ca\",\"error_code\":1102,\"error_name\":\"worker_exceeded_resou"
+        }
+      ],
+      "html1102Or503": 1,
+      "d1RowsRead": {
+        "n": 1,
+        "min": 33,
+        "p50": 33,
+        "p95": 33,
+        "max": 33
+      },
+      "serverWallMs": {
+        "n": 1,
+        "min": 614,
+        "p50": 614,
+        "p95": 614,
+        "max": 614
+      },
+      "log": [
+        {
+          "learnerIndex": 1,
+          "learnerId": "learner-demo-Lc421tWTPaC24A",
+          "step": "start",
+          "round": 0,
+          "slug": "position",
+          "status": 200,
+          "wallMs": 659,
+          "bytes": 3348,
+          "ray": "a202caa4fe5921ca-CMH",
+          "requestId": "ks2_req_53d7535a-10cd-4337-8971-8d1a8e1d8ece",
+          "title": null,
+          "signals": [],
+          "serverWallMs": 614,
+          "queryCount": 10,
+          "d1RowsRead": 33,
+          "projectionFallback": "degraded",
+          "error": null,
+          "code": null,
+          "bodySnippet": null
+        },
+        {
+          "learnerIndex": 1,
+          "learnerId": "learner-demo-Lc421tWTPaC24A",
+          "step": "wrong",
+          "round": 0,
+          "slug": "position",
+          "status": 503,
+          "wallMs": 476.9,
+          "bytes": 813,
+          "ray": "a202caa91ee621ca-CMH",
+          "requestId": null,
+          "title": null,
+          "signals": [],
+          "serverWallMs": null,
+          "queryCount": null,
+          "d1RowsRead": null,
+          "projectionFallback": null,
+          "error": null,
+          "code": null,
+          "bodySnippet": "{\"type\":\"https://developers.cloudflare.com/support/troubleshooting/http-status-codes/cloudflare-1xxx-errors/error-1102/\",\"title\":\"Error 1102: Worker exceeded resource limits\",\"status\":503,\"detail\":\"A Worker script configured by the website owner exceeded its resource limits (CPU time or memory) and was terminated.\",\"instance\":\"a202caa91ee621ca\",\"error_code\":1102,\"error_name\":\"worker_exceeded_resou"
+        }
+      ]
+    },
+    {
+      "learnerIndex": 2,
+      "learnerId": "learner-demo-hDxW7-ppx21Qjw",
+      "accountId": "demo-qfImWw9qteNG4A",
+      "completedRounds": 0,
+      "stoppedReason": "hard-fail-correct:503",
+      "statuses": {
+        "200": 2,
+        "503": 1
+      },
+      "hardFails": [
+        {
+          "learnerIndex": 2,
+          "learnerId": "learner-demo-hDxW7-ppx21Qjw",
+          "step": "correct",
+          "round": 0,
+          "slug": "possible",
+          "status": 503,
+          "wallMs": 450.6,
+          "bytes": 813,
+          "ray": "a202caadfa5821ca-CMH",
+          "requestId": null,
+          "title": null,
+          "signals": [],
+          "serverWallMs": null,
+          "queryCount": null,
+          "d1RowsRead": null,
+          "projectionFallback": null,
+          "error": null,
+          "code": null,
+          "bodySnippet": "{\"type\":\"https://developers.cloudflare.com/support/troubleshooting/http-status-codes/cloudflare-1xxx-errors/error-1102/\",\"title\":\"Error 1102: Worker exceeded resource limits\",\"status\":503,\"detail\":\"A Worker script configured by the website owner exceeded its resource limits (CPU time or memory) and was terminated.\",\"instance\":\"a202caadfa5821ca\",\"error_code\":1102,\"error_name\":\"worker_exceeded_resou"
+        }
+      ],
+      "html1102Or503": 1,
+      "d1RowsRead": {
+        "n": 2,
+        "min": 33,
+        "p50": 33,
+        "p95": 33,
+        "max": 33
+      },
+      "serverWallMs": {
+        "n": 2,
+        "min": 632,
+        "p50": 648,
+        "p95": 648,
+        "max": 648
+      },
+      "log": [
+        {
+          "learnerIndex": 2,
+          "learnerId": "learner-demo-hDxW7-ppx21Qjw",
+          "step": "start",
+          "round": 0,
+          "slug": "possible",
+          "status": 200,
+          "wallMs": 696.5,
+          "bytes": 3337,
+          "ray": "a202caa56f781210-CMH",
+          "requestId": "ks2_req_9d814373-4b3b-4f39-b9b2-e8d5b8f64c8f",
+          "title": null,
+          "signals": [],
+          "serverWallMs": 648,
+          "queryCount": 10,
+          "d1RowsRead": 33,
+          "projectionFallback": "degraded",
+          "error": null,
+          "code": null,
+          "bodySnippet": null
+        },
+        {
+          "learnerIndex": 2,
+          "learnerId": "learner-demo-hDxW7-ppx21Qjw",
+          "step": "wrong",
+          "round": 0,
+          "slug": "possible",
+          "status": 200,
+          "wallMs": 673.8,
+          "bytes": 3581,
+          "ray": "a202caa9bef61210-CMH",
+          "requestId": "ks2_req_3430a8eb-0fcc-483c-83c0-07ed65c7e2a5",
+          "title": null,
+          "signals": [],
+          "serverWallMs": 632,
+          "queryCount": 9,
+          "d1RowsRead": 33,
+          "projectionFallback": "hit",
+          "error": null,
+          "code": null,
+          "bodySnippet": null
+        },
+        {
+          "learnerIndex": 2,
+          "learnerId": "learner-demo-hDxW7-ppx21Qjw",
+          "step": "correct",
+          "round": 0,
+          "slug": "possible",
+          "status": 503,
+          "wallMs": 450.6,
+          "bytes": 813,
+          "ray": "a202caadfa5821ca-CMH",
+          "requestId": null,
+          "title": null,
+          "signals": [],
+          "serverWallMs": null,
+          "queryCount": null,
+          "d1RowsRead": null,
+          "projectionFallback": null,
+          "error": null,
+          "code": null,
+          "bodySnippet": "{\"type\":\"https://developers.cloudflare.com/support/troubleshooting/http-status-codes/cloudflare-1xxx-errors/error-1102/\",\"title\":\"Error 1102: Worker exceeded resource limits\",\"status\":503,\"detail\":\"A Worker script configured by the website owner exceeded its resource limits (CPU time or memory) and was terminated.\",\"instance\":\"a202caadfa5821ca\",\"error_code\":1102,\"error_name\":\"worker_exceeded_resou"
+        }
+      ]
+    },
+    {
+      "learnerIndex": 3,
+      "learnerId": "learner-demo-FJTJX6ZVh5DCSg",
+      "accountId": "demo-Vyky-ldvrUzEww",
+      "completedRounds": 0,
+      "stoppedReason": "hard-fail-correct:503",
+      "statuses": {
+        "200": 2,
+        "503": 1
+      },
+      "hardFails": [
+        {
+          "learnerIndex": 3,
+          "learnerId": "learner-demo-FJTJX6ZVh5DCSg",
+          "step": "correct",
+          "round": 0,
+          "slug": "probably",
+          "status": 503,
+          "wallMs": 444,
+          "bytes": 813,
+          "ray": "a202caaed86c984a-CMH",
+          "requestId": null,
+          "title": null,
+          "signals": [],
+          "serverWallMs": null,
+          "queryCount": null,
+          "d1RowsRead": null,
+          "projectionFallback": null,
+          "error": null,
+          "code": null,
+          "bodySnippet": "{\"type\":\"https://developers.cloudflare.com/support/troubleshooting/http-status-codes/cloudflare-1xxx-errors/error-1102/\",\"title\":\"Error 1102: Worker exceeded resource limits\",\"status\":503,\"detail\":\"A Worker script configured by the website owner exceeded its resource limits (CPU time or memory) and was terminated.\",\"instance\":\"a202caaed86c984a\",\"error_code\":1102,\"error_name\":\"worker_exceeded_resou"
+        }
+      ],
+      "html1102Or503": 1,
+      "d1RowsRead": {
+        "n": 2,
+        "min": 33,
+        "p50": 33,
+        "p95": 33,
+        "max": 33
+      },
+      "serverWallMs": {
+        "n": 2,
+        "min": 620,
+        "p50": 628,
+        "p95": 628,
+        "max": 628
+      },
+      "log": [
+        {
+          "learnerIndex": 3,
+          "learnerId": "learner-demo-FJTJX6ZVh5DCSg",
+          "step": "start",
+          "round": 0,
+          "slug": "probably",
+          "status": 200,
+          "wallMs": 662.2,
+          "bytes": 3341,
+          "ray": "a202caa68aaf7089-CMH",
+          "requestId": "ks2_req_4fffefad-97c8-4515-957b-492d7b5fa5b9",
+          "title": null,
+          "signals": [],
+          "serverWallMs": 620,
+          "queryCount": 10,
+          "d1RowsRead": 33,
+          "projectionFallback": "degraded",
+          "error": null,
+          "code": null,
+          "bodySnippet": null
+        },
+        {
+          "learnerIndex": 3,
+          "learnerId": "learner-demo-FJTJX6ZVh5DCSg",
+          "step": "wrong",
+          "round": 0,
+          "slug": "probably",
+          "status": 200,
+          "wallMs": 665.9,
+          "bytes": 3587,
+          "ray": "a202caaaa8dc7089-CMH",
+          "requestId": "ks2_req_7417c1fe-c0f3-4d9f-a58f-90efd5442f30",
+          "title": null,
+          "signals": [],
+          "serverWallMs": 628,
+          "queryCount": 9,
+          "d1RowsRead": 33,
+          "projectionFallback": "hit",
+          "error": null,
+          "code": null,
+          "bodySnippet": null
+        },
+        {
+          "learnerIndex": 3,
+          "learnerId": "learner-demo-FJTJX6ZVh5DCSg",
+          "step": "correct",
+          "round": 0,
+          "slug": "probably",
+          "status": 503,
+          "wallMs": 444,
+          "bytes": 813,
+          "ray": "a202caaed86c984a-CMH",
+          "requestId": null,
+          "title": null,
+          "signals": [],
+          "serverWallMs": null,
+          "queryCount": null,
+          "d1RowsRead": null,
+          "projectionFallback": null,
+          "error": null,
+          "code": null,
+          "bodySnippet": "{\"type\":\"https://developers.cloudflare.com/support/troubleshooting/http-status-codes/cloudflare-1xxx-errors/error-1102/\",\"title\":\"Error 1102: Worker exceeded resource limits\",\"status\":503,\"detail\":\"A Worker script configured by the website owner exceeded its resource limits (CPU time or memory) and was terminated.\",\"instance\":\"a202caaed86c984a\",\"error_code\":1102,\"error_name\":\"worker_exceeded_resou"
+        }
+      ]
+    },
+    {
+      "learnerIndex": 4,
+      "learnerId": "learner-demo-KX8V5GqvRpmTQQ",
+      "accountId": "demo-16vhsH17xUu3pA",
+      "completedRounds": 0,
+      "stoppedReason": "hard-fail-wrong:503",
+      "statuses": {
+        "200": 1,
+        "503": 1
+      },
+      "hardFails": [
+        {
+          "learnerIndex": 4,
+          "learnerId": "learner-demo-KX8V5GqvRpmTQQ",
+          "step": "wrong",
+          "round": 0,
+          "slug": "promise",
+          "status": 503,
+          "wallMs": 552.1,
+          "bytes": 813,
+          "ray": "a202caa92ea8984a-CMH",
+          "requestId": null,
+          "title": null,
+          "signals": [],
+          "serverWallMs": null,
+          "queryCount": null,
+          "d1RowsRead": null,
+          "projectionFallback": null,
+          "error": null,
+          "code": null,
+          "bodySnippet": "{\"type\":\"https://developers.cloudflare.com/support/troubleshooting/http-status-codes/cloudflare-1xxx-errors/error-1102/\",\"title\":\"Error 1102: Worker exceeded resource limits\",\"status\":503,\"detail\":\"A Worker script configured by the website owner exceeded its resource limits (CPU time or memory) and was terminated.\",\"instance\":\"a202caa92ea8984a\",\"error_code\":1102,\"error_name\":\"worker_exceeded_resou"
+        }
+      ],
+      "html1102Or503": 1,
+      "d1RowsRead": {
+        "n": 1,
+        "min": 33,
+        "p50": 33,
+        "p95": 33,
+        "max": 33
+      },
+      "serverWallMs": {
+        "n": 1,
+        "min": 630,
+        "p50": 630,
+        "p95": 630,
+        "max": 630
+      },
+      "log": [
+        {
+          "learnerIndex": 4,
+          "learnerId": "learner-demo-KX8V5GqvRpmTQQ",
+          "step": "start",
+          "round": 0,
+          "slug": "promise",
+          "status": 200,
+          "wallMs": 665,
+          "bytes": 3329,
+          "ray": "a202caa4ffc2984a-CMH",
+          "requestId": "ks2_req_685f56b5-3f8e-4d63-8d5a-c1418264bb7d",
+          "title": null,
+          "signals": [],
+          "serverWallMs": 630,
+          "queryCount": 10,
+          "d1RowsRead": 33,
+          "projectionFallback": "degraded",
+          "error": null,
+          "code": null,
+          "bodySnippet": null
+        },
+        {
+          "learnerIndex": 4,
+          "learnerId": "learner-demo-KX8V5GqvRpmTQQ",
+          "step": "wrong",
+          "round": 0,
+          "slug": "promise",
+          "status": 503,
+          "wallMs": 552.1,
+          "bytes": 813,
+          "ray": "a202caa92ea8984a-CMH",
+          "requestId": null,
+          "title": null,
+          "signals": [],
+          "serverWallMs": null,
+          "queryCount": null,
+          "d1RowsRead": null,
+          "projectionFallback": null,
+          "error": null,
+          "code": null,
+          "bodySnippet": "{\"type\":\"https://developers.cloudflare.com/support/troubleshooting/http-status-codes/cloudflare-1xxx-errors/error-1102/\",\"title\":\"Error 1102: Worker exceeded resource limits\",\"status\":503,\"detail\":\"A Worker script configured by the website owner exceeded its resource limits (CPU time or memory) and was terminated.\",\"instance\":\"a202caa92ea8984a\",\"error_code\":1102,\"error_name\":\"worker_exceeded_resou"
+        }
+      ]
+    }
+  ]
+}

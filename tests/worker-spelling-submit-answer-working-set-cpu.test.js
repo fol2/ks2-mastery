@@ -1,3 +1,9 @@
+// Free-tier CPU: mid-session submit-answer must not hydrate every historical
+// session slug. Prod Nelson (build e41ac74d / H2 catalogue cut) still joined
+// CF cpuTime p50≈16ms while every wrong/correct bound ~51 item rows from
+// uniqueWords/results/status/sentenceHistory. Engine submitAnswer only needs
+// the current card slug (Pattern Quest: current + next).
+
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
@@ -6,22 +12,23 @@ import { createMigratedSqliteD1Database } from './helpers/sqlite-d1.js';
 
 const BASE_URL = 'https://repo.test';
 const NOW = Date.UTC(2026, 6, 24);
+const HISTORICAL_SLUGS = 50;
 
 function seedAccount(DB, {
-  accountId = 'adult-stale-stats',
-  learnerId = 'learner-stale-stats',
+  accountId = 'adult-submit-ws',
+  learnerId = 'learner-submit-ws',
 } = {}) {
   DB.db.prepare(`
     INSERT INTO learner_profiles (
       id, name, year_group, avatar_color, goal, daily_minutes,
       created_at, updated_at, state_revision
-    ) VALUES (?, 'Stale Stats', 'Y5', '#3E6FA8', 'sats', 15, ?, ?, 0)
+    ) VALUES (?, 'Submit WS', 'Y5', '#3E6FA8', 'sats', 15, ?, ?, 0)
   `).run(learnerId, NOW, NOW);
   DB.db.prepare(`
     INSERT INTO adult_accounts (
       id, email, display_name, platform_role, selected_learner_id,
       created_at, updated_at, repo_revision
-    ) VALUES (?, ?, 'Stale Adult', 'parent', ?, ?, ?, 0)
+    ) VALUES (?, ?, 'Submit WS Adult', 'parent', ?, ?, ?, 0)
   `).run(accountId, `${accountId}@example.test`, learnerId, NOW, NOW);
   DB.db.prepare(`
     INSERT INTO account_learner_memberships (
@@ -47,8 +54,8 @@ function workingSetSlugBind(queryLog) {
 
 function createHarness() {
   const DB = createMigratedSqliteD1Database();
-  const accountId = 'adult-stale-stats';
-  const learnerId = 'learner-stale-stats';
+  const accountId = 'adult-submit-ws';
+  const learnerId = 'learner-submit-ws';
   seedAccount(DB, { accountId, learnerId });
 
   const app = createWorkerApp({ now: () => NOW });
@@ -63,7 +70,7 @@ function createHarness() {
 
   async function command(commandName, payload = {}) {
     DB.clearQueryLog();
-    const requestId = `stale-stats-${sequence += 1}`;
+    const requestId = `submit-ws-${sequence += 1}`;
     const response = await app.fetch(new Request(`${BASE_URL}/api/subjects/spelling/command`, {
       method: 'POST',
       headers: {
@@ -90,12 +97,63 @@ function createHarness() {
   }
 
   return {
+    DB,
+    learnerId,
     command,
     close() { DB.close(); },
   };
 }
 
-test('fresh learner single-slug start must not bind the full published catalogue into D1 working-set reads', async () => {
+function fattenActiveSessionHistory(DB, learnerId, currentSlug = 'possess') {
+  const row = DB.db.prepare(`
+    SELECT ui_json
+    FROM spelling_learner_state
+    WHERE learner_id = ?
+  `).get(learnerId);
+  assert.ok(row?.ui_json, 'expected spelling_learner_state.ui_json after start-session');
+  const ui = JSON.parse(row.ui_json);
+  assert.equal(ui?.session?.currentSlug, currentSlug, 'session must still be on the active slug');
+
+  const historical = Array.from({ length: HISTORICAL_SLUGS }, (_, index) => `history-word-${index}`);
+  const status = { ...(ui.session.status || {}) };
+  const sentenceHistory = { ...(ui.session.sentenceHistory || {}) };
+  for (const slug of historical) {
+    status[slug] = { done: true, needed: true };
+    sentenceHistory[slug] = { lastSentenceId: 's1' };
+  }
+  ui.session = {
+    ...ui.session,
+    uniqueWords: [...historical, currentSlug],
+    results: historical.map((slug) => ({ slug, correct: true })),
+    queue: [currentSlug],
+    status,
+    sentenceHistory,
+    guardianResults: Object.fromEntries(historical.map((slug) => [slug, { ok: true }])),
+  };
+
+  DB.db.prepare(`
+    UPDATE spelling_learner_state
+    SET ui_json = ?
+    WHERE learner_id = ?
+  `).run(JSON.stringify(ui), learnerId);
+
+  const insertItem = DB.db.prepare(`
+    INSERT INTO spelling_item_state (
+      learner_id, slug, progress_json, guardian_json, pattern_json,
+      updated_at, updated_by_account_id
+    ) VALUES (?, ?, ?, NULL, NULL, ?, 'adult-submit-ws')
+  `);
+  for (const slug of historical) {
+    insertItem.run(
+      learnerId,
+      slug,
+      JSON.stringify({ stage: 4, attempts: 4, correct: 4, wrong: 0, dueDay: 1 }),
+      NOW,
+    );
+  }
+}
+
+test('submit-answer working-set bind stays on the current slug despite fat session history', async () => {
   const harness = createHarness();
   try {
     const start = await harness.command('start-session', {
@@ -106,29 +164,11 @@ test('fresh learner single-slug start must not bind the full published catalogue
     assert.equal(start.response.status, 200, JSON.stringify(start.body));
     assert.equal(start.body.ok, true);
 
-    const slugs = workingSetSlugBind(start.queryLog);
-    assert.deepEqual(
-      slugs,
-      ['possess'],
-      `single-slug start must request only the explicit slug; got ${slugs.length} slugs`,
-    );
-  } finally {
-    harness.close();
-  }
-});
-
-test('stale-stats submit-answer stays on active session slugs instead of expanding to the full catalogue', async () => {
-  const harness = createHarness();
-  try {
-    const start = await harness.command('start-session', {
-      mode: 'single',
-      slug: 'possess',
-      length: 1,
-    });
-    assert.equal(start.response.status, 200, JSON.stringify(start.body));
+    fattenActiveSessionHistory(harness.DB, harness.learnerId, 'possess');
 
     const wrong = await harness.command('submit-answer', { typed: 'posess' });
     assert.equal(wrong.response.status, 200, JSON.stringify(wrong.body));
+    assert.equal(wrong.body.ok, true);
 
     const slugs = workingSetSlugBind(wrong.queryLog);
     assert.deepEqual(

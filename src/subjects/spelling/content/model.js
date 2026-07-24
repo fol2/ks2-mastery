@@ -28,6 +28,40 @@ export {
 };
 
 export const SPELLING_CONTENT_SUBJECT_ID = 'spelling';
+
+// Isolate-local memo for learner-visible projection. Spelling commands resolve
+// content on every request; the runtime-content cache already returns the same
+// snapshot object, so re-normalising ~1480 words each time was pure Free-tier
+// CPU. Entries stay valid until the next scheduled pool activation (or forever
+// when no schedule remains).
+const LEARNER_VISIBLE_SNAPSHOT_CACHE = new WeakMap();
+
+function learnerVisibleEnvCacheKey(env = {}, pools = []) {
+  const flags = [];
+  for (const pool of Array.isArray(pools) ? pools : []) {
+    const visibility = normalisePoolVisibility(pool?.visibility);
+    if (visibility.state === 'rollout-flagged' && visibility.rolloutFlag) {
+      flags.push(visibility.rolloutFlag);
+    }
+  }
+  if (!flags.length) return '';
+  flags.sort();
+  const safeEnv = isPlainObject(env) ? env : {};
+  return flags.map((flag) => `${flag}=${String(safeEnv[flag] ?? '')}`).join('&');
+}
+
+function nextLearnerVisibleInvalidationAt(pools = [], nowTs) {
+  let nextAt = Number.POSITIVE_INFINITY;
+  for (const pool of Array.isArray(pools) ? pools : []) {
+    if (pool?.active === false || pool?.retired) continue;
+    const visibility = normalisePoolVisibility(pool?.visibility);
+    if (visibility.state !== 'scheduled') continue;
+    if (visibility.scheduledAt > nowTs && visibility.scheduledAt < nextAt) {
+      nextAt = visibility.scheduledAt;
+    }
+  }
+  return nextAt;
+}
 /**
  * P2 U10 (H7 adversarial synthesis): jump straight from version 2 to 4,
  * skipping 3, so the content-model version never collides with
@@ -466,12 +500,21 @@ export function resolveLearnerVisibleSpellingSnapshot(rawSnapshot, {
   now = Date.now(),
   env = {},
 } = {}) {
+  const nowTs = Number.isFinite(Number(now)) ? Number(now) : Date.now();
+  if (rawSnapshot && typeof rawSnapshot === 'object') {
+    const cached = LEARNER_VISIBLE_SNAPSHOT_CACHE.get(rawSnapshot);
+    if (cached && cached.validUntil > nowTs) {
+      const envKey = learnerVisibleEnvCacheKey(env, cached.pools);
+      if (envKey === cached.envKey) return cached.snapshot;
+    }
+  }
+
   const snapshot = normalisePublishedSnapshot(rawSnapshot);
   const visiblePoolIds = new Set(snapshot.pools
     .filter((pool) => (
       pool.active !== false
         && !pool.retired
-        && isSpellingPoolLearnerVisible(pool.visibility, { now, env })
+        && isSpellingPoolLearnerVisible(pool.visibility, { now: nowTs, env })
     ))
     .map((pool) => pool.id));
   const pools = snapshot.pools.filter((pool) => visiblePoolIds.has(pool.id));
@@ -481,13 +524,23 @@ export function resolveLearnerVisibleSpellingSnapshot(rawSnapshot, {
       && visiblePoolIds.has(track.poolId)
   ));
   const words = snapshot.words.filter((word) => visiblePoolIds.has(word.spellingPool));
-  return {
+  const resolved = {
     ...snapshot,
     pools,
     rewardTracks,
     words,
     wordBySlug: Object.fromEntries(words.map((word) => [word.slug, word])),
   };
+
+  if (rawSnapshot && typeof rawSnapshot === 'object') {
+    LEARNER_VISIBLE_SNAPSHOT_CACHE.set(rawSnapshot, {
+      snapshot: resolved,
+      pools: snapshot.pools,
+      envKey: learnerVisibleEnvCacheKey(env, snapshot.pools),
+      validUntil: nextLearnerVisibleInvalidationAt(snapshot.pools, nowTs),
+    });
+  }
+  return resolved;
 }
 
 function normaliseDraft(rawValue) {

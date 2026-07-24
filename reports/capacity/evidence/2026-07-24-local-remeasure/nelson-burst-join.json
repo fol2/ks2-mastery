@@ -1,0 +1,293 @@
+{
+  "capturedAt": "2026-07-24T14:56:00.674Z",
+  "prodBuildHash": "6c6f6f4",
+  "hammer": {
+    "method": "nelson-api-burst",
+    "paceMs": 0,
+    "maxRounds": 60,
+    "completedRounds": 39,
+    "total": 158,
+    "statuses": {
+      "200": 157,
+      "503": 1
+    },
+    "hardFails": [
+      {
+        "round": 39,
+        "step": "wrong",
+        "slug": "question",
+        "status": 503,
+        "wallMs": 76.4,
+        "ray": "a203c4e4093dc5eb-LHR",
+        "requestId": null,
+        "title": null,
+        "bodySnippet": "{\"type\":\"https://developers.cloudflare.com/support/troubleshooting/http-status-codes/cloudflare-1xxx-errors/error-1102/\",\"title\":\"Error 1102: Worker exceeded resource limits\",\"status\":503,\"detail\":\"A Worker script configured by the website owner exceeded its resource limits (CPU time or memory) and was terminated.\",\"instance\":\"a203c4e4093dc5eb\",\"error_code\":1102,\"error_name\":\"worker_exceeded_resou"
+      }
+    ],
+    "html1102Or503": 1,
+    "d1RowsRead": {
+      "n": 157,
+      "min": 60,
+      "p50": 62,
+      "p95": 66,
+      "max": 67
+    },
+    "serverWallMs": {
+      "n": 157,
+      "p50": 59,
+      "p95": 70,
+      "max": 186
+    },
+    "stoppedReason": "hard-fail-wrong:503",
+    "learnerId": "86a6c60f-e1ef-4985-954d-95ab13349c6f",
+    "learnerName": "Nelson",
+    "bootstrapRay": "a203c463fc5cc5eb-LHR",
+    "startedAt": "2026-07-24T14:55:40.368Z",
+    "finishedAt": "2026-07-24T14:56:00.674Z",
+    "label": "nelson-burst-6c6f6f4",
+    "prodBuildHint": "see /api/version"
+  },
+  "join": {
+    "tailObjects": 164,
+    "joined": 158,
+    "missingRay": 0,
+    "outcomes": {
+      "ok": 163,
+      "exceededCpu": 1
+    },
+    "okCfCpu": {
+      "n": 157,
+      "min": 13,
+      "p50": 18,
+      "p95": 57,
+      "max": 217
+    },
+    "failCfCpu": [
+      11
+    ],
+    "fails": [
+      {
+        "round": 39,
+        "step": "wrong",
+        "slug": "question",
+        "status": 503,
+        "clientWall": 76.4,
+        "serverWallMs": null,
+        "d1RowsRead": null,
+        "ray": "a203c4e4093dc5eb-LHR",
+        "requestId": null,
+        "cfCpu": 11,
+        "cfWall": 57,
+        "outcome": "exceededCpu",
+        "cfStatus": 503,
+        "exceptions": [
+          {
+            "name": "Error",
+            "message": "Worker exceeded CPU time limit.",
+            "timestamp": 1784904960682
+          }
+        ]
+      }
+    ],
+    "nearFailWindow": [
+      {
+        "round": 36,
+        "step": "correct",
+        "slug": "promise",
+        "status": 200,
+        "clientWall": 104.3,
+        "serverWallMs": 56,
+        "d1RowsRead": 60,
+        "ray": "a203c4db780cc5eb-LHR",
+        "requestId": "ks2_req_df9bd96e-23ac-4fd0-8bdb-55cfb2825113",
+        "cfCpu": 16,
+        "cfWall": 82,
+        "outcome": "ok",
+        "cfStatus": 200,
+        "exceptions": []
+      },
+      {
+        "round": 36,
+        "step": "continue",
+        "slug": "promise",
+        "status": 200,
+        "clientWall": 120.8,
+        "serverWallMs": 63,
+        "d1RowsRead": 62,
+        "ray": "a203c4dc1a1bc5eb-LHR",
+        "requestId": "ks2_req_319c7067-95e2-47f0-8bce-58c5cc51193b",
+        "cfCpu": 18,
+        "cfWall": 96,
+        "outcome": "ok",
+        "cfStatus": 200,
+        "exceptions": []
+      },
+      {
+        "round": 37,
+        "step": "start",
+        "slug": "purpose",
+        "status": 200,
+        "clientWall": 107.9,
+        "serverWallMs": 57,
+        "d1RowsRead": 66,
+        "ray": "a203c4dcdc76c5eb-LHR",
+        "requestId": "ks2_req_4168ec7b-d97c-479c-854f-3ddb780b5cc3",
+        "cfCpu": 16,
+        "cfWall": 85,
+        "outcome": "ok",
+        "cfStatus": 200,
+        "exceptions": []
+      },
+      {
+        "round": 37,
+        "step": "wrong",
+        "slug": "purpose",
+        "status": 200,
+        "clientWall": 102.1,
+        "serverWallMs": 57,
+        "d1RowsRead": 60,
+        "ray": "a203c4dd8e43c5eb-LHR",
+        "requestId": "ks2_req_a0f00edc-de50-40e7-9e9c-f6c52cef93ff",
+        "cfCpu": 16,
+        "cfWall": 82,
+        "outcome": "ok",
+        "cfStatus": 200,
+        "exceptions": []
+      },
+      {
+        "round": 37,
+        "step": "correct",
+        "slug": "purpose",
+        "status": 200,
+        "clientWall": 237.2,
+        "serverWallMs": 61,
+        "d1RowsRead": 60,
+        "ray": "a203c4dea973c5eb-LHR",
+        "requestId": "ks2_req_89837c8d-2be2-4346-a320-6e54ab0a632d",
+        "cfCpu": 61,
+        "cfWall": 132,
+        "outcome": "ok",
+        "cfStatus": 200,
+        "exceptions": []
+      },
+      {
+        "round": 37,
+        "step": "continue",
+        "slug": "purpose",
+        "status": 200,
+        "clientWall": 99,
+        "serverWallMs": 54,
+        "d1RowsRead": 62,
+        "ray": "a203c4dfac62c5eb-LHR",
+        "requestId": "ks2_req_2b7df078-5625-4ace-aaae-213f9b69c8dc",
+        "cfCpu": 14,
+        "cfWall": 77,
+        "outcome": "ok",
+        "cfStatus": 200,
+        "exceptions": []
+      },
+      {
+        "round": 38,
+        "step": "start",
+        "slug": "quarter",
+        "status": 200,
+        "clientWall": 107.5,
+        "serverWallMs": 61,
+        "d1RowsRead": 66,
+        "ray": "a203c4e04e5dc5eb-LHR",
+        "requestId": "ks2_req_dddb92ce-7065-4a43-b6d2-106047be7c47",
+        "cfCpu": 18,
+        "cfWall": 87,
+        "outcome": "ok",
+        "cfStatus": 200,
+        "exceptions": []
+      },
+      {
+        "round": 38,
+        "step": "wrong",
+        "slug": "quarter",
+        "status": 200,
+        "clientWall": 170.7,
+        "serverWallMs": 62,
+        "d1RowsRead": 60,
+        "ray": "a203c4e0f829c5eb-LHR",
+        "requestId": "ks2_req_dbe88811-9848-4b26-abe9-d4d39012b3c9",
+        "cfCpu": 17,
+        "cfWall": 89,
+        "outcome": "ok",
+        "cfStatus": 200,
+        "exceptions": []
+      },
+      {
+        "round": 38,
+        "step": "correct",
+        "slug": "quarter",
+        "status": 200,
+        "clientWall": 115.3,
+        "serverWallMs": 67,
+        "d1RowsRead": 60,
+        "ray": "a203c4e20af3c5eb-LHR",
+        "requestId": "ks2_req_c3289a3e-4d80-47f3-a423-039cdaccd6d5",
+        "cfCpu": 17,
+        "cfWall": 93,
+        "outcome": "ok",
+        "cfStatus": 200,
+        "exceptions": []
+      },
+      {
+        "round": 38,
+        "step": "continue",
+        "slug": "quarter",
+        "status": 200,
+        "clientWall": 105.3,
+        "serverWallMs": 58,
+        "d1RowsRead": 62,
+        "ray": "a203c4e2bd4cc5eb-LHR",
+        "requestId": "ks2_req_afae90df-b4de-49ae-9b30-16e2b226ed8f",
+        "cfCpu": 19,
+        "cfWall": 87,
+        "outcome": "ok",
+        "cfStatus": 200,
+        "exceptions": []
+      },
+      {
+        "round": 39,
+        "step": "start",
+        "slug": "question",
+        "status": 200,
+        "clientWall": 101.8,
+        "serverWallMs": 56,
+        "d1RowsRead": 66,
+        "ray": "a203c4e36f11c5eb-LHR",
+        "requestId": "ks2_req_7b6dcc6a-2ce5-4cb2-8c21-c68bcf080e28",
+        "cfCpu": 13,
+        "cfWall": 80,
+        "outcome": "ok",
+        "cfStatus": 200,
+        "exceptions": []
+      },
+      {
+        "round": 39,
+        "step": "wrong",
+        "slug": "question",
+        "status": 503,
+        "clientWall": 76.4,
+        "serverWallMs": null,
+        "d1RowsRead": null,
+        "ray": "a203c4e4093dc5eb-LHR",
+        "requestId": null,
+        "cfCpu": 11,
+        "cfWall": 57,
+        "outcome": "exceededCpu",
+        "cfStatus": 503,
+        "exceptions": [
+          {
+            "name": "Error",
+            "message": "Worker exceeded CPU time limit.",
+            "timestamp": 1784904960682
+          }
+        ]
+      }
+    ]
+  }
+}

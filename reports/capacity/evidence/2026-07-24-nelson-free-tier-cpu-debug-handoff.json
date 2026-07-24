@@ -1,0 +1,223 @@
+{
+  "schema": "ks2.capacity.debug-handoff.v1",
+  "capturedAt": "2026-07-24T18:54:46Z",
+  "capturedBy": "acceptance-criteria-qa-reviewer",
+  "branch": "fix/free-tier-nelson-spelling-cpu",
+  "gitSha": "f4e48b2359585a708b1d0286bd3d570cc1824f54",
+  "cloudAgent": {
+    "bcId": "bc-fcc98b36-918b-403a-8c38-fbc803d1c05e",
+    "name": "Cloud agent debug context",
+    "url": "https://cursor.com/agents/bc-fcc98b36-918b-403a-8c38-fbc803d1c05e"
+  },
+  "question": "Why does Nelson (and multiplayer) Spelling on Workers Free hit Cloudflare Error 1102 / exceededCpu, and what is still open after H2–H4?",
+  "lockedRootCause": {
+    "id": "RC-FREE-10MS-FLEXIBILITY",
+    "confidence": "very high",
+    "locked": true,
+    "source": "reports/capacity/evidence/2026-07-23-nelson-wrong-correct-rca-verdict.json",
+    "statement": "Workers Free caps CPU at 10ms per request. Nelson spelling command cost under rapid successive submits sits near/above that budget and relies on isolate flexibility. Sustained burst (or overlapping multiplayer streams) withdraws flexibility → exceededCpu / HTML Error 1102 even when the failing invocation only records ~11–17ms CF CPU.",
+    "primaryConstraint": {
+      "workersPlan": "Free",
+      "configuredCpuMsPerRequest": 10,
+      "wranglerLimitsCpuMs": null,
+      "confirmedBy": "James",
+      "confirmedAt": "2026-07-23T23:45:46.974Z"
+    },
+    "triggerShapes": [
+      "Rapid sequential wrong→correct (+ continue) without human pacing",
+      "N≥2 concurrent spelling command streams once the isolate is stressed",
+      "Post-storm single requests while isolate is still exhausted (FC5)"
+    ],
+    "nonTriggers": [
+      "Human-paced submits with ≥~500ms gaps on a cool isolate (historically)",
+      "Thin/demo profiles under light load (lower d1RowsRead / CPU)"
+    ],
+    "platformSignatures": {
+      "outcome": "exceededCpu",
+      "exception": "Worker exceeded CPU time limit.",
+      "http": "Cloudflare HTML Error 1102 (often no x-ks2-request-id, no app JSON)",
+      "paradox": "Fail cpuTime can be lower than peer OK requests on the same scriptVersion (flexibility withdrawal)"
+    }
+  },
+  "falsified": [
+    {
+      "id": "H-hard-50ms-budget",
+      "claim": "Request exceeds a hard ~50ms CPU budget because work is too expensive",
+      "whyFalse": "Fail cpuTime often 11–17ms while OK peers reach 64–270ms on same scriptVersion"
+    },
+    {
+      "id": "H-cpu-climbs",
+      "claim": "CPU climbs across rounds until it crosses a threshold",
+      "whyFalse": "Burst averages did not climb; failure is flexibility withdrawal, not monotonic climb"
+    },
+    {
+      "id": "H-cas-race",
+      "claim": "Classic CAS double-submit race causing 503",
+      "whyFalse": "Concurrent same-revision → 409 stale_write locally; prod fail outcome is exceededCpu"
+    },
+    {
+      "id": "H-projection-unavailable",
+      "claim": "App-level projection_unavailable 503",
+      "whyFalse": "Fail body is Cloudflare HTML 1102, not JSON projection_unavailable"
+    },
+    {
+      "id": "H-only-catalogue-scan",
+      "claim": "FC1 catalogue stale-stats scan is the only remaining cause",
+      "whyFalse": "After FC1 fix, Nelson still exceededCpu with d1RowsRead p50≈60–62 (not ~1512)"
+    }
+  ],
+  "failureClasses": {
+    "index": "reports/capacity/evidence/2026-07-24-free-tier-5-player-failure-classes.json",
+    "classes": [
+      {
+        "id": "FC1-catalogue-stale-stats",
+        "status": "FIXED_VERIFIED",
+        "symptom": "Error 1102 / d1RowsRead≈1512 on start/submit",
+        "mechanism": "stale/missing gameplay stats triggered full-catalogue json_each working-set",
+        "fixCommits": ["5cc1fe99", "a6037051"],
+        "guardTest": "tests/worker-spelling-stale-stats-working-set.test.js"
+      },
+      {
+        "id": "FC2-free-10ms-nelson-single-burst",
+        "status": "FIXED_VERIFIED_ON_9c5533ea_CONDITIONAL",
+        "symptom": "Nelson wrong→correct → exceededCpu (burst and later paced500 regression on 6c6f6f4)",
+        "loadContributorsCut": [
+          {
+            "id": "H2",
+            "commit": "e8e51055",
+            "what": "release-bound catalogue fingerprint / pool cache / avoid O(words) walks",
+            "result": "paced cpu 18→16ms — insufficient alone"
+          },
+          {
+            "id": "H3",
+            "commit": "d3a4e77b",
+            "what": "submit/continue working-set = active card only (not uniqueWords/results history)",
+            "claimed": "fat session ~51 item rows per submit",
+            "caveat": "post-H3 Nelson hammer still showed itemRows p50=51 and cpu p50=18ms; H3 may not have been the paced Nelson bottleneck"
+          },
+          {
+            "id": "H4",
+            "commit": "f02dac6a",
+            "what": "memoize learner-visible spelling snapshot per isolate (WeakMap)",
+            "result": "paced/burst CF cpu p50=8ms on version 9c5533ea"
+          }
+        ],
+        "acceptanceGate": {
+          "nelsonPaced500": "≥40 rounds, 0×1102, CF cpuTime p50 <10ms",
+          "nelsonBurst": "improved / ideally 0×1102",
+          "concurrent5Short": "0×1102 after cooldown"
+        },
+        "agentEvidence": {
+          "paced500Join": "reports/capacity/evidence/2026-07-24-postfix-h4/paced500-cpu-join.json",
+          "paced500Summary": "reports/capacity/evidence/2026-07-24-postfix-h4/paced500.summary.json",
+          "burstJoin": "reports/capacity/evidence/2026-07-24-postfix-h4/burst-cpu-join.json",
+          "concurrent5Short": "reports/capacity/evidence/2026-07-24-postfix-h4/spelling-hammer-h4-concurrent5-r4.json",
+          "prodVersionId": "9c5533ea-f73c-40b6-a114-052adc335696"
+        },
+        "independentQa": {
+          "at": "2026-07-24T18:44:22.901Z",
+          "learnerId": "86a6c60f-e1ef-4985-954d-95ab13349c6f",
+          "method": "qa-independent-nelson-paced500",
+          "artefact": "/tmp/qa-nelson-reverify/paced500-correct-rev.json",
+          "http": {
+            "rounds": 40,
+            "statuses": { "200": 160 },
+            "html1102Or503": 0,
+            "hardFails": 0,
+            "d1RowsReadP50": 60,
+            "passHttpGate": true
+          },
+          "cpu": {
+            "passCpuGate": null,
+            "note": "wrangler tail session did not capture cpuTime join; do not treat CPU as independently re-verified"
+          }
+        }
+      },
+      {
+        "id": "FC3-multiplayer-concurrent-1102",
+        "status": "SHORT_LOCAL_PASS_AFTER_H4_LONGER_STILL_PENDING",
+        "symptom": "N≥2 concurrent spelling streams → Error 1102",
+        "whyStillOpen": "H4 concurrent5 evidence is only 4 rounds / ~7s thin demo learners (d1RowsRead≈33–34), not fat Nelson-like free play. Pre-H4 longer concurrent5 paced-100ms had 503/1102.",
+        "preH4Evidence": [
+          "reports/capacity/evidence/2026-07-24-multiplayer-hammers/spelling-hammer-concurrent5-paced-100ms.json",
+          "reports/capacity/evidence/2026-07-24-multiplayer-hammers/spelling-hammer-concurrent5-pace-0-retest.json",
+          "reports/capacity/evidence/2026-07-24-multiplayer-hammers/spelling-hammer-staggered5-pace100-stagger250.json"
+        ],
+        "nextEvidence": "longer concurrent-5 / true free-play soak with cooldown discipline + wrangler tail cpuTime join"
+      },
+      {
+        "id": "FC4-demo-rate-limited",
+        "status": "EXPECTED_NOT_WORKER_CRASH",
+        "symptom": "HTTP 400 demo_rate_limited after dense demo volume"
+      },
+      {
+        "id": "FC5-isolate-exhausted-single-start",
+        "status": "OBSERVED_TRANSIENT",
+        "symptom": "After heavy hammers, even thin/paced traffic can 1102 until isolate recovers",
+        "operatorRule": "Keep multiplayer hammers short; cool down ≥2 minutes before remeasure"
+      }
+    ]
+  },
+  "overallGoal": {
+    "statement": "Free-tier full game for 5 fat Nelson-like players playing freely",
+    "verdict": "NOT_MET",
+    "reason": "FC2 single-player gates are conditionally green; FC3 longer multiplayer soak is still pending"
+  },
+  "debugPlaybook": {
+    "reproduceNelsonPacedHttp": {
+      "learnerId": "86a6c60f-e1ef-4985-954d-95ab13349c6f",
+      "origin": "https://ks2.eugnel.uk",
+      "critical": "Use bootstrap revision.selectedLearnerRevision — NOT learners.byId[id].stateRevision (missing on real accounts → expectedRevision 0 → all 409)",
+      "committedHammerBug": {
+        "file": "scripts/spelling-wrong-correct-hammer.mjs",
+        "via": "scripts/lib/production-smoke.mjs loadBootstrap()",
+        "symptom": "COOKIE_FILE Nelson run returns 160×409 with empty bodies",
+        "agentMethodLabel": "nelson-api-client-sim-gap (label used in evidence; not present in committed hammer method string)"
+      },
+      "paceMs": 500,
+      "maxRounds": 40,
+      "passHttp": "completedRounds≥40 && html1102Or503===0 && hardFails===0"
+    },
+    "reproduceCpuJoin": {
+      "tooling": "node scripts/wrangler-oauth.mjs tail --format json",
+      "join": "scripts/join-capacity-worker-logs.mjs (cpuTimeMs + outcome exceededCpu)",
+      "gate": "command-ok CF cpuTime p50 < 10ms",
+      "tailRisk": "H4 paced join still showed p95=12 max=52 — tail still above Free budget"
+    },
+    "hotFiles": [
+      "worker/src/subjects/spelling/commands.js",
+      "worker/src/subjects/spelling/gameplay-state.js",
+      "src/subjects/spelling/content/model.js",
+      "src/subjects/spelling/remote-actions.js",
+      "src/platform/runtime/subject-command-actions.js",
+      "docs/operations/capacity.md"
+    ],
+    "guardTests": [
+      "tests/spelling-gameplay-stats-catalogue-cpu.test.js",
+      "tests/spelling-learner-visible-snapshot-cpu.test.js",
+      "tests/worker-spelling-stale-stats-working-set.test.js",
+      "tests/worker-spelling-submit-answer-working-set-cpu.test.js"
+    ],
+    "openCorrectnessRisk": {
+      "id": "stale-release-pool-totals-cache",
+      "file": "worker/src/subjects/spelling/gameplay-state.js",
+      "summary": "RELEASE_CATALOGUE_POOL_CACHE keyed by releaseId/version may keep pool totals after same-release scheduled/rollout visibility changes",
+      "severity": "medium",
+      "source": "bugbot review on H2/H4 branch"
+    }
+  },
+  "qaShipCall": {
+    "fc2SingleNelson": "CONDITIONAL_PASS — HTTP independently re-verified; CPU relies on agent join for 9c5533ea",
+    "fivePlayerGoal": "REJECT — longer concurrent / fat soak still required",
+    "doNotClaim": [
+      "classroom readiness from Free-tier alone",
+      "FC2 FIXED implies 5-player free play fixed",
+      "H3 alone fixed Nelson paced CPU (measurements contradict)"
+    ]
+  },
+  "relatedDocs": [
+    "docs/operations/capacity.md#free-tier-child-command-pacing",
+    "docs/operations/capacity.md#spelling-stale-stats-working-set-trap",
+    "docs/solutions/debugging/nelson-free-tier-spelling-cpu-1102-rca-2026-07-24.md"
+  ]
+}

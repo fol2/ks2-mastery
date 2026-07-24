@@ -1,0 +1,35 @@
+{
+  "summary": {
+    "statuses": {
+      "200": 100
+    },
+    "completedRounds": 25,
+    "html1102Or503": 0,
+    "hardFails": [],
+    "stoppedReason": "max-rounds",
+    "d1RowsRead": {
+      "n": 100,
+      "min": 60,
+      "p50": 60,
+      "p95": 66,
+      "max": 66
+    }
+  },
+  "join": {
+    "cmds": 50,
+    "ok": 50,
+    "fail": 0,
+    "missing": 0
+  },
+  "failOutcomes": [],
+  "cpuCmdOk": {
+    "n": 50,
+    "min": 5,
+    "p50": 8,
+    "p95": 10,
+    "max": 11
+  },
+  "versions": [
+    "9c5533ea-f73c-40b6-a114-052adc335696"
+  ]
+}

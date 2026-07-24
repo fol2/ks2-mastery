@@ -1,0 +1,69 @@
+{
+  "acceptance": {
+    "rounds": 40,
+    "http1102": 0,
+    "cpuP50": 8,
+    "steadyCpuP50": 8,
+    "passHttp": true,
+    "passCpu": true,
+    "passSteadyCpu": true
+  },
+  "join": {
+    "cmds": 80,
+    "ok": 80,
+    "fail": 0,
+    "missing": 0
+  },
+  "failOutcomes": [],
+  "cpuCmdOk": {
+    "n": 80,
+    "min": 6,
+    "p50": 8,
+    "p95": 12,
+    "max": 52
+  },
+  "cpuSteady": {
+    "n": 76,
+    "min": 6,
+    "p50": 8,
+    "p95": 11,
+    "max": 52
+  },
+  "first8Cpu": [
+    12,
+    12,
+    11,
+    9,
+    11,
+    9,
+    12,
+    9
+  ],
+  "versions": [
+    "9c5533ea-f73c-40b6-a114-052adc335696"
+  ],
+  "summary": {
+    "statuses": {
+      "200": 160
+    },
+    "d1RowsRead": {
+      "n": 160,
+      "min": 60,
+      "p50": 60,
+      "p95": 66,
+      "max": 67
+    },
+    "serverWallMs": {
+      "n": 160,
+      "p50": 104,
+      "p95": 132,
+      "max": 316
+    }
+  },
+  "vsPrior": {
+    "baseline": 18,
+    "h2": 16,
+    "h3": 18,
+    "h4": 8
+  }
+}

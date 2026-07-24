@@ -1,0 +1,33 @@
+{
+  "method": "nelson-api-client-sim-gap",
+  "paceMs": 500,
+  "maxRounds": 40,
+  "completedRounds": 40,
+  "total": 160,
+  "statuses": {
+    "200": 160
+  },
+  "hardFails": [],
+  "html1102Or503": 0,
+  "d1RowsRead": {
+    "n": 160,
+    "min": 60,
+    "p50": 60,
+    "p95": 66,
+    "max": 67
+  },
+  "serverWallMs": {
+    "n": 160,
+    "p50": 104,
+    "p95": 132,
+    "max": 316
+  },
+  "stoppedReason": "max-rounds",
+  "learnerId": "86a6c60f-e1ef-4985-954d-95ab13349c6f",
+  "learnerName": "Nelson",
+  "bootstrapRay": "a20450341edfd094-LHR",
+  "startedAt": "2026-07-24T16:31:07.181Z",
+  "finishedAt": "2026-07-24T16:32:55.745Z",
+  "label": "h4-paced500",
+  "prodBuildHint": "see /api/version"
+}
