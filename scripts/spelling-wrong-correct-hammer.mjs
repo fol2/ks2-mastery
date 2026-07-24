@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { performance } from 'node:perf_hooks';
 import { createDemoSession, loadBootstrap, createRequestId } from './lib/production-smoke.mjs';
 
@@ -7,6 +7,8 @@ const origin = process.env.ORIGIN || 'https://ks2.eugnel.uk';
 const paceMs = Number(process.env.PACE_MS || 0);
 const maxRounds = Number(process.env.MAX_ROUNDS || 40);
 const label = process.env.HAMMER_LABEL || (paceMs > 0 ? `paced-${paceMs}` : 'burst');
+const cookieFile = process.env.COOKIE_FILE || '';
+const forcedLearnerId = process.env.LEARNER_ID || '';
 const slugs = (process.env.SLUGS || [
   'possess', 'position', 'possible', 'potatoes', 'pressure', 'probably', 'promise', 'purpose',
   'quarter', 'question', 'recent', 'regular', 'reign', 'remember', 'sentence', 'separate',
@@ -45,8 +47,22 @@ async function rawCommand({ cookie, learnerId, revision, command, payload }) {
   };
 }
 
-const { cookie, session } = await createDemoSession(origin);
-const boot = await loadBootstrap(origin, cookie, { expectedSession: session });
+let cookie;
+let session = null;
+let boot;
+if (cookieFile) {
+  cookie = readFileSync(cookieFile, 'utf8').trim();
+  if (!cookie.startsWith('ks2_session=')) {
+    throw new Error('COOKIE_FILE must contain a ks2_session=... value');
+  }
+  boot = await loadBootstrap(origin, cookie);
+  if (forcedLearnerId && boot.learnerId !== forcedLearnerId) {
+    throw new Error(`Bootstrap selected learner ${boot.learnerId} did not match LEARNER_ID ${forcedLearnerId}`);
+  }
+} else {
+  ({ cookie, session } = await createDemoSession(origin));
+  boot = await loadBootstrap(origin, cookie, { expectedSession: session });
+}
 let revision = boot.revision;
 const log = []; const hardFails = []; const statuses = {};
 const startedAt = new Date().toISOString();
@@ -98,7 +114,9 @@ const summary = {
   paceMs, maxRounds, completedRounds, total: log.length, statuses, hardFails,
   html1102Or503: log.filter((r) => r.status === 503 || /1102/i.test(String(r.bodySnippet || ''))).length,
   d1RowsRead: sorted.length ? { n: sorted.length, min: sorted[0], p50: sorted[Math.floor(sorted.length * 0.5)], p95: sorted[Math.floor(sorted.length * 0.95)], max: sorted.at(-1) } : null,
-  stoppedReason, learnerId: boot.learnerId, accountId: session.accountId, startedAt,
+  stoppedReason, learnerId: boot.learnerId, accountId: session?.accountId || null,
+  authMode: cookieFile ? 'cookie-file' : 'demo-session',
+  startedAt,
   finishedAt: new Date().toISOString(), label,
 };
 const path = `reports/capacity/evidence/spelling-hammer-${label}.json`;

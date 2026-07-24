@@ -1,9 +1,10 @@
 {
-  "capturedAt": "2026-07-24T12:21:30.000Z",
+  "capturedAt": "2026-07-24T15:08:00.000Z",
   "prodBuildHash": "6c6f6f4",
   "goal": "Free-tier full game for 5 fat Nelson-like players playing freely",
   "method": "evidence-first; no product code fix in this capture",
   "stoppedHeavyHammers": true,
+  "localRemeasure": "reports/capacity/evidence/2026-07-24-local-remeasure/index.json",
   "postStormRecovery": {
     "note": "After multiplayer hammers, even single thin start returned Error 1102 until isolate recovered. Light probes 5/5 OK after ~2+ minutes idle.",
     "lightStartProbe": {
@@ -22,46 +23,60 @@
         "reports/capacity/evidence/2026-07-24-prod-stress-stale-stats-rca.json",
         "reports/capacity/evidence/2026-07-24-prod-stress-stale-stats-postdeploy.json"
       ],
-      "currentBuildCheck": "thin start/submit d1RowsRead p50=33–34 (not ~1512)"
+      "currentBuildCheck": "thin start/submit d1RowsRead p50=33–34; Nelson p50=62 (not ~1512)"
     },
     {
       "id": "FC2-free-10ms-nelson-single-burst",
-      "status": "LOCKED_PRIOR_RCA_NEEDS_REMEASURE_ON_6c6f6f4",
-      "symptom": "Nelson wrong→correct ungapped burst → Error 1102 exceededCpu",
+      "status": "REMEASURED_CONFIRMED_ON_6c6f6f4",
+      "symptom": "Nelson wrong→correct → Error 1102 exceededCpu (burst and paced500)",
       "evidence": [
-        "reports/capacity/evidence/2026-07-23-nelson-wrong-correct-rca-verdict.json"
+        "reports/capacity/evidence/2026-07-23-nelson-wrong-correct-rca-verdict.json",
+        "reports/capacity/evidence/2026-07-24-local-remeasure/index.json",
+        "reports/capacity/evidence/2026-07-24-local-remeasure/nelson-burst-join.json",
+        "reports/capacity/evidence/2026-07-24-local-remeasure/nelson-paced500-fresh-join.json"
       ],
       "measurementsPrior": {
         "burstCfCpuP50Ms": 15,
         "paced500CfCpuP50Ms": 3,
         "failCpuTimeMs": 17
       },
-      "blockerToRemeasure": "Need logged-in Nelson cookie (learnerId 86a6c60f-e1ef-4985-954d-95ab13349c6f). Demo cannot synthesise Nelson-scale fat history under demo rate limits."
+      "measurementsOn6c6f6f4": {
+        "burstFailCpuTimeMs": 11,
+        "burstOkCfCpuP50Ms": 18,
+        "burstOkCfCpuMaxMs": 217,
+        "paced500FailCpuTimeMs": 12,
+        "paced500OkCfCpuP50Ms": 18,
+        "paced500OkCfCpuMaxMs": 270,
+        "d1RowsReadP50": 62
+      },
+      "regressionNote": "Prior RCA: paced500 → 0×503. Remeasure after cooldown: paced500 still exceededCpu at round 37.",
+      "blockerToRemeasure": null
     },
     {
       "id": "FC3-multiplayer-concurrent-1102",
-      "status": "REPRODUCED_ON_6c6f6f4",
+      "status": "REPRODUCED_ON_6c6f6f4_CLOUD_SHORT_LOCAL_DID_NOT_REPRO",
       "symptom": "N≥2 concurrent spelling command streams → Cloudflare Error 1102 (error_code 1102), often with no x-ks2-request-id",
       "evidenceFiles": [
-        "/tmp/ks2-stress-6c6f6f4/spelling-hammer-concurrent5-paced-100ms.json",
-        "/tmp/ks2-stress-6c6f6f4/spelling-hammer-concurrent5-pace-0-retest.json",
-        "/tmp/ks2-stress-6c6f6f4/spelling-hammer-concurrent5-pace-450-retest.json",
-        "/tmp/ks2-stress-6c6f6f4/spelling-hammer-concurrent5-pace-1000-retest.json",
-        "/tmp/ks2-stress-6c6f6f4/spelling-hammer-staggered5-pace100-stagger250.json",
-        "/tmp/ks2-stress-6c6f6f4/spelling-hammer-concurrent2-pace-100.json",
-        "/tmp/ks2-stress-6c6f6f4/spelling-hammer-concurrent3-pace-100.json"
+        "reports/capacity/evidence/2026-07-24-multiplayer-hammers/spelling-hammer-concurrent5-paced-100ms.json",
+        "reports/capacity/evidence/2026-07-24-multiplayer-hammers/spelling-hammer-concurrent5-pace-0-retest.json",
+        "reports/capacity/evidence/2026-07-24-multiplayer-hammers/spelling-hammer-staggered5-pace100-stagger250.json",
+        "reports/capacity/evidence/2026-07-24-multiplayer-hammers/spelling-hammer-concurrent2-pace-100.json",
+        "reports/capacity/evidence/2026-07-24-local-remeasure/spelling-hammer-concurrent2-pace100-r12.json",
+        "reports/capacity/evidence/2026-07-24-local-remeasure/spelling-hammer-concurrent5-pace100-r4.json"
       ],
       "observed": {
         "singleThinBurst0ms": { "rounds": 25, "http200": 100, "http503": 0 },
         "singleThinPaced100ms": { "rounds": 20, "http200": 80, "http503": 0 },
-        "concurrent5Lockstep": "repeated Error 1102 at pace 0/100/450/1000ms once isolate stressed",
+        "concurrent5Lockstep": "repeated Error 1102 at pace 0/100/450/1000ms once isolate stressed (cloud agent)",
         "staggered5Pace100Stagger250": { "http503": 5 },
         "concurrent2Pace100": { "http503": 1 },
+        "localShortConcurrent2r12": { "http200": 96, "http503": 0 },
+        "localShortConcurrent5r4": { "http200": 80, "http503": 0, "spellingCpuP50": 25, "spellingCpuMax": 355 },
         "body": "Error 1102: Worker exceeded resource limits / error_code 1102",
         "priorOkCapacityWhenPresent": { "d1RowsRead": "33–39", "serverWallMsP50": "~630" }
       },
-      "interpretation": "Matches Free 10ms CPU/request + isolate flexibility withdrawal under overlapping spelling commands. Per-request pacing alone does not protect multiplayer when several learners hit the Worker together. Not FC1 (rows stay ~33).",
-      "missingForCpuAttribution": "wrangler tail / CF invocation cpuTime on failing rays (a202c91f…, a202caa9…, a202d0a7…)"
+      "interpretation": "Matches Free 10ms CPU/request + isolate flexibility withdrawal under overlapping spelling commands. Short local concurrent demos after cooldown did not reproduce; longer cloud hammers did. Not FC1 (rows stay ~33).",
+      "cpuAttribution": "Local wrangler tail on concurrent5 r4: 0×exceededCpu; spelling cpuTime p50≈25ms max≈355ms under flexibility. Nelson FC2 fails remain the clearer cpuTime join (11–12ms exceededCpu)."
     },
     {
       "id": "FC4-demo-rate-limited",
@@ -72,8 +87,11 @@
     {
       "id": "FC5-isolate-exhausted-single-start",
       "status": "OBSERVED_TRANSIENT",
-      "symptom": "After heavy concurrent hammers, even single thin start-session returns Error 1102 until isolate recovers",
-      "evidence": "/tmp/ks2-stress-post/spelling-hammer-postcooldown-thin-burst.json then recovered light probes",
+      "symptom": "After heavy concurrent/Nelson hammers, even paced or thin traffic can 1102 until isolate recovers",
+      "evidence": [
+        "reports/capacity/evidence/2026-07-24-multiplayer-hammers/spelling-hammer-postcooldown-thin-burst.json",
+        "reports/capacity/evidence/2026-07-24-local-remeasure/nelson-paced500-hot-isolate.json"
+      ],
       "note": "Stress testing can temporarily degrade real users on Free; keep multiplayer hammers short and cool down."
     }
   ],
@@ -83,9 +101,9 @@
     "note": "10k spelling_item_state rows; mid-session submit d1RowsRead≈10 locally. Local SQLite ≠ CF Free cpuTime."
   },
   "nextEvidenceSteps": [
-    "Obtain Nelson ks2_session cookie; remeasure single-player 0/100/450ms on build 6c6f6f4",
-    "Capture wrangler tail / CF logs for concurrent rays to record cpuTime on 1102 vs OK",
-    "Only after cpuTime attribution: cut spelling command CPU until concurrent thin N=5 stays under Free 10ms, then re-test Nelson fat",
+    "DONE: Nelson cookie + wrangler tail cpuTime on 6c6f6f4 (FC2 confirmed; paced500 no longer safe)",
+    "Product fix gate: cut Nelson spelling command CF cpuTime p50 ~18ms → <10ms Free budget",
+    "After CPU cut: re-run Nelson paced500 (≥40 rounds 0×1102) then burst; only then longer concurrent N=5",
     "Avoid further long concurrent prod storms without cooldown"
   ],
   "noFixApplied": true

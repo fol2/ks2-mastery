@@ -33,6 +33,9 @@ const SPELLING_STATS_POOL_KEYS = Object.freeze([
 const SPELLING_REVIEW_SCHEDULE_VERSION = 1;
 const SPELLING_STATS_CATALOGUE_VERSION = 1;
 const SPELLING_RECENT_BOSS_ACHIEVEMENT_LIMIT = 8;
+// Isolate-local cache: published releases are immutable, so pool totals keyed
+// by release fingerprint must not be recomputed on every command.
+const RELEASE_CATALOGUE_POOL_CACHE = new Map();
 const GUARDIAN_ACHIEVEMENT_PREFIX = 'achievement:spelling:guardian:7-day:';
 const RECOVERY_ACHIEVEMENT_PREFIX = 'achievement:spelling:recovery:expert:';
 const BOSS_ACHIEVEMENT_PREFIX = 'achievement:spelling:boss:clean-sweep:';
@@ -342,6 +345,12 @@ function catalogueFingerprint(words = [], {
   };
   feed(releaseId);
   feed(Number(publishedVersion) || 0);
+  // Published content releases are immutable. When a release id is present,
+  // fingerprint from release metadata only — do not walk ~1480 words on every
+  // Free-tier command just to re-hash the same catalogue.
+  if (releaseId) {
+    return hash.toString(16).padStart(8, '0');
+  }
   for (const word of Array.isArray(words) ? words : []) {
     feed(word?.slug);
     feed(word?.year);
@@ -352,21 +361,82 @@ function catalogueFingerprint(words = [], {
 }
 
 function spellingStatsCatalogue(words = [], options = {}) {
+  const fingerprint = catalogueFingerprint(words, options);
+  const releaseId = typeof options?.releaseId === 'string' ? options.releaseId : '';
+  let pools = null;
+  if (releaseId) {
+    pools = RELEASE_CATALOGUE_POOL_CACHE.get(fingerprint) || null;
+  }
+  if (!pools) {
+    pools = cataloguePoolTotals(words);
+    if (releaseId) RELEASE_CATALOGUE_POOL_CACHE.set(fingerprint, pools);
+  }
   return {
     version: SPELLING_STATS_CATALOGUE_VERSION,
-    fingerprint: catalogueFingerprint(words, options),
-    pools: cataloguePoolTotals(words),
+    fingerprint,
+    pools,
   };
+}
+
+function withCataloguePoolTotals(stats = {}, catalogue = null) {
+  const raw = parseSpellingGameplayStats(stats);
+  if (!isPlainObject(catalogue?.pools)) return raw;
+  const next = { ...raw };
+  for (const key of SPELLING_STATS_POOL_KEYS) {
+    const pool = isPlainObject(raw[key]) ? raw[key] : {};
+    next[key] = {
+      ...pool,
+      total: Number(catalogue.pools[key]) || 0,
+    };
+  }
+  return next;
+}
+
+/**
+ * Retarget catalogue fingerprint/pool totals from the in-memory published
+ * word list without rebuilding due schedules. Used when the fingerprint
+ * algorithm or content release changes but bounded gameplay history remains.
+ */
+export function refreshSpellingGameplayCatalogue(rawValue = {}, words = [], options = {}) {
+  const raw = parseSpellingGameplayStats(rawValue);
+  const catalogue = spellingStatsCatalogue(words, options);
+  return {
+    ...withCataloguePoolTotals(raw, catalogue),
+    catalogueV1: catalogue,
+    reviewScheduleV1: raw.reviewScheduleV1,
+  };
+}
+
+function resolveWordBySlug(words = [], slug = '') {
+  if (!slug || !Array.isArray(words)) return null;
+  for (const word of words) {
+    if (word?.slug === slug) return word;
+  }
+  return null;
 }
 
 export function spellingGameplayStatsAreCurrent(rawValue = {}, words = [], options = {}) {
   const raw = parseSpellingGameplayStats(rawValue);
-  const expected = spellingStatsCatalogue(words, options);
   const actual = raw.catalogueV1;
   if (!isPlainObject(actual)
     || Number(actual.version) !== SPELLING_STATS_CATALOGUE_VERSION
-    || actual.fingerprint !== expected.fingerprint
+    || typeof actual.fingerprint !== 'string'
+    || !actual.fingerprint
     || !normaliseReviewSchedule(raw.reviewScheduleV1)) return false;
+
+  // Release-bound catalogues: compare fingerprint + stored pool totals without
+  // rebuilding the catalogue from the full word list on every command.
+  const releaseId = typeof options?.releaseId === 'string' ? options.releaseId : '';
+  if (releaseId) {
+    const expectedFingerprint = catalogueFingerprint(words, options);
+    if (actual.fingerprint !== expectedFingerprint) return false;
+    return SPELLING_STATS_POOL_KEYS.every((key) => (
+      Number(actual.pools?.[key]) === Number(raw[key]?.total)
+    ));
+  }
+
+  const expected = spellingStatsCatalogue(words, options);
+  if (actual.fingerprint !== expected.fingerprint) return false;
   return SPELLING_STATS_POOL_KEYS.every((key) => (
     Number(actual.pools?.[key]) === expected.pools[key]
       && Number(raw[key]?.total) === expected.pools[key]
@@ -474,9 +544,10 @@ export function spellingGameplayStatsWithDueSchedule(stats = {}, words = [], dat
     }
   }
   const rawStats = parseSpellingGameplayStats(stats);
+  const catalogue = spellingStatsCatalogue(words, options);
   return {
-    ...rawStats,
-    catalogueV1: spellingStatsCatalogue(words, options),
+    ...withCataloguePoolTotals(rawStats, catalogue),
+    catalogueV1: catalogue,
     reviewScheduleV1: {
       version: SPELLING_REVIEW_SCHEDULE_VERSION,
       duePools: Object.fromEntries(SPELLING_STATS_POOL_KEYS.map((key) => [
@@ -510,15 +581,21 @@ export function updateSpellingGameplayStats(
   const today = Math.floor((Number.isFinite(Number(now)) ? Number(now) : Date.now()) / DAY_MS);
   const pools = materialiseSpellingGameplayStats(raw, now);
   const maps = scheduleMaps(schedule);
-  const wordsBySlug = new Map((Array.isArray(words) ? words : [])
-    .filter((word) => typeof word?.slug === 'string' && word.slug)
-    .map((word) => [word.slug, word]));
   const previousProgress = isPlainObject(previousData?.progress) ? previousData.progress : {};
   const nextProgress = isPlainObject(nextData?.progress) ? nextData.progress : {};
   const slugs = new Set([...Object.keys(previousProgress), ...Object.keys(nextProgress)]);
+  const expectedFingerprint = catalogueFingerprint(
+    Array.isArray(words) ? words : [],
+    options,
+  );
+  const catalogue = (
+    isPlainObject(raw.catalogueV1)
+    && Number(raw.catalogueV1.version) === SPELLING_STATS_CATALOGUE_VERSION
+    && raw.catalogueV1.fingerprint === expectedFingerprint
+  ) ? raw.catalogueV1 : spellingStatsCatalogue(words, options);
 
   for (const slug of slugs) {
-    const word = wordsBySlug.get(slug);
+    const word = resolveWordBySlug(words, slug);
     if (!word) continue;
     const before = progressRecord(previousProgress[slug], today);
     const after = progressRecord(nextProgress[slug], today);
@@ -547,10 +624,11 @@ export function updateSpellingGameplayStats(
     pools[key].trouble = nextSchedule.troubleAlways[key]
       + nextSchedule.troubleDuePools[key]
         .reduce((total, [day, count]) => total + (day <= today ? count : 0), 0);
+    pools[key].total = Number(catalogue.pools?.[key]) || 0;
   }
   return {
     ...pools,
-    catalogueV1: spellingStatsCatalogue(words, options),
+    catalogueV1: catalogue,
     reviewScheduleV1: nextSchedule,
   };
 }

@@ -20,6 +20,7 @@ import { createServerSpellingEngine } from './engine.js';
 import {
   materialiseSpellingGameplayStats,
   parseSpellingGameplayStats,
+  refreshSpellingGameplayCatalogue,
   spellingGameplayStatsAreCurrent,
   spellingGameplayStatsWithDueSchedule,
   updateSpellingGameplayStats,
@@ -123,6 +124,9 @@ function continueWillFinish(runtimeRecord) {
 }
 
 function commandWorkingSlugs(command, runtimeRecord, allCurrentSlugs, statsCurrent) {
+  const resolveAllCurrentSlugs = typeof allCurrentSlugs === 'function'
+    ? allCurrentSlugs
+    : () => allCurrentSlugs;
   if (command.command === 'reset-learner') {
     return { slugs: [], completeCatalogue: true };
   }
@@ -146,10 +150,10 @@ function commandWorkingSlugs(command, runtimeRecord, allCurrentSlugs, statsCurre
     // Smart, Trouble, Guardian, Boss and Pattern Quest selection inspect
     // current published progress. Pay the catalogue cost once at round
     // creation (also rebuilds stale stats), never on each answer.
-    return { slugs: allCurrentSlugs, completeCatalogue: true };
+    return { slugs: resolveAllCurrentSlugs(), completeCatalogue: true };
   }
   if (command.command === 'continue-session' && continueWillFinish(runtimeRecord)) {
-    return { slugs: allCurrentSlugs, completeCatalogue: true };
+    return { slugs: resolveAllCurrentSlugs(), completeCatalogue: true };
   }
   // Mid-session commands are always session-bounded. Stale stats or a missing
   // session must not expand submit/continue into a full-catalogue D1 read —
@@ -163,7 +167,7 @@ function commandWorkingSlugs(command, runtimeRecord, allCurrentSlugs, statsCurre
     return { slugs: activeSessionSlugs(runtimeRecord), completeCatalogue: false };
   }
   if (!statsCurrent) {
-    return { slugs: allCurrentSlugs, completeCatalogue: true };
+    return { slugs: resolveAllCurrentSlugs(), completeCatalogue: true };
   }
   return { slugs: activeSessionSlugs(runtimeRecord), completeCatalogue: false };
 }
@@ -470,13 +474,49 @@ export function createSpellingCommandHandlers({ now, random } = {}) {
       };
     }
 
-    const allCurrentSlugs = snapshot.words.map((word) => word?.slug).filter(Boolean);
     const statsOptions = spellingStatsOptions(contentResult, nowValue);
-    const statsCurrent = spellingGameplayStatsAreCurrent(
-      runtimeRecord.spellingStats,
+    let spellingStats = runtimeRecord.spellingStats;
+    let statsCurrent = spellingGameplayStatsAreCurrent(
+      spellingStats,
       snapshot.words,
       statsOptions,
     );
+    // One-shot retarget when a release-bound fingerprint algorithm or content
+    // release changes. Keeps review schedules and unlocks the aggregate path
+    // for this same request instead of waiting for the next command.
+    if (!statsCurrent && statsOptions.releaseId) {
+      const existingCatalogue = parseSpellingGameplayStats(spellingStats).catalogueV1;
+      const hasCatalogueFingerprint = Boolean(
+        existingCatalogue
+        && typeof existingCatalogue === 'object'
+        && !Array.isArray(existingCatalogue)
+        && typeof existingCatalogue.fingerprint === 'string'
+        && existingCatalogue.fingerprint,
+      );
+      if (hasCatalogueFingerprint) {
+        spellingStats = refreshSpellingGameplayCatalogue(
+          spellingStats,
+          snapshot.words,
+          statsOptions,
+        );
+        runtimeRecord = {
+          ...runtimeRecord,
+          spellingStats,
+        };
+        statsCurrent = spellingGameplayStatsAreCurrent(
+          spellingStats,
+          snapshot.words,
+          statsOptions,
+        );
+      }
+    }
+    let allCurrentSlugsCache = null;
+    const allCurrentSlugs = () => {
+      if (!allCurrentSlugsCache) {
+        allCurrentSlugsCache = snapshot.words.map((word) => word?.slug).filter(Boolean);
+      }
+      return allCurrentSlugsCache;
+    };
     const workingSetPlan = commandWorkingSlugs(
       command,
       runtimeRecord,
@@ -669,6 +709,23 @@ export function createSpellingCommandHandlers({ now, random } = {}) {
             result.stats,
             snapshot.words,
             result.data,
+            statsOptions,
+          );
+        } else if (statsOptions.releaseId) {
+          // Release-bound retarget: content release / fingerprint algorithm
+          // changed, but the review schedule remains valid. Refresh catalogue
+          // metadata in memory, then apply the session delta — no D1 catalogue
+          // scan and no schedule wipe from a partial working set.
+          persistedSpellingStats = updateSpellingGameplayStats(
+            refreshSpellingGameplayCatalogue(
+              runtimeRecord.spellingStats,
+              snapshot.words,
+              statsOptions,
+            ),
+            snapshot.words,
+            runtimeRecord.subjectRecord?.data || {},
+            result.data,
+            nowValue,
             statsOptions,
           );
         }

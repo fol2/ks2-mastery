@@ -1,0 +1,63 @@
+{
+  "capturedAt": "2026-07-24T15:08:00.000Z",
+  "prodBuildHash": "6c6f6f4",
+  "operator": "local-machine (Chrome ks2_session + wrangler OAuth tail)",
+  "method": "evidence-first remeasure of FC2/FC3 blockers from cloud agent PR #940; no product fix",
+  "auth": {
+    "learnerId": "86a6c60f-e1ef-4985-954d-95ab13349c6f",
+    "learnerName": "Nelson",
+    "cookieSource": "Chrome import via gstack browse (value not stored in evidence)"
+  },
+  "fc2": {
+    "status": "REMEASURED_CONFIRMED_ON_6c6f6f4",
+    "notFc1": "Nelson command d1RowsRead p50=62 (catalogue scan ~1512 fixed)",
+    "burst": {
+      "file": "nelson-burst.json",
+      "join": "nelson-burst-join.json",
+      "completedRounds": 39,
+      "stoppedReason": "hard-fail-wrong:503",
+      "failRay": "a203c4e4093dc5eb-LHR",
+      "failCfCpuMs": 11,
+      "failCfWallMs": 57,
+      "outcome": "exceededCpu",
+      "exception": "Worker exceeded CPU time limit.",
+      "okCfCpu": { "n": 157, "min": 13, "p50": 18, "p95": 57, "max": 217 },
+      "d1RowsRead": { "n": 157, "min": 60, "p50": 62, "p95": 66, "max": 67 }
+    },
+    "paced500AfterCooldown": {
+      "file": "nelson-paced500-fresh.json",
+      "join": "nelson-paced500-fresh-join.json",
+      "cooldownProbe": "nelson-cooldown-probe.summary.json (3 rounds @450ms → 0×1102 before paced run)",
+      "completedRounds": 37,
+      "stoppedReason": "hard-fail-wrong:503",
+      "failRay": "a203d0175f94f41c-LHR",
+      "failCfCpuMs": 12,
+      "failCfWallMs": 62,
+      "outcome": "exceededCpu",
+      "okCfCpu": { "n": 149, "min": 14, "p50": 18, "p95": 52, "max": 270 },
+      "d1RowsRead": { "n": 149, "min": 60, "p50": 62, "p95": 66, "max": 67 },
+      "regressionVsPriorRca": "Prior RCA paced500 had 0×503 and cfCpu p50≈3ms. On 6c6f6f4, paced500 still hits exceededCpu after ~37 rounds with ok cfCpu p50≈18ms."
+    },
+    "paced500HotIsolate": {
+      "file": "nelson-paced500-hot-isolate.json",
+      "note": "Immediate paced500 after burst failed earlier (round 18) — treat as FC5 contamination, not clean paced baseline."
+    },
+    "interpretation": "Nelson spelling wrong→correct still sits above Free-tier effective ~10ms once isolate flexibility withdraws. Fail requests show cpuTime 11–12ms with exceededCpu while peer OK requests on the same scriptVersion reach 200ms+ CPU under flexibility."
+  },
+  "fc3": {
+    "status": "PRIOR_CLOUD_REPRO_STANDS_SHORT_LOCAL_DID_NOT_REPRO",
+    "priorCloudEvidence": "reports/capacity/evidence/2026-07-24-multiplayer-hammers/* and failure-classes FC3",
+    "localShortRemeasure": {
+      "concurrent2_r5": { "file": "spelling-hammer-concurrent2-pace100-short.json", "http200": 40, "http503": 0 },
+      "concurrent2_r12": { "file": "spelling-hammer-concurrent2-pace100-r12.json", "http200": 96, "http503": 0 },
+      "concurrent5_r4": { "file": "spelling-hammer-concurrent5-pace100-r4.json", "http200": 80, "http503": 0 },
+      "tailCpuOnConcurrent5r4": { "spellingCpuP50": 25, "spellingCpuMax": 355, "exceededCpuEvents": 0 }
+    },
+    "note": "Short bounded concurrent demos after Nelson cooldown did not reproduce 1102. Cloud agent longer/heavier concurrent hammers on the same build did. Keep multiplayer storms short."
+  },
+  "nextProductFixGate": [
+    "Cut Nelson spelling command CF cpuTime p50 from ~18ms toward <10ms under Free",
+    "Re-run Nelson paced500 (expect 0×1102 for ≥40 rounds) then burst endurance",
+    "Only then re-open longer concurrent N=5 hammers with wrangler tail cpuTime join"
+  ]
+}
