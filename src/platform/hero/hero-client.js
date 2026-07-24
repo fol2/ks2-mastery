@@ -177,6 +177,7 @@ export function createHeroModeClient({
         method: init?.method,
         status: 0,
         requestId,
+        text: error?.message || String(error),
       });
       throw new HeroModeClientError({
         code: 'network_error',

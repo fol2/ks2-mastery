@@ -484,7 +484,7 @@ test('punctuation context-pack action remains available while practice is read-o
   }]);
 });
 
-test('subject command action handler holds paced gap before the next gameplay command', async (t) => {
+test('subject command action handler unlocks UI immediately then holds silent paced gap', async (t) => {
   t.mock.timers.enable({ apis: ['setTimeout'] });
 
   const sent = [];
@@ -515,25 +515,27 @@ test('subject command action handler holds paced gap before the next gameplay co
     },
   });
 
+  assert.equal(SUBJECT_COMMAND_MIN_GAP_MS, 100);
   assert.equal(handler.handle('punctuation-submit-form'), true);
   await flushPromises();
   assert.deepEqual(sent, ['submit-answer']);
-  assert.equal(settled.length, 0);
-  assert.equal(pending.size, 2);
+  // UI settle callback fires as soon as the response lands.
+  assert.equal(settled.length, 1);
+  // Only the silent pace lock remains (dedupe key already cleared).
+  assert.equal(pending.size, 1);
 
-  // During the Free-tier gap, a different paced command must not start.
+  // During the silent gap, a different paced command must not start.
   assert.equal(handler.handle('punctuation-continue'), true);
   await flushPromises();
   assert.deepEqual(sent, ['submit-answer']);
 
   t.mock.timers.tick(SUBJECT_COMMAND_MIN_GAP_MS - 1);
   await flushPromises();
-  assert.equal(settled.length, 0);
-  assert.equal(pending.size, 2);
+  assert.equal(settled.length, 1);
+  assert.equal(pending.size, 1);
 
   t.mock.timers.tick(1);
   await flushPromises();
-  assert.equal(settled.length, 1);
   assert.equal(pending.size, 0);
 
   assert.equal(handler.handle('punctuation-continue'), true);

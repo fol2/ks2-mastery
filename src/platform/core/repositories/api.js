@@ -292,7 +292,7 @@ async function fetchJson(fetchFn, url, init, authSession) {
   try {
     response = await fetchFn(url, resolvedInit);
   } catch (error) {
-    reportIngressRequestFailure({ endpoint: url, method, status: 0, requestId });
+    reportIngressRequestFailure({ endpoint: url, method, status: 0, requestId, text: error?.message || String(error) });
     const wrapped = new RepositoryHttpError({
       url,
       method,
@@ -307,7 +307,15 @@ async function fetchJson(fetchFn, url, init, authSession) {
 
   const { payload, text } = await parseResponseBody(response);
   if (!response.ok) {
-    reportIngressRequestFailure({ endpoint: url, method, status: response.status, requestId });
+    reportIngressRequestFailure({
+      endpoint: url,
+      method,
+      status: response.status,
+      requestId,
+      payload,
+      responseSnippet: text,
+      text,
+    });
     throw new RepositoryHttpError({
       url,
       method,

@@ -144,6 +144,7 @@ test('hub api failures retain the browser ingress id for CPU termination joins',
         method: 'GET',
         status: 503,
         requestId: ingressRequestId,
+        signal: 'http-503',
       },
     ]]);
   } finally {

@@ -258,11 +258,15 @@ export function captureClientError({ source, error, info, credentialFetch, times
     const errorKind = typeof errorObject.name === 'string' && errorObject.name
       ? errorObject.name
       : (source || 'Error');
+    const routeName = typeof infoObject.routeName === 'string'
+      ? infoObject.routeName
+      : (typeof errorObject.routeName === 'string' ? errorObject.routeName : undefined);
 
     const rawEvent = {
       errorKind,
       message,
       stack: componentStack || stack,
+      routeName,
       timestamp,
     };
     const redacted = redactClientErrorEvent(rawEvent);

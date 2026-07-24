@@ -223,6 +223,7 @@ export function createRemoteSpellingActionHandler({
   const preferenceIntentCounters = new Map();
   const latestPreferenceIntents = new Map();
   const scopedRuntimeErrors = new Map();
+  const minGapMs = Math.max(0, Number(pacedCommandMinGapMs) || 0);
 
   function appState() {
     return store?.getState?.() || {};
@@ -519,21 +520,29 @@ export function createRemoteSpellingActionHandler({
     });
   }
 
-  function beginPendingCommand(command) {
-    const state = appState();
-    const dedupeKey = spellingCommandDedupeKey(command, state);
-    if (dedupeKey && pendingCommandKeys.has(dedupeKey)) return { ok: false, dedupeKey: '' };
-    if (SPELLING_IN_FLIGHT_DEDUPE_COMMANDS.has(command) && spellingPendingCommand(state)) {
-      return { ok: false, dedupeKey: '' };
-    }
-    if (dedupeKey) pendingCommandKeys.add(dedupeKey);
-    setPendingCommand(command);
-    return { ok: true, dedupeKey };
+  function spellingPaceLockKey(command, learnerId = '') {
+    if (!SPELLING_PACED_COMMANDS.has(command) || minGapMs <= 0) return '';
+    return `spelling:paced:${learnerId || 'default'}`;
   }
 
-  function releasePendingCommand(command, dedupeKey) {
-    if (dedupeKey) pendingCommandKeys.delete(dedupeKey);
-    clearPendingCommand(command);
+  function beginPendingCommand(command) {
+    const state = appState();
+    const learnerId = state.learners?.selectedId || '';
+    const dedupeKey = spellingCommandDedupeKey(command, state);
+    const paceKey = spellingPaceLockKey(command, learnerId);
+    if (paceKey && pendingCommandKeys.has(paceKey)) {
+      return { ok: false, dedupeKey: '', paceKey: '' };
+    }
+    if (dedupeKey && pendingCommandKeys.has(dedupeKey)) {
+      return { ok: false, dedupeKey: '', paceKey: '' };
+    }
+    if (SPELLING_IN_FLIGHT_DEDUPE_COMMANDS.has(command) && spellingPendingCommand(state)) {
+      return { ok: false, dedupeKey: '', paceKey: '' };
+    }
+    if (dedupeKey) pendingCommandKeys.add(dedupeKey);
+    if (paceKey) pendingCommandKeys.add(paceKey);
+    setPendingCommand(command);
+    return { ok: true, dedupeKey, paceKey };
   }
 
   async function sendCommand(command, payload = {}, { learnerId: requestedLearnerId = '', preferenceVersion = 0 } = {}) {
@@ -676,18 +685,19 @@ export function createRemoteSpellingActionHandler({
     return true;
   }
 
-  const minGapMs = Math.max(0, Number(pacedCommandMinGapMs) || 0);
-
-  function releaseAfterPace(command, dedupeKey, onSettled = null) {
-    const finish = () => {
-      releasePendingCommand(command, dedupeKey);
-      onSettled?.();
-    };
-    if (SPELLING_PACED_COMMANDS.has(command) && minGapMs > 0) {
-      delay(minGapMs).then(finish);
+  function releaseAfterPace(command, dedupeKey, paceKey = '', onSettled = null) {
+    // Clear UI pending + in-flight dedupe immediately so Continue/Submit
+    // unlock as soon as the response lands. Hold only the silent pace key.
+    if (dedupeKey) pendingCommandKeys.delete(dedupeKey);
+    clearPendingCommand(command);
+    onSettled?.();
+    if (paceKey && minGapMs > 0) {
+      delay(minGapMs).then(() => {
+        pendingCommandKeys.delete(paceKey);
+      });
       return;
     }
-    finish();
+    if (paceKey) pendingCommandKeys.delete(paceKey);
   }
 
   function runCommand(command, payload = {}, options = {}) {
@@ -724,7 +734,7 @@ export function createRemoteSpellingActionHandler({
         errorMessage || commandErrorMessage(error, fallback),
       );
     }).finally(() => {
-      releaseAfterPace(command, pending.dedupeKey, onSettled);
+      releaseAfterPace(command, pending.dedupeKey, pending.paceKey, onSettled);
     });
     return true;
   }
@@ -1116,7 +1126,7 @@ export function createRemoteSpellingActionHandler({
         globalThis.console?.warn?.('Spelling shortcut command failed.', error);
         setRuntimeErrorForLearner(learnerId, commandErrorMessage(error, 'The spelling shortcut could not be completed.'));
       }).finally(() => {
-        releaseAfterPace('start-session', pending.dedupeKey);
+        releaseAfterPace('start-session', pending.dedupeKey, pending.paceKey);
       });
       return true;
     }

@@ -452,12 +452,12 @@ Do not claim classroom or school readiness from Free-tier limits alone.
 
 Workers Free caps CPU at **10ms per request**. Nelson wrong→correct burst hammers measured CF CPU p50 ~15ms and then `exceededCpu` / Error 1102; the same shape with ~500ms gaps stayed healthy (see `reports/capacity/evidence/2026-07-23-nelson-wrong-correct-rca-verdict.json`).
 
-While the deployment stays on Free, the **child UI path** enforces a ~450ms inter-command gap (`SUBJECT_COMMAND_MIN_GAP_MS`) after paced gameplay commands settle (`start-session`, `submit-answer`, `continue-session`, `skip-*`, `end-session`) in:
+While the deployment stays on Free, the **child UI path** enforces a silent ~100ms inter-command gap (`SUBJECT_COMMAND_MIN_GAP_MS`) after paced gameplay commands receive a response (`start-session`, `submit-answer`, `continue-session`, `skip-*`, `end-session`) in:
 
 - `src/platform/runtime/subject-command-actions.js` (punctuation / reading / reasoning / arithmetic)
 - `src/subjects/spelling/remote-actions.js` (Spelling uses its own remote action handler)
 
-Pending UI stays disabled during the gap. Raw ungapped API hammers on Free may still 1102; that is expected without Paid or sub-10ms server CPU.
+UI pending clears as soon as the response lands (buttons unlock immediately). Only a silent pace lock remains during the gap so dense Free-tier retries cannot stack. Raw ungapped API hammers on Free may still 1102; that is expected without Paid or sub-10ms server CPU.
 
 ### Spelling stale-stats working-set trap
 

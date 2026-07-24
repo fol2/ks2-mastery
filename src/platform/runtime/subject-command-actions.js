@@ -8,8 +8,12 @@ function errorMessage(error, fallback) {
   return error?.payload?.message || error?.message || fallback;
 }
 
-/** Minimum gap after a paced gameplay command settles before the next may start (Workers Free). */
-export const SUBJECT_COMMAND_MIN_GAP_MS = 450;
+/**
+ * Silent minimum gap after a paced gameplay command response before the next
+ * may start (Workers Free input dedupe). UI pending clears as soon as the
+ * response lands; only this lock remains during the gap.
+ */
+export const SUBJECT_COMMAND_MIN_GAP_MS = 100;
 
 const PACED_COMMANDS = new Set([
   'start-session',
@@ -103,16 +107,17 @@ export function createSubjectCommandActionHandler({
       }
       setSubjectError(errorMessage(error, `${subjectId} command could not be completed.`));
     }).finally(() => {
-      const finish = () => {
-        if (dedupeKey) pendingKeys.delete(dedupeKey);
-        if (paceKey) pendingKeys.delete(paceKey);
-        onCommandSettled({ action: actionName, data, learnerId, subjectId, command, payload });
-      };
-      if (isPaced && minGapMs > 0) {
-        delay(minGapMs).then(finish);
+      // Unlock the UI immediately when the response settles. Keep only the
+      // silent pace lock so dense Free-tier retries cannot stack.
+      if (dedupeKey) pendingKeys.delete(dedupeKey);
+      onCommandSettled({ action: actionName, data, learnerId, subjectId, command, payload });
+      if (paceKey && isPaced && minGapMs > 0) {
+        delay(minGapMs).then(() => {
+          pendingKeys.delete(paceKey);
+        });
         return;
       }
-      finish();
+      if (paceKey) pendingKeys.delete(paceKey);
     });
 
     return true;

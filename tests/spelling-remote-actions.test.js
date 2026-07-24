@@ -1917,17 +1917,19 @@ test('U4 module.js: Alt+5 Boss is a no-op when allWordsMega=false — neither st
     'Boss gate held — savePrefs must NOT fire before graduation');
 });
 
-test('remote spelling actions hold Free-tier paced gap after submit-answer', async (t) => {
+test('remote spelling actions clear UI pending immediately then hold silent paced gap', async (t) => {
   t.mock.timers.enable({ apis: ['setTimeout'] });
 
   const sent = [];
   const { store } = createStoreHarness();
+  const pendingCommandKeys = new Set();
   const handler = createRemoteSpellingActionHandler({
     pacedCommandMinGapMs: SUBJECT_COMMAND_MIN_GAP_MS,
     store,
     services: { spelling: {} },
     tts: { speak() {}, stop() {} },
     readModels: { readJson: async () => ({}) },
+    pendingCommandKeys,
     subjectCommands: {
       send(request) {
         sent.push(request.command);
@@ -1952,9 +1954,11 @@ test('remote spelling actions hold Free-tier paced gap after submit-answer', asy
   assert.equal(handler.handle('spelling-submit-form', { formData }), true);
   await flushPromises();
   assert.deepEqual(sent, ['submit-answer']);
-  assert.equal(store.getState().transientUi?.spellingPendingCommand, 'submit-answer');
+  // UI unlocks as soon as the response lands; silent pace lock remains.
+  assert.equal(store.getState().transientUi?.spellingPendingCommand, '');
+  assert.equal(pendingCommandKeys.size, 1);
 
-  // Immediate correct retry must stay blocked while the Free-tier gap holds.
+  // Immediate correct retry must stay blocked while the silent gap holds.
   formData.set('typed', 'correct');
   assert.equal(handler.handle('spelling-submit-form', { formData }), true);
   await flushPromises();
@@ -1962,7 +1966,7 @@ test('remote spelling actions hold Free-tier paced gap after submit-answer', asy
 
   t.mock.timers.tick(SUBJECT_COMMAND_MIN_GAP_MS);
   await flushPromises();
-  assert.equal(store.getState().transientUi?.spellingPendingCommand, '');
+  assert.equal(pendingCommandKeys.size, 0);
 
   assert.equal(handler.handle('spelling-submit-form', { formData }), true);
   await flushPromises();
