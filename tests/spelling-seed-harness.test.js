@@ -609,7 +609,11 @@ test('CLI bounded seed aborts without writes when an existing learner has lost i
       () => db.db.exec(sql),
       /existing learner is missing bounded Spelling state/,
     );
-    assert.equal(db.db.isTransaction, false, 'the guard rolls back the complete CLI transaction');
+    // node:sqlite DatabaseSync does not expose `isTransaction` on all runtimes;
+    // the COUNT(*) asserts below are the authoritative rollback proof.
+    if (Object.prototype.hasOwnProperty.call(db.db, 'isTransaction')) {
+      assert.equal(db.db.isTransaction, false, 'the guard rolls back the complete CLI transaction');
+    }
     assert.equal(db.db.prepare(`
       SELECT COUNT(*) AS count FROM spelling_learner_state
       WHERE learner_id = 'learner-cli-row-hole'

@@ -1,0 +1,64 @@
+{
+  "capturedAt": "2026-07-24T00:59:18.348Z",
+  "buildHashBeforeFix": "3be4e7a",
+  "findings": [
+    {
+      "id": "classroom-10",
+      "result": "pass",
+      "note": "10 demo learners, grammar/arithmetic/reasoning, zero 5xx/signals"
+    },
+    {
+      "id": "spelling-dense-demo",
+      "result": "pass",
+      "note": "demo dense smoke including wrong→correct recovery"
+    },
+    {
+      "id": "spelling-burst-demo",
+      "result": "fail-1102",
+      "note": "ungapped wrong→correct hit Error 1102; also observed d1RowsRead≈1512 on start/submit under stale stats"
+    },
+    {
+      "id": "spelling-paced-450",
+      "result": "fail-1102",
+      "note": "450ms paced still 1102 after prior isolate exhaustion; single start after short cooldown also 1102"
+    },
+    {
+      "id": "root-cause",
+      "result": "confirmed",
+      "note": "commandWorkingSlugs forced allCurrentSlugs whenever !statsCurrent, before explicit-slug optimization; D1 json_each(~1480) counted as rowsRead"
+    }
+  ],
+  "classroom10": {
+    "max5xx": {
+      "configured": 0,
+      "observed": 0,
+      "passed": true
+    },
+    "maxNetworkFailures": {
+      "configured": 0,
+      "observed": 0,
+      "passed": true
+    },
+    "requireZeroSignals": {
+      "configured": true,
+      "observed": 0,
+      "passed": true
+    },
+    "configured": true,
+    "violations": [],
+    "limits": {
+      "max5xx": 0,
+      "maxNetworkFailures": 0,
+      "maxBootstrapP95Ms": null,
+      "maxCommandP95Ms": null,
+      "maxBootstrapServerP95Ms": null,
+      "maxCommandServerP95Ms": null,
+      "maxBootstrapD1RowsWritten": null,
+      "maxCommandD1RowsWritten": null,
+      "maxResponseBytes": null,
+      "maxCommandResponseBytes": null,
+      "requireZeroSignals": true,
+      "requireBootstrapCapacity": false
+    }
+  }
+}

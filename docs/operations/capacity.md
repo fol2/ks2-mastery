@@ -459,6 +459,15 @@ While the deployment stays on Free, the **child UI path** enforces a ~450ms inte
 
 Pending UI stays disabled during the gap. Raw ungapped API hammers on Free may still 1102; that is expected without Paid or sub-10ms server CPU.
 
+### Spelling stale-stats working-set trap
+
+When gameplay stats are missing or their catalogue fingerprint is stale, Smart/Trouble/Guardian starts still need a one-shot full-catalogue working-set read so pool totals can rebuild. That cost must **not** leak onto:
+
+- `start-session` with an explicit `slug` / `words` list
+- mid-session `submit-answer` / `continue-session` / `skip-word` / `end-session`
+
+On Workers Free, D1 attributes `json_each(fullCatalogue)` as roughly catalogue-sized `d1RowsRead` (~1480 published words today). Prod stress on 2026-07-24 saw fresh-demo single-slug starts report `d1RowsRead ≈ 1512` and then Error 1102. Guard coverage: `tests/worker-spelling-stale-stats-working-set.test.js`.
+
 ### Admin ops console KPI endpoint
 
 `GET /api/admin/ops/kpi` runs 7 live `COUNT(*)` queries against `adult_accounts`, `learner_profiles`, `practice_sessions`, `event_log`, `mutation_receipts` plus 1 read against `admin_kpi_metrics`. Event and mutation counts remain bounded by the retained migration `0010` indexes (`idx_event_log_created`, `idx_mutation_receipts_applied`). Migration `0019` removes the global `practice_sessions(updated_at)` index because it amplified every player session write; practice-session engagement remains a manual admin diagnostic rather than a player hot-path dependency.
