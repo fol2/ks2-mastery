@@ -6,14 +6,12 @@
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { gunzipSync } from 'node:zlib';
-import { readFileSync } from 'node:fs';
 
 import { resolveLearnerVisibleSpellingSnapshot } from '../src/subjects/spelling/content/model.js';
+import { SEEDED_SPELLING_PUBLISHED_SNAPSHOT } from '../src/subjects/spelling/data/word-data.js';
 
 function loadPublishedSnapshot() {
-  const buf = readFileSync('dist/worker/content/spelling-published-snapshot-E6KEEB35.bin');
-  return JSON.parse(gunzipSync(buf).toString('utf8'));
+  return structuredClone(SEEDED_SPELLING_PUBLISHED_SNAPSHOT);
 }
 
 function countingWordsSnapshot(raw) {

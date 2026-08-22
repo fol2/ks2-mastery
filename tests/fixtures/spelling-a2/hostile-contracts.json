@@ -1,0 +1,17 @@
+{
+  "unknownManifestKey": { "unexpected": true },
+  "unsafeArchivePaths": ["../pack.zip", "/pack.zip", "packs/../../pack.zip", "pack.js"],
+  "badDigests": ["", "abc", "gggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg"],
+  "duplicateTargetCatalogues": [
+    {
+      "catalogueId": "ks2-core:starter",
+      "packId": "ks2-core",
+      "items": [{ "runtimeItemId": "ks2-core:answer", "itemId": "answer", "legacySlug": "answer", "target": "Answer" }]
+    },
+    {
+      "catalogueId": "future-pack:full",
+      "packId": "future-pack",
+      "items": [{ "runtimeItemId": "future-pack:answer-uk", "itemId": "answer-uk", "legacySlug": "answer-uk", "target": "  ＡＮＳＷＥＲ  " }]
+    }
+  ]
+}
