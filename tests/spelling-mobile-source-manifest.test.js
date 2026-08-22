@@ -406,7 +406,11 @@ test('mobile source manifest builds identically in a confirmed shallow Git repos
   });
 });
 
-test('ambient SHA-256 cannot change donor-present shallow fixture certification', () => {
+test('ambient SHA-256 cannot change donor-present shallow fixture certification', (t) => {
+  if (repositoryIsShallow()) {
+    t.skip('donor-present shallow fixture requires the pinned donor object');
+    return;
+  }
   const expected = serialiseSpellingMobileSourceManifest(
     buildSpellingMobileSourceManifest({ repoRoot: REPO_ROOT }),
   );
