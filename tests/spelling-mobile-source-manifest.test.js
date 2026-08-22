@@ -55,6 +55,14 @@ const GIT_ENVIRONMENT_VARIABLES_TO_REMOVE = new Set([
   'GIT_TEMPLATE_DIR',
   'GIT_DEFAULT_HASH',
 ]);
+
+function repositoryIsShallow() {
+  return execFileSync(
+    'git',
+    ['rev-parse', '--is-shallow-repository'],
+    { cwd: REPO_ROOT, encoding: 'utf8' },
+  ).trim() === 'true';
+}
 const EXPECTED_DONOR_FILES = [
   {
     path: 'content/spelling.seed.json',
@@ -306,6 +314,13 @@ test('mobile source manifest requires full donor history only when certifying A0
   const expected = serialiseSpellingMobileSourceManifest(
     buildSpellingMobileSourceManifest({ repoRoot: REPO_ROOT }),
   );
+  if (repositoryIsShallow()) {
+    assert.throws(
+      () => buildSpellingMobileSourceManifest({ repoRoot: REPO_ROOT, requireFullHistory: true }),
+      /A0 certification requires full Git history with the pinned donor commit/,
+    );
+    return;
+  }
   const certified = serialiseSpellingMobileSourceManifest(
     buildSpellingMobileSourceManifest({ repoRoot: REPO_ROOT, requireFullHistory: true }),
   );
@@ -319,7 +334,11 @@ test('mobile source manifest requires full donor history only when certifying A0
   });
 });
 
-test('full-history certification ignores inherited Git repository-routing variables', () => {
+test('full-history certification ignores inherited Git repository-routing variables', (t) => {
+  if (repositoryIsShallow()) {
+    t.skip('full-history routing proof requires the pinned donor commit');
+    return;
+  }
   const expected = serialiseSpellingMobileSourceManifest(
     buildSpellingMobileSourceManifest({ repoRoot: REPO_ROOT }),
   );
