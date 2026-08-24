@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { seededShuffle, getShardFiles } from '../scripts/shard-shuffle.mjs';
+import { getShardFiles, seededShuffle, SHARD_SEED } from '../scripts/shard-shuffle.mjs';
 
 const SAMPLE_FILES = [
   'tests/alpha.test.js',
@@ -18,6 +18,10 @@ const SAMPLE_FILES = [
 ];
 
 describe('seededShuffle', () => {
+  it('pins the reviewed CI shard seed', () => {
+    assert.equal(SHARD_SEED, 'ks2-pr941-69795');
+  });
+
   it('is deterministic (same input = same output)', () => {
     const first = seededShuffle(SAMPLE_FILES);
     const second = seededShuffle(SAMPLE_FILES);
