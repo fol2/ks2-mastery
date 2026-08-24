@@ -1,0 +1,4621 @@
+{
+  "schemaVersion": 1,
+  "donorCommit": "8da3218a5077be24cabaf82031ade17d0389a958",
+  "a0MergedCommit": "93a505f42b19c519e3cb16e2d7cac026750743f8",
+  "characterisationSourceCommit": "b52a5b907ceb30b0aa0dca2da0a0f52d535ad99a",
+  "releaseId": "spelling-r7",
+  "fixedNow": 1768478400000,
+  "randomSeed": 42,
+  "scenarios": {
+    "smart-retry-correction-secure": {
+      "ok": true,
+      "state": {
+        "roster": [
+          "eighth",
+          "profession",
+          "convenience",
+          "disastrous",
+          "thorough"
+        ],
+        "firstSlug": "disastrous",
+        "trace": [
+          {
+            "command": "start-session",
+            "ok": true,
+            "changed": true,
+            "phase": "session",
+            "mode": "smart",
+            "sessionPhase": "question",
+            "resultingSlug": "disastrous",
+            "actedOnSlug": null,
+            "grade": null,
+            "awaitingAdvance": false,
+            "feedbackKind": null,
+            "feedbackHeadline": null
+          },
+          {
+            "command": "submit-answer:wrong",
+            "ok": true,
+            "changed": true,
+            "phase": "session",
+            "mode": "smart",
+            "sessionPhase": "retry",
+            "resultingSlug": "disastrous",
+            "actedOnSlug": null,
+            "grade": null,
+            "awaitingAdvance": false,
+            "feedbackKind": "error",
+            "feedbackHeadline": "Not quite."
+          },
+          {
+            "command": "submit-answer:retry-wrong",
+            "ok": true,
+            "changed": true,
+            "phase": "session",
+            "mode": "smart",
+            "sessionPhase": "correction",
+            "resultingSlug": "disastrous",
+            "actedOnSlug": null,
+            "grade": null,
+            "awaitingAdvance": false,
+            "feedbackKind": "error",
+            "feedbackHeadline": "Still not quite."
+          },
+          {
+            "command": "submit-answer:correction",
+            "ok": true,
+            "changed": true,
+            "phase": "session",
+            "mode": "smart",
+            "sessionPhase": "question",
+            "resultingSlug": "disastrous",
+            "actedOnSlug": null,
+            "grade": null,
+            "awaitingAdvance": true,
+            "feedbackKind": "info",
+            "feedbackHeadline": "Locked in."
+          },
+          {
+            "command": "continue-session",
+            "ok": true,
+            "changed": true,
+            "phase": "session",
+            "mode": "smart",
+            "sessionPhase": "question",
+            "resultingSlug": "convenience",
+            "actedOnSlug": null,
+            "grade": null,
+            "awaitingAdvance": false,
+            "feedbackKind": null,
+            "feedbackHeadline": null
+          },
+          {
+            "command": "submit-answer:correct",
+            "ok": true,
+            "changed": true,
+            "phase": "session",
+            "mode": "smart",
+            "sessionPhase": "question",
+            "resultingSlug": "convenience",
+            "actedOnSlug": null,
+            "grade": null,
+            "awaitingAdvance": true,
+            "feedbackKind": "info",
+            "feedbackHeadline": "Good first hit."
+          },
+          {
+            "command": "continue-session",
+            "ok": true,
+            "changed": true,
+            "phase": "session",
+            "mode": "smart",
+            "sessionPhase": "question",
+            "resultingSlug": "disastrous",
+            "actedOnSlug": null,
+            "grade": null,
+            "awaitingAdvance": false,
+            "feedbackKind": null,
+            "feedbackHeadline": null
+          },
+          {
+            "command": "submit-answer:clean-return",
+            "ok": true,
+            "changed": true,
+            "phase": "session",
+            "mode": "smart",
+            "sessionPhase": "question",
+            "resultingSlug": "disastrous",
+            "actedOnSlug": null,
+            "grade": null,
+            "awaitingAdvance": true,
+            "feedbackKind": "info",
+            "feedbackHeadline": "Correct now."
+          },
+          {
+            "command": "continue-session",
+            "ok": true,
+            "changed": true,
+            "phase": "session",
+            "mode": "smart",
+            "sessionPhase": "question",
+            "resultingSlug": "profession",
+            "actedOnSlug": null,
+            "grade": null,
+            "awaitingAdvance": false,
+            "feedbackKind": null,
+            "feedbackHeadline": null
+          },
+          {
+            "command": "submit-answer:correct",
+            "ok": true,
+            "changed": true,
+            "phase": "session",
+            "mode": "smart",
+            "sessionPhase": "question",
+            "resultingSlug": "profession",
+            "actedOnSlug": null,
+            "grade": null,
+            "awaitingAdvance": true,
+            "feedbackKind": "info",
+            "feedbackHeadline": "Good first hit."
+          },
+          {
+            "command": "continue-session",
+            "ok": true,
+            "changed": true,
+            "phase": "session",
+            "mode": "smart",
+            "sessionPhase": "question",
+            "resultingSlug": "eighth",
+            "actedOnSlug": null,
+            "grade": null,
+            "awaitingAdvance": false,
+            "feedbackKind": null,
+            "feedbackHeadline": null
+          },
+          {
+            "command": "submit-answer:correct",
+            "ok": true,
+            "changed": true,
+            "phase": "session",
+            "mode": "smart",
+            "sessionPhase": "question",
+            "resultingSlug": "eighth",
+            "actedOnSlug": null,
+            "grade": null,
+            "awaitingAdvance": true,
+            "feedbackKind": "info",
+            "feedbackHeadline": "Good first hit."
+          },
+          {
+            "command": "continue-session",
+            "ok": true,
+            "changed": true,
+            "phase": "session",
+            "mode": "smart",
+            "sessionPhase": "question",
+            "resultingSlug": "thorough",
+            "actedOnSlug": null,
+            "grade": null,
+            "awaitingAdvance": false,
+            "feedbackKind": null,
+            "feedbackHeadline": null
+          },
+          {
+            "command": "submit-answer:correct",
+            "ok": true,
+            "changed": true,
+            "phase": "session",
+            "mode": "smart",
+            "sessionPhase": "question",
+            "resultingSlug": "thorough",
+            "actedOnSlug": null,
+            "grade": null,
+            "awaitingAdvance": true,
+            "feedbackKind": "info",
+            "feedbackHeadline": "Good first hit."
+          },
+          {
+            "command": "continue-session",
+            "ok": true,
+            "changed": true,
+            "phase": "session",
+            "mode": "smart",
+            "sessionPhase": "question",
+            "resultingSlug": "convenience",
+            "actedOnSlug": null,
+            "grade": null,
+            "awaitingAdvance": false,
+            "feedbackKind": null,
+            "feedbackHeadline": null
+          },
+          {
+            "command": "submit-answer:correct",
+            "ok": true,
+            "changed": true,
+            "phase": "session",
+            "mode": "smart",
+            "sessionPhase": "question",
+            "resultingSlug": "convenience",
+            "actedOnSlug": null,
+            "grade": null,
+            "awaitingAdvance": true,
+            "feedbackKind": "success",
+            "feedbackHeadline": "Correct."
+          },
+          {
+            "command": "continue-session",
+            "ok": true,
+            "changed": true,
+            "phase": "session",
+            "mode": "smart",
+            "sessionPhase": "question",
+            "resultingSlug": "profession",
+            "actedOnSlug": null,
+            "grade": null,
+            "awaitingAdvance": false,
+            "feedbackKind": null,
+            "feedbackHeadline": null
+          },
+          {
+            "command": "submit-answer:correct",
+            "ok": true,
+            "changed": true,
+            "phase": "session",
+            "mode": "smart",
+            "sessionPhase": "question",
+            "resultingSlug": "profession",
+            "actedOnSlug": null,
+            "grade": null,
+            "awaitingAdvance": true,
+            "feedbackKind": "success",
+            "feedbackHeadline": "Correct."
+          },
+          {
+            "command": "continue-session",
+            "ok": true,
+            "changed": true,
+            "phase": "session",
+            "mode": "smart",
+            "sessionPhase": "question",
+            "resultingSlug": "eighth",
+            "actedOnSlug": null,
+            "grade": null,
+            "awaitingAdvance": false,
+            "feedbackKind": null,
+            "feedbackHeadline": null
+          },
+          {
+            "command": "submit-answer:correct",
+            "ok": true,
+            "changed": true,
+            "phase": "session",
+            "mode": "smart",
+            "sessionPhase": "question",
+            "resultingSlug": "eighth",
+            "actedOnSlug": null,
+            "grade": null,
+            "awaitingAdvance": true,
+            "feedbackKind": "success",
+            "feedbackHeadline": "Correct."
+          },
+          {
+            "command": "continue-session",
+            "ok": true,
+            "changed": true,
+            "phase": "session",
+            "mode": "smart",
+            "sessionPhase": "question",
+            "resultingSlug": "thorough",
+            "actedOnSlug": null,
+            "grade": null,
+            "awaitingAdvance": false,
+            "feedbackKind": null,
+            "feedbackHeadline": null
+          },
+          {
+            "command": "submit-answer:correct",
+            "ok": true,
+            "changed": true,
+            "phase": "session",
+            "mode": "smart",
+            "sessionPhase": "question",
+            "resultingSlug": "thorough",
+            "actedOnSlug": null,
+            "grade": null,
+            "awaitingAdvance": true,
+            "feedbackKind": "success",
+            "feedbackHeadline": "Correct."
+          },
+          {
+            "command": "continue-session",
+            "ok": true,
+            "changed": true,
+            "phase": "summary",
+            "mode": "smart",
+            "sessionPhase": null,
+            "resultingSlug": null,
+            "actedOnSlug": null,
+            "grade": null,
+            "awaitingAdvance": false,
+            "feedbackKind": null,
+            "feedbackHeadline": null
+          }
+        ],
+        "summary": {
+          "mode": "smart",
+          "label": "Smart review",
+          "message": "Good. The weak words were caught quickly and are now marked due again for this learner.",
+          "cards": [
+            {
+              "label": "Words in round",
+              "value": 5,
+              "sub": "Unique words selected"
+            },
+            {
+              "label": "Clean first attempts",
+              "value": 4,
+              "sub": "Strong on the first go"
+            },
+            {
+              "label": "Needed correction",
+              "value": 1,
+              "sub": "These words came back again"
+            },
+            {
+              "label": "Prompts heard",
+              "value": 11,
+              "sub": "Includes repeats of weak words"
+            }
+          ],
+          "mistakes": [
+            {
+              "slug": "disastrous",
+              "word": "disastrous",
+              "family": "disastrous",
+              "year": "5-6",
+              "yearLabel": "Years 5-6",
+              "familyWords": [
+                "disastrous"
+              ]
+            }
+          ],
+          "elapsedMs": 0,
+          "totalWords": 5,
+          "correct": 4,
+          "accuracy": 80,
+          "heroContext": {
+            "source": "hero-mode",
+            "questId": "quest-a",
+            "taskId": "task-a",
+            "questFingerprint": null,
+            "launchRequestId": null
+          }
+        }
+      },
+      "events": [
+        {
+          "id": "spelling.retry-cleared:a1-smart:sess-1768478400000-3e1e72ac:disastrous:correction:2",
+          "type": "spelling.retry-cleared",
+          "subjectId": "spelling",
+          "learnerId": "a1-smart",
+          "sessionId": "sess-1768478400000-3e1e72ac",
+          "mode": "smart",
+          "createdAt": 1768478400000,
+          "wordSlug": "disastrous",
+          "word": "disastrous",
+          "family": "disastrous",
+          "yearBand": "5-6",
+          "spellingPool": "core",
+          "fromPhase": "correction",
+          "attemptCount": 2
+        },
+        {
+          "id": "spelling.session-completed:a1-smart:sess-1768478400000-3e1e72ac",
+          "type": "spelling.session-completed",
+          "subjectId": "spelling",
+          "learnerId": "a1-smart",
+          "sessionId": "sess-1768478400000-3e1e72ac",
+          "mode": "smart",
+          "createdAt": 1768478400000,
+          "sessionType": "learning",
+          "totalWords": 5,
+          "mistakeCount": 1
+        }
+      ],
+      "audio": {
+        "cues": [
+          {
+            "word": {
+              "year": "5-6",
+              "family": "disastrous",
+              "word": "disastrous",
+              "slug": "disastrous",
+              "spellingPool": "core",
+              "coverageTier": "statutory-core",
+              "yearLabel": "Years 5-6",
+              "familyWords": [
+                "disastrous"
+              ],
+              "sentence": "The broken pump was disastrous for the field.",
+              "sentences": [
+                "The broken pump was disastrous for the field."
+              ],
+              "accepted": [
+                "disastrous"
+              ],
+              "explanation": "Disastrous means causing great harm, failure or trouble.",
+              "listId": "statutory-y5-6",
+              "yearGroups": [
+                "Y5",
+                "Y6"
+              ],
+              "tags": [
+                "statutory",
+                "legacy-seed"
+              ],
+              "patternIds": [
+                "suffix-ous"
+              ],
+              "sourceNote": "Seeded from preserved legacy spelling word list.",
+              "provenance": {
+                "source": "legacy/vendor/word-list.js",
+                "note": "Legacy vendor seed for Pass 11 content model.",
+                "importedAt": 0
+              },
+              "progressKey": "disastrous",
+              "sortIndex": 142
+            },
+            "sentence": "The broken pump was disastrous for the field.",
+            "slow": false
+          },
+          {
+            "word": {
+              "year": "5-6",
+              "family": "disastrous",
+              "word": "disastrous",
+              "slug": "disastrous",
+              "spellingPool": "core",
+              "coverageTier": "statutory-core",
+              "yearLabel": "Years 5-6",
+              "familyWords": [
+                "disastrous"
+              ],
+              "sentence": "The broken pump was disastrous for the field.",
+              "sentences": [
+                "The broken pump was disastrous for the field."
+              ],
+              "accepted": [
+                "disastrous"
+              ],
+              "explanation": "Disastrous means causing great harm, failure or trouble.",
+              "listId": "statutory-y5-6",
+              "yearGroups": [
+                "Y5",
+                "Y6"
+              ],
+              "tags": [
+                "statutory",
+                "legacy-seed"
+              ],
+              "patternIds": [
+                "suffix-ous"
+              ],
+              "sourceNote": "Seeded from preserved legacy spelling word list.",
+              "provenance": {
+                "source": "legacy/vendor/word-list.js",
+                "note": "Legacy vendor seed for Pass 11 content model.",
+                "importedAt": 0
+              },
+              "progressKey": "disastrous",
+              "sortIndex": 142
+            },
+            "sentence": "The broken pump was disastrous for the field.",
+            "slow": true
+          },
+          {
+            "word": {
+              "year": "5-6",
+              "family": "convenience",
+              "word": "convenience",
+              "slug": "convenience",
+              "spellingPool": "core",
+              "coverageTier": "statutory-core",
+              "yearLabel": "Years 5-6",
+              "familyWords": [
+                "convenience"
+              ],
+              "sentence": "The timetable was changed for the convenience of parents.",
+              "sentences": [
+                "The timetable was changed for the convenience of parents."
+              ],
+              "accepted": [
+                "convenience"
+              ],
+              "explanation": "Convenience means ease, usefulness or something that saves time and effort.",
+              "listId": "statutory-y5-6",
+              "yearGroups": [
+                "Y5",
+                "Y6"
+              ],
+              "tags": [
+                "statutory",
+                "legacy-seed",
+                "exception-word"
+              ],
+              "patternIds": [],
+              "sourceNote": "Seeded from preserved legacy spelling word list.",
+              "provenance": {
+                "source": "legacy/vendor/word-list.js",
+                "note": "Legacy vendor seed for Pass 11 content model.",
+                "importedAt": 0
+              },
+              "progressKey": "convenience",
+              "sortIndex": 133
+            },
+            "sentence": "The timetable was changed for the convenience of parents.",
+            "slow": false
+          },
+          {
+            "word": {
+              "year": "5-6",
+              "family": "disastrous",
+              "word": "disastrous",
+              "slug": "disastrous",
+              "spellingPool": "core",
+              "coverageTier": "statutory-core",
+              "yearLabel": "Years 5-6",
+              "familyWords": [
+                "disastrous"
+              ],
+              "sentence": "The storm had a disastrous effect.",
+              "sentences": [
+                "The storm had a disastrous effect."
+              ],
+              "accepted": [
+                "disastrous"
+              ],
+              "explanation": "Disastrous means causing great harm, failure or trouble.",
+              "listId": "statutory-y5-6",
+              "yearGroups": [
+                "Y5",
+                "Y6"
+              ],
+              "tags": [
+                "statutory",
+                "legacy-seed"
+              ],
+              "patternIds": [
+                "suffix-ous"
+              ],
+              "sourceNote": "Seeded from preserved legacy spelling word list.",
+              "provenance": {
+                "source": "legacy/vendor/word-list.js",
+                "note": "Legacy vendor seed for Pass 11 content model.",
+                "importedAt": 0
+              },
+              "progressKey": "disastrous",
+              "sortIndex": 142
+            },
+            "sentence": "The storm had a disastrous effect.",
+            "slow": false
+          },
+          {
+            "word": {
+              "year": "5-6",
+              "family": "profession",
+              "word": "profession",
+              "slug": "profession",
+              "spellingPool": "core",
+              "coverageTier": "statutory-core",
+              "yearLabel": "Years 5-6",
+              "familyWords": [
+                "profession"
+              ],
+              "sentence": "Teaching is a respected profession.",
+              "sentences": [
+                "Teaching is a respected profession."
+              ],
+              "accepted": [
+                "profession"
+              ],
+              "explanation": "A profession is a type of work that needs special training or skill.",
+              "listId": "statutory-y5-6",
+              "yearGroups": [
+                "Y5",
+                "Y6"
+              ],
+              "tags": [
+                "statutory",
+                "legacy-seed"
+              ],
+              "patternIds": [
+                "suffix-sion"
+              ],
+              "sourceNote": "Seeded from preserved legacy spelling word list.",
+              "provenance": {
+                "source": "legacy/vendor/word-list.js",
+                "note": "Legacy vendor seed for Pass 11 content model.",
+                "importedAt": 0
+              },
+              "progressKey": "profession",
+              "sortIndex": 184
+            },
+            "sentence": "Teaching is a respected profession.",
+            "slow": false
+          },
+          {
+            "word": {
+              "year": "3-4",
+              "family": "eight/eighth",
+              "word": "eighth",
+              "slug": "eighth",
+              "spellingPool": "core",
+              "coverageTier": "statutory-core",
+              "yearLabel": "Years 3-4",
+              "familyWords": [
+                "eight",
+                "eighth"
+              ],
+              "sentence": "The eighth page was folded over.",
+              "sentences": [
+                "The eighth page was folded over."
+              ],
+              "accepted": [
+                "eighth"
+              ],
+              "explanation": "Eighth means number eight in order.",
+              "listId": "statutory-y3-4",
+              "yearGroups": [
+                "Y3",
+                "Y4"
+              ],
+              "tags": [
+                "statutory",
+                "legacy-seed"
+              ],
+              "patternIds": [
+                "homophone"
+              ],
+              "sourceNote": "Seeded from preserved legacy spelling word list.",
+              "provenance": {
+                "source": "legacy/vendor/word-list.js",
+                "note": "Legacy vendor seed for Pass 11 content model.",
+                "importedAt": 0
+              },
+              "progressKey": "eighth",
+              "sortIndex": 32
+            },
+            "sentence": "The eighth page was folded over.",
+            "slow": false
+          },
+          {
+            "word": {
+              "year": "5-6",
+              "family": "thorough",
+              "word": "thorough",
+              "slug": "thorough",
+              "spellingPool": "core",
+              "coverageTier": "statutory-core",
+              "yearLabel": "Years 5-6",
+              "familyWords": [
+                "thorough"
+              ],
+              "sentence": "The police made a thorough search of the park.",
+              "sentences": [
+                "The police made a thorough search of the park."
+              ],
+              "accepted": [
+                "thorough"
+              ],
+              "explanation": "Thorough means complete and careful, with nothing important missed.",
+              "listId": "statutory-y5-6",
+              "yearGroups": [
+                "Y5",
+                "Y6"
+              ],
+              "tags": [
+                "statutory",
+                "legacy-seed",
+                "exception-word"
+              ],
+              "patternIds": [],
+              "sourceNote": "Seeded from preserved legacy spelling word list.",
+              "provenance": {
+                "source": "legacy/vendor/word-list.js",
+                "note": "Legacy vendor seed for Pass 11 content model.",
+                "importedAt": 0
+              },
+              "progressKey": "thorough",
+              "sortIndex": 207
+            },
+            "sentence": "The police made a thorough search of the park.",
+            "slow": false
+          },
+          {
+            "word": {
+              "year": "5-6",
+              "family": "convenience",
+              "word": "convenience",
+              "slug": "convenience",
+              "spellingPool": "core",
+              "coverageTier": "statutory-core",
+              "yearLabel": "Years 5-6",
+              "familyWords": [
+                "convenience"
+              ],
+              "sentence": "The side pocket is there for convenience.",
+              "sentences": [
+                "The side pocket is there for convenience."
+              ],
+              "accepted": [
+                "convenience"
+              ],
+              "explanation": "Convenience means ease, usefulness or something that saves time and effort.",
+              "listId": "statutory-y5-6",
+              "yearGroups": [
+                "Y5",
+                "Y6"
+              ],
+              "tags": [
+                "statutory",
+                "legacy-seed",
+                "exception-word"
+              ],
+              "patternIds": [],
+              "sourceNote": "Seeded from preserved legacy spelling word list.",
+              "provenance": {
+                "source": "legacy/vendor/word-list.js",
+                "note": "Legacy vendor seed for Pass 11 content model.",
+                "importedAt": 0
+              },
+              "progressKey": "convenience",
+              "sortIndex": 133
+            },
+            "sentence": "The side pocket is there for convenience.",
+            "slow": false
+          },
+          {
+            "word": {
+              "year": "5-6",
+              "family": "profession",
+              "word": "profession",
+              "slug": "profession",
+              "spellingPool": "core",
+              "coverageTier": "statutory-core",
+              "yearLabel": "Years 5-6",
+              "familyWords": [
+                "profession"
+              ],
+              "sentence": "He wants a profession that lets him work outdoors.",
+              "sentences": [
+                "He wants a profession that lets him work outdoors."
+              ],
+              "accepted": [
+                "profession"
+              ],
+              "explanation": "A profession is a type of work that needs special training or skill.",
+              "listId": "statutory-y5-6",
+              "yearGroups": [
+                "Y5",
+                "Y6"
+              ],
+              "tags": [
+                "statutory",
+                "legacy-seed"
+              ],
+              "patternIds": [
+                "suffix-sion"
+              ],
+              "sourceNote": "Seeded from preserved legacy spelling word list.",
+              "provenance": {
+                "source": "legacy/vendor/word-list.js",
+                "note": "Legacy vendor seed for Pass 11 content model.",
+                "importedAt": 0
+              },
+              "progressKey": "profession",
+              "sortIndex": 184
+            },
+            "sentence": "He wants a profession that lets him work outdoors.",
+            "slow": false
+          },
+          {
+            "word": {
+              "year": "3-4",
+              "family": "eight/eighth",
+              "word": "eighth",
+              "slug": "eighth",
+              "spellingPool": "core",
+              "coverageTier": "statutory-core",
+              "yearLabel": "Years 3-4",
+              "familyWords": [
+                "eight",
+                "eighth"
+              ],
+              "sentence": "I placed the eighth sticker in the corner.",
+              "sentences": [
+                "I placed the eighth sticker in the corner."
+              ],
+              "accepted": [
+                "eighth"
+              ],
+              "explanation": "Eighth means number eight in order.",
+              "listId": "statutory-y3-4",
+              "yearGroups": [
+                "Y3",
+                "Y4"
+              ],
+              "tags": [
+                "statutory",
+                "legacy-seed"
+              ],
+              "patternIds": [
+                "homophone"
+              ],
+              "sourceNote": "Seeded from preserved legacy spelling word list.",
+              "provenance": {
+                "source": "legacy/vendor/word-list.js",
+                "note": "Legacy vendor seed for Pass 11 content model.",
+                "importedAt": 0
+              },
+              "progressKey": "eighth",
+              "sortIndex": 32
+            },
+            "sentence": "I placed the eighth sticker in the corner.",
+            "slow": false
+          },
+          {
+            "word": {
+              "year": "5-6",
+              "family": "thorough",
+              "word": "thorough",
+              "slug": "thorough",
+              "spellingPool": "core",
+              "coverageTier": "statutory-core",
+              "yearLabel": "Years 5-6",
+              "familyWords": [
+                "thorough"
+              ],
+              "sentence": "A thorough plan helped the day run smoothly.",
+              "sentences": [
+                "A thorough plan helped the day run smoothly."
+              ],
+              "accepted": [
+                "thorough"
+              ],
+              "explanation": "Thorough means complete and careful, with nothing important missed.",
+              "listId": "statutory-y5-6",
+              "yearGroups": [
+                "Y5",
+                "Y6"
+              ],
+              "tags": [
+                "statutory",
+                "legacy-seed",
+                "exception-word"
+              ],
+              "patternIds": [],
+              "sourceNote": "Seeded from preserved legacy spelling word list.",
+              "provenance": {
+                "source": "legacy/vendor/word-list.js",
+                "note": "Legacy vendor seed for Pass 11 content model.",
+                "importedAt": 0
+              },
+              "progressKey": "thorough",
+              "sortIndex": 207
+            },
+            "sentence": "A thorough plan helped the day run smoothly.",
+            "slow": false
+          }
+        ],
+        "spoken": []
+      },
+      "persisted": {
+        "progress": {
+          "eighth": {
+            "stage": 1,
+            "attempts": 1,
+            "correct": 1,
+            "wrong": 0,
+            "dueDay": 20469,
+            "lastDay": 20468,
+            "lastResult": "correct"
+          },
+          "profession": {
+            "stage": 1,
+            "attempts": 1,
+            "correct": 1,
+            "wrong": 0,
+            "dueDay": 20469,
+            "lastDay": 20468,
+            "lastResult": "correct"
+          },
+          "convenience": {
+            "stage": 1,
+            "attempts": 1,
+            "correct": 1,
+            "wrong": 0,
+            "dueDay": 20469,
+            "lastDay": 20468,
+            "lastResult": "correct"
+          },
+          "disastrous": {
+            "stage": 0,
+            "attempts": 1,
+            "correct": 0,
+            "wrong": 1,
+            "dueDay": 20468,
+            "lastDay": 20468,
+            "lastResult": "wrong"
+          },
+          "thorough": {
+            "stage": 1,
+            "attempts": 1,
+            "correct": 1,
+            "wrong": 0,
+            "dueDay": 20469,
+            "lastDay": 20468,
+            "lastResult": "correct"
+          }
+        }
+      }
+    },
+    "trouble-priority-and-fallback": {
+      "ok": true,
+      "state": {
+        "priorityRoster": [
+          "accommodate",
+          "address"
+        ],
+        "priorityTrace": [
+          {
+            "command": "start-session:trouble",
+            "ok": true,
+            "changed": true,
+            "phase": "session",
+            "mode": "trouble",
+            "sessionPhase": "question",
+            "resultingSlug": "accommodate",
+            "actedOnSlug": null,
+            "grade": null,
+            "awaitingAdvance": false,
+            "feedbackKind": null,
+            "feedbackHeadline": null
+          }
+        ],
+        "fallbackRoster": [
+          "eighth",
+          "profession",
+          "convenience",
+          "disastrous",
+          "thorough"
+        ],
+        "fallbackTrace": [
+          {
+            "command": "start-session:trouble-fallback",
+            "ok": true,
+            "changed": true,
+            "phase": "session",
+            "mode": "smart",
+            "sessionPhase": "question",
+            "resultingSlug": "disastrous",
+            "actedOnSlug": null,
+            "grade": null,
+            "awaitingAdvance": false,
+            "feedbackKind": "warn",
+            "feedbackHeadline": "Trouble drill fell back to Smart Review."
+          }
+        ],
+        "fallbackHeadline": "Trouble drill fell back to Smart Review."
+      },
+      "events": [],
+      "audio": {
+        "priority": {
+          "cues": [
+            {
+              "word": {
+                "year": "5-6",
+                "family": "accommodate",
+                "word": "accommodate",
+                "slug": "accommodate",
+                "spellingPool": "core",
+                "coverageTier": "statutory-core",
+                "yearLabel": "Years 5-6",
+                "familyWords": [
+                  "accommodate"
+                ],
+                "sentence": "We must accommodate visitors at sports day.",
+                "sentences": [
+                  "We must accommodate visitors at sports day."
+                ],
+                "accepted": [
+                  "accommodate"
+                ],
+                "explanation": "To accommodate means to provide space for someone or something, or to fit in with needs.",
+                "listId": "statutory-y5-6",
+                "yearGroups": [
+                  "Y5",
+                  "Y6"
+                ],
+                "tags": [
+                  "statutory",
+                  "legacy-seed"
+                ],
+                "patternIds": [
+                  "double-consonant"
+                ],
+                "sourceNote": "Seeded from preserved legacy spelling word list.",
+                "provenance": {
+                  "source": "legacy/vendor/word-list.js",
+                  "note": "Legacy vendor seed for Pass 11 content model.",
+                  "importedAt": 0
+                },
+                "progressKey": "accommodate",
+                "sortIndex": 109
+              },
+              "sentence": "We must accommodate visitors at sports day.",
+              "slow": false
+            }
+          ],
+          "spoken": []
+        },
+        "fallback": {
+          "cues": [
+            {
+              "word": {
+                "year": "5-6",
+                "family": "disastrous",
+                "word": "disastrous",
+                "slug": "disastrous",
+                "spellingPool": "core",
+                "coverageTier": "statutory-core",
+                "yearLabel": "Years 5-6",
+                "familyWords": [
+                  "disastrous"
+                ],
+                "sentence": "The broken pump was disastrous for the field.",
+                "sentences": [
+                  "The broken pump was disastrous for the field."
+                ],
+                "accepted": [
+                  "disastrous"
+                ],
+                "explanation": "Disastrous means causing great harm, failure or trouble.",
+                "listId": "statutory-y5-6",
+                "yearGroups": [
+                  "Y5",
+                  "Y6"
+                ],
+                "tags": [
+                  "statutory",
+                  "legacy-seed"
+                ],
+                "patternIds": [
+                  "suffix-ous"
+                ],
+                "sourceNote": "Seeded from preserved legacy spelling word list.",
+                "provenance": {
+                  "source": "legacy/vendor/word-list.js",
+                  "note": "Legacy vendor seed for Pass 11 content model.",
+                  "importedAt": 0
+                },
+                "progressKey": "disastrous",
+                "sortIndex": 142
+              },
+              "sentence": "The broken pump was disastrous for the field.",
+              "slow": false
+            }
+          ],
+          "spoken": []
+        }
+      },
+      "persisted": {
+        "priority": {
+          "possess": {
+            "stage": 1,
+            "attempts": 2,
+            "correct": 2,
+            "wrong": 0,
+            "dueDay": 20467,
+            "lastDay": 20466,
+            "lastResult": "correct"
+          },
+          "accommodate": {
+            "stage": 3,
+            "attempts": 5,
+            "correct": 4,
+            "wrong": 1,
+            "dueDay": 20468,
+            "lastDay": 20467,
+            "lastResult": "wrong"
+          },
+          "address": {
+            "stage": 2,
+            "attempts": 4,
+            "correct": 2,
+            "wrong": 2,
+            "dueDay": 20467,
+            "lastDay": 20466,
+            "lastResult": "wrong"
+          }
+        },
+        "fallback": {}
+      }
+    },
+    "test-core-only-single-attempt": {
+      "ok": true,
+      "state": {
+        "roster": [
+          "achieve",
+          "library",
+          "controversy",
+          "therefore",
+          "occupy",
+          "opposite",
+          "bargain",
+          "neighbour",
+          "necessary",
+          "extreme",
+          "vegetable",
+          "arrive",
+          "peculiar",
+          "medicine",
+          "interfere",
+          "regular",
+          "recognise",
+          "probably",
+          "possession",
+          "natural"
+        ],
+        "rosterCoverageTiers": [
+          "statutory-core",
+          "statutory-core",
+          "statutory-core",
+          "statutory-core",
+          "statutory-core",
+          "statutory-core",
+          "statutory-core",
+          "statutory-core",
+          "statutory-core",
+          "statutory-core",
+          "statutory-core",
+          "statutory-core",
+          "statutory-core",
+          "statutory-core",
+          "statutory-core",
+          "statutory-core",
+          "statutory-core",
+          "statutory-core",
+          "statutory-core",
+          "statutory-core"
+        ],
+        "firstSlug": "achieve",
+        "secondSlug": "library",
+        "trace": [
+          {
+            "command": "start-session",
+            "ok": true,
+            "changed": true,
+            "phase": "session",
+            "mode": "test",
+            "sessionPhase": "question",
+            "resultingSlug": "achieve",
+            "actedOnSlug": null,
+            "grade": null,
+            "awaitingAdvance": false,
+            "feedbackKind": null,
+            "feedbackHeadline": null
+          },
+          {
+            "command": "submit-answer:wrong",
+            "ok": true,
+            "changed": true,
+            "phase": "session",
+            "mode": "test",
+            "sessionPhase": "question",
+            "resultingSlug": "achieve",
+            "actedOnSlug": null,
+            "grade": null,
+            "awaitingAdvance": true,
+            "feedbackKind": "info",
+            "feedbackHeadline": "Saved."
+          },
+          {
+            "command": "continue-session",
+            "ok": true,
+            "changed": true,
+            "phase": "session",
+            "mode": "test",
+            "sessionPhase": "question",
+            "resultingSlug": "library",
+            "actedOnSlug": null,
+            "grade": null,
+            "awaitingAdvance": false,
+            "feedbackKind": null,
+            "feedbackHeadline": null
+          },
+          {
+            "command": "submit-answer:correct",
+            "ok": true,
+            "changed": true,
+            "phase": "session",
+            "mode": "test",
+            "sessionPhase": "question",
+            "resultingSlug": "library",
+            "actedOnSlug": null,
+            "grade": null,
+            "awaitingAdvance": true,
+            "feedbackKind": "info",
+            "feedbackHeadline": "Saved."
+          },
+          {
+            "command": "continue-session",
+            "ok": true,
+            "changed": true,
+            "phase": "session",
+            "mode": "test",
+            "sessionPhase": "question",
+            "resultingSlug": "controversy",
+            "actedOnSlug": null,
+            "grade": null,
+            "awaitingAdvance": false,
+            "feedbackKind": null,
+            "feedbackHeadline": null
+          }
+        ]
+      },
+      "events": [],
+      "audio": {
+        "cues": [
+          {
+            "word": {
+              "year": "5-6",
+              "family": "achieve",
+              "word": "achieve",
+              "slug": "achieve",
+              "spellingPool": "core",
+              "coverageTier": "statutory-core",
+              "yearLabel": "Years 5-6",
+              "familyWords": [
+                "achieve"
+              ],
+              "sentence": "We must achieve calm before the show.",
+              "sentences": [
+                "We must achieve calm before the show."
+              ],
+              "accepted": [
+                "achieve"
+              ],
+              "explanation": "To achieve means to succeed in doing something through effort.",
+              "listId": "statutory-y5-6",
+              "yearGroups": [
+                "Y5",
+                "Y6"
+              ],
+              "tags": [
+                "statutory",
+                "legacy-seed"
+              ],
+              "patternIds": [
+                "i-before-e"
+              ],
+              "sourceNote": "Seeded from preserved legacy spelling word list.",
+              "provenance": {
+                "source": "legacy/vendor/word-list.js",
+                "note": "Legacy vendor seed for Pass 11 content model.",
+                "importedAt": 0
+              },
+              "progressKey": "achieve",
+              "sortIndex": 112
+            },
+            "sentence": "We must achieve calm before the show.",
+            "slow": false
+          },
+          {
+            "word": {
+              "year": "3-4",
+              "family": "library",
+              "word": "library",
+              "slug": "library",
+              "spellingPool": "core",
+              "coverageTier": "statutory-core",
+              "yearLabel": "Years 3-4",
+              "familyWords": [
+                "library"
+              ],
+              "sentence": "We found the atlas in the library.",
+              "sentences": [
+                "We found the atlas in the library."
+              ],
+              "accepted": [
+                "library"
+              ],
+              "explanation": "A library is a place where books and information are kept for people to use.",
+              "listId": "statutory-y3-4",
+              "yearGroups": [
+                "Y3",
+                "Y4"
+              ],
+              "tags": [
+                "statutory",
+                "legacy-seed",
+                "exception-word"
+              ],
+              "patternIds": [],
+              "sourceNote": "Seeded from preserved legacy spelling word list.",
+              "provenance": {
+                "source": "legacy/vendor/word-list.js",
+                "note": "Legacy vendor seed for Pass 11 content model.",
+                "importedAt": 0
+              },
+              "progressKey": "library",
+              "sortIndex": 60
+            },
+            "sentence": "We found the atlas in the library.",
+            "slow": false
+          },
+          {
+            "word": {
+              "year": "5-6",
+              "family": "controversy",
+              "word": "controversy",
+              "slug": "controversy",
+              "spellingPool": "core",
+              "coverageTier": "statutory-core",
+              "yearLabel": "Years 5-6",
+              "familyWords": [
+                "controversy"
+              ],
+              "sentence": "The budget was at the centre of controversy.",
+              "sentences": [
+                "The budget was at the centre of controversy."
+              ],
+              "accepted": [
+                "controversy"
+              ],
+              "explanation": "A controversy is strong disagreement about an issue.",
+              "listId": "statutory-y5-6",
+              "yearGroups": [
+                "Y5",
+                "Y6"
+              ],
+              "tags": [
+                "statutory",
+                "legacy-seed",
+                "exception-word"
+              ],
+              "patternIds": [],
+              "sourceNote": "Seeded from preserved legacy spelling word list.",
+              "provenance": {
+                "source": "legacy/vendor/word-list.js",
+                "note": "Legacy vendor seed for Pass 11 content model.",
+                "importedAt": 0
+              },
+              "progressKey": "controversy",
+              "sortIndex": 132
+            },
+            "sentence": "The budget was at the centre of controversy.",
+            "slow": false
+          }
+        ],
+        "spoken": []
+      },
+      "persisted": {
+        "prefs": {
+          "mode": "smart",
+          "yearFilter": "extra",
+          "roundLength": "20",
+          "showCloze": true,
+          "autoSpeak": true,
+          "extraWordFamilies": false,
+          "ttsProvider": "openai",
+          "bufferedGeminiVoice": "Iapetus"
+        },
+        "progress": {
+          "achieve": {
+            "stage": 0,
+            "attempts": 1,
+            "correct": 0,
+            "wrong": 1,
+            "dueDay": 20468,
+            "lastDay": 20468,
+            "lastResult": "wrong"
+          },
+          "library": {
+            "stage": 1,
+            "attempts": 1,
+            "correct": 1,
+            "wrong": 0,
+            "dueDay": 20469,
+            "lastDay": 20468,
+            "lastResult": "correct"
+          }
+        }
+      }
+    },
+    "single-practice-only": {
+      "ok": true,
+      "state": {
+        "trace": [
+          {
+            "command": "start-session",
+            "ok": true,
+            "changed": true,
+            "phase": "session",
+            "mode": "single",
+            "sessionPhase": "question",
+            "resultingSlug": "possess",
+            "actedOnSlug": null,
+            "grade": null,
+            "awaitingAdvance": false,
+            "feedbackKind": null,
+            "feedbackHeadline": null
+          },
+          {
+            "command": "submit-answer:wrong",
+            "ok": true,
+            "changed": true,
+            "phase": "session",
+            "mode": "single",
+            "sessionPhase": "retry",
+            "resultingSlug": "possess",
+            "actedOnSlug": null,
+            "grade": null,
+            "awaitingAdvance": false,
+            "feedbackKind": "error",
+            "feedbackHeadline": "Not quite."
+          },
+          {
+            "command": "submit-answer:retry-wrong",
+            "ok": true,
+            "changed": true,
+            "phase": "session",
+            "mode": "single",
+            "sessionPhase": "correction",
+            "resultingSlug": "possess",
+            "actedOnSlug": null,
+            "grade": null,
+            "awaitingAdvance": false,
+            "feedbackKind": "error",
+            "feedbackHeadline": "Still not quite."
+          },
+          {
+            "command": "submit-answer:correction",
+            "ok": true,
+            "changed": true,
+            "phase": "session",
+            "mode": "single",
+            "sessionPhase": "question",
+            "resultingSlug": "possess",
+            "actedOnSlug": null,
+            "grade": null,
+            "awaitingAdvance": true,
+            "feedbackKind": "info",
+            "feedbackHeadline": "Locked in."
+          },
+          {
+            "command": "continue-session",
+            "ok": true,
+            "changed": true,
+            "phase": "session",
+            "mode": "single",
+            "sessionPhase": "question",
+            "resultingSlug": "possess",
+            "actedOnSlug": null,
+            "grade": null,
+            "awaitingAdvance": false,
+            "feedbackKind": null,
+            "feedbackHeadline": null
+          },
+          {
+            "command": "submit-answer:clean-return",
+            "ok": true,
+            "changed": true,
+            "phase": "session",
+            "mode": "single",
+            "sessionPhase": "question",
+            "resultingSlug": "possess",
+            "actedOnSlug": null,
+            "grade": null,
+            "awaitingAdvance": true,
+            "feedbackKind": "info",
+            "feedbackHeadline": "Correct now."
+          },
+          {
+            "command": "continue-session",
+            "ok": true,
+            "changed": true,
+            "phase": "summary",
+            "mode": "single",
+            "sessionPhase": null,
+            "resultingSlug": null,
+            "actedOnSlug": null,
+            "grade": null,
+            "awaitingAdvance": false,
+            "feedbackKind": null,
+            "feedbackHeadline": null
+          }
+        ],
+        "summary": {
+          "mode": "single",
+          "label": "Word bank practice",
+          "message": "Practice complete. Learner progress was not changed.",
+          "cards": [
+            {
+              "label": "Practice words",
+              "value": 1,
+              "sub": "Unique words selected"
+            },
+            {
+              "label": "Clean first attempts",
+              "value": 0,
+              "sub": "Practice result only"
+            },
+            {
+              "label": "Needed correction",
+              "value": 1,
+              "sub": "These words came back again"
+            },
+            {
+              "label": "Prompts heard",
+              "value": 3,
+              "sub": "Includes repeats of weak words"
+            }
+          ],
+          "mistakes": [
+            {
+              "slug": "possess",
+              "word": "possess",
+              "family": "possess(ion)",
+              "year": "3-4",
+              "yearLabel": "Years 3-4",
+              "familyWords": [
+                "possess",
+                "possession"
+              ]
+            }
+          ],
+          "elapsedMs": 0,
+          "totalWords": 1,
+          "correct": 0,
+          "accuracy": 0,
+          "heroContext": null
+        }
+      },
+      "events": [
+        {
+          "id": "spelling.retry-cleared:a1-single:sess-1768478400000-99e1ef7c:possess:correction:2",
+          "type": "spelling.retry-cleared",
+          "subjectId": "spelling",
+          "learnerId": "a1-single",
+          "sessionId": "sess-1768478400000-99e1ef7c",
+          "mode": "single",
+          "createdAt": 1768478400000,
+          "wordSlug": "possess",
+          "word": "possess",
+          "family": "possess(ion)",
+          "yearBand": "3-4",
+          "spellingPool": "core",
+          "fromPhase": "correction",
+          "attemptCount": 2
+        }
+      ],
+      "audio": {
+        "cues": [
+          {
+            "word": {
+              "year": "3-4",
+              "family": "possess(ion)",
+              "word": "possess",
+              "slug": "possess",
+              "spellingPool": "core",
+              "coverageTier": "statutory-core",
+              "yearLabel": "Years 3-4",
+              "familyWords": [
+                "possess",
+                "possession"
+              ],
+              "sentence": "Some birds possess bright feathers.",
+              "sentences": [
+                "Some birds possess bright feathers."
+              ],
+              "accepted": [
+                "possess"
+              ],
+              "explanation": "To possess something means to own it or have it.",
+              "listId": "statutory-y3-4",
+              "yearGroups": [
+                "Y3",
+                "Y4"
+              ],
+              "tags": [
+                "statutory",
+                "legacy-seed"
+              ],
+              "patternIds": [
+                "double-consonant"
+              ],
+              "sourceNote": "Seeded from preserved legacy spelling word list.",
+              "provenance": {
+                "source": "legacy/vendor/word-list.js",
+                "note": "Legacy vendor seed for Pass 11 content model.",
+                "importedAt": 0
+              },
+              "progressKey": "possess",
+              "sortIndex": 78
+            },
+            "sentence": "Some birds possess bright feathers.",
+            "slow": false
+          },
+          {
+            "word": {
+              "year": "3-4",
+              "family": "possess(ion)",
+              "word": "possess",
+              "slug": "possess",
+              "spellingPool": "core",
+              "coverageTier": "statutory-core",
+              "yearLabel": "Years 3-4",
+              "familyWords": [
+                "possess",
+                "possession"
+              ],
+              "sentence": "Some birds possess bright feathers.",
+              "sentences": [
+                "Some birds possess bright feathers."
+              ],
+              "accepted": [
+                "possess"
+              ],
+              "explanation": "To possess something means to own it or have it.",
+              "listId": "statutory-y3-4",
+              "yearGroups": [
+                "Y3",
+                "Y4"
+              ],
+              "tags": [
+                "statutory",
+                "legacy-seed"
+              ],
+              "patternIds": [
+                "double-consonant"
+              ],
+              "sourceNote": "Seeded from preserved legacy spelling word list.",
+              "provenance": {
+                "source": "legacy/vendor/word-list.js",
+                "note": "Legacy vendor seed for Pass 11 content model.",
+                "importedAt": 0
+              },
+              "progressKey": "possess",
+              "sortIndex": 78
+            },
+            "sentence": "Some birds possess bright feathers.",
+            "slow": true
+          },
+          {
+            "word": {
+              "year": "3-4",
+              "family": "possess(ion)",
+              "word": "possess",
+              "slug": "possess",
+              "spellingPool": "core",
+              "coverageTier": "statutory-core",
+              "yearLabel": "Years 3-4",
+              "familyWords": [
+                "possess",
+                "possession"
+              ],
+              "sentence": "Very few animals possess wings and fur.",
+              "sentences": [
+                "Very few animals possess wings and fur."
+              ],
+              "accepted": [
+                "possess"
+              ],
+              "explanation": "To possess something means to own it or have it.",
+              "listId": "statutory-y3-4",
+              "yearGroups": [
+                "Y3",
+                "Y4"
+              ],
+              "tags": [
+                "statutory",
+                "legacy-seed"
+              ],
+              "patternIds": [
+                "double-consonant"
+              ],
+              "sourceNote": "Seeded from preserved legacy spelling word list.",
+              "provenance": {
+                "source": "legacy/vendor/word-list.js",
+                "note": "Legacy vendor seed for Pass 11 content model.",
+                "importedAt": 0
+              },
+              "progressKey": "possess",
+              "sortIndex": 78
+            },
+            "sentence": "Very few animals possess wings and fur.",
+            "slow": false
+          }
+        ],
+        "spoken": []
+      },
+      "persisted": {
+        "targetSlug": "possess",
+        "sentinelSlug": "accommodate",
+        "progressStorage": {
+          "key": "ks2-spell-progress-a1-single",
+          "before": "{\"possess\":{\"stage\":2,\"attempts\":6,\"correct\":4,\"wrong\":2,\"dueDay\":20467,\"lastDay\":20466,\"lastResult\":\"correct\"},\"accommodate\":{\"stage\":3,\"attempts\":9,\"correct\":7,\"wrong\":2,\"dueDay\":20471,\"lastDay\":20467,\"lastResult\":\"correct\"}}",
+          "after": "{\"possess\":{\"stage\":2,\"attempts\":6,\"correct\":4,\"wrong\":2,\"dueDay\":20467,\"lastDay\":20466,\"lastResult\":\"correct\"},\"accommodate\":{\"stage\":3,\"attempts\":9,\"correct\":7,\"wrong\":2,\"dueDay\":20471,\"lastDay\":20467,\"lastResult\":\"correct\"}}"
+        },
+        "progressBefore": {
+          "possess": {
+            "stage": 2,
+            "attempts": 6,
+            "correct": 4,
+            "wrong": 2,
+            "dueDay": 20467,
+            "lastDay": 20466,
+            "lastResult": "correct"
+          },
+          "accommodate": {
+            "stage": 3,
+            "attempts": 9,
+            "correct": 7,
+            "wrong": 2,
+            "dueDay": 20471,
+            "lastDay": 20467,
+            "lastResult": "correct"
+          }
+        },
+        "progressAfter": {
+          "possess": {
+            "stage": 2,
+            "attempts": 6,
+            "correct": 4,
+            "wrong": 2,
+            "dueDay": 20467,
+            "lastDay": 20466,
+            "lastResult": "correct"
+          },
+          "accommodate": {
+            "stage": 3,
+            "attempts": 9,
+            "correct": 7,
+            "wrong": 2,
+            "dueDay": 20471,
+            "lastDay": 20467,
+            "lastResult": "correct"
+          }
+        },
+        "byteIdentical": true
+      }
+    },
+    "guardian-wobble-recover-and-skip": {
+      "ok": true,
+      "state": {
+        "roster": [
+          "possess",
+          "island",
+          "language",
+          "question",
+          "prejudice",
+          "category",
+          "bicycle",
+          "neighbour"
+        ],
+        "actions": [
+          {
+            "slug": "possess",
+            "action": "recover"
+          },
+          {
+            "slug": "island",
+            "action": "wrong"
+          },
+          {
+            "slug": "language",
+            "action": "skip"
+          },
+          {
+            "slug": "question",
+            "action": "correct"
+          },
+          {
+            "slug": "prejudice",
+            "action": "correct"
+          },
+          {
+            "slug": "category",
+            "action": "correct"
+          },
+          {
+            "slug": "bicycle",
+            "action": "correct"
+          },
+          {
+            "slug": "neighbour",
+            "action": "correct"
+          }
+        ],
+        "trace": [
+          {
+            "command": "start-session",
+            "ok": true,
+            "changed": true,
+            "phase": "session",
+            "mode": "guardian",
+            "sessionPhase": "question",
+            "resultingSlug": "possess",
+            "actedOnSlug": null,
+            "grade": null,
+            "awaitingAdvance": false,
+            "feedbackKind": null,
+            "feedbackHeadline": null
+          },
+          {
+            "command": "submit-answer:recover",
+            "ok": true,
+            "changed": true,
+            "phase": "session",
+            "mode": "guardian",
+            "sessionPhase": "question",
+            "resultingSlug": "possess",
+            "actedOnSlug": null,
+            "grade": null,
+            "awaitingAdvance": true,
+            "feedbackKind": "success",
+            "feedbackHeadline": "Recovered."
+          },
+          {
+            "command": "continue-session",
+            "ok": true,
+            "changed": true,
+            "phase": "session",
+            "mode": "guardian",
+            "sessionPhase": "question",
+            "resultingSlug": "island",
+            "actedOnSlug": null,
+            "grade": null,
+            "awaitingAdvance": false,
+            "feedbackKind": null,
+            "feedbackHeadline": null
+          },
+          {
+            "command": "submit-answer:wobble",
+            "ok": true,
+            "changed": true,
+            "phase": "session",
+            "mode": "guardian",
+            "sessionPhase": "question",
+            "resultingSlug": "island",
+            "actedOnSlug": null,
+            "grade": null,
+            "awaitingAdvance": true,
+            "feedbackKind": "warn",
+            "feedbackHeadline": "Wobbling."
+          },
+          {
+            "command": "continue-session",
+            "ok": true,
+            "changed": true,
+            "phase": "session",
+            "mode": "guardian",
+            "sessionPhase": "question",
+            "resultingSlug": "language",
+            "actedOnSlug": null,
+            "grade": null,
+            "awaitingAdvance": false,
+            "feedbackKind": null,
+            "feedbackHeadline": null
+          },
+          {
+            "command": "skip-word",
+            "ok": true,
+            "changed": true,
+            "phase": "session",
+            "mode": "guardian",
+            "sessionPhase": "question",
+            "resultingSlug": "language",
+            "actedOnSlug": null,
+            "grade": null,
+            "awaitingAdvance": true,
+            "feedbackKind": "warn",
+            "feedbackHeadline": "Wobbling."
+          },
+          {
+            "command": "continue-session",
+            "ok": true,
+            "changed": true,
+            "phase": "session",
+            "mode": "guardian",
+            "sessionPhase": "question",
+            "resultingSlug": "question",
+            "actedOnSlug": null,
+            "grade": null,
+            "awaitingAdvance": false,
+            "feedbackKind": null,
+            "feedbackHeadline": null
+          },
+          {
+            "command": "submit-answer:correct",
+            "ok": true,
+            "changed": true,
+            "phase": "session",
+            "mode": "guardian",
+            "sessionPhase": "question",
+            "resultingSlug": "question",
+            "actedOnSlug": null,
+            "grade": null,
+            "awaitingAdvance": true,
+            "feedbackKind": "info",
+            "feedbackHeadline": "Guardian strong."
+          },
+          {
+            "command": "continue-session",
+            "ok": true,
+            "changed": true,
+            "phase": "session",
+            "mode": "guardian",
+            "sessionPhase": "question",
+            "resultingSlug": "prejudice",
+            "actedOnSlug": null,
+            "grade": null,
+            "awaitingAdvance": false,
+            "feedbackKind": null,
+            "feedbackHeadline": null
+          },
+          {
+            "command": "submit-answer:correct",
+            "ok": true,
+            "changed": true,
+            "phase": "session",
+            "mode": "guardian",
+            "sessionPhase": "question",
+            "resultingSlug": "prejudice",
+            "actedOnSlug": null,
+            "grade": null,
+            "awaitingAdvance": true,
+            "feedbackKind": "info",
+            "feedbackHeadline": "Guardian strong."
+          },
+          {
+            "command": "continue-session",
+            "ok": true,
+            "changed": true,
+            "phase": "session",
+            "mode": "guardian",
+            "sessionPhase": "question",
+            "resultingSlug": "category",
+            "actedOnSlug": null,
+            "grade": null,
+            "awaitingAdvance": false,
+            "feedbackKind": null,
+            "feedbackHeadline": null
+          },
+          {
+            "command": "submit-answer:correct",
+            "ok": true,
+            "changed": true,
+            "phase": "session",
+            "mode": "guardian",
+            "sessionPhase": "question",
+            "resultingSlug": "category",
+            "actedOnSlug": null,
+            "grade": null,
+            "awaitingAdvance": true,
+            "feedbackKind": "info",
+            "feedbackHeadline": "Guardian strong."
+          },
+          {
+            "command": "continue-session",
+            "ok": true,
+            "changed": true,
+            "phase": "session",
+            "mode": "guardian",
+            "sessionPhase": "question",
+            "resultingSlug": "bicycle",
+            "actedOnSlug": null,
+            "grade": null,
+            "awaitingAdvance": false,
+            "feedbackKind": null,
+            "feedbackHeadline": null
+          },
+          {
+            "command": "submit-answer:correct",
+            "ok": true,
+            "changed": true,
+            "phase": "session",
+            "mode": "guardian",
+            "sessionPhase": "question",
+            "resultingSlug": "bicycle",
+            "actedOnSlug": null,
+            "grade": null,
+            "awaitingAdvance": true,
+            "feedbackKind": "info",
+            "feedbackHeadline": "Guardian strong."
+          },
+          {
+            "command": "continue-session",
+            "ok": true,
+            "changed": true,
+            "phase": "session",
+            "mode": "guardian",
+            "sessionPhase": "question",
+            "resultingSlug": "neighbour",
+            "actedOnSlug": null,
+            "grade": null,
+            "awaitingAdvance": false,
+            "feedbackKind": null,
+            "feedbackHeadline": null
+          },
+          {
+            "command": "submit-answer:correct",
+            "ok": true,
+            "changed": true,
+            "phase": "session",
+            "mode": "guardian",
+            "sessionPhase": "question",
+            "resultingSlug": "neighbour",
+            "actedOnSlug": null,
+            "grade": null,
+            "awaitingAdvance": true,
+            "feedbackKind": "info",
+            "feedbackHeadline": "Guardian strong."
+          },
+          {
+            "command": "continue-session",
+            "ok": true,
+            "changed": true,
+            "phase": "summary",
+            "mode": "guardian",
+            "sessionPhase": null,
+            "resultingSlug": null,
+            "actedOnSlug": null,
+            "grade": null,
+            "awaitingAdvance": false,
+            "feedbackKind": null,
+            "feedbackHeadline": null
+          }
+        ],
+        "summary": {
+          "mode": "guardian",
+          "label": "Guardian Mission",
+          "message": "Good. The weak words were caught quickly and are now marked due again for this learner.",
+          "cards": [
+            {
+              "label": "Words in round",
+              "value": 8,
+              "sub": "Unique words selected"
+            },
+            {
+              "label": "Clean first attempts",
+              "value": 6,
+              "sub": "Strong on the first go"
+            },
+            {
+              "label": "Needed correction",
+              "value": 2,
+              "sub": "These words came back again"
+            },
+            {
+              "label": "Prompts heard",
+              "value": 8,
+              "sub": "Includes repeats of weak words"
+            }
+          ],
+          "mistakes": [
+            {
+              "slug": "island",
+              "word": "island",
+              "family": "island",
+              "year": "3-4",
+              "yearLabel": "Years 3-4",
+              "familyWords": [
+                "island"
+              ]
+            },
+            {
+              "slug": "language",
+              "word": "language",
+              "family": "language",
+              "year": "5-6",
+              "yearLabel": "Years 5-6",
+              "familyWords": [
+                "language"
+              ]
+            }
+          ],
+          "elapsedMs": 0,
+          "totalWords": 8,
+          "correct": 6,
+          "accuracy": 75,
+          "heroContext": null
+        }
+      },
+      "events": [
+        {
+          "id": "spelling.guardian.recovered:a1-guardian:sess-1768478400000-a03daa48:possess:1",
+          "type": "spelling.guardian.recovered",
+          "subjectId": "spelling",
+          "learnerId": "a1-guardian",
+          "sessionId": "sess-1768478400000-a03daa48",
+          "mode": "guardian",
+          "createdAt": 1768478400000,
+          "wordSlug": "possess",
+          "word": "possess",
+          "family": "possess(ion)",
+          "yearBand": "3-4",
+          "spellingPool": "core",
+          "renewals": 1,
+          "reviewLevel": 2
+        },
+        {
+          "id": "spelling.guardian.wobbled:a1-guardian:sess-1768478400000-a03daa48:island:1",
+          "type": "spelling.guardian.wobbled",
+          "subjectId": "spelling",
+          "learnerId": "a1-guardian",
+          "sessionId": "sess-1768478400000-a03daa48",
+          "mode": "guardian",
+          "createdAt": 1768478400000,
+          "wordSlug": "island",
+          "word": "island",
+          "family": "island",
+          "yearBand": "3-4",
+          "spellingPool": "core",
+          "lapses": 1
+        },
+        {
+          "id": "spelling.guardian.wobbled:a1-guardian:sess-1768478400000-a03daa48:language:1",
+          "type": "spelling.guardian.wobbled",
+          "subjectId": "spelling",
+          "learnerId": "a1-guardian",
+          "sessionId": "sess-1768478400000-a03daa48",
+          "mode": "guardian",
+          "createdAt": 1768478400000,
+          "wordSlug": "language",
+          "word": "language",
+          "family": "language",
+          "yearBand": "5-6",
+          "spellingPool": "core",
+          "lapses": 1
+        },
+        {
+          "id": "spelling.guardian.renewed:a1-guardian:sess-1768478400000-a03daa48:question:1",
+          "type": "spelling.guardian.renewed",
+          "subjectId": "spelling",
+          "learnerId": "a1-guardian",
+          "sessionId": "sess-1768478400000-a03daa48",
+          "mode": "guardian",
+          "createdAt": 1768478400000,
+          "wordSlug": "question",
+          "word": "question",
+          "family": "question",
+          "yearBand": "3-4",
+          "spellingPool": "core",
+          "reviewLevel": 1,
+          "nextDueDay": 20471
+        },
+        {
+          "id": "spelling.guardian.renewed:a1-guardian:sess-1768478400000-a03daa48:prejudice:1",
+          "type": "spelling.guardian.renewed",
+          "subjectId": "spelling",
+          "learnerId": "a1-guardian",
+          "sessionId": "sess-1768478400000-a03daa48",
+          "mode": "guardian",
+          "createdAt": 1768478400000,
+          "wordSlug": "prejudice",
+          "word": "prejudice",
+          "family": "prejudice",
+          "yearBand": "5-6",
+          "spellingPool": "core",
+          "reviewLevel": 1,
+          "nextDueDay": 20471
+        },
+        {
+          "id": "spelling.guardian.renewed:a1-guardian:sess-1768478400000-a03daa48:category:1",
+          "type": "spelling.guardian.renewed",
+          "subjectId": "spelling",
+          "learnerId": "a1-guardian",
+          "sessionId": "sess-1768478400000-a03daa48",
+          "mode": "guardian",
+          "createdAt": 1768478400000,
+          "wordSlug": "category",
+          "word": "category",
+          "family": "category",
+          "yearBand": "5-6",
+          "spellingPool": "core",
+          "reviewLevel": 1,
+          "nextDueDay": 20471
+        },
+        {
+          "id": "spelling.guardian.renewed:a1-guardian:sess-1768478400000-a03daa48:bicycle:1",
+          "type": "spelling.guardian.renewed",
+          "subjectId": "spelling",
+          "learnerId": "a1-guardian",
+          "sessionId": "sess-1768478400000-a03daa48",
+          "mode": "guardian",
+          "createdAt": 1768478400000,
+          "wordSlug": "bicycle",
+          "word": "bicycle",
+          "family": "bicycle",
+          "yearBand": "3-4",
+          "spellingPool": "core",
+          "reviewLevel": 1,
+          "nextDueDay": 20471
+        },
+        {
+          "id": "spelling.guardian.renewed:a1-guardian:sess-1768478400000-a03daa48:neighbour:1",
+          "type": "spelling.guardian.renewed",
+          "subjectId": "spelling",
+          "learnerId": "a1-guardian",
+          "sessionId": "sess-1768478400000-a03daa48",
+          "mode": "guardian",
+          "createdAt": 1768478400000,
+          "wordSlug": "neighbour",
+          "word": "neighbour",
+          "family": "neighbour",
+          "yearBand": "5-6",
+          "spellingPool": "core",
+          "reviewLevel": 1,
+          "nextDueDay": 20471
+        },
+        {
+          "id": "spelling.session-completed:a1-guardian:sess-1768478400000-a03daa48",
+          "type": "spelling.session-completed",
+          "subjectId": "spelling",
+          "learnerId": "a1-guardian",
+          "sessionId": "sess-1768478400000-a03daa48",
+          "mode": "guardian",
+          "createdAt": 1768478400000,
+          "sessionType": "learning",
+          "totalWords": 8,
+          "mistakeCount": 2
+        },
+        {
+          "id": "spelling.guardian.mission-completed:a1-guardian:sess-1768478400000-a03daa48",
+          "type": "spelling.guardian.mission-completed",
+          "subjectId": "spelling",
+          "learnerId": "a1-guardian",
+          "sessionId": "sess-1768478400000-a03daa48",
+          "mode": "guardian",
+          "createdAt": 1768478400000,
+          "totalWords": 8,
+          "renewalCount": 5,
+          "wobbledCount": 2,
+          "recoveredCount": 1
+        }
+      ],
+      "audio": {
+        "cues": [
+          {
+            "word": {
+              "year": "3-4",
+              "family": "possess(ion)",
+              "word": "possess",
+              "slug": "possess",
+              "spellingPool": "core",
+              "coverageTier": "statutory-core",
+              "yearLabel": "Years 3-4",
+              "familyWords": [
+                "possess",
+                "possession"
+              ],
+              "sentence": "A great player must possess skill and patience.",
+              "sentences": [
+                "A great player must possess skill and patience."
+              ],
+              "accepted": [
+                "possess"
+              ],
+              "explanation": "To possess something means to own it or have it.",
+              "listId": "statutory-y3-4",
+              "yearGroups": [
+                "Y3",
+                "Y4"
+              ],
+              "tags": [
+                "statutory",
+                "legacy-seed"
+              ],
+              "patternIds": [
+                "double-consonant"
+              ],
+              "sourceNote": "Seeded from preserved legacy spelling word list.",
+              "provenance": {
+                "source": "legacy/vendor/word-list.js",
+                "note": "Legacy vendor seed for Pass 11 content model.",
+                "importedAt": 0
+              },
+              "progressKey": "possess",
+              "sortIndex": 78
+            },
+            "sentence": "A great player must possess skill and patience.",
+            "slow": false
+          },
+          {
+            "word": {
+              "year": "3-4",
+              "family": "island",
+              "word": "island",
+              "slug": "island",
+              "spellingPool": "core",
+              "coverageTier": "statutory-core",
+              "yearLabel": "Years 3-4",
+              "familyWords": [
+                "island"
+              ],
+              "sentence": "The island was quiet and green.",
+              "sentences": [
+                "The island was quiet and green."
+              ],
+              "accepted": [
+                "island"
+              ],
+              "explanation": "An island is land with water all around it.",
+              "listId": "statutory-y3-4",
+              "yearGroups": [
+                "Y3",
+                "Y4"
+              ],
+              "tags": [
+                "statutory",
+                "legacy-seed"
+              ],
+              "patternIds": [
+                "silent-letter"
+              ],
+              "sourceNote": "Seeded from preserved legacy spelling word list.",
+              "provenance": {
+                "source": "legacy/vendor/word-list.js",
+                "note": "Legacy vendor seed for Pass 11 content model.",
+                "importedAt": 0
+              },
+              "progressKey": "island",
+              "sortIndex": 56
+            },
+            "sentence": "The island was quiet and green.",
+            "slow": false
+          },
+          {
+            "word": {
+              "year": "5-6",
+              "family": "language",
+              "word": "language",
+              "slug": "language",
+              "spellingPool": "core",
+              "coverageTier": "statutory-core",
+              "yearLabel": "Years 5-6",
+              "familyWords": [
+                "language"
+              ],
+              "sentence": "Good language helps us understand each other.",
+              "sentences": [
+                "Good language helps us understand each other."
+              ],
+              "accepted": [
+                "language"
+              ],
+              "explanation": "Language is a system of words and signs that people use to communicate.",
+              "listId": "statutory-y5-6",
+              "yearGroups": [
+                "Y5",
+                "Y6"
+              ],
+              "tags": [
+                "statutory",
+                "legacy-seed",
+                "exception-word"
+              ],
+              "patternIds": [],
+              "sourceNote": "Seeded from preserved legacy spelling word list.",
+              "provenance": {
+                "source": "legacy/vendor/word-list.js",
+                "note": "Legacy vendor seed for Pass 11 content model.",
+                "importedAt": 0
+              },
+              "progressKey": "language",
+              "sortIndex": 167
+            },
+            "sentence": "Good language helps us understand each other.",
+            "slow": false
+          },
+          {
+            "word": {
+              "year": "3-4",
+              "family": "question",
+              "word": "question",
+              "slug": "question",
+              "spellingPool": "core",
+              "coverageTier": "statutory-core",
+              "yearLabel": "Years 3-4",
+              "familyWords": [
+                "question"
+              ],
+              "sentence": "His question helped the class think.",
+              "sentences": [
+                "His question helped the class think."
+              ],
+              "accepted": [
+                "question"
+              ],
+              "explanation": "A question is something you ask to find out information.",
+              "listId": "statutory-y3-4",
+              "yearGroups": [
+                "Y3",
+                "Y4"
+              ],
+              "tags": [
+                "statutory",
+                "legacy-seed"
+              ],
+              "patternIds": [
+                "suffix-tion"
+              ],
+              "sourceNote": "Seeded from preserved legacy spelling word list.",
+              "provenance": {
+                "source": "legacy/vendor/word-list.js",
+                "note": "Legacy vendor seed for Pass 11 content model.",
+                "importedAt": 0
+              },
+              "progressKey": "question",
+              "sortIndex": 87
+            },
+            "sentence": "His question helped the class think.",
+            "slow": false
+          },
+          {
+            "word": {
+              "year": "5-6",
+              "family": "prejudice",
+              "word": "prejudice",
+              "slug": "prejudice",
+              "spellingPool": "core",
+              "coverageTier": "statutory-core",
+              "yearLabel": "Years 5-6",
+              "familyWords": [
+                "prejudice"
+              ],
+              "sentence": "No one should face prejudice because of their background.",
+              "sentences": [
+                "No one should face prejudice because of their background."
+              ],
+              "accepted": [
+                "prejudice"
+              ],
+              "explanation": "Prejudice is an unfair opinion about a person or group formed without enough knowledge.",
+              "listId": "statutory-y5-6",
+              "yearGroups": [
+                "Y5",
+                "Y6"
+              ],
+              "tags": [
+                "statutory",
+                "legacy-seed"
+              ],
+              "patternIds": [
+                "prefix-pre-re-de"
+              ],
+              "sourceNote": "Seeded from preserved legacy spelling word list.",
+              "provenance": {
+                "source": "legacy/vendor/word-list.js",
+                "note": "Legacy vendor seed for Pass 11 content model.",
+                "importedAt": 0
+              },
+              "progressKey": "prejudice",
+              "sortIndex": 182
+            },
+            "sentence": "No one should face prejudice because of their background.",
+            "slow": false
+          },
+          {
+            "word": {
+              "year": "5-6",
+              "family": "category",
+              "word": "category",
+              "slug": "category",
+              "spellingPool": "core",
+              "coverageTier": "statutory-core",
+              "yearLabel": "Years 5-6",
+              "familyWords": [
+                "category"
+              ],
+              "sentence": "We put the books in each category.",
+              "sentences": [
+                "We put the books in each category."
+              ],
+              "accepted": [
+                "category"
+              ],
+              "explanation": "A category is a group of things that share the same type or feature.",
+              "listId": "statutory-y5-6",
+              "yearGroups": [
+                "Y5",
+                "Y6"
+              ],
+              "tags": [
+                "statutory",
+                "legacy-seed",
+                "exception-word"
+              ],
+              "patternIds": [],
+              "sourceNote": "Seeded from preserved legacy spelling word list.",
+              "provenance": {
+                "source": "legacy/vendor/word-list.js",
+                "note": "Legacy vendor seed for Pass 11 content model.",
+                "importedAt": 0
+              },
+              "progressKey": "category",
+              "sortIndex": 124
+            },
+            "sentence": "We put the books in each category.",
+            "slow": false
+          },
+          {
+            "word": {
+              "year": "3-4",
+              "family": "bicycle",
+              "word": "bicycle",
+              "slug": "bicycle",
+              "spellingPool": "core",
+              "coverageTier": "statutory-core",
+              "yearLabel": "Years 3-4",
+              "familyWords": [
+                "bicycle"
+              ],
+              "sentence": "He parked his bicycle outside the shop.",
+              "sentences": [
+                "He parked his bicycle outside the shop."
+              ],
+              "accepted": [
+                "bicycle"
+              ],
+              "explanation": "A bicycle is a vehicle with two wheels that you ride by pedalling.",
+              "listId": "statutory-y3-4",
+              "yearGroups": [
+                "Y3",
+                "Y4"
+              ],
+              "tags": [
+                "statutory",
+                "legacy-seed",
+                "exception-word"
+              ],
+              "patternIds": [],
+              "sourceNote": "Seeded from preserved legacy spelling word list.",
+              "provenance": {
+                "source": "legacy/vendor/word-list.js",
+                "note": "Legacy vendor seed for Pass 11 content model.",
+                "importedAt": 0
+              },
+              "progressKey": "bicycle",
+              "sortIndex": 9
+            },
+            "sentence": "He parked his bicycle outside the shop.",
+            "slow": false
+          },
+          {
+            "word": {
+              "year": "5-6",
+              "family": "neighbour",
+              "word": "neighbour",
+              "slug": "neighbour",
+              "spellingPool": "core",
+              "coverageTier": "statutory-core",
+              "yearLabel": "Years 5-6",
+              "familyWords": [
+                "neighbour"
+              ],
+              "sentence": "Our neighbour brought over some cake.",
+              "sentences": [
+                "Our neighbour brought over some cake."
+              ],
+              "accepted": [
+                "neighbour"
+              ],
+              "explanation": "A neighbour is someone who lives near you.",
+              "listId": "statutory-y5-6",
+              "yearGroups": [
+                "Y5",
+                "Y6"
+              ],
+              "tags": [
+                "statutory",
+                "legacy-seed",
+                "exception-word"
+              ],
+              "patternIds": [],
+              "sourceNote": "Seeded from preserved legacy spelling word list.",
+              "provenance": {
+                "source": "legacy/vendor/word-list.js",
+                "note": "Legacy vendor seed for Pass 11 content model.",
+                "importedAt": 0
+              },
+              "progressKey": "neighbour",
+              "sortIndex": 174
+            },
+            "sentence": "Our neighbour brought over some cake.",
+            "slow": false
+          }
+        ],
+        "spoken": []
+      },
+      "persisted": {
+        "progressBefore": {
+          "possess": {
+            "stage": 4,
+            "attempts": 6,
+            "correct": 5,
+            "wrong": 1,
+            "dueDay": 20528,
+            "lastDay": 20461,
+            "lastResult": "correct"
+          },
+          "island": {
+            "stage": 4,
+            "attempts": 6,
+            "correct": 5,
+            "wrong": 1,
+            "dueDay": 20528,
+            "lastDay": 20461,
+            "lastResult": "correct"
+          },
+          "language": {
+            "stage": 4,
+            "attempts": 6,
+            "correct": 5,
+            "wrong": 1,
+            "dueDay": 20528,
+            "lastDay": 20461,
+            "lastResult": "correct"
+          },
+          "question": {
+            "stage": 4,
+            "attempts": 6,
+            "correct": 5,
+            "wrong": 1,
+            "dueDay": 20528,
+            "lastDay": 20461,
+            "lastResult": "correct"
+          },
+          "prejudice": {
+            "stage": 4,
+            "attempts": 6,
+            "correct": 5,
+            "wrong": 1,
+            "dueDay": 20528,
+            "lastDay": 20461,
+            "lastResult": "correct"
+          },
+          "category": {
+            "stage": 4,
+            "attempts": 6,
+            "correct": 5,
+            "wrong": 1,
+            "dueDay": 20528,
+            "lastDay": 20461,
+            "lastResult": "correct"
+          },
+          "bicycle": {
+            "stage": 4,
+            "attempts": 6,
+            "correct": 5,
+            "wrong": 1,
+            "dueDay": 20528,
+            "lastDay": 20461,
+            "lastResult": "correct"
+          },
+          "neighbour": {
+            "stage": 4,
+            "attempts": 6,
+            "correct": 5,
+            "wrong": 1,
+            "dueDay": 20528,
+            "lastDay": 20461,
+            "lastResult": "correct"
+          }
+        },
+        "progressAfter": {
+          "possess": {
+            "stage": 4,
+            "attempts": 7,
+            "correct": 6,
+            "wrong": 1,
+            "dueDay": 20528,
+            "lastDay": 20461,
+            "lastResult": "correct"
+          },
+          "island": {
+            "stage": 4,
+            "attempts": 7,
+            "correct": 5,
+            "wrong": 2,
+            "dueDay": 20528,
+            "lastDay": 20461,
+            "lastResult": "correct"
+          },
+          "language": {
+            "stage": 4,
+            "attempts": 7,
+            "correct": 5,
+            "wrong": 2,
+            "dueDay": 20528,
+            "lastDay": 20461,
+            "lastResult": "correct"
+          },
+          "question": {
+            "stage": 4,
+            "attempts": 7,
+            "correct": 6,
+            "wrong": 1,
+            "dueDay": 20528,
+            "lastDay": 20461,
+            "lastResult": "correct"
+          },
+          "prejudice": {
+            "stage": 4,
+            "attempts": 7,
+            "correct": 6,
+            "wrong": 1,
+            "dueDay": 20528,
+            "lastDay": 20461,
+            "lastResult": "correct"
+          },
+          "category": {
+            "stage": 4,
+            "attempts": 7,
+            "correct": 6,
+            "wrong": 1,
+            "dueDay": 20528,
+            "lastDay": 20461,
+            "lastResult": "correct"
+          },
+          "bicycle": {
+            "stage": 4,
+            "attempts": 7,
+            "correct": 6,
+            "wrong": 1,
+            "dueDay": 20528,
+            "lastDay": 20461,
+            "lastResult": "correct"
+          },
+          "neighbour": {
+            "stage": 4,
+            "attempts": 7,
+            "correct": 6,
+            "wrong": 1,
+            "dueDay": 20528,
+            "lastDay": 20461,
+            "lastResult": "correct"
+          }
+        },
+        "guardian": {
+          "possess": {
+            "reviewLevel": 2,
+            "lastReviewedDay": 20468,
+            "nextDueDay": 20482,
+            "correctStreak": 1,
+            "lapses": 1,
+            "renewals": 1,
+            "wobbling": false
+          },
+          "island": {
+            "reviewLevel": 0,
+            "lastReviewedDay": 20468,
+            "nextDueDay": 20469,
+            "correctStreak": 0,
+            "lapses": 1,
+            "renewals": 0,
+            "wobbling": true
+          },
+          "language": {
+            "reviewLevel": 0,
+            "lastReviewedDay": 20468,
+            "nextDueDay": 20469,
+            "correctStreak": 0,
+            "lapses": 1,
+            "renewals": 0,
+            "wobbling": true
+          },
+          "question": {
+            "reviewLevel": 1,
+            "lastReviewedDay": 20468,
+            "nextDueDay": 20471,
+            "correctStreak": 1,
+            "lapses": 0,
+            "renewals": 0,
+            "wobbling": false
+          },
+          "prejudice": {
+            "reviewLevel": 1,
+            "lastReviewedDay": 20468,
+            "nextDueDay": 20471,
+            "correctStreak": 1,
+            "lapses": 0,
+            "renewals": 0,
+            "wobbling": false
+          },
+          "category": {
+            "reviewLevel": 1,
+            "lastReviewedDay": 20468,
+            "nextDueDay": 20471,
+            "correctStreak": 1,
+            "lapses": 0,
+            "renewals": 0,
+            "wobbling": false
+          },
+          "bicycle": {
+            "reviewLevel": 1,
+            "lastReviewedDay": 20468,
+            "nextDueDay": 20471,
+            "correctStreak": 1,
+            "lapses": 0,
+            "renewals": 0,
+            "wobbling": false
+          },
+          "neighbour": {
+            "reviewLevel": 1,
+            "lastReviewedDay": 20468,
+            "nextDueDay": 20471,
+            "correctStreak": 1,
+            "lapses": 0,
+            "renewals": 0,
+            "wobbling": false
+          }
+        }
+      }
+    },
+    "boss-seeded-selection-mega-safe": {
+      "ok": true,
+      "state": {
+        "roster": [
+          "interest",
+          "different",
+          "necessary",
+          "heard",
+          "rhyme",
+          "equip",
+          "lightning",
+          "remember",
+          "relevant",
+          "certain"
+        ],
+        "seen": [
+          "interest",
+          "different",
+          "necessary",
+          "heard",
+          "rhyme",
+          "equip",
+          "lightning",
+          "remember",
+          "relevant",
+          "certain"
+        ],
+        "finalPhase": "summary",
+        "trace": [
+          {
+            "command": "start-session",
+            "ok": true,
+            "changed": true,
+            "phase": "session",
+            "mode": "boss",
+            "sessionPhase": "question",
+            "resultingSlug": "interest",
+            "actedOnSlug": null,
+            "grade": null,
+            "awaitingAdvance": false,
+            "feedbackKind": null,
+            "feedbackHeadline": null
+          },
+          {
+            "command": "submit-answer:wrong",
+            "ok": true,
+            "changed": true,
+            "phase": "session",
+            "mode": "boss",
+            "sessionPhase": "question",
+            "resultingSlug": "interest",
+            "actedOnSlug": null,
+            "grade": null,
+            "awaitingAdvance": true,
+            "feedbackKind": "warn",
+            "feedbackHeadline": "Saved."
+          },
+          {
+            "command": "continue-session",
+            "ok": true,
+            "changed": true,
+            "phase": "session",
+            "mode": "boss",
+            "sessionPhase": "question",
+            "resultingSlug": "different",
+            "actedOnSlug": null,
+            "grade": null,
+            "awaitingAdvance": false,
+            "feedbackKind": null,
+            "feedbackHeadline": null
+          },
+          {
+            "command": "submit-answer:correct",
+            "ok": true,
+            "changed": true,
+            "phase": "session",
+            "mode": "boss",
+            "sessionPhase": "question",
+            "resultingSlug": "different",
+            "actedOnSlug": null,
+            "grade": null,
+            "awaitingAdvance": true,
+            "feedbackKind": "info",
+            "feedbackHeadline": "Saved."
+          },
+          {
+            "command": "continue-session",
+            "ok": true,
+            "changed": true,
+            "phase": "session",
+            "mode": "boss",
+            "sessionPhase": "question",
+            "resultingSlug": "necessary",
+            "actedOnSlug": null,
+            "grade": null,
+            "awaitingAdvance": false,
+            "feedbackKind": null,
+            "feedbackHeadline": null
+          },
+          {
+            "command": "submit-answer:correct",
+            "ok": true,
+            "changed": true,
+            "phase": "session",
+            "mode": "boss",
+            "sessionPhase": "question",
+            "resultingSlug": "necessary",
+            "actedOnSlug": null,
+            "grade": null,
+            "awaitingAdvance": true,
+            "feedbackKind": "info",
+            "feedbackHeadline": "Saved."
+          },
+          {
+            "command": "continue-session",
+            "ok": true,
+            "changed": true,
+            "phase": "session",
+            "mode": "boss",
+            "sessionPhase": "question",
+            "resultingSlug": "heard",
+            "actedOnSlug": null,
+            "grade": null,
+            "awaitingAdvance": false,
+            "feedbackKind": null,
+            "feedbackHeadline": null
+          },
+          {
+            "command": "submit-answer:correct",
+            "ok": true,
+            "changed": true,
+            "phase": "session",
+            "mode": "boss",
+            "sessionPhase": "question",
+            "resultingSlug": "heard",
+            "actedOnSlug": null,
+            "grade": null,
+            "awaitingAdvance": true,
+            "feedbackKind": "info",
+            "feedbackHeadline": "Saved."
+          },
+          {
+            "command": "continue-session",
+            "ok": true,
+            "changed": true,
+            "phase": "session",
+            "mode": "boss",
+            "sessionPhase": "question",
+            "resultingSlug": "rhyme",
+            "actedOnSlug": null,
+            "grade": null,
+            "awaitingAdvance": false,
+            "feedbackKind": null,
+            "feedbackHeadline": null
+          },
+          {
+            "command": "submit-answer:correct",
+            "ok": true,
+            "changed": true,
+            "phase": "session",
+            "mode": "boss",
+            "sessionPhase": "question",
+            "resultingSlug": "rhyme",
+            "actedOnSlug": null,
+            "grade": null,
+            "awaitingAdvance": true,
+            "feedbackKind": "info",
+            "feedbackHeadline": "Saved."
+          },
+          {
+            "command": "continue-session",
+            "ok": true,
+            "changed": true,
+            "phase": "session",
+            "mode": "boss",
+            "sessionPhase": "question",
+            "resultingSlug": "equip",
+            "actedOnSlug": null,
+            "grade": null,
+            "awaitingAdvance": false,
+            "feedbackKind": null,
+            "feedbackHeadline": null
+          },
+          {
+            "command": "submit-answer:correct",
+            "ok": true,
+            "changed": true,
+            "phase": "session",
+            "mode": "boss",
+            "sessionPhase": "question",
+            "resultingSlug": "equip",
+            "actedOnSlug": null,
+            "grade": null,
+            "awaitingAdvance": true,
+            "feedbackKind": "info",
+            "feedbackHeadline": "Saved."
+          },
+          {
+            "command": "continue-session",
+            "ok": true,
+            "changed": true,
+            "phase": "session",
+            "mode": "boss",
+            "sessionPhase": "question",
+            "resultingSlug": "lightning",
+            "actedOnSlug": null,
+            "grade": null,
+            "awaitingAdvance": false,
+            "feedbackKind": null,
+            "feedbackHeadline": null
+          },
+          {
+            "command": "submit-answer:correct",
+            "ok": true,
+            "changed": true,
+            "phase": "session",
+            "mode": "boss",
+            "sessionPhase": "question",
+            "resultingSlug": "lightning",
+            "actedOnSlug": null,
+            "grade": null,
+            "awaitingAdvance": true,
+            "feedbackKind": "info",
+            "feedbackHeadline": "Saved."
+          },
+          {
+            "command": "continue-session",
+            "ok": true,
+            "changed": true,
+            "phase": "session",
+            "mode": "boss",
+            "sessionPhase": "question",
+            "resultingSlug": "remember",
+            "actedOnSlug": null,
+            "grade": null,
+            "awaitingAdvance": false,
+            "feedbackKind": null,
+            "feedbackHeadline": null
+          },
+          {
+            "command": "submit-answer:correct",
+            "ok": true,
+            "changed": true,
+            "phase": "session",
+            "mode": "boss",
+            "sessionPhase": "question",
+            "resultingSlug": "remember",
+            "actedOnSlug": null,
+            "grade": null,
+            "awaitingAdvance": true,
+            "feedbackKind": "info",
+            "feedbackHeadline": "Saved."
+          },
+          {
+            "command": "continue-session",
+            "ok": true,
+            "changed": true,
+            "phase": "session",
+            "mode": "boss",
+            "sessionPhase": "question",
+            "resultingSlug": "relevant",
+            "actedOnSlug": null,
+            "grade": null,
+            "awaitingAdvance": false,
+            "feedbackKind": null,
+            "feedbackHeadline": null
+          },
+          {
+            "command": "submit-answer:correct",
+            "ok": true,
+            "changed": true,
+            "phase": "session",
+            "mode": "boss",
+            "sessionPhase": "question",
+            "resultingSlug": "relevant",
+            "actedOnSlug": null,
+            "grade": null,
+            "awaitingAdvance": true,
+            "feedbackKind": "info",
+            "feedbackHeadline": "Saved."
+          },
+          {
+            "command": "continue-session",
+            "ok": true,
+            "changed": true,
+            "phase": "session",
+            "mode": "boss",
+            "sessionPhase": "question",
+            "resultingSlug": "certain",
+            "actedOnSlug": null,
+            "grade": null,
+            "awaitingAdvance": false,
+            "feedbackKind": null,
+            "feedbackHeadline": null
+          },
+          {
+            "command": "submit-answer:correct",
+            "ok": true,
+            "changed": true,
+            "phase": "session",
+            "mode": "boss",
+            "sessionPhase": "question",
+            "resultingSlug": "certain",
+            "actedOnSlug": null,
+            "grade": null,
+            "awaitingAdvance": true,
+            "feedbackKind": "info",
+            "feedbackHeadline": "Saved."
+          },
+          {
+            "command": "continue-session",
+            "ok": true,
+            "changed": true,
+            "phase": "summary",
+            "mode": "boss",
+            "sessionPhase": null,
+            "resultingSlug": null,
+            "actedOnSlug": null,
+            "grade": null,
+            "awaitingAdvance": false,
+            "feedbackKind": null,
+            "feedbackHeadline": null
+          }
+        ],
+        "summary": {
+          "mode": "boss",
+          "label": "Boss Dictation",
+          "message": "Boss round complete — 9 of 10 Mega words landed. Your Mega words stay Mega — review the missed ones on your own.",
+          "cards": [
+            {
+              "label": "Score",
+              "value": "9/10",
+              "sub": "Correct spellings"
+            },
+            {
+              "label": "Accuracy",
+              "value": "90%",
+              "sub": "Single attempt per word"
+            },
+            {
+              "label": "Correct",
+              "value": 9,
+              "sub": "Strong on the day"
+            },
+            {
+              "label": "Needs more work",
+              "value": 1,
+              "sub": "Practice these on your own — Mega stays intact."
+            }
+          ],
+          "mistakes": [
+            {
+              "slug": "interest",
+              "word": "interest",
+              "family": "interest",
+              "year": "3-4",
+              "yearLabel": "Years 3-4",
+              "familyWords": [
+                "interest"
+              ]
+            }
+          ],
+          "elapsedMs": 0,
+          "totalWords": 10,
+          "correct": 9,
+          "accuracy": 90,
+          "heroContext": null
+        }
+      },
+      "events": [
+        {
+          "id": "spelling.session-completed:a1-boss:sess-1768478400000-544f0f38",
+          "type": "spelling.session-completed",
+          "subjectId": "spelling",
+          "learnerId": "a1-boss",
+          "sessionId": "sess-1768478400000-544f0f38",
+          "mode": "boss",
+          "createdAt": 1768478400000,
+          "sessionType": "test",
+          "totalWords": 10,
+          "mistakeCount": 1
+        },
+        {
+          "id": "spelling.boss.completed:a1-boss:sess-1768478400000-544f0f38",
+          "type": "spelling.boss.completed",
+          "subjectId": "spelling",
+          "learnerId": "a1-boss",
+          "sessionId": "sess-1768478400000-544f0f38",
+          "mode": "boss",
+          "createdAt": 1768478400000,
+          "length": 10,
+          "correct": 9,
+          "wrong": 1,
+          "seedSlugs": [
+            "interest",
+            "different",
+            "necessary",
+            "heard",
+            "rhyme",
+            "equip",
+            "lightning",
+            "remember",
+            "relevant",
+            "certain"
+          ]
+        }
+      ],
+      "audio": {
+        "cues": [
+          {
+            "word": {
+              "year": "3-4",
+              "family": "interest",
+              "word": "interest",
+              "slug": "interest",
+              "spellingPool": "core",
+              "coverageTier": "statutory-core",
+              "yearLabel": "Years 3-4",
+              "familyWords": [
+                "interest"
+              ],
+              "sentence": "The museum display held our interest.",
+              "sentences": [
+                "The museum display held our interest."
+              ],
+              "accepted": [
+                "interest"
+              ],
+              "explanation": "Interest is a feeling of wanting to know or learn more about something.",
+              "listId": "statutory-y3-4",
+              "yearGroups": [
+                "Y3",
+                "Y4"
+              ],
+              "tags": [
+                "statutory",
+                "legacy-seed",
+                "exception-word"
+              ],
+              "patternIds": [],
+              "sourceNote": "Seeded from preserved legacy spelling word list.",
+              "provenance": {
+                "source": "legacy/vendor/word-list.js",
+                "note": "Legacy vendor seed for Pass 11 content model.",
+                "importedAt": 0
+              },
+              "progressKey": "interest",
+              "sortIndex": 55
+            },
+            "sentence": "The museum display held our interest.",
+            "slow": false
+          },
+          {
+            "word": {
+              "year": "3-4",
+              "family": "different",
+              "word": "different",
+              "slug": "different",
+              "spellingPool": "core",
+              "coverageTier": "statutory-core",
+              "yearLabel": "Years 3-4",
+              "familyWords": [
+                "different"
+              ],
+              "sentence": "His plan looked different after lunch.",
+              "sentences": [
+                "His plan looked different after lunch."
+              ],
+              "accepted": [
+                "different"
+              ],
+              "explanation": "Different means not the same.",
+              "listId": "statutory-y3-4",
+              "yearGroups": [
+                "Y3",
+                "Y4"
+              ],
+              "tags": [
+                "statutory",
+                "legacy-seed"
+              ],
+              "patternIds": [
+                "double-consonant"
+              ],
+              "sourceNote": "Seeded from preserved legacy spelling word list.",
+              "provenance": {
+                "source": "legacy/vendor/word-list.js",
+                "note": "Legacy vendor seed for Pass 11 content model.",
+                "importedAt": 0
+              },
+              "progressKey": "different",
+              "sortIndex": 26
+            },
+            "sentence": "His plan looked different after lunch.",
+            "slow": false
+          },
+          {
+            "word": {
+              "year": "5-6",
+              "family": "necessary",
+              "word": "necessary",
+              "slug": "necessary",
+              "spellingPool": "core",
+              "coverageTier": "statutory-core",
+              "yearLabel": "Years 5-6",
+              "familyWords": [
+                "necessary"
+              ],
+              "sentence": "The teacher said silence was necessary.",
+              "sentences": [
+                "The teacher said silence was necessary."
+              ],
+              "accepted": [
+                "necessary"
+              ],
+              "explanation": "Necessary means needed or required.",
+              "listId": "statutory-y5-6",
+              "yearGroups": [
+                "Y5",
+                "Y6"
+              ],
+              "tags": [
+                "statutory",
+                "legacy-seed"
+              ],
+              "patternIds": [
+                "double-consonant"
+              ],
+              "sourceNote": "Seeded from preserved legacy spelling word list.",
+              "provenance": {
+                "source": "legacy/vendor/word-list.js",
+                "note": "Legacy vendor seed for Pass 11 content model.",
+                "importedAt": 0
+              },
+              "progressKey": "necessary",
+              "sortIndex": 173
+            },
+            "sentence": "The teacher said silence was necessary.",
+            "slow": false
+          },
+          {
+            "word": {
+              "year": "3-4",
+              "family": "heard",
+              "word": "heard",
+              "slug": "heard",
+              "spellingPool": "core",
+              "coverageTier": "statutory-core",
+              "yearLabel": "Years 3-4",
+              "familyWords": [
+                "heard"
+              ],
+              "sentence": "We heard the bell from the playground.",
+              "sentences": [
+                "We heard the bell from the playground."
+              ],
+              "accepted": [
+                "heard"
+              ],
+              "explanation": "Heard is the past tense of hear; it means listened to or noticed a sound.",
+              "listId": "statutory-y3-4",
+              "yearGroups": [
+                "Y3",
+                "Y4"
+              ],
+              "tags": [
+                "statutory",
+                "legacy-seed"
+              ],
+              "patternIds": [
+                "homophone"
+              ],
+              "sourceNote": "Seeded from preserved legacy spelling word list.",
+              "provenance": {
+                "source": "legacy/vendor/word-list.js",
+                "note": "Legacy vendor seed for Pass 11 content model.",
+                "importedAt": 0
+              },
+              "progressKey": "heard",
+              "sortIndex": 48
+            },
+            "sentence": "We heard the bell from the playground.",
+            "slow": false
+          },
+          {
+            "word": {
+              "year": "5-6",
+              "family": "rhyme",
+              "word": "rhyme",
+              "slug": "rhyme",
+              "spellingPool": "core",
+              "coverageTier": "statutory-core",
+              "yearLabel": "Years 5-6",
+              "familyWords": [
+                "rhyme"
+              ],
+              "sentence": "We wrote a short rhyme about rain.",
+              "sentences": [
+                "We wrote a short rhyme about rain."
+              ],
+              "accepted": [
+                "rhyme"
+              ],
+              "explanation": "A rhyme is a word or line that has the same ending sound as another.",
+              "listId": "statutory-y5-6",
+              "yearGroups": [
+                "Y5",
+                "Y6"
+              ],
+              "tags": [
+                "statutory",
+                "legacy-seed",
+                "exception-word"
+              ],
+              "patternIds": [],
+              "sourceNote": "Seeded from preserved legacy spelling word list.",
+              "provenance": {
+                "source": "legacy/vendor/word-list.js",
+                "note": "Legacy vendor seed for Pass 11 content model.",
+                "importedAt": 0
+              },
+              "progressKey": "rhyme",
+              "sortIndex": 192
+            },
+            "sentence": "We wrote a short rhyme about rain.",
+            "slow": false
+          },
+          {
+            "word": {
+              "year": "5-6",
+              "family": "equip (-ped, -ment)",
+              "word": "equip",
+              "slug": "equip",
+              "spellingPool": "core",
+              "coverageTier": "statutory-core",
+              "yearLabel": "Years 5-6",
+              "familyWords": [
+                "equip",
+                "equipped",
+                "equipment"
+              ],
+              "sentence": "Please equip the bike with a bell and lights.",
+              "sentences": [
+                "Please equip the bike with a bell and lights."
+              ],
+              "accepted": [
+                "equip"
+              ],
+              "explanation": "To equip means to provide the things needed for a task.",
+              "listId": "statutory-y5-6",
+              "yearGroups": [
+                "Y5",
+                "Y6"
+              ],
+              "tags": [
+                "statutory",
+                "legacy-seed",
+                "exception-word"
+              ],
+              "patternIds": [],
+              "sourceNote": "Seeded from preserved legacy spelling word list.",
+              "provenance": {
+                "source": "legacy/vendor/word-list.js",
+                "note": "Legacy vendor seed for Pass 11 content model.",
+                "importedAt": 0
+              },
+              "progressKey": "equip",
+              "sortIndex": 145
+            },
+            "sentence": "Please equip the bike with a bell and lights.",
+            "slow": false
+          },
+          {
+            "word": {
+              "year": "5-6",
+              "family": "lightning",
+              "word": "lightning",
+              "slug": "lightning",
+              "spellingPool": "core",
+              "coverageTier": "statutory-core",
+              "yearLabel": "Years 5-6",
+              "familyWords": [
+                "lightning"
+              ],
+              "sentence": "The pilot watched lightning from above.",
+              "sentences": [
+                "The pilot watched lightning from above."
+              ],
+              "accepted": [
+                "lightning"
+              ],
+              "explanation": "Lightning is a bright flash of electricity in the sky during a storm.",
+              "listId": "statutory-y5-6",
+              "yearGroups": [
+                "Y5",
+                "Y6"
+              ],
+              "tags": [
+                "statutory",
+                "legacy-seed",
+                "exception-word"
+              ],
+              "patternIds": [],
+              "sourceNote": "Seeded from preserved legacy spelling word list.",
+              "provenance": {
+                "source": "legacy/vendor/word-list.js",
+                "note": "Legacy vendor seed for Pass 11 content model.",
+                "importedAt": 0
+              },
+              "progressKey": "lightning",
+              "sortIndex": 169
+            },
+            "sentence": "The pilot watched lightning from above.",
+            "slow": false
+          },
+          {
+            "word": {
+              "year": "3-4",
+              "family": "remember",
+              "word": "remember",
+              "slug": "remember",
+              "spellingPool": "core",
+              "coverageTier": "statutory-core",
+              "yearLabel": "Years 3-4",
+              "familyWords": [
+                "remember"
+              ],
+              "sentence": "Please remember your coat.",
+              "sentences": [
+                "Please remember your coat."
+              ],
+              "accepted": [
+                "remember"
+              ],
+              "explanation": "To remember means to keep something in your mind or bring it back to mind.",
+              "listId": "statutory-y3-4",
+              "yearGroups": [
+                "Y3",
+                "Y4"
+              ],
+              "tags": [
+                "statutory",
+                "legacy-seed"
+              ],
+              "patternIds": [
+                "prefix-pre-re-de"
+              ],
+              "sourceNote": "Seeded from preserved legacy spelling word list.",
+              "provenance": {
+                "source": "legacy/vendor/word-list.js",
+                "note": "Legacy vendor seed for Pass 11 content model.",
+                "importedAt": 0
+              },
+              "progressKey": "remember",
+              "sortIndex": 91
+            },
+            "sentence": "Please remember your coat.",
+            "slow": false
+          },
+          {
+            "word": {
+              "year": "5-6",
+              "family": "relevant",
+              "word": "relevant",
+              "slug": "relevant",
+              "spellingPool": "core",
+              "coverageTier": "statutory-core",
+              "yearLabel": "Years 5-6",
+              "familyWords": [
+                "relevant"
+              ],
+              "sentence": "The question was relevant to our lesson.",
+              "sentences": [
+                "The question was relevant to our lesson."
+              ],
+              "accepted": [
+                "relevant"
+              ],
+              "explanation": "Relevant means connected to what is being discussed or needed.",
+              "listId": "statutory-y5-6",
+              "yearGroups": [
+                "Y5",
+                "Y6"
+              ],
+              "tags": [
+                "statutory",
+                "legacy-seed",
+                "exception-word"
+              ],
+              "patternIds": [],
+              "sourceNote": "Seeded from preserved legacy spelling word list.",
+              "provenance": {
+                "source": "legacy/vendor/word-list.js",
+                "note": "Legacy vendor seed for Pass 11 content model.",
+                "importedAt": 0
+              },
+              "progressKey": "relevant",
+              "sortIndex": 190
+            },
+            "sentence": "The question was relevant to our lesson.",
+            "slow": false
+          },
+          {
+            "word": {
+              "year": "3-4",
+              "family": "certain",
+              "word": "certain",
+              "slug": "certain",
+              "spellingPool": "core",
+              "coverageTier": "statutory-core",
+              "yearLabel": "Years 3-4",
+              "familyWords": [
+                "certain"
+              ],
+              "sentence": "I am certain that this is mine.",
+              "sentences": [
+                "I am certain that this is mine."
+              ],
+              "accepted": [
+                "certain"
+              ],
+              "explanation": "Certain means sure, or known to be true.",
+              "listId": "statutory-y3-4",
+              "yearGroups": [
+                "Y3",
+                "Y4"
+              ],
+              "tags": [
+                "statutory",
+                "legacy-seed",
+                "exception-word"
+              ],
+              "patternIds": [],
+              "sourceNote": "Seeded from preserved legacy spelling word list.",
+              "provenance": {
+                "source": "legacy/vendor/word-list.js",
+                "note": "Legacy vendor seed for Pass 11 content model.",
+                "importedAt": 0
+              },
+              "progressKey": "certain",
+              "sortIndex": 19
+            },
+            "sentence": "I am certain that this is mine.",
+            "slow": false
+          }
+        ],
+        "spoken": []
+      },
+      "persisted": {
+        "progressBefore": {
+          "interest": {
+            "stage": 4,
+            "attempts": 6,
+            "correct": 5,
+            "wrong": 1,
+            "dueDay": 20528,
+            "lastDay": 20461,
+            "lastResult": "correct"
+          },
+          "different": {
+            "stage": 4,
+            "attempts": 6,
+            "correct": 5,
+            "wrong": 1,
+            "dueDay": 20528,
+            "lastDay": 20461,
+            "lastResult": "correct"
+          },
+          "necessary": {
+            "stage": 4,
+            "attempts": 6,
+            "correct": 5,
+            "wrong": 1,
+            "dueDay": 20528,
+            "lastDay": 20461,
+            "lastResult": "correct"
+          },
+          "heard": {
+            "stage": 4,
+            "attempts": 6,
+            "correct": 5,
+            "wrong": 1,
+            "dueDay": 20528,
+            "lastDay": 20461,
+            "lastResult": "correct"
+          },
+          "rhyme": {
+            "stage": 4,
+            "attempts": 6,
+            "correct": 5,
+            "wrong": 1,
+            "dueDay": 20528,
+            "lastDay": 20461,
+            "lastResult": "correct"
+          },
+          "equip": {
+            "stage": 4,
+            "attempts": 6,
+            "correct": 5,
+            "wrong": 1,
+            "dueDay": 20528,
+            "lastDay": 20461,
+            "lastResult": "correct"
+          },
+          "lightning": {
+            "stage": 4,
+            "attempts": 6,
+            "correct": 5,
+            "wrong": 1,
+            "dueDay": 20528,
+            "lastDay": 20461,
+            "lastResult": "correct"
+          },
+          "remember": {
+            "stage": 4,
+            "attempts": 6,
+            "correct": 5,
+            "wrong": 1,
+            "dueDay": 20528,
+            "lastDay": 20461,
+            "lastResult": "correct"
+          },
+          "relevant": {
+            "stage": 4,
+            "attempts": 6,
+            "correct": 5,
+            "wrong": 1,
+            "dueDay": 20528,
+            "lastDay": 20461,
+            "lastResult": "correct"
+          },
+          "certain": {
+            "stage": 4,
+            "attempts": 6,
+            "correct": 5,
+            "wrong": 1,
+            "dueDay": 20528,
+            "lastDay": 20461,
+            "lastResult": "correct"
+          }
+        },
+        "progressAfter": {
+          "interest": {
+            "stage": 4,
+            "attempts": 7,
+            "correct": 5,
+            "wrong": 2,
+            "dueDay": 20528,
+            "lastDay": 20461,
+            "lastResult": "correct"
+          },
+          "different": {
+            "stage": 4,
+            "attempts": 7,
+            "correct": 6,
+            "wrong": 1,
+            "dueDay": 20528,
+            "lastDay": 20461,
+            "lastResult": "correct"
+          },
+          "necessary": {
+            "stage": 4,
+            "attempts": 7,
+            "correct": 6,
+            "wrong": 1,
+            "dueDay": 20528,
+            "lastDay": 20461,
+            "lastResult": "correct"
+          },
+          "heard": {
+            "stage": 4,
+            "attempts": 7,
+            "correct": 6,
+            "wrong": 1,
+            "dueDay": 20528,
+            "lastDay": 20461,
+            "lastResult": "correct"
+          },
+          "rhyme": {
+            "stage": 4,
+            "attempts": 7,
+            "correct": 6,
+            "wrong": 1,
+            "dueDay": 20528,
+            "lastDay": 20461,
+            "lastResult": "correct"
+          },
+          "equip": {
+            "stage": 4,
+            "attempts": 7,
+            "correct": 6,
+            "wrong": 1,
+            "dueDay": 20528,
+            "lastDay": 20461,
+            "lastResult": "correct"
+          },
+          "lightning": {
+            "stage": 4,
+            "attempts": 7,
+            "correct": 6,
+            "wrong": 1,
+            "dueDay": 20528,
+            "lastDay": 20461,
+            "lastResult": "correct"
+          },
+          "remember": {
+            "stage": 4,
+            "attempts": 7,
+            "correct": 6,
+            "wrong": 1,
+            "dueDay": 20528,
+            "lastDay": 20461,
+            "lastResult": "correct"
+          },
+          "relevant": {
+            "stage": 4,
+            "attempts": 7,
+            "correct": 6,
+            "wrong": 1,
+            "dueDay": 20528,
+            "lastDay": 20461,
+            "lastResult": "correct"
+          },
+          "certain": {
+            "stage": 4,
+            "attempts": 7,
+            "correct": 6,
+            "wrong": 1,
+            "dueDay": 20528,
+            "lastDay": 20461,
+            "lastResult": "correct"
+          }
+        }
+      }
+    },
+    "pattern-quest-wobble-and-complete": {
+      "ok": true,
+      "state": {
+        "roster": [
+          "explanation",
+          "competition",
+          "pronunciation",
+          "question"
+        ],
+        "cards": [
+          {
+            "type": "spell",
+            "slug": "explanation",
+            "patternId": "suffix-tion",
+            "patternTitle": "Words ending in -tion",
+            "rule": "Many nouns end with -tion and sound like \"shun\", often from a verb.",
+            "index": 0,
+            "total": 5,
+            "word": "explanation",
+            "sentence": "His explanation made sense to everyone."
+          },
+          {
+            "type": "spell",
+            "slug": "competition",
+            "patternId": "suffix-tion",
+            "patternTitle": "Words ending in -tion",
+            "rule": "Many nouns end with -tion and sound like \"shun\", often from a verb.",
+            "index": 1,
+            "total": 5,
+            "word": "competition",
+            "sentence": "She won the art competition."
+          },
+          {
+            "type": "classify",
+            "slug": "pronunciation",
+            "patternId": "suffix-tion",
+            "patternTitle": "Words ending in -tion",
+            "rule": "Many nouns end with -tion and sound like \"shun\", often from a verb.",
+            "index": 2,
+            "total": 5,
+            "word": "pronunciation",
+            "sentence": "Her pronunciation was clear and careful.",
+            "choices": [
+              {
+                "label": "Words ending in -cian",
+                "correct": false,
+                "id": "option-0"
+              },
+              {
+                "label": "Words ending in -sion",
+                "correct": false,
+                "id": "option-1"
+              },
+              {
+                "label": "Words ending in -tion",
+                "correct": true,
+                "id": "option-2"
+              }
+            ]
+          },
+          {
+            "type": "detect-error",
+            "slug": "question",
+            "patternId": "suffix-tion",
+            "patternTitle": "Words ending in -tion",
+            "rule": "Many nouns end with -tion and sound like \"shun\", often from a verb.",
+            "index": 3,
+            "total": 5,
+            "word": "question",
+            "sentence": "She asked a thoughtful question.",
+            "misspelling": "questian",
+            "target": "question"
+          },
+          {
+            "type": "explain",
+            "slug": "explanation",
+            "patternId": "suffix-tion",
+            "patternTitle": "Words ending in -tion",
+            "rule": "Many nouns end with -tion and sound like \"shun\", often from a verb.",
+            "index": 4,
+            "total": 5,
+            "word": "explanation",
+            "sentence": "His explanation made sense to everyone.",
+            "choices": [
+              {
+                "label": "Job names often end with -cian when they come from an -ic or -ics subject.",
+                "correct": false,
+                "id": "option-0"
+              },
+              {
+                "label": "Some nouns end with -sion when the base has a \"d\", \"de\" or \"s\" sound before the ending.",
+                "correct": false,
+                "id": "option-1"
+              },
+              {
+                "label": "Many nouns end with -tion and sound like \"shun\", often from a verb.",
+                "correct": true,
+                "id": "option-2"
+              }
+            ]
+          }
+        ],
+        "grading": [
+          {
+            "actedOnSlug": "explanation",
+            "grade": "correct"
+          },
+          {
+            "actedOnSlug": "competition",
+            "grade": "wrong"
+          },
+          {
+            "actedOnSlug": "pronunciation",
+            "grade": "correct"
+          },
+          {
+            "actedOnSlug": "question",
+            "grade": "correct"
+          },
+          {
+            "actedOnSlug": "explanation",
+            "grade": "correct"
+          }
+        ],
+        "finalPhase": "summary",
+        "trace": [
+          {
+            "command": "start-session",
+            "ok": true,
+            "changed": true,
+            "phase": "session",
+            "mode": "pattern-quest",
+            "sessionPhase": "question",
+            "resultingSlug": "explanation",
+            "actedOnSlug": null,
+            "grade": null,
+            "awaitingAdvance": false,
+            "feedbackKind": null,
+            "feedbackHeadline": null
+          },
+          {
+            "command": "submit-answer:correct",
+            "ok": true,
+            "changed": true,
+            "phase": "session",
+            "mode": "pattern-quest",
+            "sessionPhase": "question",
+            "resultingSlug": "competition",
+            "actedOnSlug": "explanation",
+            "grade": "correct",
+            "awaitingAdvance": true,
+            "feedbackKind": "success",
+            "feedbackHeadline": "Correct!"
+          },
+          {
+            "command": "continue-session",
+            "ok": true,
+            "changed": true,
+            "phase": "session",
+            "mode": "pattern-quest",
+            "sessionPhase": "question",
+            "resultingSlug": "competition",
+            "actedOnSlug": null,
+            "grade": null,
+            "awaitingAdvance": false,
+            "feedbackKind": null,
+            "feedbackHeadline": null
+          },
+          {
+            "command": "submit-answer:wobble",
+            "ok": true,
+            "changed": true,
+            "phase": "session",
+            "mode": "pattern-quest",
+            "sessionPhase": "question",
+            "resultingSlug": "pronunciation",
+            "actedOnSlug": "competition",
+            "grade": "wrong",
+            "awaitingAdvance": true,
+            "feedbackKind": "warn",
+            "feedbackHeadline": "Wobble."
+          },
+          {
+            "command": "continue-session",
+            "ok": true,
+            "changed": true,
+            "phase": "session",
+            "mode": "pattern-quest",
+            "sessionPhase": "question",
+            "resultingSlug": "pronunciation",
+            "actedOnSlug": null,
+            "grade": null,
+            "awaitingAdvance": false,
+            "feedbackKind": null,
+            "feedbackHeadline": null
+          },
+          {
+            "command": "submit-answer:correct",
+            "ok": true,
+            "changed": true,
+            "phase": "session",
+            "mode": "pattern-quest",
+            "sessionPhase": "question",
+            "resultingSlug": "question",
+            "actedOnSlug": "pronunciation",
+            "grade": "correct",
+            "awaitingAdvance": true,
+            "feedbackKind": "success",
+            "feedbackHeadline": "Correct!"
+          },
+          {
+            "command": "continue-session",
+            "ok": true,
+            "changed": true,
+            "phase": "session",
+            "mode": "pattern-quest",
+            "sessionPhase": "question",
+            "resultingSlug": "question",
+            "actedOnSlug": null,
+            "grade": null,
+            "awaitingAdvance": false,
+            "feedbackKind": null,
+            "feedbackHeadline": null
+          },
+          {
+            "command": "submit-answer:correct",
+            "ok": true,
+            "changed": true,
+            "phase": "session",
+            "mode": "pattern-quest",
+            "sessionPhase": "question",
+            "resultingSlug": "explanation",
+            "actedOnSlug": "question",
+            "grade": "correct",
+            "awaitingAdvance": true,
+            "feedbackKind": "success",
+            "feedbackHeadline": "Nice spot!"
+          },
+          {
+            "command": "continue-session",
+            "ok": true,
+            "changed": true,
+            "phase": "session",
+            "mode": "pattern-quest",
+            "sessionPhase": "question",
+            "resultingSlug": "explanation",
+            "actedOnSlug": null,
+            "grade": null,
+            "awaitingAdvance": false,
+            "feedbackKind": null,
+            "feedbackHeadline": null
+          },
+          {
+            "command": "submit-answer:correct",
+            "ok": true,
+            "changed": true,
+            "phase": "session",
+            "mode": "pattern-quest",
+            "sessionPhase": "question",
+            "resultingSlug": "explanation",
+            "actedOnSlug": "explanation",
+            "grade": "correct",
+            "awaitingAdvance": true,
+            "feedbackKind": "success",
+            "feedbackHeadline": "Correct!"
+          },
+          {
+            "command": "continue-session",
+            "ok": true,
+            "changed": true,
+            "phase": "summary",
+            "mode": "pattern-quest",
+            "sessionPhase": null,
+            "resultingSlug": null,
+            "actedOnSlug": null,
+            "grade": null,
+            "awaitingAdvance": false,
+            "feedbackKind": null,
+            "feedbackHeadline": null
+          }
+        ],
+        "summary": {
+          "mode": "pattern-quest",
+          "label": "Pattern Quest",
+          "message": "Pattern Quest complete — 4 of 5 right on \"Words ending in -tion\". Mega stays; wobbling cards return tomorrow.",
+          "cards": [
+            {
+              "label": "Score",
+              "value": "4/5",
+              "sub": "Words ending in -tion"
+            },
+            {
+              "label": "Correct",
+              "value": 4,
+              "sub": "Single attempt per card"
+            },
+            {
+              "label": "Wobbling",
+              "value": 1,
+              "sub": "Comes back tomorrow"
+            },
+            {
+              "label": "Pattern",
+              "value": "Words ending in -tion",
+              "sub": "Today's quest"
+            }
+          ],
+          "mistakes": [
+            {
+              "slug": "competition",
+              "word": "competition",
+              "family": "competition",
+              "year": "5-6",
+              "yearLabel": "Years 5-6",
+              "familyWords": [
+                "competition"
+              ]
+            }
+          ],
+          "elapsedMs": 0,
+          "totalWords": 5,
+          "correct": 4,
+          "accuracy": 80,
+          "heroContext": null
+        }
+      },
+      "events": [
+        {
+          "id": "spelling.session-completed:a1-pattern-quest:sess-1768478400000-45f24514",
+          "type": "spelling.session-completed",
+          "subjectId": "spelling",
+          "learnerId": "a1-pattern-quest",
+          "sessionId": "sess-1768478400000-45f24514",
+          "mode": "pattern-quest",
+          "createdAt": 1768478400000,
+          "sessionType": "learning",
+          "totalWords": 4,
+          "mistakeCount": 1
+        },
+        {
+          "id": "spelling.pattern.quest-completed:a1-pattern-quest:sess-1768478400000-45f24514:suffix-tion",
+          "type": "spelling.pattern.quest-completed",
+          "subjectId": "spelling",
+          "learnerId": "a1-pattern-quest",
+          "sessionId": "sess-1768478400000-45f24514",
+          "mode": "pattern-quest",
+          "createdAt": 1768478400000,
+          "patternId": "suffix-tion",
+          "patternTitle": "Words ending in -tion",
+          "slugs": [
+            "explanation",
+            "competition",
+            "pronunciation",
+            "question"
+          ],
+          "correctCount": 4,
+          "wobbledSlugs": [
+            "competition"
+          ]
+        }
+      ],
+      "audio": {
+        "cues": [
+          {
+            "word": {
+              "year": "5-6",
+              "family": "explanation",
+              "word": "explanation",
+              "slug": "explanation",
+              "spellingPool": "core",
+              "coverageTier": "statutory-core",
+              "yearLabel": "Years 5-6",
+              "familyWords": [
+                "explanation"
+              ],
+              "sentence": "His explanation made sense to everyone.",
+              "sentences": [
+                "His explanation made sense to everyone."
+              ],
+              "accepted": [
+                "explanation"
+              ],
+              "explanation": "An explanation gives reasons or details that make something clear.",
+              "listId": "statutory-y5-6",
+              "yearGroups": [
+                "Y5",
+                "Y6"
+              ],
+              "tags": [
+                "statutory",
+                "legacy-seed"
+              ],
+              "patternIds": [
+                "suffix-tion"
+              ],
+              "sourceNote": "Seeded from preserved legacy spelling word list.",
+              "provenance": {
+                "source": "legacy/vendor/word-list.js",
+                "note": "Legacy vendor seed for Pass 11 content model.",
+                "importedAt": 0
+              },
+              "progressKey": "explanation",
+              "sortIndex": 152
+            },
+            "sentence": "His explanation made sense to everyone.",
+            "slow": false
+          },
+          {
+            "word": {
+              "year": "5-6",
+              "family": "competition",
+              "word": "competition",
+              "slug": "competition",
+              "spellingPool": "core",
+              "coverageTier": "statutory-core",
+              "yearLabel": "Years 5-6",
+              "familyWords": [
+                "competition"
+              ],
+              "sentence": "She won the art competition.",
+              "sentences": [
+                "She won the art competition."
+              ],
+              "accepted": [
+                "competition"
+              ],
+              "explanation": "A competition is an event where people try to win or do better than others.",
+              "listId": "statutory-y5-6",
+              "yearGroups": [
+                "Y5",
+                "Y6"
+              ],
+              "tags": [
+                "statutory",
+                "legacy-seed"
+              ],
+              "patternIds": [
+                "suffix-tion"
+              ],
+              "sourceNote": "Seeded from preserved legacy spelling word list.",
+              "provenance": {
+                "source": "legacy/vendor/word-list.js",
+                "note": "Legacy vendor seed for Pass 11 content model.",
+                "importedAt": 0
+              },
+              "progressKey": "competition",
+              "sortIndex": 129
+            },
+            "sentence": "She won the art competition.",
+            "slow": false
+          },
+          {
+            "word": {
+              "year": "5-6",
+              "family": "pronunciation",
+              "word": "pronunciation",
+              "slug": "pronunciation",
+              "spellingPool": "core",
+              "coverageTier": "statutory-core",
+              "yearLabel": "Years 5-6",
+              "familyWords": [
+                "pronunciation"
+              ],
+              "sentence": "Her pronunciation was clear and careful.",
+              "sentences": [
+                "Her pronunciation was clear and careful."
+              ],
+              "accepted": [
+                "pronunciation"
+              ],
+              "explanation": "Pronunciation is the way a word is spoken.",
+              "listId": "statutory-y5-6",
+              "yearGroups": [
+                "Y5",
+                "Y6"
+              ],
+              "tags": [
+                "statutory",
+                "legacy-seed"
+              ],
+              "patternIds": [
+                "suffix-tion"
+              ],
+              "sourceNote": "Seeded from preserved legacy spelling word list.",
+              "provenance": {
+                "source": "legacy/vendor/word-list.js",
+                "note": "Legacy vendor seed for Pass 11 content model.",
+                "importedAt": 0
+              },
+              "progressKey": "pronunciation",
+              "sortIndex": 186
+            },
+            "sentence": "Her pronunciation was clear and careful.",
+            "slow": false
+          },
+          {
+            "word": {
+              "year": "3-4",
+              "family": "question",
+              "word": "question",
+              "slug": "question",
+              "spellingPool": "core",
+              "coverageTier": "statutory-core",
+              "yearLabel": "Years 3-4",
+              "familyWords": [
+                "question"
+              ],
+              "sentence": "She asked a thoughtful question.",
+              "sentences": [
+                "She asked a thoughtful question."
+              ],
+              "accepted": [
+                "question"
+              ],
+              "explanation": "A question is something you ask to find out information.",
+              "listId": "statutory-y3-4",
+              "yearGroups": [
+                "Y3",
+                "Y4"
+              ],
+              "tags": [
+                "statutory",
+                "legacy-seed"
+              ],
+              "patternIds": [
+                "suffix-tion"
+              ],
+              "sourceNote": "Seeded from preserved legacy spelling word list.",
+              "provenance": {
+                "source": "legacy/vendor/word-list.js",
+                "note": "Legacy vendor seed for Pass 11 content model.",
+                "importedAt": 0
+              },
+              "progressKey": "question",
+              "sortIndex": 87
+            },
+            "sentence": "She asked a thoughtful question.",
+            "slow": false
+          },
+          {
+            "word": {
+              "year": "5-6",
+              "family": "explanation",
+              "word": "explanation",
+              "slug": "explanation",
+              "spellingPool": "core",
+              "coverageTier": "statutory-core",
+              "yearLabel": "Years 5-6",
+              "familyWords": [
+                "explanation"
+              ],
+              "sentence": "His explanation made sense to everyone.",
+              "sentences": [
+                "His explanation made sense to everyone."
+              ],
+              "accepted": [
+                "explanation"
+              ],
+              "explanation": "An explanation gives reasons or details that make something clear.",
+              "listId": "statutory-y5-6",
+              "yearGroups": [
+                "Y5",
+                "Y6"
+              ],
+              "tags": [
+                "statutory",
+                "legacy-seed"
+              ],
+              "patternIds": [
+                "suffix-tion"
+              ],
+              "sourceNote": "Seeded from preserved legacy spelling word list.",
+              "provenance": {
+                "source": "legacy/vendor/word-list.js",
+                "note": "Legacy vendor seed for Pass 11 content model.",
+                "importedAt": 0
+              },
+              "progressKey": "explanation",
+              "sortIndex": 152
+            },
+            "sentence": "His explanation made sense to everyone.",
+            "slow": false
+          }
+        ],
+        "spoken": []
+      },
+      "persisted": {
+        "progressBefore": {
+          "explanation": {
+            "stage": 4,
+            "attempts": 6,
+            "correct": 5,
+            "wrong": 1,
+            "dueDay": 20528,
+            "lastDay": 20461,
+            "lastResult": "correct"
+          },
+          "competition": {
+            "stage": 4,
+            "attempts": 6,
+            "correct": 5,
+            "wrong": 1,
+            "dueDay": 20528,
+            "lastDay": 20461,
+            "lastResult": "correct"
+          },
+          "pronunciation": {
+            "stage": 4,
+            "attempts": 6,
+            "correct": 5,
+            "wrong": 1,
+            "dueDay": 20528,
+            "lastDay": 20461,
+            "lastResult": "correct"
+          },
+          "question": {
+            "stage": 4,
+            "attempts": 6,
+            "correct": 5,
+            "wrong": 1,
+            "dueDay": 20528,
+            "lastDay": 20461,
+            "lastResult": "correct"
+          }
+        },
+        "progressAfter": {
+          "explanation": {
+            "stage": 4,
+            "attempts": 8,
+            "correct": 7,
+            "wrong": 1,
+            "dueDay": 20528,
+            "lastDay": 20461,
+            "lastResult": "correct"
+          },
+          "competition": {
+            "stage": 4,
+            "attempts": 7,
+            "correct": 5,
+            "wrong": 2,
+            "dueDay": 20528,
+            "lastDay": 20461,
+            "lastResult": "correct"
+          },
+          "pronunciation": {
+            "stage": 4,
+            "attempts": 7,
+            "correct": 6,
+            "wrong": 1,
+            "dueDay": 20528,
+            "lastDay": 20461,
+            "lastResult": "correct"
+          },
+          "question": {
+            "stage": 4,
+            "attempts": 7,
+            "correct": 6,
+            "wrong": 1,
+            "dueDay": 20528,
+            "lastDay": 20461,
+            "lastResult": "correct"
+          }
+        },
+        "pattern": {
+          "wobbling": {
+            "competition": {
+              "wobbling": true,
+              "wobbledAt": 20468,
+              "patternId": "suffix-tion"
+            }
+          }
+        }
+      }
+    },
+    "word-bank-item-after-row-250": {
+      "ok": true,
+      "state": {
+        "runtimeWordCount": 1480,
+        "rowNumber": 300,
+        "expectedSlug": "alert",
+        "entry": {
+          "slug": "alert",
+          "word": "alert",
+          "family": "alert",
+          "year": "3-4",
+          "yearLabel": "Years 3-4",
+          "spellingPool": "core",
+          "coverageTier": "secure-extension",
+          "familyWords": [
+            "alert"
+          ],
+          "sentence": "The teacher wrote the word alert on the board for secure vocabulary spelling practice.",
+          "explanation": "Alert is an owner-approved generated KS2 secure-extension spelling-practice entry. Pupils should read it clearly, spell each letter in order, and keep the accepted UK form unchanged.",
+          "accepted": [
+            "alert"
+          ],
+          "variants": [],
+          "status": "new",
+          "stageLabel": "New / due today",
+          "progress": {
+            "stage": 0,
+            "attempts": 0,
+            "correct": 0,
+            "wrong": 0,
+            "dueDay": 20468,
+            "lastDay": null,
+            "lastResult": null
+          }
+        }
+      },
+      "events": [],
+      "audio": {
+        "cues": [],
+        "spoken": []
+      },
+      "persisted": {}
+    }
+  }
+}

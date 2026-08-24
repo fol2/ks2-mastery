@@ -1,8 +1,8 @@
 import { createHash } from 'node:crypto';
 
-const SEED = 'ks2-9597';
+export const SHARD_SEED = 'ks2-pr941-69795';
 
-export function seededShuffle(files, seed = SEED) {
+export function seededShuffle(files, seed = SHARD_SEED) {
   const hashed = files.map(f => ({
     file: f,
     hash: createHash('md5').update(seed + f).digest('hex')
@@ -11,7 +11,7 @@ export function seededShuffle(files, seed = SEED) {
   return hashed.map(h => h.file);
 }
 
-export function getShardFiles(files, shardIndex, shardTotal, seed = SEED) {
+export function getShardFiles(files, shardIndex, shardTotal, seed = SHARD_SEED) {
   const shuffled = seededShuffle(files, seed);
   return shuffled.filter((_, i) => i % shardTotal === shardIndex - 1);
 }

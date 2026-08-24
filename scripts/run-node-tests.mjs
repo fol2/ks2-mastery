@@ -31,7 +31,7 @@ import { readdir, writeFile } from 'node:fs/promises';
 import { availableParallelism } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { getShardFiles } from './shard-shuffle.mjs';
+import { getShardFiles, SHARD_SEED } from './shard-shuffle.mjs';
 
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const NODE_TEST_RE = /^(?:test-.*|.*\.(?:test|spec)\.(?:c|m)?jsx?|.*-test\.(?:c|m)?jsx?)$/;
@@ -245,7 +245,7 @@ if (isDirectInvocation) {
     if (shardIndex !== null && shardTotal !== null) {
       const filteredFiles = getShardFiles(files, shardIndex, shardTotal);
       runOptions.files = filteredFiles;
-      console.log(`shard ${shardIndex}/${shardTotal}: ${filteredFiles.length} files (seed=ks2-shard-seed-2026)`);
+      console.log(`shard ${shardIndex}/${shardTotal}: ${filteredFiles.length} files (seed=${SHARD_SEED})`);
     }
 
     const wallStart = Date.now();

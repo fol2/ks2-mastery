@@ -1,0 +1,149 @@
+{
+  "schemaVersion": 1,
+  "identity": {
+    "runtimeItemIdFormat": "packId:itemId",
+    "packId": "ks2-core",
+    "entitlementId": "full-ks2"
+  },
+  "catalogues": [
+    {
+      "catalogueId": "ks2-core:starter",
+      "packId": "ks2-core",
+      "releaseScope": "v1-bundled",
+      "entitlementIds": [],
+      "itemIds": [
+        "answer",
+        "appear",
+        "arrive",
+        "build",
+        "busy",
+        "circle",
+        "early",
+        "fruit",
+        "group",
+        "heard",
+        "achieve",
+        "muscle",
+        "occur",
+        "suggest",
+        "develop",
+        "competition",
+        "frequently",
+        "queue",
+        "rhythm",
+        "yacht"
+      ],
+      "selectionNotes": [
+        "Manually reviewed lower-entry Years 3-4 statutory words.",
+        "One learning target per item; no duplicate family variants.",
+        "Common, recognisable vocabulary with varied spelling patterns."
+      ]
+    },
+    {
+      "catalogueId": "ks2-core:full",
+      "packId": "ks2-core",
+      "releaseScope": "v1-download",
+      "entitlementIds": [
+        "full-ks2"
+      ],
+      "selection": {
+        "coverageTier": "statutory-core"
+      }
+    },
+    {
+      "catalogueId": "secure-vocabulary:future",
+      "packId": "secure-vocabulary",
+      "releaseScope": "future-independent-product",
+      "entitlementIds": [],
+      "selection": {
+        "coverageTier": "secure-extension"
+      },
+      "monsterPolicy": "new-pack-specific-monster-required"
+    },
+    {
+      "catalogueId": "extra-vocabulary:future",
+      "packId": "extra-vocabulary",
+      "releaseScope": "future-independent-product",
+      "entitlementIds": [],
+      "selection": {
+        "coverageTier": "enrichment-extra"
+      },
+      "monsterPolicy": "preserve-vellhorn"
+    }
+  ],
+  "sentenceCorrections": [
+    {
+      "catalogueId": "ks2-core:full",
+      "itemId": "famous",
+      "sentenceId": "sentence-6",
+      "expectedText": "The castle is famous with visitors from many countries.",
+      "replacementText": "The castle is famous among visitors from many countries."
+    }
+  ],
+  "rewardTracks": [
+    {
+      "rewardTrackId": "spelling-core-inklet",
+      "packId": "ks2-core",
+      "monsterId": "inklet",
+      "yearBand": "3-4",
+      "thresholds": [
+        1,
+        10,
+        30,
+        60,
+        100
+      ]
+    },
+    {
+      "rewardTrackId": "spelling-core-glimmerbug",
+      "packId": "ks2-core",
+      "monsterId": "glimmerbug",
+      "yearBand": "5-6",
+      "thresholds": [
+        1,
+        10,
+        30,
+        60,
+        100
+      ]
+    },
+    {
+      "rewardTrackId": "spelling-core-phaeton",
+      "packId": "ks2-core",
+      "monsterId": "phaeton",
+      "sourceRewardTrackIds": [
+        "spelling-core-inklet",
+        "spelling-core-glimmerbug"
+      ],
+      "thresholds": [
+        3,
+        25,
+        95,
+        145,
+        213
+      ]
+    },
+    {
+      "rewardTrackId": "spelling-extra-vellhorn",
+      "packId": "extra-vocabulary",
+      "monsterId": "vellhorn",
+      "thresholds": [
+        1,
+        10,
+        30,
+        60,
+        100
+      ],
+      "releaseScope": "future-independent-product"
+    }
+  ],
+  "audioProfiles": [
+    "Iapetus",
+    "Sulafat"
+  ],
+  "audioKinds": [
+    "word-natural",
+    "dictation-normal",
+    "dictation-slow"
+  ]
+}
