@@ -50,6 +50,7 @@
     "APP_HOSTNAME": "ks2.eugnel.uk",
     "AUTH_MODE": "production",
     "ENVIRONMENT": "production",
+    "ARITHMETIC_SUBJECT_ENABLED": "false",
     "PUNCTUATION_SUBJECT_ENABLED": "true",
     "SOCIAL_LOGIN_WIRE_ENABLED": "true",
     "HERO_MODE_SHADOW_ENABLED": "false",

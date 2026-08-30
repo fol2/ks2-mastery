@@ -53,6 +53,21 @@ function createPunctuationHarness({ storage, subjects } = {}) {
   });
 }
 
+function createArithmeticHarness({ storage, subjects } = {}) {
+  return createAppHarness({
+    storage,
+    subjects,
+    subjectExposureGates: { [SUBJECT_EXPOSURE_GATES.arithmetic]: true },
+  });
+}
+
+function answerArithmeticCorrectly(harness) {
+  const state = harness.store.getState().subjectUi.arithmetic;
+  const formData = new FormData();
+  formData.set('answer', state.session.currentQuestion.answer);
+  harness.dispatch('arithmetic-submit-form', { formData });
+}
+
 function preparePunctuationHarness(harness) {
   const learnerId = harness.store.getState().learners.selectedId;
   harness.services.punctuation.savePrefs(learnerId, {
@@ -278,6 +293,67 @@ const punctuationSpec = {
   },
 };
 
+const arithmeticSpec = {
+  label: 'Arithmetic thin-slice subject',
+  subjectId: 'arithmetic',
+  createHarness: createArithmeticHarness,
+  expectReactPractice: true,
+  practiceMatcher: /Arithmetic mission/,
+  sessionMatcher: /Year 5\/6 arithmetic|Mixed arithmetic/,
+  summaryMatcher: /Arithmetic session complete/,
+  getUiState(harness) {
+    return harness.store.getState().subjectUi.arithmetic;
+  },
+  isSessionState(ui) {
+    return ui.phase === 'session';
+  },
+  isSummaryState(ui) {
+    return ui.phase === 'summary';
+  },
+  startRound(harness) {
+    harness.dispatch('arithmetic-start');
+  },
+  answerCorrectly: answerArithmeticCorrectly,
+  backToDashboard(harness) {
+    harness.dispatch('arithmetic-back');
+  },
+  expectedRestPhase: 'setup',
+  triggerActionName: 'arithmetic-start',
+  triggerAction(harness) {
+    harness.dispatch('arithmetic-start');
+  },
+  expectedCompletionEventType: 'arithmetic.session-completed',
+  assertDashboardStats(stats) {
+    assert.ok(stats.pct >= 0 && stats.pct <= 100);
+    assert.equal(typeof stats.streak, 'number');
+  },
+  assertAnalytics(analytics) {
+    assert.equal(analytics.attempts, 1);
+    assert.equal(analytics.correct, 1);
+    assert.equal(analytics.accuracy, 100);
+    assert.equal(analytics.sessionsCompleted, 1);
+  },
+};
+
+test('Arithmetic stays off the dashboard and route path until its exposure gate opens', () => {
+  const gated = createAppHarness();
+
+  assert.equal(gated.contextFor().subjects.some((subject) => subject.id === 'arithmetic'), false);
+
+  gated.dispatch('open-subject', { subjectId: 'arithmetic' });
+  assert.equal(gated.store.getState().route.screen, 'dashboard');
+
+  gated.store.openSubject('arithmetic');
+  assert.match(gated.render(), /not available in this deployment yet/);
+
+  const enabled = createArithmeticHarness();
+  assert.equal(enabled.contextFor().subjects.some((subject) => subject.id === 'arithmetic'), true);
+
+  enabled.dispatch('open-subject', { subjectId: 'arithmetic' });
+  assert.equal(enabled.store.getState().route.screen, 'subject');
+  assert.equal(enabled.store.getState().route.subjectId, 'arithmetic');
+});
+
 test('Punctuation stays off the dashboard and route path until its exposure gate opens', () => {
   const gated = createAppHarness();
 
@@ -308,3 +384,5 @@ registerSubjectConformanceSuite(expansionFixtureSpec);
 registerGoldenPathSmokeSuite(expansionFixtureSpec);
 registerSubjectConformanceSuite(punctuationSpec);
 registerGoldenPathSmokeSuite(punctuationSpec);
+registerSubjectConformanceSuite(arithmeticSpec);
+registerGoldenPathSmokeSuite(arithmeticSpec);

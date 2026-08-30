@@ -39,6 +39,12 @@ export function createArithmeticReadModelService({ getState } = {}) {
     getPrefs(learnerId) {
       return normaliseArithmeticPrefs(currentUi(getState, learnerId).prefs);
     },
+    savePrefs(learnerId, patch = {}) {
+      return normaliseArithmeticPrefs({
+        ...currentUi(getState, learnerId).prefs,
+        ...(patch && typeof patch === 'object' && !Array.isArray(patch) ? patch : {}),
+      });
+    },
     getStats(learnerId) {
       const overview = currentUi(getState, learnerId).stats?.overview || {};
       return {
@@ -54,6 +60,10 @@ export function createArithmeticReadModelService({ getState } = {}) {
     getAnalyticsSnapshot(learnerId) {
       return clone(currentUi(getState, learnerId).analytics) || createInitialArithmeticState().analytics;
     },
+    startSession() {},
+    submitAnswer() {},
+    continueSession() {},
+    endSession() {},
     resetLearner() {},
   };
 }

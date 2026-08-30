@@ -576,6 +576,7 @@ async function visibleHeroCampMonsterIdsFromSpellingExposure(repository, account
 
 export function subjectExposureGatesFromEnv(env = {}) {
   return {
+    [SUBJECT_EXPOSURE_GATES.arithmetic]: envFlagEnabled(env.ARITHMETIC_SUBJECT_ENABLED),
     [SUBJECT_EXPOSURE_GATES.punctuation]: envFlagEnabled(env.PUNCTUATION_SUBJECT_ENABLED),
   };
 }
@@ -589,8 +590,9 @@ function heroModeSessionFlags({ env = {}, accountId = '' } = {}) {
 }
 
 function requireSubjectCommandAvailable(command, env = {}) {
-  if (command?.subjectId !== 'punctuation') return;
-  if (subjectExposureGatesFromEnv(env)[SUBJECT_EXPOSURE_GATES.punctuation]) return;
+  const gateId = SUBJECT_EXPOSURE_GATES[command?.subjectId];
+  if (!gateId) return;
+  if (subjectExposureGatesFromEnv(env)[gateId]) return;
   throw new NotFoundError('Subject command is not available.', {
     code: 'subject_command_not_found',
     subjectId: command.subjectId,

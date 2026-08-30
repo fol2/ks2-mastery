@@ -1,4 +1,5 @@
 export const SUBJECT_EXPOSURE_GATES = Object.freeze({
+  arithmetic: 'arithmeticProduction',
   punctuation: 'punctuationProduction',
 });
 
