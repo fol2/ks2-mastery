@@ -444,6 +444,9 @@ test('client bundle audit fails when Arithmetic server content is in the metafil
   await writeFile(metafile, JSON.stringify({
     inputs: {
       'shared/arithmetic/content.js': { bytes: 1 },
+      'worker/src/subjects/arithmetic/commands.js': { bytes: 1 },
+      'src/subjects/arithmetic/service.js': { bytes: 1 },
+      'src/subjects/arithmetic/repository.js': { bytes: 1 },
     },
   }));
 

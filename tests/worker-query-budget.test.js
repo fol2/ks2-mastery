@@ -366,6 +366,7 @@ function createCommandHarness({ subjectId = 'spelling', accountId = 'adult-cmd' 
     DB,
     AUTH_MODE: 'development-stub',
     ENVIRONMENT: 'test',
+    ...(subjectId === 'arithmetic' ? { ARITHMETIC_SUBJECT_ENABLED: 'true' } : {}),
     ...(subjectId === 'punctuation' ? { PUNCTUATION_SUBJECT_ENABLED: 'true' } : {}),
   };
   let revision = 0;
