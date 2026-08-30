@@ -1,5 +1,7 @@
 import { createLocalPlatformRepositories } from '../core/repositories/index.js';
 import { createPracticeStreakSubscriber } from '../events/index.js';
+import { createArithmeticPersistence } from '../../subjects/arithmetic/repository.js';
+import { createArithmeticService } from '../../subjects/arithmetic/service.js';
 import { createPunctuationRewardSubscriber } from '../../subjects/punctuation/event-hooks.js';
 import { createPunctuationPersistence } from '../../subjects/punctuation/repository.js';
 import { createPunctuationService } from '../../subjects/punctuation/service.js';
@@ -27,6 +29,12 @@ export function createLocalAppController({
   if (!resolvedServices.punctuation) {
     resolvedServices.punctuation = createPunctuationService({
       repository: createPunctuationPersistence({ repositories }),
+      now,
+    });
+  }
+  if (!resolvedServices.arithmetic) {
+    resolvedServices.arithmetic = createArithmeticService({
+      repository: createArithmeticPersistence({ repositories }),
       now,
     });
   }
